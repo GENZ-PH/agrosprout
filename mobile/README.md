@@ -20,7 +20,7 @@ To reach a local API from the phone, set `EXPO_PUBLIC_API_URL` to your laptop's 
 ## Before every PR
 
 ```bash
-npm run check   # typecheck + lint (also runs in the Cloudflare build)
+npm run check   # typecheck + lint + Node tests (also runs in the Cloudflare build)
 ```
 
 Add packages with `npx expo install <package>` (picks SDK-compatible versions) and announce new dependencies in chat to avoid lockfile conflicts.
@@ -38,6 +38,6 @@ Add packages with `npx expo install <package>` (picks SDK-compatible versions) a
 | `src/components/` | charts, cards, ⓘ explainers | Frontend |
 | `src/types.ts` | shared data contracts (PR only) | Engine + Data |
 | `src/api/` | typed API client + `useApiQuery` / `useApiMutation` | Infra (#2) |
-| `src/state/` | TanStack Query client + persisted Zustand stores | Infra (#2) |
+| `src/state/` | TanStack Query client + persisted Zustand stores (export each store from `stores.ts`) | Infra (#2) |
 
 API, state and deployment details: [docs/12-infrastructure.md](../docs/12-infrastructure.md).

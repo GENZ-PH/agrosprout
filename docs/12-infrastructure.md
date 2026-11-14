@@ -58,7 +58,7 @@ npx expo start                      # press w for web, or scan with Expo Go
 
 On a phone with Expo Go, `localhost` is the phone itself. Set `EXPO_PUBLIC_API_URL` to your laptop's LAN IP (e.g. `http://192.168.1.20:8787`) and run `npm run dev -- --ip 0.0.0.0` in `api/`, or point it at the preview API.
 
-**Before every PR:** run `npm run check` in each folder you touched (typecheck + lint). There is no hosted CI. Cloudflare runs the same check during the build and refuses to deploy a broken commit.
+**Before every PR:** run `npm run check` in each folder you touched (typecheck + lint; in `mobile/` it also runs the Node tests in `src/**/*.test.ts`). There is no hosted CI. Cloudflare runs the same check during the build and refuses to deploy a broken commit.
 
 ## Usage
 
@@ -99,7 +99,7 @@ Add the name (no value) to `api/.dev.vars.example`, put the real value in your l
 import { api } from "../src/api/client";
 import { useApiQuery, useApiMutation } from "../src/api/hooks";
 
-const health = useApiQuery(["health"], () => api.v1.health.$get());
+const health = useApiQuery(["health"], ({ signal }) => api.v1.health.$get(undefined, { init: { signal } }));
 // health.data is typed from the Worker; health.error is an ApiError { code, message, status }
 
 const save = useApiMutation((input: { id: string }) => api.v1.things.$post({ json: input }));
@@ -112,7 +112,7 @@ save.mutate({ id: "x" });
 - **Retries:** network errors and 5xx retry once; 4xx never retry; mutations never retry.
 - **Offline cache:** every successful query is saved to the device unless it sets `meta: { persist: false }` (use that for live-only data like `/v1/health`). The saved cache is dropped automatically when the app version in `app.json` changes, or when `CACHE_SCHEMA` is bumped.
 - **Online/focus:** on Android the app tells TanStack Query when the connection drops (NetInfo) and when it comes back to the foreground (`src/net/sync.ts`); the browser handles this on web.
-- **Errors:** `error.code` is the Worker's code (`invalid_request`, `rate_limited`, `not_found`, ...) or `network_error` / `timeout` from the client.
+- **Errors:** `error.code` is the Worker's code (`invalid_request`, `rate_limited`, `not_found`, ...) or `network_error` / `timeout` / `aborted` from the client.
 - **Config:** read env values only through `src/env.ts` (`API_URL`, `APP_VERSION`, `IS_WEB`, `IS_NATIVE`), never `process.env` directly.
 
 ### TanStack Query or Zustand?
@@ -122,7 +122,24 @@ save.mutate({ id: "x" });
 | **TanStack Query** (via `useApiQuery`) | Anything that comes from the API | `src/api/` |
 | **Zustand** (via `createPersistedStore`) | Anything the farmer creates or chooses: lots, crops, months, settings | `src/state/` |
 
-Both are saved to the device (AsyncStorage), so the app opens with data when offline. Copy `src/state/example-store.ts` to start a store. When a store's saved shape changes, bump `version` and pass a `migrate(old, fromVersion)` that converts old data; without `migrate`, old data is dropped. Bump `CACHE_SCHEMA` in `src/state/query-client.ts` after a breaking API change.
+Both are saved to the device (AsyncStorage on Android, `localStorage` on web). Copy `src/state/example-store.ts` to start a store and **export it from `src/state/stores.ts`**. When a store's saved shape changes, bump `version` and pass a `migrate(old, fromVersion)` that converts old data. Bump `CACHE_SCHEMA` in `src/state/query-client.ts` after a breaking API change.
+
+### Offline data rules
+
+How the pieces behave, checked against the installed library code (zustand 5.1.0, TanStack Query 5.107.1, AsyncStorage 2.2.0) and covered by `npm test` in `mobile/`:
+
+| Rule | Why |
+|---|---|
+| **Anything the dashboard needs offline goes in a Zustand store**, including per-lot NASA POWER data (`LotData`) and its fetch date. Save it as soon as it is fetched (06-architecture offline checklist). | The TanStack Query cache is a convenience cache: it is deleted when the app version changes, when `CACHE_SCHEMA` is bumped, after **7 days** (`QUERY_CACHE_MAX_AGE`), or if it cannot be read. Stores have none of these limits. |
+| **Screens only render after every store has loaded.** The root layout waits (`useStoresReady`, usually a few milliseconds). | With plain zustand `persist`, a change made before saved data finishes loading writes the empty defaults over the farmer's saved data. A test in `src/state/persist-core.test.ts` reproduces it. |
+| **Nothing is written until saved data has been read**, even if a store is created later than launch. | Same reason. The early change is dropped with a console warning instead of erasing saved data. |
+| **Saved data is backed up before it is migrated or replaced.** If it is unreadable, from another `version`, or `migrate` throws, the original text is kept under `agrosprout-<store>:backup:<time>` and the store starts from its defaults. | Plain zustand drops old-version data silently, and never finishes loading if `migrate` throws. |
+| **If device storage cannot be read at all, nothing is saved** until the next launch (status `failed`). | Writing then could overwrite data that is still on disk. |
+| **Lots fetched while offline stay `data_status: "pending"`** and are fetched again with `onReconnect` / `useOnReconnect` (`src/net/reconnect.ts`). | 06-architecture: "fetch automatically when back online". Online state comes from NetInfo on Android and the browser on web. |
+| **Direct calls (NASA POWER, OSRM) use `fetchWithTimeout`** from `src/net/fetch.ts` (15 s default) and pass the query's `signal`. | A cancelled or hung request stops instead of waiting forever. |
+| **Keep stores small.** Store the processed monthly values, not the raw ~33 KB POWER response. | AsyncStorage on Android is capped at 6 MB in total by default (`AsyncStorage_db_size_in_MB`). |
+
+`useHydrationReport()` (`src/state/hydration.ts`) tells a screen whether each store loaded normally (`ready`), was restored from a backup (`recovered`) or could not be read (`failed`), so the Frontend can show a message. No UI is included.
 
 ## Why it is set up this way
 

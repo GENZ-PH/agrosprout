@@ -34,7 +34,11 @@ export const queryPersister = createAsyncStoragePersister({
   key: "agrosprout-query-cache",
 });
 
-/** Bump CACHE_SCHEMA after a breaking API change; a new app version also drops the saved cache. */
+/**
+ * Bump CACHE_SCHEMA after a breaking API change; a new app version also drops the saved cache.
+ * This cache can be deleted (version change, 7 days, unreadable), so data the app needs offline
+ * belongs in a Zustand store, not only here. See docs/12-infrastructure.md#offline-data-rules.
+ */
 const CACHE_SCHEMA = 1;
 export const QUERY_CACHE_BUSTER = `${APP_VERSION}:${CACHE_SCHEMA}`;
 export const QUERY_CACHE_MAX_AGE = 7 * DAY;

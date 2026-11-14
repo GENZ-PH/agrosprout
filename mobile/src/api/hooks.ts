@@ -10,15 +10,19 @@ import { api, unwrap, type ApiData, type ApiError } from "./client";
 type JsonResponse = { status: number; json(): Promise<unknown> };
 
 /**
- * The one way to read from the API.
- *   const health = useApiQuery(["health"], () => api.v1.health.$get());
+ * The one way to read from the API. Pass `signal` on so a cancelled query stops downloading:
+ *   const health = useApiQuery(["health"], ({ signal }) => api.v1.health.$get(undefined, { init: { signal } }));
  */
 export function useApiQuery<R extends JsonResponse>(
   key: QueryKey,
-  call: () => Promise<R>,
+  call: (ctx: { signal: AbortSignal }) => Promise<R>,
   options?: Omit<UseQueryOptions<ApiData<R>, ApiError>, "queryKey" | "queryFn">,
 ) {
-  return useQuery<ApiData<R>, ApiError>({ queryKey: key, queryFn: () => unwrap(call()), ...options });
+  return useQuery<ApiData<R>, ApiError>({
+    queryKey: key,
+    queryFn: ({ signal }) => unwrap(call({ signal })),
+    ...options,
+  });
 }
 
 /**
@@ -42,4 +46,6 @@ export const keys = {
 
 /** Example wired to /v1/health (no UI uses it yet). */
 export const useHealth = () =>
-  useApiQuery(keys.health.all, () => api.v1.health.$get(), { meta: { persist: false } });
+  useApiQuery(keys.health.all, ({ signal }) => api.v1.health.$get(undefined, { init: { signal } }), {
+    meta: { persist: false },
+  });
