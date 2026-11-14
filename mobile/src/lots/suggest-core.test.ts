@@ -8,7 +8,7 @@ import { cropFit, type FitLevel } from "../engine/cropFit";
 import { cropSeasonDays, harvestMonthOf } from "../engine/season";
 import { ILIGAN_LOT_FIXTURE } from "../engine/__fixtures__/iligan-lot.fixture";
 import type { CropLibrary, LotDetails } from "../types";
-import { goodMonthsText, lotSuggestions, safeTopCrops, topCropReason, topCrops, type CropSuggestion } from "./suggest-core";
+import { goodMonthsText, lotSuggestions, noCropFits, safeLotTop, topCropReason, topCrops, type CropSuggestion, type LotSuggestions } from "./suggest-core";
 import { fitReasonText } from "../components/recommendations-core";
 import { monthShort } from "./months-core";
 
@@ -112,19 +112,20 @@ const RANK: Record<FitLevel, number> = { good: 0, watch: 1, poor: 2, unknown: 3 
 const compare = (order: string[]) => (a: CropSuggestion, b: CropSuggestion) =>
   RANK[a.level] - RANK[b.level] || b.best_months.length - a.best_months.length || order.indexOf(a.crop_id) - order.indexOf(b.crop_id);
 
-test("top crops: 3 by default, never unknown, sorted by level then month count then library order", () => {
+test("top crops: 3 by default, never unknown or Poor fit, sorted by level then month count then library order", () => {
   for (const water of ["unknown", "rain", "full"] as const) {
     const s = lotSuggestions({ ...UNKNOWN, water }, ILIGAN_LOT_FIXTURE, CROP_LIBRARY);
     const top = topCrops(s);
     const order = CROP_LIBRARY.crops.map((c) => c.id);
     const cmp = compare(order);
     assert.ok(top.length <= 3 && top.length > 0, water);
-    assert.ok(top.every((c) => c.level !== "unknown"), water);
+    assert.ok(top.every((c) => c.level === "good" || c.level === "watch"), water);
     for (let i = 1; i < top.length; i++) assert.ok(cmp(top[i - 1], top[i]) < 0, `${water}: ${top[i - 1].crop_id} before ${top[i].crop_id}`);
-    const left = s.crops.filter((c) => c.level !== "unknown" && !top.includes(c));
+    const left = s.crops.filter((c) => (c.level === "good" || c.level === "watch") && !top.includes(c));
     if (top.length === 3) for (const c of left) assert.ok(cmp(top[2], c) < 0, `${water}: ${c.crop_id} would rank above the 3rd`);
     else assert.deepEqual(left, [], `${water}: fewer than 3 only when every rated crop is in`);
-    assert.equal(topCrops(s, 5).length, 5, `${water}: n is still a parameter`);
+    const listable = s.crops.filter((c) => c.level === "good" || c.level === "watch").length;
+    assert.equal(topCrops(s, 5).length, Math.min(5, listable), `${water}: n is still a parameter`);
   }
 });
 
@@ -182,15 +183,79 @@ test("a Watch out or Poor reason names its month when the crop has more than one
   assert.equal(topCropReason(one), fitReasonText(one.reasons[0]), "one best month: the row already says which");
 });
 
+/** The Iligan lot with every month changed, e.g. frozen or rainless. */
+const climate = (change: (m: typeof ILIGAN_LOT_FIXTURE.monthly) => Partial<typeof ILIGAN_LOT_FIXTURE.monthly>) => ({
+  ...ILIGAN_LOT_FIXTURE,
+  monthly: { ...ILIGAN_LOT_FIXTURE.monthly, ...change(ILIGAN_LOT_FIXTURE.monthly) },
+});
+const FROZEN = climate(() => ({ tmax_c: Array(12).fill(-15), tmin_c: Array(12).fill(-25) }));
+const RAINLESS = climate(() => ({ precip_mm: { p20: Array(12).fill(0), p50: Array(12).fill(0), p80: Array(12).fill(0) } }));
+
+test("Poor fit is never a top crop: a frozen lot has no top crops, and says it is too cold", () => {
+  const s = lotSuggestions(UNKNOWN, FROZEN, CROP_LIBRARY);
+  assert.ok(s.crops.some((c) => c.level === "poor"), "the frozen lot rates crops Poor, or this test proves nothing");
+  assert.deepEqual(topCrops(s), []);
+  assert.deepEqual(noCropFits(s), { why: "too cold" });
+});
+
+test("a rain-fed lot with no rain: no crop grows well, mostly too dry", () => {
+  const s = lotSuggestions({ ...UNKNOWN, water: "rain" }, RAINLESS, CROP_LIBRARY);
+  assert.deepEqual(topCrops(s), []);
+  assert.deepEqual(noCropFits(s), { why: "too dry" });
+});
+
+const sug = (level: CropSuggestion["level"], code?: string): CropSuggestion => ({
+  crop_id: `${level}-${code ?? "none"}`,
+  level,
+  good_months: [],
+  best_months: level === "unknown" ? [] : [1],
+  reasons: code ? [{ code, level: level === "good" ? "watch" : level, months: [1], value: null, limit: null } as CropSuggestion["reasons"][number]] : [],
+});
+const sugs = (...crops: CropSuggestion[]): LotSuggestions => ({ crops });
+
+test("noCropFits: the trouble is named only when more than half of the rated crops share it", () => {
+  assert.deepEqual(noCropFits(sugs(sug("poor", "water"), sug("poor", "dry-year"), sug("poor", "too-cold"))), { why: "too dry" });
+  assert.deepEqual(noCropFits(sugs(sug("poor", "too-hot"), sug("poor", "warm"), sug("unknown"))), { why: "too hot" });
+  assert.deepEqual(noCropFits(sugs(sug("poor", "waterlogging"))), { why: "too wet" });
+  assert.deepEqual(noCropFits(sugs(sug("poor", "water"), sug("poor", "too-cold"))), { why: null }, "half is not most");
+  assert.deepEqual(noCropFits(sugs(sug("poor", "missing-climate"))), { why: null });
+});
+
+/** A crop rated on temperature only: its water use could not be checked (e.g. no Kc in crops.json). */
+const partial = (level: "watch" | "poor", code: string): CropSuggestion => {
+  const c = sug(level, code);
+  return { ...c, crop_id: `partial-${code}`, reasons: [...c.reasons, { code: "no-crop-data", level: "unknown", months: [], value: null, limit: null }] };
+};
+
+test("a crop rated without its water check is never a top crop, and doesn't count for 'none grow well'", () => {
+  // Sesbania on the Sahara probe: Watch out for cool January, but its water use is not in crops.json.
+  const s = sugs(partial("watch", "cool"), sug("poor", "water"), sug("poor", "water"));
+  assert.deepEqual(topCrops(s), []);
+  assert.deepEqual(noCropFits(s), { why: "too dry" });
+  assert.deepEqual(topCrops(sugs(sug("watch", "cool"), partial("watch", "warm"))).map((c) => c.crop_id), ["watch-cool"]);
+  assert.equal(noCropFits(sugs(partial("poor", "too-cold"))), null, "only partly rated crops: nothing to say");
+});
+
+test("noCropFits is null when any crop fits, or when no crop can be rated", () => {
+  assert.equal(noCropFits(lotSuggestions(UNKNOWN, ILIGAN_LOT_FIXTURE, CROP_LIBRARY)), null);
+  assert.equal(noCropFits(sugs(sug("watch", "cool"), sug("poor", "too-cold"))), null);
+  assert.equal(noCropFits(sugs(sug("unknown"), sug("unknown"))), null, "no crop data is not 'nothing grows'");
+  assert.equal(noCropFits(sugs()), null);
+});
+
 test("bad saved data gives no top crops instead of a crash", () => {
   const broken = { monthly: { ...ILIGAN_LOT_FIXTURE.monthly, tmax_c: undefined } } as unknown as typeof ILIGAN_LOT_FIXTURE;
   assert.throws(() => lotSuggestions(UNKNOWN, broken, CROP_LIBRARY), "the engine throws on it, or this test proves nothing");
   const warn = console.warn;
   console.warn = () => {};
   try {
-    assert.deepEqual(safeTopCrops(UNKNOWN, broken, CROP_LIBRARY), []);
+    assert.deepEqual(safeLotTop(UNKNOWN, broken, CROP_LIBRARY), { top: [], noFit: null });
   } finally {
     console.warn = warn;
   }
-  assert.deepEqual(safeTopCrops(UNKNOWN, ILIGAN_LOT_FIXTURE, CROP_LIBRARY), topCrops(lotSuggestions(UNKNOWN, ILIGAN_LOT_FIXTURE, CROP_LIBRARY)));
+  assert.deepEqual(safeLotTop(UNKNOWN, ILIGAN_LOT_FIXTURE, CROP_LIBRARY), {
+    top: topCrops(lotSuggestions(UNKNOWN, ILIGAN_LOT_FIXTURE, CROP_LIBRARY)),
+    noFit: null,
+  });
+  assert.deepEqual(safeLotTop(UNKNOWN, FROZEN, CROP_LIBRARY), { top: [], noFit: { why: "too cold" } });
 });

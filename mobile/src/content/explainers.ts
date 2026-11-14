@@ -105,12 +105,12 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   },
   "top-crops": {
     id: "top-crops",
-    title: "Top 3 for this lot",
+    title: "Top crops for this lot",
     sources: ["power", "fao56", "ecocrop", "crop-library", "farmer"],
-    what: "The 3 crops from our crop list that suit this lot best, and the planting months when each one does best. Tap one to choose it as the lot's crop, or search for any other crop you grow.",
+    what: "Up to 3 crops from our crop list that suit this lot best, and the planting months when each one does best. Tap one to choose it as the lot's crop, or search for any other crop you grow.",
     source:
       "Rain, temperature and soil wetness from NASA POWER at this lot ({period}). Crop water use from FAO-56 (Allen and others, 1998) and temperature ranges from the FAO Ecocrop database, each cited in the crop library (crops.json). It is the same check as \"Your crops here\", and your answer about the lot's water is used. Crop names in the search: FAO Ecocrop © FAO, via OpenCLIM/ecocrop.",
-    read: "Each crop is tried as one season planted in each month of the year. Crops that are a Good fit in some month come first, then Watch out, then Poor fit. Among crops with the same result, the one with more planting months at that result comes first. \"If planted in\" gives those months. A Watch out or Poor fit crop also says its main problem.",
+    read: "Each crop is tried as one season planted in each month of the year. Crops that are a Good fit in some month come first, then Watch out. Poor fit crops, and crops whose water use can't be checked, are not listed: when every crop we could check is a Poor fit in every month, it says that none grow well here. Among crops with the same result, the one with more planting months at that result comes first. \"If planted in\" gives those months. A Watch out crop also says its main problem.",
     limits: [
       "The order among equally good crops is a team assumption: a crop with more good planting months ranks higher.",
       "Each crop is checked as one season on its own.",
@@ -366,6 +366,14 @@ export const DATA_SOURCES: readonly DataSource[] = [
     url: "https://github.com/OpenCLIM/ecocrop",
   },
   {
+    name: "Natural Earth 1:10m land and lakes (release v5.1.2)",
+    used_for:
+      "Warns when a lot looks like it is on the sea or a lake, which NASA's coarse climate cells can read as land. Made with Natural Earth (public domain).",
+    period: "Release v5.1.2, 2022",
+    resolution: "Map scale 1:10,000,000; Philippines only",
+    url: "https://www.naturalearthdata.com/",
+  },
+  {
     name: "Crop library (crops.json)",
     used_for: "Season length, planting calendars, waterlogging and drought tolerance and other crop traits. Each value has its own citation in the file.",
     period: "See each citation",
@@ -430,6 +438,7 @@ export const LIMITATIONS: readonly string[] = [
   "Everything is monthly, so short dry spells inside a month are smoothed out.",
   "Crop values are general and not specific to a variety.",
   "Market and labor information is rough and needs local prices.",
+  "The \"looks like water\" warning uses a coarse land map, so a farm right on the shore can be flagged, and Lake Lanao is not in it.",
   "The soil-health score is a relative indicator from the model, not a lab test.",
   "Temperatures for lots you draw are estimated from the monthly mean and daily range, and if your field's elevation is not known evaporation is calculated at sea level.",
   "Crop water use is not adjusted for a humid, low-wind climate, so it may be slightly too high in such places.",
