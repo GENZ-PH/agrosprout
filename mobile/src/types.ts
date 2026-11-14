@@ -173,9 +173,16 @@ export interface LotMonthly {
   precip_mm: PrecipPercentiles;
   /** Reference evapotranspiration, FAO-56 (src/data/et0.ts), mm per month. */
   et0_mm: MonthlySeries;
-  /** Mean daily maximum temperature (POWER T2M_MAX), °C. */
+  /**
+   * Mean daily maximum temperature, °C. Demo farms: mean of daily POWER T2M_MAX.
+   * Live lots: POWER T2M + T2M_RANGE/2, because the monthly T2M_MAX is the
+   * hottest day of the month, not the mean daily maximum (docs/03).
+   */
   tmax_c: MonthlySeries;
-  /** Mean daily minimum temperature (POWER T2M_MIN), °C. */
+  /**
+   * Mean daily minimum temperature, °C. Demo farms: mean of daily POWER T2M_MIN.
+   * Live lots: POWER T2M - T2M_RANGE/2 (monthly T2M_MIN is the coldest day).
+   */
   tmin_c: MonthlySeries;
   /** Root-zone soil wetness (POWER GWETROOT), 0-1. */
   rootzone_wetness: MonthlySeries;
