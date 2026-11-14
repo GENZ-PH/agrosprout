@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { COMPONENT_LABELS } from "../engine/explain";
 import { DATA_SOURCES, DISCLAIMER, EXPLAINERS, GLOSSARY, LIMITATIONS, fill } from "./explainers";
 
 const ALL_TEXT = (): string =>
@@ -31,4 +32,8 @@ test("the months card never says already good for a blocked month", () => {
   const read = EXPLAINERS["months-compare"].read;
   assert.match(read, /clash/);
   assert.match(read, /even on a lot with nothing else on it/);
+});
+
+test("the recommendations text uses the same score names the app shows", () => {
+  for (const label of Object.values(COMPONENT_LABELS)) assert.ok(EXPLAINERS.recommendations.read.includes(label), label);
 });
