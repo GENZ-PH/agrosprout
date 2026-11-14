@@ -195,13 +195,25 @@ export function seasonCompare(w: SeasonWindow, ctx: CompareContext): SeasonCompa
   }
 
   if (w.status === "already-good") {
+    // "Already good" only when the farmer's months carry no dry or heat risk. Otherwise nothing
+    // beats them, but they are not risk-free, so the card says what to plan for (#150 review).
+    const risky = w.yours.stress_months.length > 0 || w.yours.heat_months.length > 0;
+    const risks = [
+      w.yours.stress_months.length > 0 ? `dry stress in ${months(w.yours.stress_months)}` : null,
+      w.yours.heat_months.length > 0 ? `heat risk in ${months(w.yours.heat_months)}` : null,
+    ]
+      .filter(Boolean)
+      .join(" and ");
+    const margin = `No other month clearly beats yours: none adds ${WINDOW_MARGIN_POINTS} fit points or more, or has fewer dry-stress months and a higher score, even with nothing else on the lot. (The ${WINDOW_MARGIN_POINTS}-point margin is assumed.)`;
     return {
       status: w.status,
-      tone: "good",
-      headline: { code: "window.already-good", text: "Your timing is already good ✓" },
+      tone: risky ? "neutral" : "good",
+      headline: risky
+        ? { code: "window.already-good.risky", text: "No better month found, but plan for the risks" }
+        : { code: "window.already-good", text: "Your timing is already good ✓" },
       detail: {
         code: "window.already-good.margin",
-        text: `No other month clearly beats yours: none adds ${WINDOW_MARGIN_POINTS} fit points or more, or has fewer dry-stress months and a higher score, even with nothing else on the lot. (The ${WINDOW_MARGIN_POINTS}-point margin is assumed.)`,
+        text: risky ? `${margin} Your months still have ${risks}: plan for them with your agricultural technician.` : margin,
       },
       otherTitle: null,
       rows: rows(w.yours, null, null),
