@@ -6,6 +6,7 @@ import { Button } from "../src/components/Button";
 import { CropFitCard } from "../src/components/CropFitCard";
 import { Disclaimer } from "../src/components/Disclaimer";
 import { Header } from "../src/components/Header";
+import { HarvestCard } from "../src/components/HarvestCard";
 import { LotTabs } from "../src/components/LotTabs";
 import { Notice } from "../src/components/Notice";
 import { PrioritiesCard } from "../src/components/PrioritiesCard";
@@ -124,6 +125,9 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
           columns={wide ? 2 : 1}
         />
       );
+      const harvestCard = (
+        <HarvestCard lot={lot} destinations={farm.destinations} harvest={analysis.harvest} cropName={cropName} period={period} />
+      );
       return (
         <>
           {analysis.stage === 1 ? (
@@ -147,6 +151,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
               </View>
               {priorities}
               {recommendations}
+              {harvestCard}
               <MonthsPrompt lot={lot} stage={analysis.stage} />
             </>
           ) : (
@@ -154,6 +159,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
               {fit}
               {priorities}
               {recommendations}
+              {harvestCard}
               {soil}
               <MonthsPrompt lot={lot} stage={analysis.stage} />
             </>
