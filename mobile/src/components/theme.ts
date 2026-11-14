@@ -11,9 +11,17 @@ export const colors = {
   pressed: "#F0EFE9",
   ink: "#1B1F1A",
   muted: "#4F554D",
-  green: "#1E6B3B",
-  greenPressed: "#14502B",
-  greenTint: "#E4EFE6",
+  // AgroSprout brand (#177): dark green #3b5a2e is the primary (7.8:1 on white, 7.2:1 on bg).
+  green: "#3B5A2E",
+  greenPressed: "#2C4422",
+  greenTint: "#E8EEDD",
+  /** Brand olive #4e6c12 (6.0:1 on white): secondary accents and text. */
+  olive: "#4E6C12",
+  /** Brand leaf green #79973d (3.3:1 on white): bars, icons and fills only, never text. */
+  leaf: "#79973D",
+  /** Brand gold #e4a427 (2.2:1 on white): fills behind dark text only (ink on gold 7.7:1). */
+  gold: "#E4A427",
+  goldTint: "#FBEFD5",
   amber: "#A04A06",
   amberTint: "#FCEFE0",
   blue: "#1D5FA8",

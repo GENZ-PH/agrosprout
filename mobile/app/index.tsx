@@ -1,9 +1,8 @@
 import { Redirect, router } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "../src/components/Button";
 import { Disclaimer } from "../src/components/Disclaimer";
-import { Icon } from "../src/components/Icon";
 import { Notice } from "../src/components/Notice";
 import { Screen } from "../src/components/Screen";
 import { colors, space, text } from "../src/components/theme";
@@ -44,8 +43,14 @@ export default function WelcomeScreen() {
       }
     >
       <View style={styles.brand}>
-        <Icon name="sprout" size={34} color={colors.green} strokeWidth={1.8} />
-        <Text style={styles.brandName}>AgriResilience</Text>
+        {/* Team logo (#177), cropped from the brand sheet; aspect 1285 x 315. */}
+        <Image
+          source={require("../assets/images/agrosprout-logo.png")}
+          style={styles.logo}
+          resizeMode="contain"
+          accessibilityRole="image"
+          accessibilityLabel="AgroSprout"
+        />
       </View>
 
       <View style={styles.middle}>
@@ -67,7 +72,7 @@ export default function WelcomeScreen() {
 
 const styles = StyleSheet.create({
   brand: { flexDirection: "row", alignItems: "center", gap: 10, paddingTop: space.xl },
-  brandName: { ...text.title, fontSize: 24 },
+  logo: { width: 220, height: 220 * (315 / 1285) },
   middle: { flexGrow: 1, justifyContent: "center", gap: 20, paddingVertical: space.xl },
   lead: { fontSize: 18, lineHeight: 27, color: colors.muted },
 });
