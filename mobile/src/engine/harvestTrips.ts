@@ -20,7 +20,7 @@ export interface HarvestTrips {
 
 /**
  * Trips needed to bring one harvest to a destination (docs/07 §3c).
- * `yield_t_per_ha` comes from crops.json (cite its source), `area_ha` from the drawn lot.
+ * `yield_t_per_ha` comes from crops.json (cite its source), `area_ha` from the drawn lot (flat map area, D31).
  */
 export function tripsPerHarvest(args: {
   crop: Pick<Crop, "yield_t_per_ha">;
