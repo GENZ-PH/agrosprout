@@ -10,6 +10,20 @@ export { cropFit } from "./cropFit";
 export type { CropFit, FitLevel, FitReason, FitReasonCode, SeasonFit } from "./cropFit";
 /** A/B/C/D rotation options with component scores (07 §3-4, #26). */
 export { rotations, tooSimilar } from "./rotations";
+export { plantingWindow } from "./plantingWindow";
+export { applyScenario } from "./scenario";
+export type { Scenario as ClimateScenario, ScenarioResult } from "./scenario";
+export { harvestMonthMinutes, tripHours, tripsPerHarvest, wetRoad } from "./harvestTrips";
+export type { HarvestTrips, TripsGap, WetRoad } from "./harvestTrips";
+export type {
+  PlantingWindowInput,
+  PlantingWindowResult,
+  SeasonWindow,
+  WindowDriver,
+  WindowGap,
+  WindowMetrics,
+  WindowUnknown,
+} from "./plantingWindow";
 export type {
   OptionKey,
   OptionKind,
@@ -31,20 +45,6 @@ export type {
   RotationSlot,
   SlotOrigin,
 } from "./scores";
-
-class NotImplementedYet extends Error {
-  constructor(what: string, issue: string) {
-    super(`${what} is not implemented yet (${issue})`);
-    this.name = "NotImplementedYet";
-  }
-}
-
-/** "Your months vs better months" planting-window scan (07 §3b). */
-export function plantingWindow(..._args: unknown[]): never {
-  throw new NotImplementedYet("plantingWindow", "#33");
-}
-
-/** Template-driven explanations and confidence (07 §5). */
 export { explain, formatMinutes, formatMonths, COMPONENT_LABELS, TECHNICIAN_LINE } from "./explain";
 export type {
   Confidence,

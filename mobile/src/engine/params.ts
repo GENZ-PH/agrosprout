@@ -261,6 +261,30 @@ export const PRIORITY_COMPONENTS = {
   labor: ["L", "M"],
 } as const;
 
+/**
+ * Planting-window scan (docs/07 §3b, #33).
+ *
+ * Fit of one planting month = weighted mean of the water fit (W), climate
+ * risk (H) and, on sloping lots, erosion protection (E) of the lot's rotation
+ * with that month, each 0-100. Equal weights. assumption: validate locally.
+ */
+export const WINDOW_FIT_WEIGHTS = { W: 1, H: 1, E: 1 } as const;
+
+/**
+ * "Better months" are shown only when the best month beats the farmer's by
+ * at least this many Fit points, or has at least one fewer typical-year
+ * stress month while also scoring higher. The 10 points come from the team
+ * spec (docs/07 §3b, "e.g. 10 points"). assumption: validate locally.
+ */
+export const WINDOW_MARGIN_POINTS = 10;
+
+/**
+ * Among months that clear the margin, pick the smallest shift that still
+ * captures at least this share of the best month's gain, so the advice stays
+ * easy to act on (docs/07 §3b). assumption: validate locally.
+ */
+export const WINDOW_GAIN_CAPTURE_SHARE = 0.8;
+
 // ---------------------------------------------------------------------------
 // Market access and travel time (docs/07-rotation-engine.md §3c, #27)
 // Every value in this section is a DEFAULT ASSUMPTION (CLAUDE.md rule 9):
@@ -369,3 +393,53 @@ export const EXPLAIN_MIN_DELTA_POINTS = 1;
  * assumption: validate locally.
  */
 export const CONFIDENCE_LOW_WEAK_INPUTS = 2;
+
+// ---------------------------------------------------------------------------
+// "What if" climate scenario (#47)
+// ---------------------------------------------------------------------------
+
+/**
+ * Slider ranges for the what-if scenario: rainfall change in percent and
+ * temperature rise in degrees C. Source: team spec (issue #47). The UI labels
+ * the result a "what if", not a forecast.
+ */
+export const SCENARIO_RANGE = {
+  rain_pct: { min: -30, max: 20 },
+  temp_c: { min: 0, max: 2 },
+} as const;
+
+// ---------------------------------------------------------------------------
+// Harvest trips and wet-season roads (docs/07 §3c, #44)
+// Every value here is a DEFAULT ASSUMPTION (CLAUDE.md rule 9) with no measured
+// source. The UI must label them, and the farmer's own load per trip always
+// overrides the default. v0 proposals; the Engine lead confirms or replaces
+// them (D27).
+// ---------------------------------------------------------------------------
+
+/**
+ * Harvest carried per trip by mode, kg. Rough load for one person or one
+ * vehicle. assumption: validate locally (no source; ask the agricultural
+ * technician and farmers at the 20:00 review).
+ */
+export const LOAD_KG_PER_TRIP: Readonly<Record<TransportMode, number>> = {
+  walk: 30,
+  carabao: 300,
+  bicycle: 60,
+  motorcycle: 100,
+  tricycle: 300,
+  jeepney: 200,
+  truck: 3000,
+};
+
+/**
+ * A month whose typical-year (P50) rain is above this many mm counts as a
+ * heavy-rain month for roads and for drying the harvest. assumption:
+ * validate locally (no source; compare with the lot's own wettest months).
+ */
+export const HEAVY_RAIN_MONTH_MM = 300;
+
+/**
+ * Travel time is multiplied by this in a heavy-rain month (slow, muddy
+ * roads). assumption: validate locally (no source).
+ */
+export const WET_ROAD_FACTOR = 1.5;
