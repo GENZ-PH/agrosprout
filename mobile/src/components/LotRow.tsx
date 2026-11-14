@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
-import { areaLabel, type DraftLot } from "../mock/draft-lots";
+import { areaLabel, type LotRowData } from "../lots/lot-editor";
 import { Button } from "./Button";
 import { Icon, type IconName } from "./Icon";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
 type Props = {
-  lot: DraftLot;
+  lot: LotRowData;
   /** Live area while a corner is being dragged, shown instead of the saved one. */
   editingAreaHa?: number;
   onPlot: () => void;
@@ -18,6 +18,7 @@ type Props = {
 /** One lot under the S1 map: plot or redraw, rename in place, delete with a confirm step. */
 export function LotRow({ lot, editingAreaHa, onPlot, onRename, onDelete }: Props) {
   const [mode, setMode] = useState<"view" | "rename" | "delete">("view");
+  const plotted = lot.area_ha !== null;
   const [draftName, setDraftName] = useState(lot.name);
 
   if (mode === "rename") {
@@ -79,15 +80,15 @@ export function LotRow({ lot, editingAreaHa, onPlot, onRename, onDelete }: Props
       <Pressable
         onPress={onPlot}
         accessibilityRole="button"
-        accessibilityLabel={`${lot.method ? "Redraw" : "Draw"} ${lot.name}`}
+        accessibilityLabel={`${plotted ? "Redraw" : "Draw"} ${lot.name}`}
         style={({ pressed }) => [
           styles.textButton,
-          { backgroundColor: lot.method ? colors.pressed : colors.greenTint },
+          { backgroundColor: plotted ? colors.pressed : colors.greenTint },
           pressed && styles.pressed,
         ]}
       >
-        <Text style={[styles.textButtonLabel, { color: lot.method ? colors.ink : colors.green }]}>
-          {lot.method ? "Redraw" : "Draw"}
+        <Text style={[styles.textButtonLabel, { color: plotted ? colors.ink : colors.green }]}>
+          {plotted ? "Redraw" : "Draw"}
         </Text>
       </Pressable>
       <IconButton

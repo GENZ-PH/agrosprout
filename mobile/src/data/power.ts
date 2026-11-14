@@ -307,7 +307,8 @@ export interface EnsureResult {
   error?: string;
 }
 
-async function readStored(store: LotDataStore, key: string): Promise<LotData | null> {
+/** Live climate data saved under `key`, or `null` when there is none or it is unreadable. */
+export async function readStored(store: Pick<LotDataStore, 'get'>, key: string): Promise<LotData | null> {
   try {
     const raw = await store.get(key);
     if (!raw) return null;
