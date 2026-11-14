@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 
 import type { CropFit, FitLevel } from "../engine";
+import { FIT_COLORS } from "./farm-map-core";
 import { Bullets, InfoCard } from "./InfoCard";
 import { FIT_LABELS, fitReasonText, fitSeasonsText, GOOD_FIT_TEXT, shortCropName } from "./recommendations-core";
 import { colors, radius, space, text } from "./theme";
@@ -15,12 +16,15 @@ type Props = {
   period: string;
 };
 
-/** Badge colors: tint + dark text, each pair contrast-checked in theme.ts. The word is the cue. */
+/**
+ * Badge colors: tint + dark text, each pair contrast-checked in theme.ts. The word is the cue.
+ * The text color is the level's FIT_COLORS, which the dashboard's farm map (#124) fills lots with.
+ */
 const BADGE: Record<FitLevel, { bg: string; fg: string; border: string }> = {
-  good: { bg: colors.greenTint, fg: colors.green, border: colors.greenTint },
-  watch: { bg: colors.amberTint, fg: colors.amber, border: colors.amberTint },
-  poor: { bg: colors.surface, fg: colors.danger, border: colors.danger },
-  unknown: { bg: colors.disabledBg, fg: colors.muted, border: colors.disabledBg },
+  good: { bg: colors.greenTint, fg: FIT_COLORS.good, border: colors.greenTint },
+  watch: { bg: colors.amberTint, fg: FIT_COLORS.watch, border: colors.amberTint },
+  poor: { bg: colors.surface, fg: FIT_COLORS.poor, border: colors.danger },
+  unknown: { bg: colors.disabledBg, fg: FIT_COLORS.unknown, border: colors.disabledBg },
 };
 
 export function CropFitCard({ fits, cropName, period }: Props) {

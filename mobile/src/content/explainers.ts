@@ -20,7 +20,8 @@ export type ExplainerId =
   | "priorities"
   | "months-compare"
   | "season-calendar"
-  | "what-if";
+  | "what-if"
+  | "farm-map";
 
 export interface Explainer {
   id: ExplainerId;
@@ -76,6 +77,19 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
       "Crop values are general, not specific to a variety.",
       "The cut-offs between Good fit, Watch out and Poor fit are team assumptions that still need a local check.",
       "Irrigation counts only as far as you told us: with \"some\" irrigation we assume it covers half of the rain shortage (an assumption), with full irrigation all of it, and if the water source is unknown we assume rain only.",
+    ],
+  },
+  "farm-map": {
+    id: "farm-map",
+    title: "Your lots on the map",
+    what: "Each lot you drew, colored by how well it suits the crops you grow there. A lot shows the result of its weakest crop, the same Good fit, Watch out or Poor fit as in \"Your crops here\". The label on each lot gives its name, its area and the result in words.",
+    source:
+      "The same check as \"Your crops here\": crop water use from FAO-56 (Allen and others, 1998), temperature ranges from the FAO Ecocrop database, and rain and temperature from NASA POWER at the middle of each lot. Years used: {period}. The area is worked out from the outline you drew.",
+    read: "Green is a good fit, orange means watch out, red is a poor fit, and dark gray means there is not enough data to judge. Light gray lots have no result yet: pick their crops, or wait for the NASA data to download. Tap a lot to see its results below.",
+    limits: [
+      "The numbers describe a NASA grid cell, roughly 50 km across, not your exact field, so lots close together will often share a color.",
+      "The cut-offs between Good fit, Watch out and Poor fit are team assumptions that still need a local check.",
+      "Without signal the photo under your lots may not load; the lots and their colors still show.",
     ],
   },
   "harvest-out": {
