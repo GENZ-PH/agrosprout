@@ -79,7 +79,9 @@ const monthList = (ms: readonly number[]) => (ms.length === 0 ? "none" : ms.map(
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const pts = (x: number) => `${x >= 0 ? "+" : "-"}${Math.round(Math.abs(x))}`;
 const line = (code: string, text: string): ExplainLine => ({ code, text });
-const names = (ids: readonly string[], byId: Map<string, Crop>) => ids.map((id) => byId.get(id)?.name ?? id);
+/** Crop name without the clarifying part in brackets, e.g. "Lowland rice (irrigated or rainfed paddy)" -> "Lowland rice". */
+const shortName = (c: Pick<Crop, "name">) => c.name.replace(/\s*\(.*\)\s*$/, "").trim() || c.name;
+const names = (ids: readonly string[], byId: Map<string, Crop>) => ids.map((id) => { const c = byId.get(id); return c ? shortName(c) : id; });
 const uniq = <T,>(xs: T[]) => [...new Set(xs)];
 /** "a", "a and b", "a, b and c". */
 const listJoin = (xs: readonly string[]) => (xs.length <= 1 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`);
@@ -144,16 +146,16 @@ function checkLocally(
   const crops = uniq(opt.slots.map((s) => s.crop_id)).map((id) => byId.get(id)).filter((c): c is Crop => !!c);
   for (const c of crops) {
     if (c.waterlogging_tolerance === "low") {
-      out.push(line(`check.waterlogging.${c.id}`, `${c.name} does not tolerate waterlogging. Does the field drain well after heavy rain or after rice?`));
+      out.push(line(`check.waterlogging.${c.id}`, `${shortName(c)} does not tolerate waterlogging. Does the field drain well after heavy rain or after rice?`));
     }
     if (c.drought_tolerance === "low") {
-      out.push(line(`check.drought.${c.id}`, `${c.name} is sensitive to dry spells. Is there a water source for dry weeks?`));
+      out.push(line(`check.drought.${c.id}`, `${shortName(c)} is sensitive to dry spells. Is there a water source for dry weeks?`));
     }
     if (c.perishability === "high") {
-      out.push(line(`check.perishable.${c.id}`, `${c.name} spoils within days. Is there a close buyer?`));
+      out.push(line(`check.perishable.${c.id}`, `${shortName(c)} spoils within days. Is there a close buyer?`));
     }
     if (opt.new_crop_ids.includes(c.id)) {
-      out.push(line(`check.new-crop.${c.id}`, `${c.name} is new on your lot. Is seed available, and do you know the local pests and where to sell it?`));
+      out.push(line(`check.new-crop.${c.id}`, `${shortName(c)} is new on your lot. Is seed available, and do you know the local pests and where to sell it?`));
     }
   }
   if (sloping && opt.metrics.bare_months.length > 0) {
@@ -216,12 +218,14 @@ function unknownsFor(opt: RotationOption, a: RotationOption, input: ExplainInput
   const missingByCrop = new Map<string, string[]>();
   for (const g of result.gaps) {
     if (!opt.slots.some((s) => s.crop_id === g.crop_id)) continue;
-    const crop = byId.get(g.crop_id)?.name ?? g.crop_id;
+    const gc = byId.get(g.crop_id);
+    const crop = gc ? shortName(gc) : g.crop_id;
     if (g.code === "season-from-fao-stages") out.push(line(`unknown.season.${g.crop_id}`, `${crop}: season length comes from FAO stage lengths, not a local value.`));
     if (g.code === "crop-field-missing") missingByCrop.set(g.crop_id, [...(missingByCrop.get(g.crop_id) ?? []), g.field.replace("_", " ")]);
   }
   for (const [id, fields] of missingByCrop) {
-    const crop = byId.get(id)?.name ?? id;
+    const mc = byId.get(id);
+    const crop = mc ? shortName(mc) : id;
     out.push(line(`unknown.crop-fields.${id}`, `${crop}: the crop library has no value for ${fields.join(", ")}.`));
   }
   return out;
@@ -390,9 +394,20 @@ export function explain(input: ExplainInput): Explanation[] {
       : better.length === 0
         ? [line("benefit.none", "No score improves by a clear margin compared with your current crops.")]
         : better.map(({ k, d }) =>
-            line(`benefit.${k}`, `${COMPONENT_NAME[k]} ${pts(d)} points${k === "S" ? ` (bare months ${a.metrics.bare_months.length} to ${opt.metrics.bare_months.length})` : ""}`),
+            line(
+              `benefit.${k}`,
+              `${COMPONENT_NAME[k]} ${pts(d)} points${
+                k === "S" && opt.metrics.bare_months.length < a.metrics.bare_months.length
+                  ? ` (bare months ${a.metrics.bare_months.length} to ${opt.metrics.bare_months.length})`
+                  : ""
+              }`,
+            ),
           );
     const tradeoffs: ExplainLine[] = worse.map(({ k, d }) => line(`tradeoff.${k}`, `${COMPONENT_NAME[k]} ${pts(d)} points`));
+    // More bare months is a cost even when the soil-building score still rises.
+    if (!isA && opt.metrics.bare_months.length > a.metrics.bare_months.length) {
+      tradeoffs.push(line("tradeoff.bare-months", `Bare-soil months go from ${a.metrics.bare_months.length} to ${opt.metrics.bare_months.length}.`));
+    }
 
     return {
       option_key: opt.key,

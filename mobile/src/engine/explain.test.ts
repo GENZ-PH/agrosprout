@@ -244,3 +244,26 @@ test("deterministic and does not change its input", () => {
   assert.deepEqual(explain(input), explain(input));
   assert.equal(JSON.stringify(result), before);
 });
+
+test("sentences use the short crop name, not the bracketed library name", () => {
+  const { ex } = run(known, crops("lowland-rice", "mungbean"));
+  const all = ex.flatMap((e) => [e.why, e.unknowns, e.check_locally, e.evidence].flat().map((l) => l.text)).join("\n");
+  assert.ok(all.includes("Lowland rice is sensitive to dry spells"), "short name is used in the dry-spell question");
+  assert.doesNotMatch(all.replace(/\([^)]*\d[^)]*\)/g, ""), /Lowland rice \(irrigated/);
+});
+
+test("more bare months is listed as a trade-off and never inside a benefit line", () => {
+  const { result, ex } = run(known, [{ crop_id: "lowland-rice", seasons: [{ plant_month: 6, harvest_month: 10 }, { plant_month: 11, harvest_month: 3 }] }]);
+  const a = result.options[0];
+  let checked = 0;
+  for (const e of ex.slice(1)) {
+    const opt = result.options.find((o) => o.key === e.option_key)!;
+    const more = opt.metrics.bare_months.length > a.metrics.bare_months.length;
+    const benefitS = e.benefits.find((b) => b.code === "benefit.S");
+    if (benefitS && more) assert.doesNotMatch(benefitS.text, /bare months/, "a worsening must not sit in a benefit line");
+    if (benefitS && !more && opt.metrics.bare_months.length < a.metrics.bare_months.length) assert.match(benefitS.text, /bare months \d+ to \d+/);
+    assert.equal(e.tradeoffs.some((t) => t.code === "tradeoff.bare-months"), more);
+    if (more) checked++;
+  }
+  assert.ok(checked > 0, "the fixture lot has an option with more bare months");
+});
