@@ -1,13 +1,53 @@
-# Third-party services and data
+# Third-party data, services, libraries, and assets
 
-Free public services the app calls from the device. Light use only. None needs an account or a key.
+Everything this project uses that the team didn't make, with its license or terms. Versions are the ones installed on 2026-11-14 (`mobile/package.json`, `api/package.json`). "Not checked" means nobody on the team has read the terms yet; fix those before submitting (#52).
 
-## NASA POWER (climate per lot)
+Contents: [NASA data](#nasa-data) · [Other data](#other-data) · [Methods and references](#methods-and-references) · [Online services the app calls](#online-services-the-app-calls) · [App libraries](#app-libraries) · [Map libraries](#bundled-map-libraries-mobilemap-src-built-into-one-offline-html-file) · [Build and test tools](#build-and-test-tools) · [API Worker](#api-worker-api) · [Pipeline](#pipeline-pipeline) · [Images, icons, and fonts](#images-icons-and-fonts) · [SI tools](#si-tools)
+
+## NASA data
+
+| Data | How we get it | What ships | Terms |
+|---|---|---|---|
+| **NASA POWER**, monthly point API (Agroclimatology community), 2001–2025 | The app calls it once per lot, centroid rounded to 0.1° (`mobile/src/data/power.ts`) | Nothing bundled; saved on the phone per lot | https://power.larc.nasa.gov/docs/services/api/ (not checked for a citation line) |
+| **NASA POWER**, daily point API, 2001–2025 | The pipeline, for the demo farm (`pipeline/fetch_power.py`) | `mobile/assets/data/demo/lanao-norte-demo-1.json` | Same as above |
+| **NASA SRTM** Global 1 arc-second v3 (SRTMGL1), elevation and slope | The pipeline, through Open Topo Data (see below) | Elevation and slope in the demo farm file | Openly shared, cite: NASA JPL. (2013). NASA Shuttle Radar Topography Mission Global 1 arc second [Data set]. NASA LP DAAC. https://doi.org/10.5067/MEASURES/SRTM/SRTMGL1.003 (read 2026-11-14 at https://www.earthdata.nasa.gov/data/catalog/lpcloud-srtmgl1-003) |
+
+Not used yet (add a row only if it ships): SMAP and MODIS through AppEEARS (#5), ESA Sentinel-2 (#13).
+
+### SRTM through Open Topo Data (pipeline only)
+
+- `https://api.opentopodata.org/v1/srtm30m`, code in `pipeline/fetch_srtm.py`. The app never calls it: only the resulting numbers ship.
+- The public API is free, limited to 100 locations per request, 1 call per second and 1000 calls per day (https://www.opentopodata.org/). It publishes no terms of use for the public instance. We make one request per demo point, wait over a second between requests and cache the answer, so a re-run makes no call. Only the team's demo coordinates are sent, never a farmer's data (rule 8). Software: MIT (https://github.com/ajnisbet/opentopodata).
+
+## Other data
+
+Fetched by the pipeline and bundled with the app. The app doesn't show either yet (the explainer text in `mobile/src/content/explainers.ts` already names both); drop them from this list and from the submission if no screen uses them by the freeze.
+
+| Data | Code | What ships | Terms |
+|---|---|---|---|
+| **PSA OpenSTAT**, palay and corn production and area harvested by province (tables 0012E4EVCP0 and 0022E4EAHC0), https://openstat.psa.gov.ph/ | `pipeline/fetch_psa.py` | `mobile/assets/data/psa/yields.json` | Not checked |
+| **NOAA Climate Prediction Center, Oceanic Niño Index (ONI)**, https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt | `pipeline/fetch_oni.py` | `mobile/assets/data/context.json` | Not checked |
+
+## Methods and references
+
+Cited in the code where they're used (`mobile/src/engine/params.ts`, `mobile/src/data/et0.ts`, `pipeline/et0.py`) and listed for the farmer in the Data & limits text (`mobile/src/content/explainers.ts`).
+
+- **FAO-56:** Allen, R.G., Pereira, L.S., Raes, D., Smith, M. (1998). *Crop evapotranspiration: guidelines for computing crop water requirements.* FAO Irrigation and Drainage Paper 56. https://www.fao.org/4/x0490e/x0490e00.htm. Penman-Monteith ET₀, crop coefficients (Table 12), stage lengths (Table 11), rooting depth and depletion fraction (Table 22).
+- **FAO Training Manual No. 3:** Brouwer, C., Heibloem, M. (1986). *Irrigation Water Management Training Manual No. 3: Irrigation Water Needs.* FAO. https://www.fao.org/4/s2022e/s2022e08.htm. Effective rainfall (Section 4.2) and the extra water paddy rice needs (Section 4.4).
+- **FAO Ecocrop:** crop temperature ranges. Each value is cited per crop in the crop library.
+- **Kader (1993):** perishability classes for market access, "where cited" in the crop library (`params.ts`). The full reference comes with `crops.json`.
+- **Crop library `crops.json` (#11): pending.** Every value will carry its own citation. When it lands, add its sources here. The engine's test fixture (`mobile/src/engine/__fixtures__/crops.fixture.ts`, not shipped) cites the FAO Ecocrop database (via https://github.com/OpenCLIM/ecocrop), the PhilRice Rice Variety Database, the IRRI Rice Knowledge Bank, the DA HVCDP Mungbean Production Guide, PNS/BAFS 27:2018 and FAO GIEWS; keep only the ones `crops.json` uses.
+
+## Online services the app calls
+
+Free public services, light use only. None needs an account or a key.
+
+### NASA POWER (climate per lot)
 
 - Monthly point API, called once per lot with the centroid rounded to 0.1°.
 - Source and terms: https://power.larc.nasa.gov/docs/services/api/
 
-## Road routing (travel time to harvest destinations, optional)
+### Road routing (travel time to harvest destinations, optional)
 
 - **FOSSGIS routing server**, `https://routing.openstreetmap.de` (car, bike and foot profiles). Code: `mobile/src/data/routing.ts`.
 - Policy (https://routing.openstreetmap.de/about.html, read 2026-11-14): at most one request per second, no scraping or heavy use, a valid User-Agent, and the required OpenStreetMap attribution with a link to "fix the map" (https://www.openstreetmap.org/fixthemap). Request URLs are saved in the server's log file. The full German usage policy (fossgis.de) could not be read from our network on 2026-11-14 and still needs a human check.
@@ -16,12 +56,34 @@ Free public services the app calls from the device. Light use only. None needs a
 - Attribution shown wherever a road route is used: "Routing © OpenStreetMap contributors". The exact wording the OSM Foundation asks for is in https://osmfoundation.org/wiki/Licence/Attribution_Guidelines and was not checked.
 - OpenStreetMap data is under the ODbL: https://www.openstreetmap.org/copyright.
 
-## Map tiles (S1 lot map, S6 places)
+### Map tiles (S1 lot map, S6 places)
 
-- Basemap is decision **D25, still open**. Until the team picks, the map page uses **Esri World Imagery** as a placeholder (`https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}`). Switching to EOX Sentinel-2 cloudless or OpenStreetMap is one line in `mobile/map-src/main.ts` (`DEFAULT_BASEMAP`). The terms of use of each option were not checked here; that is part of D25.
+- Basemap is decision **D25, still open**. Until the team picks, the map page uses **Esri World Imagery** as a placeholder (`https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}`). Switching to EOX Sentinel-2 cloudless or OpenStreetMap is one line in `mobile/map-src/main.ts` (`DEFAULT_BASEMAP`). The terms of use of each option were not checked here; that is part of D25. If the team picks Sentinel-2 cloudless, it also goes under "Space Agency Partner Data" in the submission (ESA Copernicus data).
 - The provider's attribution is always shown on the map (Leaflet attribution control).
 - Tiles are requested only for the area on screen, as the farmer looks around. No bulk download or tile caching. Offline, lot shapes still draw on a plain background.
 - Like any web map, tile requests show the tile server which area is being viewed (zoom level and tile numbers). No lot shapes, names, or other farm data are sent.
+
+## App libraries
+
+Runtime dependencies in `mobile/package.json`, all open source.
+
+| Library | Version | License | Link |
+|---|---|---|---|
+| Expo (`expo`, `expo-router`, `expo-constants`, `expo-linking`, `expo-location`, `expo-status-bar`, `@expo/metro-runtime`) | SDK 58 | MIT | https://github.com/expo/expo |
+| React, React DOM | 19.3.0 | MIT | https://react.dev |
+| React Native | 0.88.1 | MIT | https://reactnative.dev |
+| React Native Web | 0.21.4 | MIT | https://github.com/necolas/react-native-web |
+| react-native-webview | 14.0.1 | MIT | https://github.com/react-native-webview/react-native-webview |
+| react-native-svg | 15.16.0 | MIT | https://github.com/software-mansion/react-native-svg |
+| react-native-screens | 4.30.1 | MIT | https://github.com/software-mansion/react-native-screens |
+| react-native-safe-area-context | 5.11.1 | MIT | https://github.com/AppAndFlow/react-native-safe-area-context |
+| AsyncStorage (`@react-native-async-storage/async-storage`) | 2.2.0 | MIT | https://github.com/react-native-async-storage/async-storage |
+| NetInfo (`@react-native-community/netinfo`) | 12.0.1 | MIT | https://github.com/react-native-netinfo/react-native-netinfo |
+| TanStack Query (`@tanstack/react-query`, `query-async-storage-persister`, `react-query-persist-client`) | 5.107.1 | MIT | https://tanstack.com/query |
+| Zustand | 5.1.0 | MIT | https://github.com/pmndrs/zustand |
+| Hono (typed API client) | 4.13.18 | MIT | https://hono.dev |
+
+Chart library: decision D30. Add it here when it lands.
 
 ## Bundled map libraries (`mobile/map-src/`, built into one offline HTML file)
 
@@ -29,8 +91,43 @@ Free public services the app calls from the device. Light use only. None needs a
 - Terra Draw 1.39.0 and terra-draw-leaflet-adapter 1.4.0, MIT: https://terradraw.io
 - Turf.js 7.4.0 (`@turf/area`, `centroid`, `convex`, `helpers`, `simplify`, `unkink-polygon`), MIT: https://turfjs.org
 
-## Pipeline-only data (not called by the app)
+## Build and test tools
 
-- **NASA SRTM v3 elevation and slope for the demo farm**, through Open Topo Data (`https://api.opentopodata.org/v1/srtm30m`). Code: `pipeline/fetch_srtm.py`. The app never calls it: only the resulting numbers ship in `mobile/assets/data/demo/`.
-- Data: NASA says the dataset "is openly shared, without restriction" and asks for citation (read 2026-11-14 at https://www.earthdata.nasa.gov/data/catalog/lpcloud-srtmgl1-003): NASA JPL. (2013). NASA Shuttle Radar Topography Mission Global 1 arc second [Data set]. NASA Land Processes Distributed Active Archive Center. https://doi.org/10.5067/MEASURES/SRTM/SRTMGL1.003
-- Service: the public API is free, limited to 100 locations per request, 1 call per second and 1000 calls per day (https://www.opentopodata.org/). It publishes no terms of use for the public instance. We make one request per demo point, wait over a second between requests and cache the answer, so a re-run makes no call. Only the team's demo coordinates are sent, never a farmer's data (rule 8). Software: MIT (https://github.com/ajnisbet/opentopodata).
+Not shipped inside the app.
+
+| Tool | Version | License | Use |
+|---|---|---|---|
+| TypeScript | 6.0.3 (app), 7.0.2 (API) | Apache-2.0 | Type checking |
+| esbuild | 0.28.2 | MIT | Bundles the offline map page |
+| ESLint, eslint-config-expo | 9.39.5, 58.0.4 | MIT | Linting |
+| Workbox CLI | 7.4.1 | MIT | Service worker for the installable web app |
+| Node.js built-in test runner | Node 24 | MIT | Engine and data tests |
+| EAS Build (Expo Application Services) | hosted | Expo terms | Android APK builds |
+| Cloudflare Pages and Workers, Wrangler 4.162.0 | hosted; Wrangler MIT OR Apache-2.0 | Cloudflare terms | Web hosting, API Worker |
+| GitHub | hosted | GitHub terms | Code, issues, pull requests |
+
+## API Worker (`api/`)
+
+A Cloudflare Worker with a health check route; the app doesn't depend on it for any result (rule 8: no backend storage of farm data).
+
+| Library | Version | License |
+|---|---|---|
+| Hono | 4.13.18 | MIT |
+| Zod | 4.6.7 | MIT |
+| @hono/zod-validator | 0.9.1 | MIT |
+
+## Pipeline (`pipeline/`)
+
+Python 3.11+ standard library only (`urllib`, `json`, `csv`, `unittest`, …). No third-party Python packages.
+
+## Images, icons, and fonts
+
+- **UI icons:** drawn by the team as SVG paths in `mobile/src/components/Icon.tsx`. No icon font, no emoji.
+- **Fonts:** the system font of each platform. No font files are bundled.
+- **App icon, Android adaptive icon, splash, and favicon** (`mobile/assets/*.png`): these are still the **Expo project template's default images** (the Expo logo), added with the scaffold (#55). Replace them with the team's own icon before the final build (#50); then update this line.
+- **SI-generated images:** none so far. Any that are added must carry a visible "SI-generated" watermark and be listed here (CLAUDE.md rule 4).
+- **Screenshots** in the demo deck and README come from the app itself (#51).
+
+## SI tools
+
+Claude Code (Anthropic) assisted with research, planning documents, and code. Every use is logged in [`docs/si-usage-log.md`](docs/si-usage-log.md).
