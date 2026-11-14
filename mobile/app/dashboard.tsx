@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { describeScenario } from "../src/components/what-if-core";
@@ -397,9 +397,13 @@ function MonthsPrompt({ lot, stage }: { lot: Lot; stage: 1 | 2 }) {
   const given = listed.filter((c) => c.seasons.length > 0);
   const usual = listed.filter((c) => c.seasons.length === 0);
   const short = (id: string) => shortCropName(cropName(id));
+  // Stage 1 is the next step, so it stands out (green, reading width). Once the months are given it is
+  // only a status line with a change button, so it looks like the cards around it (the same width as
+  // "Getting your harvest out").
+  const Wrap = stage === 1 ? Narrow : Fragment;
   return (
-    <Narrow>
-      <View style={styles.prompt}>
+    <Wrap>
+      <View style={stage === 1 ? styles.prompt : styles.plainCard}>
         <Text style={text.heading} accessibilityRole="header">
           {stage === 1 ? "Want a sharper comparison?" : "Your planting months"}
         </Text>
@@ -434,7 +438,7 @@ function MonthsPrompt({ lot, stage }: { lot: Lot; stage: 1 | 2 }) {
           )}
         </View>
       </View>
-    </Narrow>
+    </Wrap>
   );
 }
 
@@ -469,6 +473,14 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: colors.green,
     backgroundColor: colors.greenTint,
+  },
+  plainCard: {
+    gap: space.md,
+    padding: space.lg,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   promptRow: { flexDirection: "row", gap: space.sm },
   promptCol: { gap: space.sm },
