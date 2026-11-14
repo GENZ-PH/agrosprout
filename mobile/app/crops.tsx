@@ -21,8 +21,8 @@ import { useFarmStore } from "../src/state/farm-store";
 import type { Lot, LotCrop } from "../src/types";
 
 // S2 What do you plant on each lot? (#25, #152, docs/11-user-flow.md). One crop per lot (D13, changed by the
-// team 2026-11-14). Per lot: the top 3 crops for the lot from its NASA data (once the data is on the phone), a
-// search over our crop list and the FAO Ecocrop names, and the lot's crop. A farm saved earlier may still have
+// team 2026-11-14). Per lot: a search over our crop list and the FAO Ecocrop names (first, as the team asked),
+// the top 3 crops for the lot from its NASA data (once the data is on the phone), and the lot's crop. A farm saved earlier may still have
 // several crops on a lot: they all show, and the next crop chosen replaces them. Saved as it is tapped. The NASA data for each lot
 // keeps loading in the background (lot sync); Next never waits for it. Onboarding ends here.
 // /crops?lot=<id> shows one lot only: the lot just added with "+ Add lot" (D32), or
@@ -83,8 +83,8 @@ export default function CropsScreen() {
         <>
           <Text style={[text.body, { color: colors.muted }]}>
             {oneLot
-              ? "Choose the crop you grow on this lot: tap one of the top crops, or search for it. You can change it later."
-              : "Choose the crop you grow on each lot: tap one of the top crops, or search for it. You can change it later."}
+              ? "Choose the crop you grow on this lot: search for it, or tap one of the top crops. You can change it later."
+              : "Choose the crop you grow on each lot: search for it, or tap one of the top crops. You can change it later."}
           </Text>
           {lots.map((lot) => (
             <LotCrops key={lot.id} lot={lot} />
@@ -117,6 +117,8 @@ function LotCrops({ lot }: { lot: Lot }) {
         </Text>
       </View>
 
+      <CropSearch lotName={lot.name} entries={SEARCH_ENTRIES} chosen={chosen} onPick={(id) => setCrops(lot.id, chooseCrop(lot.crops, id))} />
+
       <View
         style={[styles.dataLine, line.tone === "ready" ? styles.dataReady : line.tone === "error" ? styles.dataError : null]}
         accessibilityLiveRegion="polite"
@@ -147,8 +149,6 @@ function LotCrops({ lot }: { lot: Lot }) {
         />
       ) : null}
 
-      <CropSearch lotName={lot.name} entries={SEARCH_ENTRIES} chosen={chosen} onPick={(id) => setCrops(lot.id, chooseCrop(lot.crops, id))} />
-
       <YourCrops lotName={lot.name} crops={lot.crops} onRemove={(id) => setCrops(lot.id, toggleCrop(lot.crops, id))} />
     </View>
   );
@@ -165,7 +165,7 @@ function YourCrops({ lotName, crops, onRemove }: { lotName: string; crops: reado
         <Text style={[text.small, { color: colors.muted }]}>One crop per lot now: the crop you choose next replaces these.</Text>
       ) : null}
       {crops.length === 0 ? (
-        <Text style={[text.small, { color: colors.muted }]}>None yet. Tap a crop above, or search for it.</Text>
+        <Text style={[text.small, { color: colors.muted }]}>None yet. Search for a crop above, or tap one of the top crops.</Text>
       ) : (
         <View style={styles.chips}>
           {crops.map((c) => {

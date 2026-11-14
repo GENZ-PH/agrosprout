@@ -55,7 +55,7 @@ flowchart LR
 - Next → S2. **Background:** the app starts fetching NASA data for each lot's center point (see 06).
 
 ### S2 — What do you plant on each lot?
-- One section per lot. **Top 3 for this lot**: the library crops that suit the lot best on its NASA data, each with its fit and best planting months (shown once the lot's data is on the phone). Below it, **one search box** over our crop list and the FAO Ecocrop names (offline); a name the app doesn't know can still be chosen as typed (not scored). (#152)
+- One section per lot. First **one search box** over our crop list and the FAO Ecocrop names (offline); a name the app doesn't know can still be chosen as typed (not scored). Below it, **Top 3 for this lot**: the library crops that suit the lot best on its NASA data, each with its fit and best planting months (shown once the lot's data is on the phone). (#152)
 - **One crop per lot** (D13, changed by the team 2026-11-14). Choosing a crop replaces the lot's crop; a farm saved earlier keeps its crops until one is chosen.
 - Progress chip per lot: "Getting climate & satellite data for Lot 1… ✓".
 - Next → S3. **Onboarding ends here.** Harvest destinations are added later (S6) to keep onboarding short.
