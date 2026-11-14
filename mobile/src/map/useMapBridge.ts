@@ -16,6 +16,8 @@ export type MapViewProps = {
   activeLotId?: string;
   /** Starting view when there are no lots yet. */
   center?: LonLat;
+  /** Starting zoom with `center` (the map page's default otherwise). */
+  zoom?: number;
   basemap?: BasemapId;
   /** Space covered by the screen's floating buttons and panels; fitting the lots avoids it. */
   inset?: MapInset;
@@ -68,6 +70,7 @@ export function useMapBridge(props: MapViewProps, postToPage: (msg: AppToMap) =>
           mode: p.mode,
           activeLotId: p.activeLotId,
           center: p.center,
+          zoom: p.zoom,
           basemap: p.basemap,
           inset: p.inset,
         });

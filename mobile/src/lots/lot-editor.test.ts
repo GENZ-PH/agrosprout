@@ -164,6 +164,38 @@ test("saving an unchanged outline (a tapped lot) adds no Undo step", () => {
   assert.equal(farm.getState().lots[0].name, "Lot 1");
 });
 
+test("+ Add lot starts one new lot, reuses it if the farmer left without drawing, and adds no Undo step", () => {
+  const { farm, editor, rows } = setup();
+  farm.getState().addLot(square(124.2, 8.2, 1));
+  const first = editor.startNewLot();
+  assert.deepEqual([first.id, first.name], ["new-2", "Lot 2"]);
+  assert.equal(editor.startNewLot().id, "new-2"); // back again: the same Lot 2, not Lot 3
+  assert.equal(editor.undo(), false);
+  const id = editor.setShape(first.id, square(124.3, 8.3, 2));
+  assert.deepEqual(
+    rows().map((r) => r.name),
+    ["Lot 1", "Lot 2"],
+  );
+  assert.equal(editor.startNewLot().name, "Lot 3");
+  // Undo of the drawing brings back the Lot 2 placeholder; it is not lost.
+  editor.undo();
+  assert.equal(farm.getState().lots.some((l) => l.id === id), false);
+  assert.equal(
+    rows().filter((r) => r.area_ha === null).map((r) => r.name).join(),
+    "Lot 2,Lot 3",
+  );
+});
+
+test("clearHistory: Undo covers only the changes made since the screen opened", () => {
+  const { farm, editor } = setup();
+  editor.ensureStarted();
+  const id = editor.setShape("new-1", square(124.2, 8.2, 1));
+  editor.rename(id, "Hill lot");
+  editor.clearHistory();
+  assert.equal(editor.undo(), false);
+  assert.equal(farm.getState().lots[0].name, "Hill lot");
+});
+
 test("a pin lot is a zero-area ring at the pin with the typed area", () => {
   const { farm, editor, rows } = setup();
   editor.ensureStarted();
