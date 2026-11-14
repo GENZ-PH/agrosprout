@@ -103,10 +103,12 @@ function LotCrops({ lot }: { lot: Lot }) {
   const updateLot = useFarmStore((s) => s.updateLot);
   const online = useOnline();
   const data = useLotData(lot);
-  const noSoil = data ? hasNoSoilData(data) : false;
+  // Sea data saved before the lot was moved is not rated, but the line says the new download is coming.
+  const seaData = data ? hasNoSoilData(data) : false;
+  const noSoil = seaData && lot.data_status === "ready";
   const { top, noFit } = useMemo(
-    () => (data && !noSoil ? safeLotTop(lot.details, data, CROP_LIBRARY) : NO_TOP),
-    [data, noSoil, lot.details],
+    () => (data && !seaData ? safeLotTop(lot.details, data, CROP_LIBRARY) : NO_TOP),
+    [data, seaData, lot.details],
   );
 
   // One crop per lot: a crop counts as chosen only when it is the lot's only crop.
@@ -153,7 +155,7 @@ function LotCrops({ lot }: { lot: Lot }) {
         ) : null}
       </View>
 
-      {data && !noSoil ? (
+      {data && !seaData ? (
         <TopCrops
           lotName={lot.name}
           top={top}

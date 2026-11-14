@@ -64,7 +64,7 @@ test("the data line follows data_status and the connection", () => {
 });
 
 test("data line: data with no soil (sea or ice) says so, whatever the connection", () => {
-  const sea = { text: "No NASA soil data here. This spot looks like sea or ice, not farmland.", tone: "error" };
+  const sea = { text: "No NASA soil moisture data here. This spot looks like sea or ice, not farmland.", tone: "error" };
   assert.deepEqual(dataLine("ready", true, true), sea);
   assert.deepEqual(dataLine("ready", false, true), sea);
   assert.equal(dataLine("ready", true, false).tone, "ready");

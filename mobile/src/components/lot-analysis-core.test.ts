@@ -155,3 +155,10 @@ test("lotView: no soil data shows no results, before asking for crops", () => {
   assert.deepEqual(lotView({ farm, lot: lot([rice]), data: NO_SOIL, library }), { kind: "no-soil" });
   assert.deepEqual(lotView({ farm, lot: lot([]), data: NO_SOIL, library }), { kind: "no-soil" });
 });
+
+test("lotView: a moved lot's old sea data is not used while its new data downloads, or after a failed download", () => {
+  for (const status of ["pending", "error"] as const) {
+    assert.deepEqual(lotView({ farm, lot: lot([rice], { data_status: status }), data: NO_SOIL, library }), { kind: "no-data", status });
+  }
+  assert.deepEqual(lotView({ farm, lot: lot([], { data_status: "pending" }), data: NO_SOIL, library }), { kind: "no-crops" });
+});

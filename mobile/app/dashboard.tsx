@@ -125,8 +125,8 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
       return (
         <Narrow>
           <Notice tone="warn">
-            NASA has no soil data for {lot.name}. This spot looks like sea or ice, not farmland, so there are no results. Move the
-            lot onto your farm.
+            NASA has no soil moisture data for {lot.name}. This spot looks like sea or ice, not farmland, so there are no
+            results. Move the lot onto your farm. If your farm really is here, on a very small island, NASA has no data for it, so we can&apos;t rate it.
           </Notice>
           <Button label={`Move ${lot.name} on the map`} href={{ pathname: "/lots", params: { lot: lot.id } }} />
         </Narrow>

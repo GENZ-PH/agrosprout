@@ -55,6 +55,14 @@ rated honestly but shown as "Top 3".
 - Elevation 0 m: also true for low coastal land, and ice sheets are high. Rejected.
 - A bundled land mask or a geocoder: new data or a new outbound request (rule 8). Rejected for now.
 
+## Known limits (found after the build, 2026-11-15)
+
+- Inner seas and lakes: a POWER probe of 13 points (2024-2025) caught only the central Sulu Sea, the Celebes Sea and
+  the Philippine Sea off Samar. Manila Bay, the Sibuyan, Visayan, Camotes and Bohol Seas, Moro Gulf, the eastern Sulu
+  Sea, Laguna de Bay and Lake Lanao read as land. Catching them needs a finer land/water map (team decision).
+- A very small island can read as sea: Pag-asa Island (11.05 N, 114.28 E) had no soil wetness in 2020-2024 (reviewer
+  probe of 8 islands; the other 7 had values). The notes say "if your farm really is here, on a very small island ...".
+
 ## Left to the builder
 
 Copy wording within the lines above, and layout, following the existing S2 and dashboard components.
