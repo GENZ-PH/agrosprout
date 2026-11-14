@@ -2,14 +2,19 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 import { Platform } from "react-native";
 
-import { fetchCropPhoto, type CropPhoto } from "./crop-photo-core";
+import {
+  CACHE_PREFIX,
+  fetchCropPhoto,
+  savedPhotosFromCache,
+  type CropPhoto,
+  type SavedCropPhoto,
+} from "./crop-photo-core";
 
 // Run-time side of the crop pictures from Wikipedia and Wikimedia Commons (#169, rule 8: only a crop
 // name leaves the phone). Looked up once per crop, saved on the phone (also "no picture found", for a
 // week), one request at a time with a pause between, because Wikimedia limits fast callers (HTTP 429).
 // Offline or any error: no picture, and the app shows the placeholder.
 
-const CACHE_PREFIX = "crop-photo:";
 const MISS_DAYS = 7;
 const GAP_MS = 1000;
 // Browsers can't set User-Agent, so the web build sends none (Wikimedia asks for Api-User-Agent there; leave it out to avoid a preflight).
@@ -94,4 +99,25 @@ export function useCropPhoto(sci: string | null): CropPhoto | null {
     };
   }, [sci]);
   return sci ? photo : null;
+}
+
+/** Every picture looked up and saved on this phone, with its credit (Licenses and credits screen). Empty while loading or when none. */
+export function useSavedCropPhotos(): SavedCropPhoto[] {
+  const [saved, setSaved] = useState<SavedCropPhoto[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const keys = (await AsyncStorage.getAllKeys()).filter((k) => k.startsWith(CACHE_PREFIX));
+        const entries = keys.length ? await AsyncStorage.multiGet(keys) : [];
+        if (!cancelled) setSaved(savedPhotosFromCache(entries));
+      } catch {
+        // storage unreadable: the screen says where these pictures are credited
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return saved;
 }

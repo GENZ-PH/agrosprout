@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { colors, MIN_TOUCH, space } from "./theme";
 
-/** Links to Edit farm (#35) and the Learn and Data and limits pages (#31). */
+/** Links to Edit farm (#35), the Learn and Data and limits pages (#31), and Licenses and credits. */
 export function FooterLinks() {
   return (
     <View style={styles.row}>
@@ -16,12 +16,15 @@ export function FooterLinks() {
       <Pressable onPress={() => router.push("/data")} accessibilityRole="link" style={styles.link}>
         <Text style={styles.text}>Data and limits</Text>
       </Pressable>
+      <Pressable onPress={() => router.push("/credits")} accessibilityRole="link" style={styles.link}>
+        <Text style={styles.text}>Credits</Text>
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: "row", gap: space.lg },
+  row: { flexDirection: "row", flexWrap: "wrap", columnGap: space.lg },
   link: { minHeight: MIN_TOUCH, minWidth: MIN_TOUCH, justifyContent: "center", alignItems: "center" },
   text: { fontSize: 14, lineHeight: 20, color: colors.blue, textDecorationLine: "underline" },
 });

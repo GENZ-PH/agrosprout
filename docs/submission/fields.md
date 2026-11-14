@@ -134,7 +134,8 @@ Not used, and why: GRACE and GRACE-FO measure water storage over large regions, 
 
 **Images, icons and fonts**
 - Screenshots from the app itself; Lucide icons (ISC license); system fonts.
-- *(App icon: name its source here once the final one is in, #50.)*
+- AgroSprout logo and app icon: the team's own artwork (#178).
+- Crop photos: 10 photos from Wikimedia Commons (CC BY, CC BY-SA, CC0 and public domain), cropped and resized; each credited in THIRD_PARTY.md and on the app's Licenses and credits screen. Our copies of the CC BY-SA photos are shared under the same license. Search-only crops show a Wikimedia Commons picture loaded at run time, credited under it.
 
 ## Final checks (see #150 section 1)
 - [ ] All members confirmed at the Iligan City Local Event, 6 at most
