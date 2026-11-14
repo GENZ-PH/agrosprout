@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { type ReactNode, useCallback, useState } from "react";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { Button } from "../src/components/Button";
@@ -29,6 +29,8 @@ import { SoilHealthChart } from "../src/components/SoilHealthChart";
 import { colors, MAX_CONTENT_WIDTH, radius, space, text } from "../src/components/theme";
 import { useLayout } from "../src/components/useLayout";
 import { useFarmLotViews, useLotAnalysis } from "../src/components/useLotAnalysis";
+import { LAND_WATER } from "../src/data/land-water";
+import { lotLooksLikeWater } from "../src/lots/land-water-core";
 import { CROP_LIBRARY, cropById } from "../src/data/crops";
 import { isOtherCrop } from "../src/lots/crop-picks";
 import { seasonsText } from "../src/lots/months-core";
@@ -117,6 +119,10 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
   const setPriorities = useFarmStore((s) => s.setPriorities);
   const { wide } = useLayout();
 
+  // Soft warning from the land map (Natural Earth): NASA's coarse cells read inner seas and lakes as land.
+  const onWater = useMemo(() => lotLooksLikeWater(LAND_WATER, lot), [lot]);
+
+  const body = (() => {
   switch (view.kind) {
     case "loading":
       return <Text style={text.caption}>Loading {lot.name}...</Text>;
@@ -258,6 +264,21 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
       );
     }
   }
+  })();
+
+  if (!onWater || view.kind === "no-soil" || view.kind === "loading") return body;
+  return (
+    <>
+      <Narrow>
+        <Notice tone="warn">
+          {lot.name} looks like it is on water (sea or lake) on our map. If this is your farm, you can go on. If not, move the lot
+          onto your farm.
+        </Notice>
+        <Button label={`Move ${lot.name} on the map`} variant="secondary" href={{ pathname: "/lots", params: { lot: lot.id } }} />
+      </Narrow>
+      {body}
+    </>
+  );
 }
 
 /**

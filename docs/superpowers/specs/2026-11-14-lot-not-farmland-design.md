@@ -59,7 +59,19 @@ rated honestly but shown as "Top 3".
 
 - Inner seas and lakes: a POWER probe of 13 points (2024-2025) caught only the central Sulu Sea, the Celebes Sea and
   the Philippine Sea off Samar. Manila Bay, the Sibuyan, Visayan, Camotes and Bohol Seas, Moro Gulf, the eastern Sulu
-  Sea, Laguna de Bay and Lake Lanao read as land. Catching them needs a finer land/water map (team decision).
+  Sea, Laguna de Bay and Lake Lanao read as land.
+
+## Part 2: land map check (johnrald1 chose option 1, 2026-11-15)
+
+- Natural Earth 1:10m land, minor islands and lakes (release v5.1.2, public domain), cut to the bounding box of
+  Natural Earth's Philippines feature and rounded to 0.001° by `pipeline/build_land_water.py` (181 KB, offline).
+- `lotLooksLikeWater` (`mobile/src/lots/land-water-core.ts`): the lot's centre and every outline point on water.
+- Soft warning only (S2 and dashboard), with Move lot; results still show, because the shore is coarse at
+  1:10,000,000 and a real shore farm (a fishpond) can read as water. The hard no-soil view (Part 1) wins when both apply.
+- Catches every inner-sea probe point and Laguna de Bay; the sample farm, Iligan and small islands (Siquijor, Camotes,
+  Batan) read as land. Not caught: Lake Lanao (not in the data). Pag-asa Island is outside the window (no check).
+- Rejected: NASA MOD44W (250 m, needs an Earthdata login and HDF tools, 3-4 h before the freeze); an elevation request
+  per lot (new outbound location request, rule 8).
 - A very small island can read as sea: Pag-asa Island (11.05 N, 114.28 E) had no soil wetness in 2020-2024 (reviewer
   probe of 8 islands; the other 7 had values). The notes say "if your farm really is here, on a very small island ...".
 

@@ -366,6 +366,14 @@ export const DATA_SOURCES: readonly DataSource[] = [
     url: "https://github.com/OpenCLIM/ecocrop",
   },
   {
+    name: "Natural Earth 1:10m land and lakes (release v5.1.2)",
+    used_for:
+      "Warns when a lot looks like it is on the sea or a lake, which NASA's coarse climate cells can read as land. Made with Natural Earth (public domain).",
+    period: "Release v5.1.2, 2022",
+    resolution: "Map scale 1:10,000,000; Philippines only",
+    url: "https://www.naturalearthdata.com/",
+  },
+  {
     name: "Crop library (crops.json)",
     used_for: "Season length, planting calendars, waterlogging and drought tolerance and other crop traits. Each value has its own citation in the file.",
     period: "See each citation",
@@ -430,6 +438,7 @@ export const LIMITATIONS: readonly string[] = [
   "Everything is monthly, so short dry spells inside a month are smoothed out.",
   "Crop values are general and not specific to a variety.",
   "Market and labor information is rough and needs local prices.",
+  "The \"looks like water\" warning uses a coarse land map, so a farm right on the shore can be flagged, and Lake Lanao is not in it.",
   "The soil-health score is a relative indicator from the model, not a lab test.",
   "Temperatures for lots you draw are estimated from the monthly mean and daily range, and if your field's elevation is not known evaporation is calculated at sea level.",
   "Crop water use is not adjusted for a humid, low-wind climate, so it may be slightly too high in such places.",

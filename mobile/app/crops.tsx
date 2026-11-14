@@ -14,8 +14,10 @@ import { hasNoSoilData } from "../src/components/lot-analysis-core";
 import { useLotData } from "../src/components/useLotAnalysis";
 import { CROP_LIBRARY, cropById } from "../src/data/crops";
 import { ECOCROP_NAMES } from "../src/data/ecocrop";
+import { LAND_WATER } from "../src/data/land-water";
 import { chooseCrop, cropShortName, dataLine, isOtherCrop, lotsWithoutCrops, otherCropName, toggleCrop } from "../src/lots/crop-picks";
 import { buildSearchEntries } from "../src/lots/crop-search-core";
+import { lotLooksLikeWater } from "../src/lots/land-water-core";
 import { safeLotTop } from "../src/lots/suggest-core";
 import { areaLabel, isPinLot } from "../src/lots/lot-editor";
 import { useFarmStore } from "../src/state/farm-store";
@@ -27,6 +29,7 @@ import type { Lot, LotCrop } from "../src/types";
 // several crops on a lot: they all show, and the next crop chosen replaces them. Saved as it is tapped. The NASA data for each lot
 // keeps loading in the background (lot sync); Next never waits for it. Onboarding ends here.
 // A lot with no NASA soil data (sea or ice, `hasNoSoilData`) gets no top crops and a "Move lot" button instead.
+// A lot that our land map (Natural Earth) puts on the sea or a lake gets a soft warning and the same button.
 // /crops?lot=<id> shows one lot only: the lot just added with "+ Add lot" (D32), or
 // a lot whose crops are missing on the dashboard. Next goes back to that lot's results.
 
@@ -114,6 +117,8 @@ function LotCrops({ lot }: { lot: Lot }) {
   // One crop per lot: a crop counts as chosen only when it is the lot's only crop.
   const chosen = lot.crops.length === 1 ? lot.crops[0].crop_id : null;
   const line = dataLine(lot.data_status, online, noSoil);
+  // Soft: NASA's coarse cells read inner seas and lakes as land, so the lot is also checked against a land map.
+  const onWater = useMemo(() => !noSoil && lotLooksLikeWater(LAND_WATER, lot), [noSoil, lot]);
 
   return (
     <View style={styles.section}>
@@ -161,6 +166,21 @@ function LotCrops({ lot }: { lot: Lot }) {
           />
         ) : null}
       </View>
+
+      {onWater ? (
+        <View style={[styles.dataLine, styles.dataError]}>
+          <Icon name="alert" size={18} color={colors.amber} />
+          <Text style={[text.small, styles.flex]}>
+            {lot.name} looks like it is on water (sea or lake) on our map. If this is your farm, go on. If not, move it.
+          </Text>
+          <Button
+            label="Move lot"
+            variant="quiet"
+            href={{ pathname: "/lots", params: { lot: lot.id } }}
+            accessibilityLabel={`Move ${lot.name} on the map`}
+          />
+        </View>
+      ) : null}
 
       {data && !seaData ? (
         <TopCrops
