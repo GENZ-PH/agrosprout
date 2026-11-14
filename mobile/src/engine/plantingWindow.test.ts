@@ -194,3 +194,70 @@ test("months that fail the crop's temperature range are never offered", () => {
   const better = r.seasons[0].better;
   if (better) assert.ok(![4, 5, 6, 7, 8, 9].includes(better.plant_month), `offered hot month ${better.plant_month}`);
 });
+
+// ---------------------------------------------------------------------------
+// "Blocked" (#89): a clearly better month exists, but only by running into another season of the lot.
+// ---------------------------------------------------------------------------
+
+/** Wet Jun-Oct, dry the rest: rice planted Jun is fine, rice planted Nov runs through the dry months (synthetic). */
+const wetSummer = () => climate({ rain: [30, 20, 20, 30, 120, 450, 450, 450, 450, 450, 80, 40] });
+const twoRice = [lc("lowland-rice", season(6, 10), season(11, 3))];
+
+test('blocked: a poor dry-season crop whose better month clashes with the other crop is not "already good"', () => {
+  const r = scan(twoRice, wetSummer());
+  const nov = r.seasons.find((s) => s.season_index === 1);
+  const jun = r.seasons.find((s) => s.season_index === 0);
+  assert.ok(nov && jun);
+  assert.equal(nov.status, "blocked");
+  assert.equal(nov.better, null);
+  assert.equal(nov.delta, null);
+  assert.equal(nov.shift_months, null);
+  assert.ok(nov.blocked);
+  assert.ok(nov.blocked.delta >= WINDOW_MARGIN_POINTS, `delta ${nov.blocked.delta}`);
+  assert.deepEqual(nov.blocked.clashes, [{ crop_id: "lowland-rice", season_index: 0 }]);
+  assert.ok(nov.drivers.length > 0, "a blocked season still says what would improve");
+  // The June crop is already in the wet months: nothing beats it even on a free lot.
+  assert.equal(jun.status, "already-good");
+  assert.equal(jun.blocked, null);
+});
+
+test("the blocked month really would clash: it is never offered as a move", () => {
+  const r = scan(twoRice, wetSummer());
+  for (const s of r.seasons) {
+    if (s.status !== "blocked") continue;
+    assert.equal(s.better, null);
+    assert.ok(s.blocked && s.blocked.clashes.length > 0);
+    // The same month planted on a lot with only this season does not clash, so it would be "better".
+    const alone = scan([lc("lowland-rice", season(11, 3))], wetSummer()).seasons[0];
+    assert.equal(alone.status, "better");
+    assert.equal(alone.better?.plant_month, s.blocked.month.plant_month);
+  }
+});
+
+test("a season with nothing better even on a free lot still reads already-good, with no blocked month", () => {
+  const r = scan([lc("lowland-rice", season(6, 10), season(11, 3))], climate());
+  for (const s of r.seasons) {
+    assert.equal(s.status, "already-good");
+    assert.equal(s.blocked, null);
+  }
+});
+
+test("a feasible better month wins over a blocked one", () => {
+  // Rice Nov alone on the lot: the better month is feasible, so the status is better, not blocked.
+  const s = scan([lc("lowland-rice", season(11, 3))], wetSummer()).seasons[0];
+  assert.equal(s.status, "better");
+  assert.equal(s.blocked, null);
+});
+
+test("real Iligan lot, rice Jun-Oct and Nov-Mar (#89): Nov is blocked by the June crop, Jun stays already good", () => {
+  const r = scan([lc("lowland-rice", season(6, 10), season(11, 3))]);
+  const [jun, nov] = r.seasons;
+  // Jun: the best free-lot month gains under the margin, so a small stress-month gain must not turn it into "blocked".
+  assert.equal(jun.status, "already-good");
+  assert.equal(jun.blocked, null);
+  // Nov: the season runs through the driest months, and July is a clear gain only if the June crop were not there.
+  assert.equal(nov.status, "blocked");
+  assert.equal(nov.blocked?.month.plant_month, 7);
+  assert.ok((nov.blocked?.delta ?? 0) >= WINDOW_MARGIN_POINTS);
+  assert.deepEqual(nov.blocked?.clashes, [{ crop_id: "lowland-rice", season_index: 0 }]);
+});
