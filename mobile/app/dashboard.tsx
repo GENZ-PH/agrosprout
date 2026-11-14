@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { Button } from "../src/components/Button";
@@ -11,12 +11,15 @@ import { Notice } from "../src/components/Notice";
 import { PrioritiesCard } from "../src/components/PrioritiesCard";
 import { togglePriority } from "../src/components/priorities-core";
 import { RecommendationsCard } from "../src/components/RecommendationsCard";
+import { shortCropName } from "../src/components/recommendations-core";
 import { Screen } from "../src/components/Screen";
 import { SoilHealthChart } from "../src/components/SoilHealthChart";
-import { MAX_CONTENT_WIDTH, space, text } from "../src/components/theme";
+import { colors, MAX_CONTENT_WIDTH, radius, space, text } from "../src/components/theme";
 import { useLayout } from "../src/components/useLayout";
 import { useLotAnalysis } from "../src/components/useLotAnalysis";
 import { cropById } from "../src/data/crops";
+import { isOtherCrop } from "../src/lots/crop-picks";
+import { seasonsText } from "../src/lots/months-core";
 import { useFarm, useFarmStore } from "../src/state/farm-store";
 import type { Farm, Lot } from "../src/types";
 
@@ -124,10 +127,17 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
       return (
         <>
           {analysis.stage === 1 ? (
-            <Notice tone="warn">
-              Option A (Your crops) uses typical planting months for now, so it is an assumption. You can give your own
-              months later.
-            </Notice>
+            <Narrow>
+              <Notice tone="warn">
+                Option A (Your crops) uses typical planting months for now, so it is an assumption. You can give your own
+                months.
+              </Notice>
+              <Button
+                label="Give your planting months"
+                variant="link"
+                href={{ pathname: "/months", params: { lot: lot.id } }}
+              />
+            </Narrow>
           ) : null}
           {wide ? (
             <>
@@ -137,6 +147,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
               </View>
               {priorities}
               {recommendations}
+              <MonthsPrompt lot={lot} stage={analysis.stage} />
             </>
           ) : (
             <>
@@ -144,12 +155,52 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
               {priorities}
               {recommendations}
               {soil}
+              <MonthsPrompt lot={lot} stage={analysis.stage} />
             </>
           )}
         </>
       );
     }
   }
+}
+
+/**
+ * The Continue prompt at the end of the dashboard (docs/11-user-flow.md S3 → S4): give your
+ * planting months for a sharper comparison, or Later. Once months are given, a way to change them.
+ */
+function MonthsPrompt({ lot, stage }: { lot: Lot; stage: 1 | 2 }) {
+  const [later, setLater] = useState(false);
+  if (stage === 1 && later) return null;
+  const listed = lot.crops.filter((c) => !isOtherCrop(c.crop_id));
+  const given = listed.filter((c) => c.seasons.length > 0);
+  const usual = listed.filter((c) => c.seasons.length === 0);
+  const short = (id: string) => shortCropName(cropName(id));
+  return (
+    <Narrow>
+      <View style={styles.prompt}>
+        <Text style={text.heading} accessibilityRole="header">
+          {stage === 1 ? "Want a sharper comparison?" : "Your planting months"}
+        </Text>
+        <Text style={text.body}>
+          {stage === 1
+            ? `Tell us which months you plant on ${lot.name}. Option A then uses your months instead of the usual ones.`
+            : `Option A uses your months: ${given.map((c) => `${short(c.crop_id)} ${seasonsText(c.seasons)}`).join("; ")}.` +
+              (usual.length > 0
+                ? ` ${usual.map((c) => short(c.crop_id)).join(", ")} ${usual.length === 1 ? "keeps" : "keep"} the usual months (assumed).`
+                : "")}
+        </Text>
+        <View style={styles.promptRow}>
+          <Button
+            label={stage === 1 ? "Continue" : "Change your months"}
+            iconAfter="chevron"
+            href={{ pathname: "/months", params: { lot: lot.id } }}
+            style={styles.col}
+          />
+          {stage === 1 ? <Button label="Later" variant="quiet" onPress={() => setLater(true)} style={styles.col} /> : null}
+        </View>
+      </View>
+    </Narrow>
+  );
 }
 
 /** Keeps messages and buttons at reading width on a wide screen. */
@@ -162,4 +213,13 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "flex-start", gap: space.lg },
   col: { flex: 1, minWidth: 0 },
   narrow: { width: "100%", maxWidth: MAX_CONTENT_WIDTH, gap: space.lg },
+  prompt: {
+    gap: space.md,
+    padding: space.lg,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.green,
+    backgroundColor: colors.greenTint,
+  },
+  promptRow: { flexDirection: "row", gap: space.sm },
 });
