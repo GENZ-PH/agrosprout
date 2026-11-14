@@ -385,3 +385,53 @@ export const EXPLAIN_MIN_DELTA_POINTS = 1;
  * inputs"). One such input gives Medium.
  */
 export const CONFIDENCE_LOW_UNKNOWN_INPUTS = 2;
+
+// ---------------------------------------------------------------------------
+// "What if" climate scenario (#47)
+// ---------------------------------------------------------------------------
+
+/**
+ * Slider ranges for the what-if scenario: rainfall change in percent and
+ * temperature rise in degrees C. Source: team spec (issue #47). The UI labels
+ * the result a "what if", not a forecast.
+ */
+export const SCENARIO_RANGE = {
+  rain_pct: { min: -30, max: 20 },
+  temp_c: { min: 0, max: 2 },
+} as const;
+
+// ---------------------------------------------------------------------------
+// Harvest trips and wet-season roads (docs/07 §3c, #44)
+// Every value here is a DEFAULT ASSUMPTION (CLAUDE.md rule 9) with no measured
+// source. The UI must label them, and the farmer's own load per trip always
+// overrides the default. v0 proposals; the Engine lead confirms or replaces
+// them (D27).
+// ---------------------------------------------------------------------------
+
+/**
+ * Harvest carried per trip by mode, kg. Rough load for one person or one
+ * vehicle. assumption: validate locally (no source; ask the agricultural
+ * technician and farmers at the 20:00 review).
+ */
+export const LOAD_KG_PER_TRIP: Readonly<Record<TransportMode, number>> = {
+  walk: 30,
+  carabao: 300,
+  bicycle: 60,
+  motorcycle: 100,
+  tricycle: 300,
+  jeepney: 200,
+  truck: 3000,
+};
+
+/**
+ * A month whose typical-year (P50) rain is above this many mm counts as a
+ * heavy-rain month for roads and for drying the harvest. assumption:
+ * validate locally (no source; compare with the lot's own wettest months).
+ */
+export const HEAVY_RAIN_MONTH_MM = 300;
+
+/**
+ * Travel time is multiplied by this in a heavy-rain month (slow, muddy
+ * roads). assumption: validate locally (no source).
+ */
+export const WET_ROAD_FACTOR = 1.5;
