@@ -21,6 +21,7 @@ import { useLotAnalysis } from "../src/components/useLotAnalysis";
 import { cropById } from "../src/data/crops";
 import type { LotAnalysis, OptionKey } from "../src/engine";
 import { useT } from "../src/i18n/lang-store";
+import { cropLabel } from "../src/i18n/strings";
 import { isDemoFarm } from "../src/state/demo-farm";
 import { useFarm, useFarmStore } from "../src/state/farm-store";
 import type { Farm, Lot, Priorities } from "../src/types";
@@ -99,7 +100,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
 
 function Results({ farm, analysis }: { farm: Farm; analysis: LotAnalysis }) {
   const setPriorities = useFarmStore((s) => s.setPriorities);
-  const { t } = useT();
+  const { t, lang, months } = useT();
   const { width } = useWindowDimensions();
   const twoColumns = width >= TWO_COLUMN_MIN;
   const { options } = analysis.rotations;
@@ -113,6 +114,10 @@ function Results({ farm, analysis }: { farm: Farm; analysis: LotAnalysis }) {
     setPicked(null);
     setPriorities(next);
   };
+  // What to plant under the best plan, in order: "Mungbean (Apr to Jun) › Lowland rice (Jul to Nov)".
+  const sequence = best.slots
+    .map((s) => `${cropLabel(lang, cropById(s.crop_id), s.crop_id)} (${months[s.plant_month - 1]} ${t("list.to")} ${months[s.harvest_month - 1]})`)
+    .join("  \u203A  ");
   const verdict = verdictText(
     {
       chosen: chosenPriorities(farm.priorities).filter((k) => !unavailable.includes(k)),
@@ -162,6 +167,7 @@ function Results({ farm, analysis }: { farm: Farm; analysis: LotAnalysis }) {
       <PriorityChips priorities={farm.priorities} onChange={choose} unavailable={unavailable} />
       <View style={styles.verdict} accessibilityLiveRegion="polite">
         <Text style={styles.verdictText}>{verdict}</Text>
+        <Text style={text.body}>{t("verdict.plant", { sequence })}</Text>
       </View>
       {twoColumns ? (
         <View style={styles.columns}>
@@ -187,7 +193,7 @@ const styles = StyleSheet.create({
   muted: { color: colors.muted },
   intro: { gap: 4 },
   lotRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: space.lg, rowGap: space.sm },
-  verdict: { borderLeftWidth: 4, borderLeftColor: colors.green, backgroundColor: colors.greenTint, borderRadius: radius.md, paddingVertical: space.md, paddingHorizontal: space.lg },
+  verdict: { borderLeftWidth: 4, borderLeftColor: colors.green, backgroundColor: colors.greenTint, borderRadius: radius.md, paddingVertical: space.md, paddingHorizontal: space.lg, gap: 4 },
   verdictText: { ...text.heading, fontWeight: "600" },
   columns: { flexDirection: "row", alignItems: "flex-start", gap: space.xl },
   column: { flex: 1, gap: space.lg, minWidth: 0 },

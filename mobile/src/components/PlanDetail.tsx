@@ -101,10 +101,7 @@ export function PlanDetail({ option, baseline, explanation, leftOut, cropById, d
       ) : null}
       {same.length > 0 ? <View style={styles.bars}>{same.map(bar)}</View> : null}
 
-      <View style={styles.notes}>
-        {!isBaseline ? <Text style={text.caption}>{t("detail.marker")}</Text> : null}
-        {leftOut.length > 0 ? <Text style={text.caption}>{t("detail.leftOut", { list: leftOut.map((k) => t(`comp.${k}`)).join(", ") })}</Text> : null}
-      </View>
+      {!isBaseline ? <Text style={text.caption}>{t("detail.marker")}</Text> : null}
 
       <View style={styles.facts}>
         <Text style={text.small}>
@@ -126,6 +123,14 @@ export function PlanDetail({ option, baseline, explanation, leftOut, cropById, d
           </Text>
         ))}
         <Text style={text.small}>{t("detail.askConfirm")}</Text>
+      </View>
+
+      <View style={styles.unknown}>
+        <Text style={text.bodyStrong}>{t("detail.unknown")}</Text>
+        <Text style={text.small}>{t("detail.unknownYear")}</Text>
+        <Text style={text.small}>{t("year.source")}</Text>
+        {option.assumed_calendar ? <Text style={text.small}>{t("year.assumed")}</Text> : null}
+        {leftOut.length > 0 ? <Text style={text.small}>{t("detail.leftOut", { list: leftOut.map((k) => t(`comp.${k}`)).join(", ") })}</Text> : null}
       </View>
 
       {explanation ? (
@@ -198,7 +203,7 @@ const styles = StyleSheet.create({
   delta: { ...text.caption, width: 40, textAlign: "right", fontVariant: ["tabular-nums"] },
   up: { color: colors.green, fontWeight: "700" },
   down: { color: colors.danger, fontWeight: "700" },
-  notes: { gap: 4 },
+  unknown: { gap: 4 },
   facts: { gap: 4 },
   ask: { gap: 6, padding: space.md, borderRadius: radius.sm, backgroundColor: colors.amberTint },
   section: { gap: 6 },

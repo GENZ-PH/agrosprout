@@ -25,14 +25,8 @@ export function PriorityChips({ priorities, onChange, unavailable }: Props) {
         {PRIORITY_KEYS.map((k) => {
           const off = unavailable.includes(k);
           const on = chosen.has(k) && !off;
-          if (off) {
-            return (
-              <View key={k} style={[styles.chip, styles.off]} accessibilityRole="checkbox" accessibilityState={{ disabled: true, checked: false }}>
-                <Text style={[text.bodyStrong, styles.offLabel]}>{t(`prio.${k}`)}</Text>
-                <Text style={[text.caption, styles.offLabel]}>{t("chips.needsData")}</Text>
-              </View>
-            );
-          }
+          // A goal that cannot be scored is left out, and named once in the line below.
+          if (off) return null;
           return (
             <Pressable
               key={k}
@@ -73,6 +67,4 @@ const styles = StyleSheet.create({
   on: { backgroundColor: colors.green, borderColor: colors.green },
   pressed: { backgroundColor: colors.pressed },
   onLabel: { color: colors.white },
-  off: { borderStyle: "dashed", backgroundColor: "transparent" },
-  offLabel: { color: colors.muted },
 });
