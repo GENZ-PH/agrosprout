@@ -16,6 +16,9 @@ export type { Scenario as ClimateScenario, ScenarioResult } from "./scenario";
 export { harvestMonthMinutes, tripHours, tripsPerHarvest, wetRoad } from "./harvestTrips";
 export type { HarvestTrips, TripsGap, WetRoad } from "./harvestTrips";
 export { explain, COMPONENT_LABELS } from "./explain";
+/** One call from a stored farm to everything a lot's screens show (#29, #34). */
+export { analyzeLot } from "./analyze";
+export type { AnalyzeGap, AnalyzeLotInput, HarvestLeg, LotAnalysis } from "./analyze";
 /** 3-year Soil Health Index line per option: a relative indicator from this model (07 §4, #43). */
 export { soilHealth, soilHealthTrajectory } from "./soilHealth";
 export type { OptionSoilHealth, SoilHealthPoint, SoilHealthResult, SoilHealthTrajectory } from "./soilHealth";
