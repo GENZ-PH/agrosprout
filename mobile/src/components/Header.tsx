@@ -34,7 +34,7 @@ export function Header({ title, leading = "back", fallbackHref = "/", right, mid
             <Icon name={leading} />
           </Pressable>
         ) : null}
-        <Text style={[styles.title, middle ? styles.titleFixed : null]} accessibilityRole="header" numberOfLines={middle ? 1 : 2}>
+        <Text style={middle ? styles.titleInline : styles.title} accessibilityRole="header" numberOfLines={middle ? 1 : 2}>
           {title}
         </Text>
         {middle ? <View style={styles.middle}>{middle}</View> : null}
@@ -59,7 +59,8 @@ const styles = StyleSheet.create({
   },
   pressed: { backgroundColor: colors.pressed },
   title: { ...text.title, flex: 1 },
-  titleFixed: { flex: 0, flexShrink: 0, marginRight: space.lg },
+  // Beside the lot tabs: as wide as its words, never squeezed.
+  titleInline: { ...text.title, flexShrink: 0, marginRight: space.md },
   middle: { flex: 1, minWidth: 0 },
   right: { ...text.small, color: colors.muted },
 });
