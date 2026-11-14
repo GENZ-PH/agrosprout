@@ -42,6 +42,7 @@ Elevation caveat: both elevation APIs agree on 6 m, so the Iligan coastal point 
 - **Public API limits** (https://www.opentopodata.org/, read 2026-11-14): max 100 locations per request, 1 call per second, 1000 calls per day. **No terms of use, attribution rule or statement on commercial use is published for the public instance** (checked the site, the API docs and the GitHub README; the software is MIT). CORS is not documented, and our test saw no CORS header, so use it in `pipeline/` only (pre-bake the demo farm).
 - **No-data:** by default `null` means either outside the dataset or no data at that cell, and the two cannot be told apart.
 - **Precision of what we got:** heights came back in whole metres at every point we tried (bilinear and cubic alike), and the slope over 30, 60 and 90 m spacing differed by a few percent (measured 2026-11-14 at two points). `slope_pct` is therefore stored in whole percent as a rough terrain class. Vertical accuracy is not stated on the pages we could read.
+- **Not used for lot area (D31, #107):** `area_ha` stays the flat map area from `turf.area`. Sampling SRTM inside a lot would send the field's shape to Open Topo Data (rule 8), and on slopes under 10% the ground area is less than 1% larger.
 
 ## Philippine sources (researched 2026-11-14)
 

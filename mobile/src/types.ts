@@ -98,7 +98,7 @@ export interface Lot {
   /** Display name, e.g. "Lot 1". */
   name: string;
   geometry: { type: "Polygon"; coordinates: LonLat[][] };
-  /** Planar area from the drawn polygon (turf.area), hectares. */
+  /** Horizontal (map) area from the drawn polygon (turf.area, no elevation or slope), hectares. D31 (#107). */
   area_ha: number;
   centroid: LonLat;
   details: LotDetails;
