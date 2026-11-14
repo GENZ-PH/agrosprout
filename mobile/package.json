@@ -52,6 +52,7 @@
     "lint": "expo lint",
     "test": "node --import ./scripts/node-test-resolve.mjs --test \"src/**/*.test.ts\" \"map-src/**/*.test.ts\"",
     "check": "npm run typecheck && npm run lint && npm test",
+    "sanity": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/node-test-resolve.mjs scripts/sanity-report.ts",
     "build:web": "expo export --platform web && workbox generateSW workbox-config.js",
     "build:apk": "eas build -p android --profile preview",
     "build:map": "node map-src/build.mjs"

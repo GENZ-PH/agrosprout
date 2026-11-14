@@ -202,6 +202,8 @@ Plain-language rules: short sentences, no jargon without a glossary link, number
 
 ## 7. Validation & sanity checks (do these before building UI on top)
 
+How to run them (#32): in `mobile/`, `npm run sanity` prints the numbers for the checks that need someone who knows the area (pass a LotData JSON file to check another lot, such as the demo farm). The checks a test can answer run with `npm test`; `src/engine/sanity.test.ts` lists which test covers each one.
+
 - [ ] Annual ET₀ and rainfall for the demo point are plausible for a humid tropical lowland. Compare with PAGASA climate normals for the nearest station if available.
 - [ ] Wet and dry season months match the local cropping calendar (ask a local farmer or technician, or check PhilRice materials).
 - [ ] **Current rotation (rice–rice–bare) shows a stress window where farmers actually report dry-spell trouble.** If it doesn't, investigate before demoing.

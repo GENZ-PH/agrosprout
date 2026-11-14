@@ -62,7 +62,7 @@ export const STRESS_WINDOW_DEFICIT_SHARE = 0.25;
 
 /**
  * Crops grown ponded (lowland paddy). These get the rice allowance from
- * crops.json `rice_extra_detail` (Brouwer & Heibloem 1986, Section 4.4):
+ * crops.json `rice_extra_detail`. Source: Brouwer & Heibloem 1986, Section 4.4:
  * percolation + seepage while ponded, soil saturation for puddling once in
  * the month before planting, and the water layer once in the planting month.
  */
@@ -216,6 +216,8 @@ export const COVER_CREDIT = { low: 0, medium: 0.5, high: 1 } as const;
 /**
  * Family diversity reaches full credit at this many plant families
  * (1 family = 0). Equal to MAX_CROPS_PER_ROTATION, the most a rotation can have.
+ * Source: team spec, docs/07-rotation-engine.md §4 ("diversity is 0 for
+ * 1 family and 1 for 3 or more").
  */
 export const FAMILIES_FOR_FULL_CREDIT = MAX_CROPS_PER_ROTATION;
 
