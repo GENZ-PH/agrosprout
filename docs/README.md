@@ -38,6 +38,7 @@ Team **Jeoleecation** (`houston-no-problem`) · Local Event **Iligan City, Phili
 | [06-architecture.md](06-architecture.md) | System design, stack, repo layout, data contracts | Engine + Frontend |
 | [07-rotation-engine.md](07-rotation-engine.md) | Water balance, candidate generation, scores, explanations, validation | Engine + Data |
 | [09-demo-plan.md](09-demo-plan.md) | 7-slide outline, story spine, video fallback | Story lead |
+| [12-infrastructure.md](12-infrastructure.md) | Cloudflare setup (Pages, Worker API, D1, R2), environments, local dev, API hooks and state, deployments, contingency | Everyone writing code |
 | [10-risks.md](10-risks.md) | Risk register + assumptions to validate | Everyone at checkpoints |
 | [decision-log.md](decision-log.md) | D1–D20 (D12, D13, D17, D19, D20 already accepted); **confirm the rest at kickoff** | Everyone |
 | [si-usage-log.md](si-usage-log.md) | SI usage record (required for submission) | Anyone using SI |

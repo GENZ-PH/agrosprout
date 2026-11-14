@@ -29,3 +29,8 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Cloudflare Workers (api/)
+.wrangler/
+.dev.vars
+api/types/
