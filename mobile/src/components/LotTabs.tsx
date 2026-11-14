@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import type { Lot } from "../types";
-import { Button } from "./Button";
 import { Icon } from "./Icon";
-import { colors, MIN_TOUCH, radius, space, text } from "./theme";
+import { colors, MIN_TOUCH, space, text } from "./theme";
 
 type Props = {
   lots: readonly Pick<Lot, "id" | "name">[];
@@ -12,7 +11,7 @@ type Props = {
   onSelect: (id: string) => void;
   /** Shows a "+" tab after the lots (S3, D32). */
   onAdd?: () => void;
-  /** Lets the farmer name the open lot ("Riverside paddy"): a pencil on its tab opens a field. */
+  /** Lets the farmer name the open lot ("Riverside paddy"): tapping its tab edits the name in place. */
   onRename?: (id: string, name: string) => void;
 };
 
@@ -21,20 +20,25 @@ const MAX_NAME = 40;
 
 /**
  * One tab per lot, for the per-lot screens (S3, S4, S5): a tab bar with the open lot underlined,
- * then a "+" tab to add a lot. Scrolls sideways when the names don't fit. On the open lot, a
- * pencil lets the farmer give it their own name, so results read "Our suggestion for Riverside paddy".
+ * then a "+" tab to add a lot. Scrolls sideways when the names don't fit. Tapping the open lot turns
+ * its name into a text field right in the tab: Enter or tapping away saves, Escape or an empty name
+ * keeps the old one. Results then read "Our suggestion for Riverside paddy".
  */
 export function LotTabs({ lots, selectedId, onSelect, onAdd, onRename }: Props) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
+  // Escape fires before blur: this stops the blur from saving what was just cancelled.
+  const cancelled = useRef(false);
   const current = lots.find((l) => l.id === selectedId);
 
   const startRename = () => {
+    cancelled.current = false;
     setDraft(current?.name ?? "");
     setEditing(true);
   };
-  const save = () => {
-    if (current && onRename && draft.trim()) onRename(current.id, draft.trim());
+  const finish = () => {
+    const name = draft.trim();
+    if (!cancelled.current && current && onRename && name && name !== current.name) onRename(current.id, name);
     setEditing(false);
   };
 
@@ -50,13 +54,40 @@ export function LotTabs({ lots, selectedId, onSelect, onAdd, onRename }: Props) 
         >
           {lots.map((l) => {
             const selected = l.id === selectedId;
+            if (selected && editing) {
+              return (
+                <View key={l.id} style={[styles.tab, styles.selected]} accessibilityRole="tab" accessibilityState={{ selected }}>
+                  <TextInput
+                    value={draft}
+                    onChangeText={setDraft}
+                    onSubmitEditing={finish}
+                    onBlur={finish}
+                    onKeyPress={(e) => {
+                      if (e.nativeEvent.key === "Escape") {
+                        cancelled.current = true;
+                        setEditing(false);
+                      }
+                    }}
+                    autoFocus
+                    selectTextOnFocus
+                    maxLength={MAX_NAME}
+                    returnKeyType="done"
+                    accessibilityLabel="Lot name"
+                    placeholder="Lot name"
+                    placeholderTextColor={colors.muted}
+                    style={[text.bodyStrong, styles.input]}
+                  />
+                  <Icon name="check" size={16} color={colors.green} />
+                </View>
+              );
+            }
             return (
               <Pressable
                 key={l.id}
-                onPress={() => (selected && onRename ? startRename() : (setEditing(false), onSelect(l.id)))}
+                onPress={() => (selected && onRename ? startRename() : onSelect(l.id))}
                 accessibilityRole="tab"
                 accessibilityState={{ selected }}
-                accessibilityHint={selected && onRename ? "Tap to name this lot" : undefined}
+                accessibilityHint={selected && onRename ? "Tap to rename this lot" : undefined}
                 style={({ pressed }) => [styles.tab, selected && styles.selected, pressed && styles.pressed]}
               >
                 <Text style={[text.bodyStrong, selected ? styles.selectedLabel : styles.label]} numberOfLines={1}>
@@ -79,27 +110,6 @@ export function LotTabs({ lots, selectedId, onSelect, onAdd, onRename }: Props) 
         </ScrollView>
       </View>
 
-      {editing && current ? (
-        <View style={styles.edit}>
-          <Text style={text.bodyStrong}>Name this lot</Text>
-          <TextInput
-            value={draft}
-            onChangeText={setDraft}
-            onSubmitEditing={save}
-            autoFocus
-            maxLength={MAX_NAME}
-            returnKeyType="done"
-            accessibilityLabel="Lot name"
-            placeholder="e.g. Riverside paddy"
-            placeholderTextColor={colors.muted}
-            style={styles.input}
-          />
-          <View style={styles.editRow}>
-            <Button label="Save" icon="check" disabled={!draft.trim()} onPress={save} style={styles.flex} />
-            <Button label="Cancel" variant="quiet" onPress={() => setEditing(false)} style={styles.flex} />
-          </View>
-        </View>
-      ) : null}
     </View>
   );
 }
@@ -123,17 +133,13 @@ const styles = StyleSheet.create({
   label: { color: colors.muted },
   selectedLabel: { color: colors.green },
   add: { minWidth: MIN_TOUCH, justifyContent: "center", paddingHorizontal: space.sm },
-  edit: { gap: space.sm, padding: space.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   input: {
-    minHeight: MIN_TOUCH,
-    paddingHorizontal: space.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surface,
-    fontSize: 16,
-    color: colors.ink,
+    minWidth: 120,
+    maxWidth: 220,
+    paddingVertical: 4,
+    paddingHorizontal: 0,
+    color: colors.green,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.green,
   },
-  editRow: { flexDirection: "row", gap: space.sm },
-  flex: { flex: 1 },
 });
