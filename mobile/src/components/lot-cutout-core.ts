@@ -11,23 +11,31 @@
 // - Crop fit uses the engine's own levels (cropFit.ts), the same colors as the farm map.
 // - Wetness and rain have no sourced class breaks, so their color is a continuous shade over the
 //   value's own range (0 dry to 1 saturated; share of the year's dry-year rain), with no cut-offs.
+// - Both panels always use the same fixed colors; nothing is rescaled per panel (#171).
+// - The comparison row (#171) is computed from the values the panels show, never typed in.
 import type { FitLevel, OptionKey, RotationOption, SoilHealthResult } from "../engine";
 import { cropFit } from "../engine/cropFit";
 import type { LotAnalysis } from "../engine/analyze";
 import type { CropLibrary, LonLat, Lot, LotCrop } from "../types";
-import { FIT_COLORS, lotFitLevel, NO_RESULT_COLOR } from "./farm-map-core";
+import { FIT_COLORS, lotFitLevel } from "./farm-map-core";
 import { FIT_LABELS } from "./recommendations-core";
 import { cropList, monthCells, OPTION_LABELS } from "./soil-health-chart-core";
 import { colors } from "./theme";
 
 export type CutoutLayer = "soil" | "fit" | "wetness" | "rain";
 
-export const CUTOUT_LAYERS: readonly { key: CutoutLayer; label: string }[] = [
-  { key: "soil", label: "Soil health" },
-  { key: "fit", label: "Crop fit" },
-  { key: "wetness", label: "Root-zone wetness" },
-  { key: "rain", label: "Rain (dry year)" },
+/**
+ * `source` says what kind of value the layer is (#171): soil health and crop fit come out of this
+ * app's model; wetness and rain are NASA POWER monthly values summed or averaged over crop months.
+ */
+export const CUTOUT_LAYERS: readonly { key: CutoutLayer; label: string; source: "model" | "power" }[] = [
+  { key: "soil", label: "Soil health", source: "model" },
+  { key: "fit", label: "Crop fit", source: "model" },
+  { key: "wetness", label: "Root-zone wetness", source: "power" },
+  { key: "rain", label: "Rain (dry year)", source: "power" },
 ];
+
+export const SOURCE_TAGS = { model: "Model estimate", power: "NASA POWER, monthly" } as const;
 
 // ---------------------------------------------------------------------------
 // Shape: lon/lat outline -> SVG path in a box
@@ -105,9 +113,27 @@ export interface PanelValue {
   detail: string;
   /** Class name in the legend, for the screen-reader summary. */
   className: string;
+  /**
+   * The shown value as a number, for the comparison row (#171): the rounded soil index, wetness to
+   * 2 decimals, whole mm of rain, or the crop-fit rank (`FIT_RANK`). `null` when there is nothing
+   * to compare (no data, or a crop fit we are not sure of).
+   */
+  num: number | null;
+  /** True for "No data": drawn as an empty dashed outline so it never looks like a neutral result. */
+  missing?: true;
 }
 
-export const NO_DATA: PanelValue = { color: NO_RESULT_COLOR, value: "No data", detail: "Not enough data for this option.", className: "No data" };
+/** Fill of a "No data" panel: empty (the card dashes the outline), unlike gray "Stays level". */
+export const NO_DATA_COLOR = colors.surface;
+
+export const NO_DATA: PanelValue = {
+  color: NO_DATA_COLOR,
+  value: "No data",
+  detail: "Not enough data for this option.",
+  className: "No data",
+  num: null,
+  missing: true,
+};
 
 /** Lighter end of the wetness and rain shades. A mix of theme tokens, not a new color. */
 const SHADE_LOW = colors.bg;
@@ -142,6 +168,7 @@ export function soilPanel(result: SoilHealthResult, key: OptionKey): PanelValue 
     value: String(end),
     detail: `Year ${result.years}: ${end} (${words} from ${result.start})`,
     className: cls.label,
+    num: end,
   };
 }
 
@@ -182,8 +209,20 @@ export function optionFitLevel(
   return lotFitLevel(fits);
 }
 
+/**
+ * Crop-fit levels in order, worst to best, for "one level better or worse". "Not sure yet" has no
+ * place in that order, so it is not compared.
+ */
+export const FIT_RANK: Readonly<Record<Exclude<FitLevel, "unknown">, number>> = { poor: 0, watch: 1, good: 2 };
+
 export function fitPanel(level: FitLevel): PanelValue {
-  return { color: FIT_COLORS[level], value: FIT_LABELS[level], detail: "Its weakest crop sets the color.", className: FIT_LABELS[level] };
+  return {
+    color: FIT_COLORS[level],
+    value: FIT_LABELS[level],
+    detail: "Its weakest crop sets the color.",
+    className: FIT_LABELS[level],
+    num: level === "unknown" ? null : FIT_RANK[level],
+  };
 }
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -200,6 +239,7 @@ export function wetnessPanel(months: readonly number[], wetness: readonly (numbe
     value: mean.toFixed(2),
     detail: `Average over ${months.length} crop month${months.length === 1 ? "" : "s"}; driest ${MONTHS[driest - 1]} ${min.toFixed(2)}`,
     className: "Root-zone wetness",
+    num: Number(mean.toFixed(2)),
   };
 }
 
@@ -220,6 +260,7 @@ export function rainPanel(months: readonly number[], p20: readonly (number | nul
     value: mm(caught),
     detail: `Falls in the crop months of a dry year: ${Math.round(share * 100)}% of that year's rain`,
     className: "Rain in crop months",
+    num: Math.round(caught),
   };
 }
 
@@ -229,8 +270,10 @@ export function rainPanel(months: readonly number[], p20: readonly (number | nul
 
 export interface CutoutPanel {
   key: OptionKey;
-  /** "Now: Your crops" or "Option B: Best for water". */
+  /** "Your current crops" or "Best other option". */
   title: string;
+  /** Which option it is: "Option A: Your crops" or "Option B: Best for water". */
+  option: string;
   /** "Rice ×2" or "Calendar months: Jun-Sep". */
   crops: string;
   value: PanelValue;
@@ -253,7 +296,8 @@ export function cutoutModel(
   const best = bestOtherOption(opts);
   const chosen = [a, best].filter((o): o is RotationOption => !!o);
   const panels = chosen.map((o): CutoutPanel => {
-    const title = o.key === "A" ? `Now: ${OPTION_LABELS.A}` : `Option ${o.key}: ${OPTION_LABELS[o.key]}`;
+    const title = o.key === "A" ? "Your current crops" : "Best other option";
+    const option = `Option ${o.key}: ${OPTION_LABELS[o.key]}`;
     const crops = o.slots.length ? cropList(o.slots.map((s) => cropName(s.crop_id))) : "No crops";
     let value: PanelValue;
     switch (layer) {
@@ -270,15 +314,109 @@ export function cutoutModel(
         value = rainPanel(cropMonths(o), analysis.monthly.precip_mm.p20);
         break;
     }
-    return { key: o.key, title, crops, value };
+    return { key: o.key, title, option, crops, value };
   });
   const same = panels.length === 2 && panels[0].value.value === panels[1].value.value && panels[0].value.color === panels[1].value.color;
   return { panels, same };
 }
 
+// ---------------------------------------------------------------------------
+// The comparison row (#171): current vs the other option on the selected layer
+// ---------------------------------------------------------------------------
+
+export interface CutoutComparison {
+  /**
+   * Who does better on this layer. Only soil health and crop fit have a "better" (a higher index,
+   * a better fit level). Wetness and rain are only more or less: too wet is a risk too. `null` then,
+   * and when the two can't be compared.
+   */
+  better: "current" | "other" | "same" | null;
+  /** Other minus current, as shown: "−1 point", "+0.03", "+120 mm", "+1 level". `null` if not comparable. */
+  diff: string | null;
+  /** Sign of the difference, for the tone of the difference pill. */
+  sign: -1 | 0 | 1 | null;
+  /** One plain sentence. */
+  sentence: string;
+}
+
+const MINUS = "−";
+const signed = (n: number, text: string) => `${n > 0 ? "+" : n < 0 ? MINUS : ""}${text}`;
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+const LEVEL_WORDS = ["", "one level", "two levels"];
+
+/**
+ * Compare the two panels of a model on its layer, from the values the panels show (so the row
+ * always matches the shapes). `null` when there is only one panel.
+ */
+export function cutoutComparison(layer: CutoutLayer, model: CutoutModel): CutoutComparison | null {
+  if (model.panels.length < 2) return null;
+  const [cur, oth] = model.panels;
+  const who = `Option ${oth.key}`;
+  if (cur.value.num === null || oth.value.num === null) {
+    const why =
+      cur.value.missing || oth.value.missing
+        ? "data is missing for one of them."
+        : "the crop fit is not sure yet for one of them.";
+    return { better: null, diff: null, sign: null, sentence: `Can't compare: ${why}` };
+  }
+  const d = Math.round((oth.value.num - cur.value.num) * 100) / 100;
+  const abs = Math.abs(d);
+  const sign = (Math.sign(d) as -1 | 0 | 1) || 0;
+  switch (layer) {
+    case "soil": {
+      const pts = plural(abs, "point", "points");
+      return {
+        better: sign > 0 ? "other" : sign < 0 ? "current" : "same",
+        diff: sign === 0 ? "No difference" : signed(d, pts),
+        sign,
+        sentence:
+          sign === 0
+            ? "Both end at the same soil health value."
+            : sign < 0
+              ? `Your current crops do better on soil health, by ${pts}.`
+              : `${who} does better on soil health, by ${pts}.`,
+      };
+    }
+    case "fit": {
+      const lv = LEVEL_WORDS[abs] ?? plural(abs, "level", "levels");
+      return {
+        better: sign > 0 ? "other" : sign < 0 ? "current" : "same",
+        diff: sign === 0 ? "Same level" : signed(d, plural(abs, "level", "levels")),
+        sign,
+        sentence:
+          sign === 0
+            ? "Both have the same crop fit."
+            : sign < 0
+              ? `Your current crops fit better, by ${lv}.`
+              : `${who} fits better, by ${lv}.`,
+      };
+    }
+    case "wetness":
+      return {
+        better: null,
+        diff: sign === 0 ? "No difference" : signed(d, abs.toFixed(2)),
+        sign,
+        sentence:
+          sign === 0
+            ? "Both have the same root-zone wetness in their crop months."
+            : `The crop months of ${who} are ${sign > 0 ? "wetter" : "drier"}, by ${abs.toFixed(2)}. Wetter is not always better.`,
+      };
+    case "rain":
+      return {
+        better: null,
+        diff: sign === 0 ? "No difference" : signed(d, mm(abs)),
+        sign,
+        sentence:
+          sign === 0
+            ? "Both catch the same dry-year rain in their crop months."
+            : `The crop months of ${who} catch ${mm(abs)} ${sign > 0 ? "more" : "less"} rain in a dry year.`,
+      };
+  }
+}
+
 /** Legend rows for a layer. Wetness and rain have a shade instead (see `cutoutShade`). */
-export function cutoutLegend(layer: CutoutLayer): { color: string; label: string }[] {
-  const noData = { color: NO_RESULT_COLOR, label: "No data" };
+export function cutoutLegend(layer: CutoutLayer): { color: string; label: string; missing?: true }[] {
+  const noData = { color: NO_DATA_COLOR, label: "No data", missing: true as const };
   switch (layer) {
     case "soil":
       return [SOIL_CLASSES.up, SOIL_CLASSES.level, SOIL_CLASSES.down, noData];
@@ -300,6 +438,7 @@ export function cutoutShade(layer: CutoutLayer): { low: string; high: string; lo
 /** One line for screen readers: the lot, the layer, then each panel's crops, value and what it means. */
 export function cutoutSummary(lotName: string, layer: CutoutLayer, model: CutoutModel): string {
   const name = CUTOUT_LAYERS.find((l) => l.key === layer)?.label ?? layer;
-  const parts = model.panels.map((p) => `${p.title}, ${p.crops}: ${p.value.value}. ${p.value.detail}.`);
-  return [`${lotName}, ${name.toLowerCase()}.`, ...parts, model.same ? "Both the same." : ""].join(" ").trim();
+  const parts = model.panels.map((p) => `${p.title} (${p.option}), ${p.crops}: ${p.value.value}. ${p.value.detail}.`);
+  const cmp = cutoutComparison(layer, model);
+  return [`${lotName}, ${name.toLowerCase()}.`, ...parts, cmp?.sentence ?? ""].join(" ").trim();
 }

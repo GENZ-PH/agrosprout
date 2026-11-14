@@ -124,11 +124,11 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   "lot-cutout": {
     id: "lot-cutout",
     sources: ["power", "fao56", "ecocrop", "crop-library", "farmer"],
-    title: "Now vs best option",
-    what: "The shape of the lot you drew, shown twice: on the left with your crops now, on the right with the best other option for this lot (the one with the highest total score). Each shape is filled with one color for the kind of data you pick: Soil health, Crop fit, Root-zone wetness or Rain in a dry year. The number or words on the shape is its value.",
+    title: "Lot comparison",
+    what: "The shape of the lot you drew, shown twice: on the left with your crops now, on the right with the best other option for this lot. \"Best\" means the highest total score over all your priorities, so on one kind of data your current crops can still do better. Each shape is filled with one color for the kind of data you pick: Soil health, Crop fit, Root-zone wetness or Rain in a dry year. The number or words on the shape is its value.",
     source:
       "Soil health is the 3-year Soil Health Index from this app's rotation model. Crop fit is the same check as \"Your crops here\" (FAO-56 crop water use, FAO Ecocrop temperature ranges). Root-zone wetness is NASA POWER GWETROOT (0 dry, 1 saturated) and rain is NASA POWER PRECTOTCORR in a dry year (the 20th percentile), both over the months a crop is in the field. Years used: {period}.",
-    read: "Compare the two shapes. Soil health: green goes up from the start, gray stays level, orange goes down. Crop fit: the same colors as \"Your crops here\". Wetness and rain: darker blue means wetter, or more of the year's rain falling while a crop is in the field. Gray with \"No data\" means a value is missing.",
+    read: "Compare the two shapes. Soil health: green goes up from the start, gray stays level, orange goes down. Crop fit: the same colors as \"Your crops here\". Wetness and rain: darker blue means wetter, or more of the year's rain falling while a crop is in the field. An empty shape with a dashed outline and \"No data\" means a value is missing. The row under the shapes gives both values and the difference, and says which one does better when that has a meaning.",
     limits: [
       "One color per lot: the data has one value for the whole lot, so nothing here shows differences inside your field.",
       "Soil health is a relative indicator from this model, not a soil test. It does not show carbon or nitrogen.",
@@ -447,3 +447,14 @@ export const LIMITATIONS: readonly string[] = [
 export function fill(text: string, vars: Readonly<Record<string, string>>): string {
   return text.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? vars[k] : m));
 }
+
+/**
+ * One line under the lot comparison's layer switch (#171): what the selected layer measures.
+ * Keys match `CutoutLayer` in components/lot-cutout-core.ts.
+ */
+export const CUTOUT_LAYER_ABOUT = {
+  soil: "A relative soil health index from this app's model after 3 years of the plan, starting at 50. Higher is better. Not a soil test.",
+  fit: "How well the crops suit this lot's water and temperature. The weakest crop sets the level.",
+  wetness: "How wet the root zone is in the months a crop is in the field, from 0 (dry) to 1 (saturated).",
+  rain: "Rain that falls in the months a crop is in the field, in a dry year (1 year in 5 is this dry or drier).",
+} as const;
