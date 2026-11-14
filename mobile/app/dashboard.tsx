@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { type ReactNode, useCallback, useState } from "react";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { Button } from "../src/components/Button";
@@ -29,6 +29,8 @@ import { SoilHealthChart } from "../src/components/SoilHealthChart";
 import { colors, MAX_CONTENT_WIDTH, radius, space, text } from "../src/components/theme";
 import { useLayout } from "../src/components/useLayout";
 import { useFarmLotViews, useLotAnalysis } from "../src/components/useLotAnalysis";
+import { LAND_WATER } from "../src/data/land-water";
+import { lotLooksLikeWater } from "../src/lots/land-water-core";
 import { CROP_LIBRARY, cropById } from "../src/data/crops";
 import { isOtherCrop } from "../src/lots/crop-picks";
 import { seasonsText } from "../src/lots/months-core";
@@ -76,6 +78,9 @@ export default function DashboardScreen() {
   const lotView = lot ? views[lot.id] : undefined;
   const compareLot = farm.lots.find((l) => l.id === compareId);
   const compareView = compareLot ? views[compareLot.id] : undefined;
+  // Soft warning from the land map (Natural Earth): NASA's coarse cells read inner seas and lakes as land. Shown
+  // first under the tabs, because it is about this lot and asks for action; the no-soil note (sea or ice) wins.
+  const onWater = useMemo(() => (lot ? lotLooksLikeWater(LAND_WATER, lot) : false), [lot]);
 
   // The sample farm's numbers come from NASA POWER daily: its source chips say so (#144).
   return (
@@ -121,6 +126,15 @@ export default function DashboardScreen() {
             onSelect={selectLot}
             onAdd={() => router.push({ pathname: "/lots", params: { new: "1" } })}
           />
+          {onWater && views[lot.id]?.kind !== "no-soil" ? (
+            <Narrow>
+              <Notice tone="warn">
+                {lot.name} looks like it is on water (sea or lake) on our map. If this is your farm, you can go on. If not, move the
+                lot onto your farm.
+              </Notice>
+              <Button label={`Move ${lot.name} on the map`} variant="secondary" href={{ pathname: "/lots", params: { lot: lot.id } }} />
+            </Narrow>
+          ) : null}
           <ElNinoNotice />
           <LotResults key={lot.id} farm={farm} lot={lot} />
         </>
@@ -146,6 +160,17 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
   switch (view.kind) {
     case "loading":
       return <Text style={text.caption}>Loading {lot.name}...</Text>;
+    case "no-soil":
+      // NASA has no soil wetness for the spot in any month: sea or ice (hasNoSoilData), so no crop is rated.
+      return (
+        <Narrow>
+          <Notice tone="warn">
+            NASA has no soil moisture data for {lot.name}. This spot looks like sea or ice, not farmland, so there are no
+            results. Move the lot onto your farm. If your farm really is here, on a very small island, NASA has no data for it, so we can&apos;t rate it.
+          </Notice>
+          <Button label={`Move ${lot.name} on the map`} href={{ pathname: "/lots", params: { lot: lot.id } }} />
+        </Narrow>
+      );
     case "no-crops":
       return (
         <Narrow>
