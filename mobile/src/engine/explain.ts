@@ -115,18 +115,18 @@ function driver(k: ComponentKey, opt: RotationOption, a: RotationOption, access:
       const wy = y.wsi_mean.p50;
       if (wo === null || wy === null) return null;
       // Averaged over the crops in the plan, so it can differ from one crop's number in "Your crops here".
-      return `Averaged over the crops in the plan, the share of water need that rain doesn't cover in a typical year goes from ${pct(wy)} to ${pct(wo)}. Dry-stress months: ${stressCount(y.stress_months)} now, ${stressCount(o.stress_months)} with this option.`;
+      return `In a typical year, rain doesn't cover ${pct(wy)} of the crops' water need now, ${pct(wo)} with this option (averaged over the crops in the plan). Dry months: ${stressCount(y.stress_months)} now, ${stressCount(o.stress_months)} with this option.`;
     }
     case "H":
       return `Months with heat or waterlogging risk: ${stressCount(uniqMonths(y.heat_months, y.waterlog_months))} now, ${stressCount(uniqMonths(o.heat_months, o.waterlog_months))} with this option.`;
     case "S":
-      return `Bare-soil months go from ${y.bare_months.length} to ${o.bare_months.length}; nitrogen-fixing crop days go from ${Math.round(y.legume_days)} to ${Math.round(o.legume_days)}.`;
+      return `Months with bare soil: ${y.bare_months.length} now, ${o.bare_months.length} with this option. Days with a bean-family crop that adds nitrogen to the soil: ${Math.round(y.legume_days)} now, ${Math.round(o.legume_days)} with this option.`;
     case "E":
       return o.bare_rain_share === null || y.bare_rain_share === null
         ? null
-        : `The share of rain falling on bare soil goes from ${pct(y.bare_rain_share)} to ${pct(o.bare_rain_share)}.`;
+        : `Rain that falls on bare soil, where it can wash soil away: ${pct(y.bare_rain_share)} now, ${pct(o.bare_rain_share)} with this option.`;
     case "B":
-      return `Crop changes within the same plant family go from ${y.same_family_changes} of ${y.crop_changes} to ${o.same_family_changes} of ${o.crop_changes}.`;
+      return `A crop follows one of its own family (so pests and diseases carry over) ${y.same_family_changes} of ${y.crop_changes} times now, ${o.same_family_changes} of ${o.crop_changes} with this option.`;
     case "M": {
       if (!access?.on) return null;
       const used = uniq(opt.slots.map((s) => access.by_crop[s.crop_id]).filter((c) => c?.minutes != null).map((c) => `${Math.round(c.minutes as number)} min (${c.source_label})`));

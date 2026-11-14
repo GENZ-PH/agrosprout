@@ -315,10 +315,17 @@ export function Tag({ label, tone }: { label: string; tone: keyof typeof TAG }) 
   );
 }
 
+/** The confidence tag in plain words (#165); the details still say "Confidence: High/Medium/Low" and why. */
+const SURE_LABELS: Record<ConfidenceLevel, string> = {
+  high: "Confidence: high, fairly sure",
+  medium: "Confidence: medium, check locally",
+  low: "Confidence: low, check first",
+};
+
 const CONFIDENCE_TONE: Record<ConfidenceLevel, keyof typeof TAG> = { high: "good", medium: "plain", low: "warn" };
 
 export function ConfidenceTag({ level }: { level: ConfidenceLevel }) {
-  return <Tag label={`Confidence: ${CONFIDENCE_LABELS[level]}`} tone={CONFIDENCE_TONE[level]} />;
+  return <Tag label={SURE_LABELS[level]} tone={CONFIDENCE_TONE[level]} />;
 }
 
 const styles = StyleSheet.create({

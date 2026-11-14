@@ -6,7 +6,17 @@ import { METHODS_ON, SOURCE_DETAILS } from "../content/source-details";
 import { SOURCES } from "../content/sources";
 import { getCalls, subscribeCalls } from "../net/call-log";
 import { Icon } from "./Icon";
-import { closeInspector, getInspector, subscribeInspector } from "./inspector-store";
+import { router } from "expo-router";
+
+import {
+  closeInspector,
+  getInspector,
+  getPanelContext,
+  openInspector,
+  openOverview,
+  type PanelContext,
+  subscribeInspector,
+} from "./inspector-store";
 import { useLayout } from "./useLayout";
 import { BREAKPOINTS, colors, MIN_TOUCH, radius, space, text } from "./theme";
 
@@ -19,13 +29,25 @@ const MONO = Platform.select({ ios: "Menlo", android: "monospace", default: "ui-
 
 function useInspectorState() {
   const state = useSyncExternalStore(subscribeInspector, getInspector, getInspector);
+  const context = useSyncExternalStore(subscribeInspector, getPanelContext, getPanelContext);
   useEffect(() => {
     if (Platform.OS !== "web" || !state) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeInspector();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [state]);
-  return state;
+  // The overview needs a lot to describe: without one (another screen), nothing shows.
+  if (state?.view === "overview" && !context) return { state: null, context };
+  return { state, context };
+}
+
+/** The panel's content for the current state. */
+function PanelBody({ state, context }: { state: NonNullable<ReturnType<typeof getInspector>>; context: PanelContext | null }) {
+  return state.view === "overview" && context ? (
+    <OverviewBody c={context} />
+  ) : state.view === "source" ? (
+    <InspectorBody k={state.key} period={state.period} onBack={context ? openOverview : undefined} />
+  ) : null;
 }
 
 const DOCK_WIDTH = 420;
@@ -40,32 +62,32 @@ export const canDock = (width: number) => width >= BREAKPOINTS.expanded + DOCK_W
  * this in a row next to the screens). Nothing shows until a NASA source is clicked.
  */
 export function DockedInspector() {
-  const state = useInspectorState();
+  const { state, context } = useInspectorState();
   const { width } = useLayout();
   if (!canDock(width) || !state) return null;
   return (
-    <View style={styles.dock} accessibilityLabel="NASA data inspector">
-      <InspectorBody k={state.key} period={state.period} />
+    <View style={styles.dock} accessibilityLabel="NASA data panel">
+      <PanelBody state={state} context={context} />
     </View>
   );
 }
 
 /** Phones: the same panel as a sheet from the bottom. */
 export function SheetInspector() {
-  const state = useInspectorState();
+  const { state, context } = useInspectorState();
   const { width } = useLayout();
   if (canDock(width) || !state) return null;
   return (
     <Modal transparent animationType="slide" visible onRequestClose={closeInspector}>
       <Pressable style={styles.scrim} onPress={closeInspector} accessibilityLabel="Close" />
-      <View style={styles.sheet}>
-        <InspectorBody k={state.key} period={state.period} />
+      <View style={[styles.sheet, state.view === "overview" && styles.sheetTall]}>
+        <PanelBody state={state} context={context} />
       </View>
     </Modal>
   );
 }
 
-export function InspectorBody({ k, period }: { k: keyof typeof SOURCES; period: string }) {
+export function InspectorBody({ k, period, onBack }: { k: keyof typeof SOURCES; period: string; onBack?: () => void }) {
   const s = SOURCES[k];
   const d = SOURCE_DETAILS[k];
   const calls = useSyncExternalStore(subscribeCalls, getCalls, getCalls).filter((c) => c.source === k);
@@ -77,6 +99,11 @@ export function InspectorBody({ k, period }: { k: keyof typeof SOURCES; period: 
   return (
     <>
       <View style={styles.head}>
+        {onBack ? (
+          <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel="All NASA data" style={({ pressed }) => [styles.close, styles.back, pressed && styles.pressed]}>
+            <Icon name="back" size={22} color={colors.ink} />
+          </Pressable>
+        ) : null}
         <View style={styles.flex}>
           <Text style={styles.tag}>NASA data</Text>
           <Text style={text.heading} accessibilityRole="header">
@@ -198,6 +225,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 const styles = StyleSheet.create({
   dock: { width: DOCK_WIDTH, flexShrink: 0, backgroundColor: colors.surface, borderLeftWidth: 1, borderLeftColor: colors.border },
   scrim: { flex: 1, backgroundColor: "rgba(0,0,0,0.35)" },
+  sheetTall: { height: "88%", maxHeight: "88%" },
+  back: { marginLeft: -space.sm, marginRight: 0 },
   sheet: { maxHeight: "82%", backgroundColor: colors.surface, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg },
   head: { flexDirection: "row", alignItems: "flex-start", gap: space.sm, padding: space.lg, paddingBottom: space.md, borderBottomWidth: 1, borderBottomColor: colors.border },
   flex: { flex: 1, minWidth: 0 },
@@ -218,4 +247,123 @@ const styles = StyleSheet.create({
   call: { gap: 2 },
   method: { gap: space.xs, paddingTop: space.sm, borderTopWidth: 1, borderTopColor: colors.border },
   link: { ...text.small, color: colors.blue, textDecorationLine: "underline" },
+});
+
+// ---------------------------------------------------------------------------
+// Overview (#165): all NASA data behind the lot on the dashboard, laid out the way the challenge
+// asks (NASA data, the patterns it checks, how it becomes advice, its limits). Every line names
+// what the app really does (see docs/submission/fields.md "NASA Data" and engine/scores.ts).
+
+/** Weather patterns the app checks, where the farmer sees each one, and the NASA variables behind it. */
+const CHECKS: readonly { what: string; where: string; vars: string }[] = [
+  { what: "Rain and dry months", where: "Fits your rain, dry-stress months, the year calendar", vars: "NASA POWER PRECTOTCORR" },
+  {
+    what: "Crop water need (evaporation)",
+    where: "FAO-56 Penman-Monteith, month by month for each crop",
+    vars: "NASA POWER T2M, T2M_RANGE, RH2M, WS2M, ALLSKY_SFC_SW_DWN",
+  },
+  { what: "Heat", where: "Weather safety: months too hot for the crop (FAO Ecocrop ranges)", vars: "NASA POWER T2M, T2M_RANGE" },
+  { what: "Wet soil and waterlogging", where: "Weather safety: waterlogging risk", vars: "NASA POWER GWETROOT" },
+  { what: "Heavy rain", where: "Protects from washout (rain on bare soil), harvest in a heavy-rain month", vars: "NASA POWER PRECTOTCORR" },
+  { what: "Dry, typical and wet years", where: "Each result in a dry (20th percentile), typical and wet (80th) year; the drier or warmer what-if", vars: "NASA POWER, every year in the record" },
+];
+
+export function OverviewBody({ c }: { c: PanelContext }) {
+  const steps = [
+    `NASA POWER gives the weather at your lot for ${c.period || "the years of the lot's data"}${c.demo ? "" : ", asked for the lot's center rounded to 0.1°"}.`,
+    "The app works out each crop's water need month by month (FAO-56) and how much of it rain covers in a dry, typical and wet year.",
+    "It builds your crops (A) and three other plans (B to D), and scores each on eight things: fits your rain, weather safety, builds soil, protects from washout, breaks pest cycles, income, easy to get to market and easy to manage.",
+    "What matters to you sets the weights. Each plan lists why, the evidence, the benefits, the trade-offs, what is not known and what to check with your agricultural technician.",
+  ];
+  return (
+    <>
+      <View style={styles.head}>
+        <View style={styles.flex}>
+          <Text style={styles.tag}>NASA data</Text>
+          <Text style={text.heading} accessibilityRole="header">
+            The data behind {c.lotName}
+          </Text>
+          <Text style={[text.small, styles.muted]}>For agricultural technicians and anyone who wants the details.</Text>
+        </View>
+        <Pressable onPress={closeInspector} accessibilityRole="button" accessibilityLabel="Close NASA data" style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
+          <Icon name="close" size={22} color={colors.ink} />
+        </Pressable>
+      </View>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        <Section title="NASA datasets used">
+          {c.sources.map((k) => {
+            const s = SOURCES[k];
+            return (
+              <Pressable
+                key={k}
+                onPress={() => openInspector(k, c.period)}
+                accessibilityRole="button"
+                accessibilityLabel={`${s.name}: details`}
+                style={({ pressed }) => [overview.dataset, pressed && styles.pressed]}
+              >
+                <View style={styles.flex}>
+                  <Text style={[text.small, styles.strong]}>{s.name}</Text>
+                  <Text style={text.small}>{s.gives}</Text>
+                  <Text style={[text.caption, styles.muted]}>{`${s.scale}, ${fill(s.years, { period: c.period || "the years of the lot's data" })}`}</Text>
+                </View>
+                <Icon name="chevron" size={18} color={colors.green} />
+              </Pressable>
+            );
+          })}
+        </Section>
+
+        <Section title="What the data checks on your lot">
+          {CHECKS.map((x) => (
+            <View key={x.what} style={overview.check}>
+              <Text style={[text.small, styles.strong]}>{x.what}</Text>
+              <Text style={text.small}>{x.where}</Text>
+              <Text style={styles.codeSmall}>{x.vars}</Text>
+            </View>
+          ))}
+        </Section>
+
+        <Section title="From data to advice">
+          {steps.map((t, i) => (
+            <View key={t} style={styles.bullet}>
+              <Text style={[text.small, styles.strong]}>{i + 1}.</Text>
+              <Text style={[text.small, styles.flex]}>{t}</Text>
+            </View>
+          ))}
+        </Section>
+
+        <Section title="Limits">
+          {[
+            "Past records, not a forecast.",
+            "One NASA POWER cell is about 50 km wide, so your own field can be wetter, drier, warmer or cooler.",
+            "Soil health is a relative indicator from this model, not a soil test.",
+            "Income and labor are not scored yet: the crop list has no local prices or labor needs.",
+          ].map((t) => (
+            <View key={t} style={styles.bullet}>
+              <Text style={text.small}>•</Text>
+              <Text style={[text.small, styles.flex]}>{t}</Text>
+            </View>
+          ))}
+          <Pressable onPress={() => router.push("/data")} accessibilityRole="link">
+            <Text style={styles.link}>All data sources and limits</Text>
+          </Pressable>
+        </Section>
+
+        {c.extra}
+      </ScrollView>
+    </>
+  );
+}
+
+const overview = StyleSheet.create({
+  dataset: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.sm,
+    padding: space.md,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minHeight: MIN_TOUCH,
+  },
+  check: { gap: 2, paddingVertical: space.xs, borderTopWidth: 1, borderTopColor: colors.border },
 });

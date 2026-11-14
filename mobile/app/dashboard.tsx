@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { type ReactNode, useCallback, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { Button } from "../src/components/Button";
@@ -9,6 +9,10 @@ import { FarmMapCard } from "../src/components/FarmMapCard";
 import { FooterLinks } from "../src/components/FooterLinks";
 import { Header } from "../src/components/Header";
 import { HarvestCard } from "../src/components/HarvestCard";
+import { NasaDataButton } from "../src/components/NasaDataButton";
+import { openOverview, setPanelContext } from "../src/components/inspector-store";
+import { canDock } from "../src/components/SourceInspector";
+import type { SourceKey } from "../src/content/sources";
 import { WhatIfCard } from "../src/components/WhatIfCard";
 import { DataTracePanel } from "../src/components/DataTracePanel";
 import { ElNinoNotice } from "../src/components/ElNinoNotice";
@@ -60,13 +64,24 @@ import type { Farm, Lot } from "../src/types";
 // the footer links scroll with the page instead of taking a pinned strip of a phone screen.
 
 const cropName = (id: string) => cropById(id)?.name ?? id;
+/** The panel opened by itself once this visit (wide windows only). */
+let panelShown = false;
 
 export default function DashboardScreen() {
   const farm = useFarm();
   const { lot: lotParam } = useLocalSearchParams<{ lot?: string }>();
   const lot = farm.lots.find((l) => l.id === lotParam) ?? farm.lots[0];
   const views = useFarmLotViews(farm);
-  const { wide } = useLayout();
+  const { wide, width } = useLayout();
+  // On a big window (mostly judges and technicians), the NASA data panel starts open once per
+  // visit; on a phone it waits for the header button. Leaving the dashboard clears its lot.
+  useEffect(() => {
+    if (canDock(width) && !panelShown) {
+      panelShown = true;
+      openOverview();
+    }
+  }, [width]);
+  useEffect(() => () => setPanelContext(null), []);
   const selectLot = useCallback((id: string) => router.setParams({ lot: id }), []);
 
   // The sample farm's numbers come from NASA POWER daily: its source chips say so (#144).
@@ -75,7 +90,7 @@ export default function DashboardScreen() {
     <Screen width="wide">
       <Header
         title="Your farm"
-        right={<Button label="Edit farm" variant="link" onPress={() => router.push("/edit-farm")} />}
+        right={<NasaDataButton />}
       />
       {lot ? (
         <>
@@ -249,9 +264,18 @@ function LotResults({ farm, lot, overview }: { farm: Farm; lot: Lot; overview: R
           {overview}
           {harvestCard}
           {whatIf}
-          {satellite}
-          {trace}
           <MonthsPrompt lot={lot} stage={analysis.stage} />
+          <PanelLot
+            lotName={lot.name}
+            period={period}
+            demo={data.kind === "demo"}
+            extra={
+              <>
+                {satellite}
+                {trace}
+              </>
+            }
+          />
         </>
       );
     }
@@ -308,6 +332,18 @@ function MonthsPrompt({ lot, stage }: { lot: Lot; stage: 1 | 2 }) {
       </View>
     </Narrow>
   );
+}
+
+/**
+ * Tells the NASA data panel (#165) which lot the dashboard shows, and hands it the cards that
+ * live there (satellite checks, NASA requests). Renders nothing itself.
+ */
+function PanelLot({ lotName, period, demo, extra }: { lotName: string; period: string; demo: boolean; extra: ReactNode }) {
+  useEffect(() => {
+    const sources: SourceKey[] = demo ? ["power-daily", "srtm", "imerg", "smap"] : ["power"];
+    setPanelContext({ lotName, period, demo, sources, extra });
+  });
+  return null;
 }
 
 /** Keeps messages and buttons at reading width on a wide screen. */
