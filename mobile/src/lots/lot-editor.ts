@@ -43,6 +43,13 @@ export interface LotEditorState {
   /** Starts the list with a "Lot 1" placeholder when the farm has no lots yet. */
   ensureStarted: () => void;
   addPlaceholder: () => PlaceholderLot;
+  /**
+   * "+ Add lot" (D32): the lot to draw on S1. Reuses a lot not drawn yet (the farmer left
+   * S1 without drawing it), else starts the next "Lot N". Not an Undo step.
+   */
+  startNewLot: () => PlaceholderLot;
+  /** Forgets every Undo step, so Undo covers only what is changed on this visit to S1. */
+  clearHistory: () => void;
   rename: (id: string, name: string) => void;
   remove: (id: string) => void;
   /**
@@ -135,6 +142,18 @@ export function createLotEditor(api: FarmLotsApi): StoreApi<LotEditorState> {
         set((s) => ({ placeholders: [...s.placeholders, p] }));
         remember(() => dropPlaceholder(p.id));
         return p;
+      },
+
+      startNewLot: () => {
+        const existing = get().placeholders[0];
+        if (existing) return existing;
+        const p = newPlaceholder();
+        set((s) => ({ placeholders: [...s.placeholders, p] }));
+        return p;
+      },
+
+      clearHistory: () => {
+        past.length = 0;
       },
 
       rename: (id, name) => {

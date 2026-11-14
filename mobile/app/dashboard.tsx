@@ -19,7 +19,7 @@ import { useFarm, useFarmStore } from "../src/state/farm-store";
 import type { Farm, Lot } from "../src/types";
 
 // S3 Dashboard (#29, docs/11-user-flow.md): results per lot, worked out on the phone from the
-// lot's NASA data. So far: the lot tabs, Your crops here, Recommendations (options A-D with
+// lot's NASA data. So far: the lot tabs with "+ Add lot" (D32: S1 then S2 for the new lot), Your crops here, Recommendations (options A-D with
 // their explanations) and the 3-year Soil Health card (#43). The other S3 cards (lot snapshot,
 // soil moisture, getting your harvest out, continue prompt) go in LotResults too.
 // `useLotAnalysis` already returns everything they need (`LotAnalysis` in src/engine/analyze.ts).
@@ -41,7 +41,12 @@ export default function DashboardScreen() {
       <Header title="Your farm" />
       {lot ? (
         <>
-          <LotTabs lots={farm.lots} selectedId={lot.id} onSelect={(id) => router.setParams({ lot: id })} />
+          <LotTabs
+            lots={farm.lots}
+            selectedId={lot.id}
+            onSelect={(id) => router.setParams({ lot: id })}
+            onAdd={() => router.push({ pathname: "/lots", params: { new: "1" } })}
+          />
           <LotResults key={lot.id} farm={farm} lot={lot} />
         </>
       ) : (
@@ -66,7 +71,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
       return (
         <Narrow>
           <Notice tone="warn">Pick the crops you grow on {lot.name} to see its results.</Notice>
-          <Button label="Pick crops" href="/crops" />
+          <Button label="Pick crops" href={{ pathname: "/crops", params: { lot: lot.id } }} />
         </Narrow>
       );
     case "no-data":

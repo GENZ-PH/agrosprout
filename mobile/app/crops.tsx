@@ -1,4 +1,5 @@
 import { onlineManager } from "@tanstack/react-query";
+import { router, useLocalSearchParams } from "expo-router";
 import { useState, useSyncExternalStore } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
@@ -24,6 +25,8 @@ import type { Lot } from "../src/types";
 // S2 What do you plant on each lot? (#25, docs/11-user-flow.md). Picks are saved
 // in the farm store as they are tapped. The NASA data for each lot keeps loading
 // in the background (lot sync); Next never waits for it. Onboarding ends here.
+// /crops?lot=<id> shows one lot only: the lot just added with "+ Add lot" (D32), or
+// a lot whose crops are missing on the dashboard. Next goes back to that lot's results.
 
 const useOnline = () =>
   useSyncExternalStore(
@@ -32,8 +35,12 @@ const useOnline = () =>
   );
 
 export default function CropsScreen() {
-  const lots = useFarmStore((s) => s.lots);
+  const allLots = useFarmStore((s) => s.lots);
+  const { lot: lotParam } = useLocalSearchParams<{ lot?: string }>();
+  const oneLot = lotParam ? allLots.find((l) => l.id === lotParam) : undefined;
+  const lots = oneLot ? [oneLot] : allLots;
   const missing = lotsWithoutCrops(lots);
+  const ready = lots.length > 0 && missing.length === 0;
 
   return (
     <Screen
@@ -44,16 +51,26 @@ export default function CropsScreen() {
               Pick at least one crop for {missing.map((l) => l.name).join(", ")}.
             </Text>
           ) : null}
-          <Button
-            label="Next: see your results"
-            href="/dashboard"
-            size="lg"
-            disabled={lots.length === 0 || missing.length > 0}
-          />
+          {oneLot ? (
+            <Button
+              label={`Next: see ${oneLot.name}`}
+              iconAfter="chevron"
+              size="lg"
+              disabled={!ready}
+              // Back to the dashboard already open under S1, on the new lot's tab.
+              onPress={() => router.dismissTo({ pathname: "/dashboard", params: { lot: oneLot.id } })}
+            />
+          ) : (
+            <Button label="Next: see your results" href="/dashboard" size="lg" disabled={!ready} />
+          )}
         </>
       }
     >
-      <Header title="What do you plant?" right="Step 2 of 2" fallbackHref="/lots" />
+      <Header
+        title={oneLot ? `What do you plant on ${oneLot.name}?` : "What do you plant?"}
+        right={oneLot ? undefined : "Step 2 of 2"}
+        fallbackHref={oneLot ? "/dashboard" : "/lots"}
+      />
       {lots.length === 0 ? (
         <View style={styles.empty}>
           <Text style={text.body}>Plot a lot on the map first, then pick its crops here.</Text>
@@ -62,7 +79,9 @@ export default function CropsScreen() {
       ) : (
         <>
           <Text style={[text.body, { color: colors.muted }]}>
-            Tap every crop you grow on each lot, one after another or at the same time. You can change this later.
+            {oneLot
+              ? "Tap every crop you grow on this lot, one after another or at the same time. You can change this later."
+              : "Tap every crop you grow on each lot, one after another or at the same time. You can change this later."}
           </Text>
           {lots.map((lot) => (
             <LotCrops key={lot.id} lot={lot} />
