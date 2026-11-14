@@ -11,15 +11,19 @@
 
 ## Flow overview
 
-```
- ONBOARDING (short: 3 steps, then results)
- S0 Welcome ──► S1 Plot lots ──► S2 Crops per lot ──► S3 Dashboard ──► "Continue?" ──► S4 Planting months ──► S5 Side by side
- (no login)     sketch → plot,    many per lot          results + data    yes / later      per lot, per crop      your months vs
-                drag points       (NASA data fetch      + explanations                                            better months
-                                   in background)                                                                 + rotations
-
- ADD ANYTIME (not part of onboarding; from the dashboard or Edit farm)
- S6 Harvest destinations: market / storage pins + transport mode → travel time per lot → Market access on the dashboard
+```mermaid
+flowchart LR
+  subgraph ONB["Onboarding: 3 steps, then results"]
+    direction LR
+    S0["S0 Welcome<br/>no login"] --> S1["S1 Plot lots<br/>sketch → plot<br/>drag points"] --> S2["S2 Crops per lot<br/>many per lot<br/>(NASA data fetch<br/>in background)"]
+  end
+  S2 --> S3["S3 Dashboard<br/>results + data<br/>ⓘ explanations"]
+  S3 --> Q{"Continue?"}
+  Q -- "Yes" --> S4["S4 Planting months<br/>per lot, per crop"] --> S5["S5 Side by side<br/>your months vs better months<br/>+ rotations"]
+  Q -- "Later" --> S3
+  S5 --> S3
+  S3 -. "add anytime<br/>(not onboarding)" .-> S6["S6 Harvest destinations<br/>market / storage + transport<br/>→ travel time per lot"]
+  S6 -- "Market access<br/>appears" --> S3
 ```
 
 ## Screens

@@ -16,6 +16,57 @@ Team member names → fill in `docs/README.md` (they're needed on the demo slide
 
 ## Timeline
 
+```mermaid
+gantt
+  title 40-hour plan (PHT, UTC+8)
+  dateFormat YYYY-MM-DD HH:mm
+  axisFormat %a %H:%M
+  todayMarker off
+
+  section Milestones
+  Kickoff and decisions             :milestone, m0, 2026-11-14 08:00, 0d
+  Submission opens                  :milestone, m1, 2026-11-14 09:00, 0d
+  Checkpoint 1 - contracts frozen   :milestone, m2, 2026-11-14 13:00, 0d
+  Checkpoint 2 - end to end         :milestone, m3, 2026-11-14 20:00, 0d
+  Feature freeze                    :crit, milestone, m4, 2026-11-15 12:00, 0d
+  Internal submit target            :crit, milestone, m5, 2026-11-15 21:00, 0d
+  Hard deadline                     :crit, milestone, m6, 2026-11-15 23:59, 0d
+
+  section Data
+  Accounts, AppEEARS request, farm point    :d0, 2026-11-14 08:00, 1h
+  POWER fetch, ET0, demo farm build         :d1, 2026-11-14 09:00, 4h
+  Crop library, calendar, routing           :d2, 2026-11-14 14:00, 6h
+  SMAP and NDVI enrichment, Sentinel-2      :d3, 2026-11-14 21:00, 4h
+
+  section Engine
+  Engine skeleton                           :e0, 2026-11-14 08:00, 1h
+  Water balance and crop fit                :e1, 2026-11-14 09:00, 4h
+  Scores, rotations, market access          :e2, 2026-11-14 14:00, 6h
+  Planting-window scan, confidence          :e3, 2026-11-14 21:00, 4h
+
+  section Frontend
+  Repo, scaffold, first deploy              :f0, 2026-11-14 08:00, 1h
+  S0, S1 sketch to plot, S2 crops           :f1, 2026-11-14 09:00, 4h
+  S3 dashboard and S6 places                :f2, 2026-11-14 14:00, 6h
+  S4 months, S5 side by side, offline       :f3, 2026-11-14 21:00, 4h
+
+  section Story
+  Local Lead check, SI log                  :s0, 2026-11-14 08:00, 1h
+  Persona, wireframes, explainer list       :s1, 2026-11-14 09:00, 4h
+  Explainer texts, Learn, Data and Limits   :s2, 2026-11-14 14:00, 6h
+  README v1, description draft              :s3, 2026-11-14 21:00, 4h
+
+  section Whole team
+  Lunch and sync                            :t0, 2026-11-14 13:00, 1h
+  Dinner and sanity review                  :t1, 2026-11-14 20:00, 1h
+  Sleep in shifts                           :t2, 2026-11-15 01:00, 6h
+  Polish, should-haves, bug bash            :t3, 2026-11-15 07:00, 5h
+  Demo deck, screenshots, final README      :t4, 2026-11-15 12:00, 4h
+  Submission drafting                       :t5, 2026-11-15 16:00, 3h
+  Final QA and submit                       :crit, t6, 2026-11-15 19:00, 2h
+  Buffer only                               :t7, 2026-11-15 21:00, 2026-11-15 23:59
+```
+
 ### Saturday Nov 14
 
 | Time | Block | Data | Engine | Frontend/UX | Story | Exit criteria |

@@ -90,6 +90,21 @@ The farm is a **single point**. For the MVP we harmonize to **point × month**:
 3. **Anomalies**: each month's deviation from its climatology. Trends: the last 10 years against the earlier period.
 4. Keep the provenance on every derived number: `{value, unit, source, native_resolution, period}`.
 
+```mermaid
+flowchart LR
+  subgraph SRC["Sources (different grids and time steps)"]
+    A["NASA POWER<br/>~0.5° · daily/monthly"]
+    B["SMAP L4<br/>9 km · 3-hourly"]
+    C["MODIS / Sentinel-2<br/>250 m / 10 m · 8–16 day"]
+    D["SRTM<br/>30 m · static"]
+  end
+  A & B & C & D --> SP["1 · Spatial<br/>sample at lot point<br/>(buffer mean for fine grids)"]
+  SP --> TM["2 · Temporal<br/>aggregate to monthly"]
+  TM --> CL["Climatology<br/>P20 / P50 / P80"]
+  TM --> AN["3 · Anomalies<br/>+ trends"]
+  CL & AN --> PR[("4 · Output with provenance<br/>value · unit · source<br/>native resolution · period")]
+```
+
 ## Accounts to create (do this in hour 1, because some requests queue)
 
 - [ ] **NASA Earthdata Login** (free), for AppEEARS, Giovanni, and Earthdata Search. Each person creates their own; no shared passwords.

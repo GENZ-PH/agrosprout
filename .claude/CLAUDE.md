@@ -29,6 +29,7 @@ An offline-first PWA that helps smallholder farmers compare crop-rotation strate
 - Live lots: the browser calls the NASA POWER **monthly** point API (CORS `*` verified). Monthly `PRECTOTCORR` is **mm/day** (× days in month); key `YYYY13` is annual (skip); `-999` = missing.
 - `app/`: React + Vite + TypeScript PWA (`vite-plugin-pwa`). The rotation engine runs in the browser (`app/src/engine/`) so it works offline.
 - Every derived value carries provenance: `{source, native_res, period}`.
+- **Diagrams and graphs in docs use Mermaid** (```` ```mermaid ```` code blocks, which GitHub renders): flowchart for flows and architecture, gantt for schedules, sequenceDiagram for interactions. No ASCII-art diagrams. UI wireframe mockups and directory trees may stay as plain text. Quote node labels (`A["..."]`), use `<br/>` for line breaks, and avoid `:` and `;` in gantt task names.
 - Network note: on the team's network, `spaceappschallenge.org` fails TLS verification in curl/WebFetch (untrusted root). Use the browser for that site. NASA POWER and GitHub work.
 
 ## Project subagents (`.claude/agents/`)

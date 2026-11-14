@@ -3,6 +3,24 @@
 > Goal: a **transparent, explainable** engine that turns NASA-derived lot data plus crop characteristics plus farmer inputs into (1) **crop fit** per lot, (2) **≥3 comparable rotation strategies (including the farmer's current crops)**, and (3) a **"your months vs better months"** planting-window comparison. Every formula here is simple on purpose. **Validity comes from traceability, not complexity.**
 > Implemented in TypeScript (`app/src/engine/`), running **per lot** on the device. Python only prepares crop data and demo farms ([06](06-architecture.md)). UI flow: [11](11-user-flow.md).
 
+## Engine data flow
+
+```mermaid
+flowchart LR
+  LOT["Lot data<br/>NASA POWER monthly<br/>(+ SMAP · NDVI · slope<br/>for the demo farm)"] --> WB["Water balance<br/>ET₀ × Kc vs effective rain"]
+  CROPS["crops.json<br/>Kc · season · temp range<br/>perishability · calendar"] --> WB
+  FARMER["Farmer inputs<br/>crops per lot · lot details<br/>months (optional) · priorities"] --> GEN
+  WB --> FIT["Crop fit<br/>per lot"]
+  WB --> GEN["Candidate rotations<br/>+ hard filters"]
+  GEN --> SC["Component scores<br/>W · H · S · E · B · I · L · M"]
+  PLACES["Places + transport<br/>(optional, S6)"] --> M["Market access (M)"] --> SC
+  SC --> RANK["Weighted by priorities<br/>A Your crops · B Water<br/>C Soil · D Balanced"]
+  WB --> SCAN["Planting-window scan<br/>(when months are given)"]
+  RANK --> EXP["Explanations<br/>Why · Evidence · Benefits<br/>Unknowns · Check locally<br/>Confidence"]
+  SCAN --> EXP
+  FIT --> EXP
+```
+
 ## Two stages (matching the team's onboarding flow)
 
 | Stage | Farmer has given | Engine outputs | Screen |
@@ -64,6 +82,16 @@ For each crop the farmer plants on a lot, for each of their seasons:
 ### Travel time per (lot, destination)
 
 Pick the first available source and **always show which one was used**:
+
+```mermaid
+flowchart TD
+  A{"Farmer entered<br/>their own time?"} -- yes --> F["Use the farmer's time<br/>label: your time · confidence high"]
+  A -- no --> B{"Online and a<br/>route was found?"}
+  B -- yes --> R["Road route distance ÷ mode speed<br/>(+ waiting time for jeepney/bus)<br/>label: road route · confidence medium"]
+  B -- no --> E["Straight-line × circuity ÷ mode speed<br/>label: rough estimate · confidence low<br/>ask the farmer to confirm"]
+  R -. "farmer can correct" .-> F
+  E -. "farmer can correct" .-> F
+```
 
 | Priority | Source | How | Confidence |
 |---|---|---|---|

@@ -4,29 +4,45 @@
 
 ## Overview
 
+```mermaid
+flowchart TB
+  subgraph PREPARE["PREPARE: Python pipeline, run by the team (online)"]
+    direction LR
+    P1["NASA POWER<br/>daily"]
+    P2["AppEEARS<br/>SMAP · MODIS NDVI/ET · SRTM"]
+    P3["ESA Sentinel-2<br/>NDVI"]
+    P4["Crop library +<br/>typical planting calendar<br/>(cited)"]
+    PIPE["pipeline/<br/>harmonize point × month<br/>→ ET₀ (FAO-56)<br/>→ climatology, P20/P80, trends"]
+    OUT[("app/public/data/<br/>crops.json · demo/*.json")]
+    P1 & P2 & P3 & P4 --> PIPE --> OUT
+  end
+
+  subgraph DELIVER["DELIVER: static hosting, public URL"]
+    HOST["GitHub Pages / Cloudflare Pages / Netlify<br/>no server · no database · no login"]
+  end
+
+  subgraph USE["USE: farmer's phone, offline-first PWA"]
+    direction TB
+    S1["S1 Sketch lots → plots<br/>(GeoJSON)"] --> S2["S2 Crops per lot"]
+    IDB[("IndexedDB<br/>lots · crops · places · lot data")]
+    ENG["engine/ (TypeScript)<br/>water balance · crop fit · rotations<br/>planting-window scan · market access<br/>explanations"]
+    UI["S3 Dashboard · S4 Months<br/>S5 Side by side · S6 Places<br/>all work offline"]
+    S2 --> IDB
+    IDB <--> ENG --> UI
+  end
+
+  POWER["NASA POWER API<br/>monthly 2001–2024<br/>CORS ✓ · ~33 KB · ~1.5 s per lot"]
+  OSRM["OSRM routing (optional)<br/>CORS ✓"]
+
+  OUT --> HOST
+  HOST -- "first visit: service worker<br/>precaches app + data" --> S1
+  S1 -- "lot centroid, rounded 0.1°" --> POWER
+  POWER -- "monthly climate → ET₀ computed in browser" --> IDB
+  UI -. "S6 places, if online<br/>(rounded ~100 m)" .-> OSRM
+  OSRM -. "road distance" .-> IDB
 ```
- ┌──────────────────────────── PREPARE (Python, run by us, online) ───────────────────────────┐
- │  NASA POWER (daily) · AppEEARS (SMAP, MODIS NDVI/ET, SRTM) · Sentinel-2 NDVI (ESA)          │
- │  Crop library + typical local planting calendar (curated, cited)                             │
- │     └─► pipeline/: harmonize (point × month) → ET₀ (FAO-56 PM) → climatology, P20/P80,       │
- │                     trends → app/public/data/{crops.json, demo/<farm>.json}                  │
- │         (demo farms get the full enrichment: SMAP, NDVI, slope; offline fallback for demo)   │
- └──────────────────────────────────────────────┬───────────────────────────────────────────────┘
-                                                │ static JSON + app build
- ┌──────────────────────────── DELIVER (static hosting, public URL) ──────────────────────────┐
- │  GitHub Pages / Cloudflare Pages / Netlify  (no server, no database, no login)               │
- └──────────────────────────────────────────────┬───────────────────────────────────────────────┘
-                                                │ first visit → service worker precaches app + data
- ┌──────────────────────────── USE (farmer's phone, offline-first PWA) ───────────────────────┐
- │  S1 map: farmer draws Lot 1..N (GeoJSON polygons)  ──online──►  NASA POWER API (browser call, │
- │  S2 crops per lot                                                CORS ✓, monthly 2001–2024,   │
- │                                                  ◄── ~33 KB/lot  ~1.5 s per lot)             │
- │  lot-data/<lotId>.json cached in IndexedDB  ← monthly ET₀ + climatology computed in browser   │
- │  engine/ (TS): water balance · crop fit · rotations · planting-window scan · explanations    │
- │  S3 dashboard · S4 months · S5 side-by-side: all computed on device, work offline           │
- │  online-only: map tiles, first data fetch per lot                                            │
- └──────────────────────────────────────────────────────────────────────────────────────────────┘
-```
+
+*Online-only: map tiles, the first NASA data fetch per lot, and optional road routing. Everything else runs offline.*
 
 ### Live per-lot data fetch (verified 2026-11-14)
 
@@ -118,6 +134,16 @@ agrosprout/
 ### Freehand sketch → plot (S1, team-defined)
 
 Pipeline, run on the device when the finger lifts (no network needed):
+
+```mermaid
+flowchart LR
+  C["Capture finger path<br/>(Draw mode)"] --> K{"Long enough?"}
+  K -- no --> T["Ask: try drawing<br/>around the whole lot"]
+  K -- yes --> CL["Close the loop"] --> SI["Simplify<br/>Douglas-Peucker<br/>→ 4–12 corner points"] --> UK{"Lines cross?"}
+  UK -- yes --> FX["Unkink, keep largest piece<br/>(else convex hull)"] --> ED
+  UK -- no --> ED["Editable plot<br/>drag · add · remove points<br/>live area"]
+  ED --> SV[("Save GeoJSON<br/>IndexedDB")]
+```
 
 1. **Capture**: in Draw mode, disable one-finger map panning; record pointer positions → lat/lng (keep two-finger pan/zoom).
 2. **Close**: connect the last point to the first. Discard strokes that are too short or tiny (e.g. < 6 points or < ~100 m²) with "Try drawing around the whole lot".
