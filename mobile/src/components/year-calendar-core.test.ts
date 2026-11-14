@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { listNames, RISK_TIPS, yearCalendarLines } from "./year-calendar-core";
+import { listNames, RISK_TIPS, tileLabel, yearCalendarLines } from "./year-calendar-core";
 import type { MonthState } from "./season-guide-core";
 
 const name = (id: string) => ({ rice: "Lowland rice", sorghum: "Sorghum", corn: "Corn" })[id as "rice"] ?? id;
@@ -32,4 +32,13 @@ test("an empty month says the soil is bare", () => {
 test("no risk line appears for a month without risk", () => {
   const lines = yearCalendarLines(month({ plant: ["corn"], field: ["corn"] }), name);
   assert.ok(lines.every((l) => !l.tone.startsWith("risk")));
+});
+
+test("a month tile says in words what its icons show, for screen readers (#45)", () => {
+  assert.equal(
+    tileLabel(month({ plant: ["sorghum"], harvest: ["rice"], field: ["sorghum", "rice"], risks: ["dry", "hot"] }), "November", name, true),
+    "November, now: plant Sorghum; harvest Lowland rice; short of water; too hot",
+  );
+  assert.equal(tileLabel(month({ field: ["corn"], risks: ["wet"] }), "July", name), "July: Corn in the field; too wet");
+  assert.equal(tileLabel(month({}), "March", name), "March: bare soil");
 });
