@@ -154,7 +154,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     what: "Each month of the year for the plan you pick: when to plant, when to harvest, and the months a crop may be short of water, too hot or too wet.",
     source:
       "The plan comes from the recommendations for this lot. Short of water, too hot and too wet are worked out from NASA POWER data for {period} with the FAO-56 water balance and each crop's temperature range.",
-    read: "Tap a month to see what happens in it. A sun marks a month when a crop in the field may be short of water, the thermometer a month that may be too hot, a drop a month that may be too wet. Pick another plan above to see its year instead.",
+    read: "Tap a month to see what happens in it. A sun marks a month when a crop in the field may be short of water, the thermometer a month that may be too hot, a drop a month that may be too wet. Pick another plan below the calendar to see its year instead.",
     limits: [
       "The months are from monthly averages, so a short dry or hot spell inside a month is not shown.",
       "A risk is shown only for months when a crop is in the field.",
