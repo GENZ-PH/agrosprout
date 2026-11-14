@@ -21,6 +21,8 @@ export type MapViewProps = {
   basemap?: BasemapId;
   /** Space covered by the screen's floating buttons and panels; fitting the lots avoids it. */
   inset?: MapInset;
+  /** The map sits inside a scrolling page: see `inPage` on the `init` message. */
+  inPage?: boolean;
   onMessage?: (msg: MapToApp) => void;
   accessibilityLabel?: string;
   style?: StyleProp<ViewStyle>;
@@ -73,6 +75,7 @@ export function useMapBridge(props: MapViewProps, postToPage: (msg: AppToMap) =>
           zoom: p.zoom,
           basemap: p.basemap,
           inset: p.inset,
+          inPage: p.inPage,
         });
       }
       latest.current.onMessage?.(msg);

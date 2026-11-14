@@ -22,10 +22,11 @@ import { Notice } from "../src/components/Notice";
 import { PrioritiesCard } from "../src/components/PrioritiesCard";
 import { togglePriority } from "../src/components/priorities-core";
 import { RecommendationsCard } from "../src/components/RecommendationsCard";
-import { shortCropName } from "../src/components/recommendations-core";
+import { shortCropName, topPick } from "../src/components/recommendations-core";
 import { Screen } from "../src/components/Screen";
 import { MonthsCompareList } from "../src/components/SeasonCompareCard";
 import { SoilHealthChart } from "../src/components/SoilHealthChart";
+import { TopPickCard } from "../src/components/TopPickCard";
 import { colors, MAX_CONTENT_WIDTH, radius, space, text } from "../src/components/theme";
 import { useLayout } from "../src/components/useLayout";
 import { useFarmLotViews, useLotAnalysis } from "../src/components/useLotAnalysis";
@@ -53,6 +54,10 @@ import type { Farm, Lot } from "../src/types";
 // Lot cutout (#134): right below the farm map on every screen size, the
 // selected lot's own shape drawn twice, now vs the best other option, colored by one data layer.
 // It uses the same no-scenario results as the map, so the what-if slider doesn't change it.
+//
+// Answer first (#165): the lot tabs, then "Best plan for this lot" (TopPickCard), then
+// priorities and Recommendations. The farm map and the lot cutout moved below the results, and
+// the footer links scroll with the page instead of taking a pinned strip of a phone screen.
 
 const cropName = (id: string) => cropById(id)?.name ?? id;
 
@@ -67,36 +72,35 @@ export default function DashboardScreen() {
   // The sample farm's numbers come from NASA POWER daily: its source chips say so (#144).
   return (
     <DemoDataContext.Provider value={lot?.data_ref.startsWith("demo/") ?? false}>
-    <Screen width="wide" footer={
-        <>
-          <FooterLinks />
-          <Disclaimer />
-        </>
-      }>
-      <Header title="Your farm" />
+    <Screen width="wide">
+      <Header
+        title="Your farm"
+        right={<Button label="Edit farm" variant="link" onPress={() => router.push("/edit-farm")} />}
+      />
       {lot ? (
         <>
-          <FarmMapCard
-            lots={farm.lots}
-            views={views}
-            selectedId={lot.id}
-            onSelect={selectLot}
-            wide={wide}
-          />
-          {(() => {
-            const v = views[lot.id];
-            return v?.kind === "ready" ? (
-              <LotCutoutCard lot={lot} analysis={v.analysis} library={CROP_LIBRARY} cropName={cropName} period={v.period} />
-            ) : null;
-          })()}
           <LotTabs
             lots={farm.lots}
             selectedId={lot.id}
             onSelect={selectLot}
             onAdd={() => router.push({ pathname: "/lots", params: { new: "1" } })}
           />
-          <ElNinoNotice />
-          <LotResults key={lot.id} farm={farm} lot={lot} />
+          <LotResults
+            key={lot.id}
+            farm={farm}
+            lot={lot}
+            overview={
+              <>
+                <FarmMapCard lots={farm.lots} views={views} selectedId={lot.id} onSelect={selectLot} wide={wide} />
+                {(() => {
+                  const v = views[lot.id];
+                  return v?.kind === "ready" ? (
+                    <LotCutoutCard lot={lot} analysis={v.analysis} library={CROP_LIBRARY} cropName={cropName} period={v.period} />
+                  ) : null;
+                })()}
+              </>
+            }
+          />
         </>
       ) : (
         <Narrow>
@@ -104,12 +108,16 @@ export default function DashboardScreen() {
           <Button label="Draw your lots" href="/lots" />
         </Narrow>
       )}
+      <View style={styles.footer}>
+        <FooterLinks />
+        <Disclaimer />
+      </View>
     </Screen>
     </DemoDataContext.Provider>
   );
 }
 
-function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
+function LotResults({ farm, lot, overview }: { farm: Farm; lot: Lot; overview: ReactNode }) {
   // The what-if scenario (#47) belongs to the lot being looked at; null = today's climate.
   const [scenario, setScenario] = useState<Scenario | null>(null);
   const view = useLotAnalysis(farm, lot, scenario);
@@ -117,11 +125,19 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
   const setPriorities = useFarmStore((s) => s.setPriorities);
   const { wide } = useLayout();
 
+  // The farm map stays on the page while a lot is loading or has no results yet.
+  const withOverview = (node: ReactNode) => (
+    <>
+      {node}
+      {overview}
+    </>
+  );
+
   switch (view.kind) {
     case "loading":
-      return <Text style={text.caption}>Loading {lot.name}...</Text>;
+      return withOverview(<Text style={text.caption}>Loading {lot.name}...</Text>);
     case "no-crops":
-      return (
+      return withOverview(
         <Narrow>
           <Notice tone="warn">Pick the crops you grow on {lot.name} to see its results.</Notice>
           <Button label="Pick crops" href={{ pathname: "/crops", params: { lot: lot.id } }} />
@@ -129,7 +145,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
       );
     case "no-data":
       // The lot sync downloads pending lots by itself when the phone has signal.
-      return (
+      return withOverview(
         <Narrow>
           {view.status === "pending" ? (
             <Notice icon="clock">Getting NASA climate data for {lot.name}. It downloads by itself when the phone has signal.</Notice>
@@ -142,7 +158,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
         </Narrow>
       );
     case "failed":
-      return (
+      return withOverview(
         <Narrow>
           <Notice tone="warn">Something went wrong while working out the results for {lot.name}.</Notice>
         </Narrow>
@@ -197,52 +213,45 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
       const satellite =
         data.kind === "demo" ? <SatelliteCard farmId={data.id} lotName={lot.name} info={{ id: "satellite-checks", period }} /> : null;
       const trace = <DataTracePanel data={data} />;
+      const a = analysis.rotations.options.find((o) => o.key === "A");
+      const pick = topPick(analysis.rotations.options);
+      const topCard = pick ? (
+        <Narrow>
+          <TopPickCard
+            lotName={lot.name}
+            pick={pick}
+            a={a}
+            explanation={analysis.explanations.find((e) => e.option_key === pick.key)}
+            cropName={cropName}
+            monthsHref={analysis.stage === 1 ? { pathname: "/months", params: { lot: lot.id } } : undefined}
+          />
+        </Narrow>
+      ) : null;
       return (
         <>
-          {analysis.stage === 1 ? (
-            <Narrow>
-              <Notice tone="warn">
-                Option A (Your crops) uses typical planting months for now, so it is an assumption. You can give your own
-                months.
-              </Notice>
-              <Button
-                label="Give your planting months"
-                variant="link"
-                href={{ pathname: "/months", params: { lot: lot.id } }}
-              />
-            </Narrow>
-          ) : null}
+          {topCard}
+          <ElNinoNotice />
+          {priorities}
+          {recommendations}
+          {yearCalendar}
+          {monthsCompare}
           {wide ? (
-            <>
-              <View style={styles.row}>
-                <View style={styles.col}>{fit}</View>
-                <View style={styles.col}>{soil}</View>
-              </View>
-              {priorities}
-              {recommendations}
-              {yearCalendar}
-              {monthsCompare}
-              {satellite}
-              {harvestCard}
-              {whatIf}
-              {trace}
-              <MonthsPrompt lot={lot} stage={analysis.stage} />
-            </>
+            <View style={styles.row}>
+              <View style={styles.col}>{fit}</View>
+              <View style={styles.col}>{soil}</View>
+            </View>
           ) : (
             <>
               {fit}
-              {priorities}
-              {recommendations}
-              {yearCalendar}
-              {monthsCompare}
-              {harvestCard}
-              {whatIf}
               {soil}
-              {satellite}
-              {trace}
-              <MonthsPrompt lot={lot} stage={analysis.stage} />
             </>
           )}
+          {overview}
+          {harvestCard}
+          {whatIf}
+          {satellite}
+          {trace}
+          <MonthsPrompt lot={lot} stage={analysis.stage} />
         </>
       );
     }
@@ -322,4 +331,5 @@ const styles = StyleSheet.create({
   },
   promptRow: { flexDirection: "row", gap: space.sm },
   promptCol: { gap: space.sm },
+  footer: { gap: space.xs, marginTop: space.lg },
 });

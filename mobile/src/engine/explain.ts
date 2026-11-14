@@ -76,6 +76,10 @@ const COMPONENT_NAME = COMPONENT_LABELS;
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const monthList = (ms: readonly number[]) => (ms.length === 0 ? "none" : ms.map((m) => MONTHS[m - 1]).join(", "));
+/** "none", "1 (Aug)", "3 (Jan, Feb, Mar)". */
+const stressCount = (ms: readonly number[]) => (ms.length === 0 ? "none" : `${ms.length} (${monthList(ms)})`);
+/** Months in either list, once each, in calendar order. */
+const uniqMonths = (a: readonly number[], b: readonly number[]) => [...new Set([...a, ...b])].sort((x, y) => x - y);
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const pts = (x: number) => `${x >= 0 ? "+" : "-"}${Math.round(Math.abs(x))}`;
 const line = (code: string, text: string): ExplainLine => ({ code, text });
@@ -110,10 +114,11 @@ function driver(k: ComponentKey, opt: RotationOption, a: RotationOption, access:
       const wo = o.wsi_mean.p50;
       const wy = y.wsi_mean.p50;
       if (wo === null || wy === null) return null;
-      return `In a typical year, unmet crop water need falls from ${pct(wy)} to ${pct(wo)} (stress months: ${monthList(y.stress_months)} to ${monthList(o.stress_months)}).`;
+      // Averaged over the crops in the plan, so it can differ from one crop's number in "Your crops here".
+      return `Averaged over the crops in the plan, the share of water need that rain doesn't cover in a typical year goes from ${pct(wy)} to ${pct(wo)}. Dry-stress months: ${stressCount(y.stress_months)} now, ${stressCount(o.stress_months)} with this option.`;
     }
     case "H":
-      return `Months with heat or waterlogging risk: ${monthList(y.heat_months.concat(y.waterlog_months))} to ${monthList(o.heat_months.concat(o.waterlog_months))}.`;
+      return `Months with heat or waterlogging risk: ${stressCount(uniqMonths(y.heat_months, y.waterlog_months))} now, ${stressCount(uniqMonths(o.heat_months, o.waterlog_months))} with this option.`;
     case "S":
       return `Bare-soil months go from ${y.bare_months.length} to ${o.bare_months.length}; nitrogen-fixing crop days go from ${Math.round(y.legume_days)} to ${Math.round(o.legume_days)}.`;
     case "E":
