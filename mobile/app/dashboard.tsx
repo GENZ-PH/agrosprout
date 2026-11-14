@@ -9,6 +9,8 @@ import { FarmMapCard } from "../src/components/FarmMapCard";
 import { FooterLinks } from "../src/components/FooterLinks";
 import { Header } from "../src/components/Header";
 import { HarvestCard } from "../src/components/HarvestCard";
+import { WhatIfCard } from "../src/components/WhatIfCard";
+import type { Scenario } from "../src/engine/scenario";
 import { LotTabs } from "../src/components/LotTabs";
 import { Notice } from "../src/components/Notice";
 import { PrioritiesCard } from "../src/components/PrioritiesCard";
@@ -87,7 +89,9 @@ export default function DashboardScreen() {
 }
 
 function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
-  const view = useLotAnalysis(farm, lot);
+  // The what-if scenario (#47) belongs to the lot being looked at; null = today's climate.
+  const [scenario, setScenario] = useState<Scenario | null>(null);
+  const view = useLotAnalysis(farm, lot, scenario);
   const updateLot = useFarmStore((s) => s.updateLot);
   const setPriorities = useFarmStore((s) => s.setPriorities);
   const { wide } = useLayout();
@@ -148,6 +152,9 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
       const harvestCard = (
         <HarvestCard lot={lot} destinations={farm.destinations} harvest={analysis.harvest} cropName={cropName} period={period} />
       );
+      const whatIf = (
+        <WhatIfCard scenario={scenario} onChange={setScenario} notes={analysis.scenario?.notes ?? []} period={period} />
+      );
       return (
         <>
           {analysis.stage === 1 ? (
@@ -172,6 +179,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
               {priorities}
               {recommendations}
               {harvestCard}
+              {whatIf}
               <MonthsPrompt lot={lot} stage={analysis.stage} />
             </>
           ) : (
@@ -180,6 +188,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
               {priorities}
               {recommendations}
               {harvestCard}
+              {whatIf}
               {soil}
               <MonthsPrompt lot={lot} stage={analysis.stage} />
             </>
