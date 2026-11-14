@@ -12,10 +12,10 @@ import { buildPersistOptions, type PersistedStoreOptions } from "./persist-core"
  * saved data is backed up before it is migrated or replaced. Export every store from
  * src/state/stores.ts so the app waits for it before showing screens.
  */
-export function createPersistedStore<T>(
+export function createPersistedStore<T, P = T>(
   name: string,
   initializer: StateCreator<T, [["zustand/persist", unknown]]>,
-  options: PersistedStoreOptions<T> = {},
+  options: PersistedStoreOptions<T, P> = {},
 ) {
-  return create<T>()(persist(initializer, buildPersistOptions<T>(name, options, AsyncStorage)));
+  return create<T>()(persist(initializer, buildPersistOptions<T, P>(name, options, AsyncStorage)));
 }

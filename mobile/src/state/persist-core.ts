@@ -34,11 +34,15 @@ export type HydrationStatus =
   /** Device storage could not be read. Changes stay in memory only and are not saved. */
   | { state: "failed"; reason: string };
 
-export interface PersistedStoreOptions<T> {
+export interface PersistedStoreOptions<T, P = T> {
   /** Bump when the saved shape changes, and handle the old shape in `migrate`. */
   version?: number;
   /** Turns data saved by an older version into the current shape. */
-  migrate?: (persisted: unknown, fromVersion: number) => T | Promise<T>;
+  migrate?: (persisted: unknown, fromVersion: number) => P | Promise<P>;
+  /** Storage key. Default `agrosprout-<name>`. Use it when a data contract fixes the key (e.g. `farm`). */
+  key?: string;
+  /** Picks what is saved (e.g. data only, not actions). Default: the whole state. */
+  partialize?: (state: T) => P;
 }
 
 type Listener = () => void;
@@ -91,12 +95,12 @@ const warn = (message: string) => console.warn(`[persisted-store] ${message}`);
  * Builds the zustand `persist` options for one store, with the guarantees listed at the top.
  * `createPersistedStore` (create-persisted-store.ts) is the only caller in the app.
  */
-export function buildPersistOptions<T>(
+export function buildPersistOptions<T, P = T>(
   name: string,
-  options: PersistedStoreOptions<T>,
+  options: PersistedStoreOptions<T, P>,
   raw: RawStorage,
-): PersistOptions<T, T> {
-  const key = `agrosprout-${name}`;
+): PersistOptions<T, P> {
+  const key = options.key ?? `agrosprout-${name}`;
   const version = options.version ?? 1;
   let readDone = false; // true once the saved data has been read; writes are blocked before that
   let readFailed = false;
@@ -111,7 +115,7 @@ export function buildPersistOptions<T>(
     warn(`${name}: ${reason}. Original saved data kept under "${backupKey}".`);
   }
 
-  const storage: PersistStorage<T> = {
+  const storage: PersistStorage<P> = {
     async getItem(k) {
       let text: string | null;
       try {
@@ -130,7 +134,7 @@ export function buildPersistOptions<T>(
       } catch {
         parsed = undefined;
       }
-      const value = parsed as StorageValue<T> | undefined;
+      const value = parsed as StorageValue<P> | undefined;
       if (!value || typeof value !== "object" || !("state" in value)) {
         await backup(text, "saved data was unreadable");
         readDone = true;
@@ -155,17 +159,17 @@ export function buildPersistOptions<T>(
     },
   };
 
-  const migrate = async (persisted: unknown, fromVersion: number): Promise<T> => {
+  const migrate = async (persisted: unknown, fromVersion: number): Promise<P> => {
     if (!options.migrate) {
       // Data was already backed up in getItem. Returning undefined makes zustand keep the defaults.
-      return undefined as unknown as T;
+      return undefined as unknown as P;
     }
     try {
       return await options.migrate(persisted, fromVersion);
     } catch (e) {
       if (recovered) recovered = { ...recovered, reason: `${recovered.reason}; migrate failed: ${String(e)}` };
       warn(`${name}: migrate from version ${fromVersion} failed (${String(e)}). Starting from defaults.`);
-      return undefined as unknown as T;
+      return undefined as unknown as P;
     }
   };
 
@@ -173,7 +177,8 @@ export function buildPersistOptions<T>(
     name: key,
     version,
     storage,
-    migrate,
+    migrate: migrate as PersistOptions<T, P>["migrate"],
+    ...(options.partialize ? { partialize: options.partialize } : {}),
     onRehydrateStorage: () => (_state, error) => {
       if (error) {
         if (readFailed) {
