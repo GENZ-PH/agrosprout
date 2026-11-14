@@ -61,6 +61,7 @@ test("farmMapLotStatus: a ready lot uses the crop-fit badge's color and words", 
 test("farmMapLotStatus: lots without a result are gray and say what is missing", () => {
   const cases: [MapLotView, string][] = [
     [{ kind: "no-crops" }, "Pick crops"],
+    [{ kind: "no-soil" }, "No soil data"],
     [{ kind: "no-data", status: "pending" }, "Waiting for NASA data"],
     [{ kind: "no-data", status: "error" }, "No NASA data yet"],
     [{ kind: "loading" }, "Loading"],
