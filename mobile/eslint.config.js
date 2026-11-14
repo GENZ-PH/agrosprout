@@ -4,7 +4,7 @@ const expoConfig = require("eslint-config-expo/flat");
 
 module.exports = defineConfig([
   expoConfig,
-  { ignores: ["dist/*"] },
+  { ignores: ["dist/*", "src/map/map-html.generated.ts"] },
   { files: ["workbox-config.js"], languageOptions: { sourceType: "commonjs" } },
   {
     // The rotation engine is pure TypeScript (docs/06-architecture.md, #22):
