@@ -11,6 +11,7 @@ import {
   otherCropId,
   otherCropName,
   toggleCrop,
+  addCrop,
 } from "./crop-picks";
 
 test("toggling adds a crop with no months, and removes it again; other crops keep their months", () => {
@@ -19,6 +20,14 @@ test("toggling adds a crop with no months, and removes it again; other crops kee
   assert.deepEqual(added, [rice, { crop_id: "mungbean", seasons: [] }]);
   assert.deepEqual(toggleCrop(added, "mungbean"), [rice]);
   assert.deepEqual(toggleCrop(added, "lowland-rice"), [{ crop_id: "mungbean", seasons: [] }]);
+});
+
+test("addCrop never duplicates", () => {
+  const rice: LotCrop = { crop_id: "lowland-rice", seasons: [{ plant_month: 6, harvest_month: 9 }] };
+  const once = addCrop([rice], "other:Cassava");
+  assert.deepEqual(once, [rice, { crop_id: "other:Cassava", seasons: [] }]);
+  assert.equal(addCrop(once, "other:Cassava"), once, "picking it again changes nothing");
+  assert.equal(addCrop(once, "lowland-rice"), once, "the farmer's months stay");
 });
 
 test("+ Other crops are saved as other:<name>", () => {

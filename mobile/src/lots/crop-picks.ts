@@ -28,6 +28,11 @@ export function toggleCrop(crops: LotCrop[], cropId: string): LotCrop[] {
     : [...crops, { crop_id: cropId, seasons: [] }];
 }
 
+/** Adds the crop with no months yet, or returns `crops` unchanged when it is already picked (search and top 5 picks). */
+export function addCrop(crops: LotCrop[], cropId: string): LotCrop[] {
+  return crops.some((c) => c.crop_id === cropId) ? crops : [...crops, { crop_id: cropId, seasons: [] }];
+}
+
 /** Lots that have no crop picked yet. */
 export const lotsWithoutCrops = (lots: Pick<Lot, "name" | "crops">[]) => lots.filter((l) => l.crops.length === 0);
 
