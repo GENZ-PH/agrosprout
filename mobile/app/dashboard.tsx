@@ -123,7 +123,8 @@ export default function DashboardScreen() {
     <Screen
       width="wide"
       overlay={
-        lot && views[lot.id]?.kind === "ready" ? (
+        // Hidden while the lot comparison dialog is open, so it doesn't sit on top of it.
+        lot && views[lot.id]?.kind === "ready" && !compareLot ? (
           <AdjustButton onPress={() => setAdjustOpen(true)} summary={adjustSummary(farm.priorities, scenario)} />
         ) : null
       }
@@ -324,6 +325,7 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
             cropName={cropName}
           monthsHref={analysis.stage === 1 ? { pathname: "/months", params: { lot: lot.id } } : undefined}
           wide={wide}
+          componentsLeftOut={analysis.rotations.components_left_out}
         />
       ) : null;
       const monthsHref = { pathname: "/months", params: { lot: lot.id } } as const;

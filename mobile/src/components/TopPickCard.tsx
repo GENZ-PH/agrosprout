@@ -1,8 +1,10 @@
 import type { Href } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 
-import type { Explanation, RotationOption } from "../engine";
+import type { ComponentKey, Explanation, RotationOption } from "../engine";
 import { Button } from "./Button";
+import { ExplainWithSI } from "./ExplainWithSI";
+import { explainRequest } from "./explain-core";
 import { ConfidenceTag } from "./RecommendationsCard";
 import { optionCropsText } from "./recommendations-core";
 import { OPTION_LABELS } from "./soil-health-chart-core";
@@ -24,6 +26,8 @@ type Props = {
   monthsHref?: Href;
   /** Room for two columns (big window): the verdict and scores left, the reasons right. */
   wide?: boolean;
+  /** Components no option is scored on (no data on this lot), left out of the SI request. */
+  componentsLeftOut?: readonly ComponentKey[];
 };
 
 /** " 29 points above your crops." when both totals exist. */
@@ -33,7 +37,7 @@ function gap(o: RotationOption, a: RotationOption | undefined): string {
   return d > 0 ? ` ${d} points above your crops.` : "";
 }
 
-export function TopPickCard({ lotName, pick, a, explanation, cropName, monthsHref, wide = false }: Props) {
+export function TopPickCard({ lotName, pick, a, explanation, cropName, monthsHref, wide = false, componentsLeftOut = [] }: Props) {
   const isA = pick.key === "A";
   const score = (o: RotationOption | undefined) => (o?.total == null ? "–" : String(Math.round(o.total)));
   // Phones get the main reason only (concise); a wide window has room for two.
@@ -42,7 +46,9 @@ export function TopPickCard({ lotName, pick, a, explanation, cropName, monthsHre
   return (
     <View style={[styles.card, wide && styles.cardWide, { borderLeftColor: color }]} accessibilityRole="summary">
       <View style={[styles.col, wide && styles.colLeft]}>
-        <Text style={text.caption}>Best plan for {lotName}</Text>
+        <View style={styles.pill}>
+          <Text style={styles.pillText}>Best plan for {lotName}</Text>
+        </View>
         <Text style={text.title} accessibilityRole="header">
           {isA ? "Keep your crops" : `Option ${pick.key}: ${OPTION_LABELS[pick.key]}`}
         </Text>
@@ -93,6 +99,9 @@ export function TopPickCard({ lotName, pick, a, explanation, cropName, monthsHre
             ))}
           </View>
         ) : null}
+        {explanation ? (
+          <ExplainWithSI request={explainRequest({ pick, a, explanation, cropName, componentsLeftOut })} />
+        ) : null}
         <Text style={[text.small, styles.muted]}>
           {wide
             ? "Talk it over with your agricultural technician before you change anything. All options are below."
@@ -125,6 +134,9 @@ const styles = StyleSheet.create({
   colRight: { flex: 6, minWidth: 0, paddingLeft: space.xl, borderLeftWidth: 1, borderLeftColor: colors.border },
   bullet: { flexDirection: "row", gap: space.sm },
   muted: { color: colors.muted },
+  // Brand gold behind dark text (#177): ink on gold tint passes AA with room to spare.
+  pill: { alignSelf: "flex-start", paddingHorizontal: space.sm, paddingVertical: 2, borderRadius: radius.pill, backgroundColor: colors.goldTint, borderWidth: 1, borderColor: colors.gold },
+  pillText: { fontSize: 14, lineHeight: 20, fontWeight: "700", color: colors.ink },
   bars: { gap: space.xs, marginVertical: space.xs },
   barRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
   barLabel: { width: 84 },

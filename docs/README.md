@@ -30,6 +30,7 @@ Team **Jeoleecation** (`houston-no-problem`) · Local Event **Iligan City, Phili
 |---|---|---|
 | [01-challenge-brief.md](01-challenge-brief.md) | Challenge requirements as a checklist (R1–R8), "SI" terminology | Everyone |
 | [02-submission-and-judging.md](02-submission-and-judging.md) | Hard rules, form fields, SI disclosure rules, judging rubric | Everyone |
+| [13-judging-and-compliance.md](13-judging-and-compliance.md) | **Scorecard on submit day:** each eligibility gate and judging criterion, our status with evidence, the gaps, and who closes them by when | Everyone |
 | [04-gap-analysis.md](04-gap-analysis.md) | What the initial proposal is missing and what to fix | Everyone |
 | [05-mvp-scope.md](05-mvp-scope.md) | Persona, user flow, MoSCoW, Definition of Done | Everyone |
 | [11-user-flow.md](11-user-flow.md) | **Team-defined onboarding**, screen by screen: no login → map lots → crops → dashboard → months → side-by-side | Everyone (Frontend + Story especially) |

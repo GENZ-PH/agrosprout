@@ -1,6 +1,6 @@
 {
-  "short_name": "AgriResilience",
-  "name": "AgriResilience: crop rotation planner",
+  "short_name": "AgroSprout",
+  "name": "AgroSprout: crop rotation planner",
   "description": "Compare crop rotations and planting months using NASA Earth data. Saved results work offline.",
   "icons": [
     { "src": "/favicon.ico", "sizes": "48x48", "type": "image/x-icon" },
@@ -11,6 +11,6 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#ffffff",
+  "theme_color": "#3b5a2e",
   "background_color": "#ffffff"
 }

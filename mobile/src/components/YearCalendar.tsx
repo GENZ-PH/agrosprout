@@ -2,6 +2,7 @@ import { useMemo, useRef, useState, type ComponentRef } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import type { RotationOption } from "../engine/rotations";
+import { monthLong } from "../lots/months-core";
 import type { Crop } from "../types";
 import { familyStyle, MONTH_NAMES } from "./field-year-core";
 import { Icon, type IconName } from "./Icon";
@@ -10,7 +11,7 @@ import { monthStates, type MonthRisk } from "./season-guide-core";
 import { OPTION_LABELS } from "./soil-health-chart-core";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 import { useLayout } from "./useLayout";
-import { type LineTone, yearCalendarLines } from "./year-calendar-core";
+import { type LineTone, tileLabel, yearCalendarLines } from "./year-calendar-core";
 
 // "Your year on Lot 1": the plan as a wall calendar, one tile per month (what is planted or
 // harvested, and the months a crop may be short of water, too hot or too wet). Tap a month for what
@@ -78,7 +79,7 @@ export function YearCalendar({ options, lotName, cropById, period }: Props) {
               onPress={() => setPicked(s.month)}
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
-              accessibilityLabel={`${MONTH_NAMES[s.month - 1]}${isNow ? ", now" : ""}`}
+              accessibilityLabel={tileLabel(s, monthLong(s.month), name, isNow)}
               style={[styles.tile, wide && styles.tileWide, on && styles.tileOn, isNow && !on && styles.tileNow]}
             >
               <Text style={[styles.tileMonth, on && styles.tileMonthOn]}>{MONTH_NAMES[s.month - 1]}</Text>
@@ -197,7 +198,7 @@ const styles = StyleSheet.create({
   tileBands: { alignSelf: "stretch", gap: 3 },
   band: { height: 22, borderRadius: 6, alignItems: "center", justifyContent: "center", flexDirection: "row" },
   bandEmpty: { backgroundColor: "#E9E3D6", borderWidth: 1, borderStyle: "dashed", borderColor: "#B9AE97" },
-  nowTag: { fontSize: 11, fontWeight: "800", color: colors.green },
+  nowTag: { fontSize: 12, fontWeight: "800", color: colors.green },
   detail: { backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: space.md, gap: 6 },
   line: { flexDirection: "row", alignItems: "flex-start", gap: space.sm },
 });

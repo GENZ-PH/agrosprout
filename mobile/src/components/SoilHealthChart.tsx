@@ -253,7 +253,7 @@ export function SoilHealthChart({ result, options, cropName, onInfoPress }: Prop
                   key={i}
                   x={STRIP_LEFT + (i + 0.5) * cellW}
                   y={STRIP_LABEL_H - 6}
-                  fontSize={11}
+                  fontSize={12}
                   fill={colors.muted}
                   textAnchor="middle"
                 >

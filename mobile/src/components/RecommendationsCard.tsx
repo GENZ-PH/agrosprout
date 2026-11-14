@@ -4,6 +4,7 @@ import { BarChart } from "react-native-chart-kit/v2";
 
 import type { ComponentKey, ConfidenceLevel, Explanation, OptionKey, RotationOption } from "../engine";
 import { chartTheme } from "./chartTheme";
+import { CropChips } from "./CropChips";
 import { Icon } from "./Icon";
 import { Bullets, InfoCard } from "./InfoCard";
 import {
@@ -142,6 +143,7 @@ function OptionItem({ option: o, a, explanation: ex, sameAs, componentsLeftOut, 
         {newCrops.length > 0 && !brief ? <Tag label={`New on your lot: ${newCrops.join(", ")}`} tone="plain" /> : null}
       </View>
 
+      <CropChips cropIds={o.slots.map((s) => s.crop_id)} cropName={cropName} />
       <Text style={text.small}>{crops}</Text>
 
       {brief ? null : (

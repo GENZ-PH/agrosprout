@@ -65,7 +65,7 @@ export function parseBackup(text: string): ParseResult {
     return { ok: false, reason: "The file is not a farm backup (not valid JSON)." };
   }
   if (!isObj(data) || data.kind !== BACKUP_KIND) {
-    return { ok: false, reason: "The file is not an AgriResilience farm backup." };
+    return { ok: false, reason: "The file is not an AgroSprout farm backup." };
   }
   if (data.format !== BACKUP_FORMAT) {
     return { ok: false, reason: `This backup uses format ${String(data.format)}; this app reads format ${BACKUP_FORMAT}.` };

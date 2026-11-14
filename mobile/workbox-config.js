@@ -3,7 +3,8 @@
 // API data offline comes from the TanStack Query cache (src/state/query-client.ts), not from here.
 module.exports = {
   globDirectory: "dist/",
-  globPatterns: ["**/*.{js,css,html,ttf,woff2,ico,png,svg,json}"],
+  // webp: the crop pictures (#172), so they show offline too (#36). jpg/jpeg for any later photos.
+  globPatterns: ["**/*.{js,css,html,ttf,woff2,ico,png,jpg,jpeg,webp,svg,json}"],
   globIgnores: ["sw.js", "workbox-*.js", "metadata.json"],
   swDest: "dist/sw.js",
   maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,

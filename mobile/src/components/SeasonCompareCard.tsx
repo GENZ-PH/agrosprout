@@ -11,6 +11,7 @@ import { rowsOf } from "./layout-core";
 import type { MonthsCompare } from "./lot-analysis-core";
 import { Button } from "./Button";
 import { Notice } from "./Notice";
+import { CropImage } from "./CropImage";
 import { colors, radius, space, text } from "./theme";
 
 // S5 "Your months vs better months" cards (#34, #95), shared by the dashboard (always shown,
@@ -93,9 +94,12 @@ export function SeasonCard({ w, c, period, count }: { w: SeasonWindow; c: Season
       period={period}
       subtitle={count > 1 ? `Season ${w.season_index + 1} of ${count}` : undefined}
     >
-      <View style={[styles.headline, { backgroundColor: tone.bg }]}>
-        <Text style={[text.bodyStrong, { color: tone.fg }]}>{c.headline.text}</Text>
-        {c.detail ? <Text style={text.small}>{c.detail.text}</Text> : null}
+      <View style={styles.headlineRow}>
+        <CropImage cropId={w.crop_id} size={44} />
+        <View style={[styles.headline, styles.headlineText, { backgroundColor: tone.bg }]}>
+          <Text style={[text.bodyStrong, { color: tone.fg }]}>{c.headline.text}</Text>
+          {c.detail ? <Text style={text.small}>{c.detail.text}</Text> : null}
+        </View>
       </View>
 
       <View style={styles.table} accessibilityRole="summary">
@@ -133,6 +137,8 @@ function Section({ title, lines }: { title: string; lines: readonly string[] }) 
 const styles = StyleSheet.create({
   gridRow: { flexDirection: "row", alignItems: "flex-start", gap: space.lg },
   gridCell: { flex: 1, minWidth: 0 },
+  headlineRow: { flexDirection: "row", alignItems: "flex-start", gap: space.sm },
+  headlineText: { flex: 1 },
   headline: { gap: space.xs, padding: space.md, borderRadius: radius.sm },
   table: { borderTopWidth: 1, borderTopColor: colors.border },
   tr: {
