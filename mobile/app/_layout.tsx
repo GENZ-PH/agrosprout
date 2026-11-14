@@ -1,6 +1,8 @@
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
+import { View } from "react-native";
+import { DockedInspector, SheetInspector } from "../src/components/SourceInspector";
 import { startQuerySync } from "../src/net/sync";
 import { useStoresReady } from "../src/state/hydration";
 import { startLotSync } from "../src/state/lot-sync";
@@ -34,7 +36,16 @@ export default function RootLayout() {
         dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
       }}
     >
-      {storesReady ? <Stack screenOptions={{ headerShown: false }} /> : null}
+      {storesReady ? (
+        // The NASA source inspector docks beside the screens on a wide window and pushes them over (#144).
+        <View style={{ flex: 1, flexDirection: "row" }}>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Stack screenOptions={{ headerShown: false }} />
+          </View>
+          <DockedInspector />
+          <SheetInspector />
+        </View>
+      ) : null}
     </PersistQueryClientProvider>
   );
 }

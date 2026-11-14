@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { EXPLAINERS, fill, type ExplainerId } from "../content/explainers";
 import { Icon } from "./Icon";
+import { SourceChips } from "./SourceChip";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
 // A dashboard card (#29) with its "ⓘ What am I looking at?" button. The ⓘ opens the card's
@@ -40,6 +41,7 @@ export function InfoCard({ title, explainer, period, subtitle, children }: Props
       </View>
       {subtitle ? <Text style={text.caption}>{subtitle}</Text> : null}
       {open ? <ExplainerBox id={explainer} period={period} /> : null}
+      <SourceChips keys={EXPLAINERS[explainer].sources} period={period} />
       {children}
     </View>
   );
