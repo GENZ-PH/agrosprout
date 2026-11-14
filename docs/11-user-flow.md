@@ -15,7 +15,7 @@
 flowchart LR
   subgraph ONB["Onboarding: 3 steps, then results"]
     direction LR
-    S0["S0 Welcome<br/>no login"] --> S1["S1 Plot lots<br/>sketch → plot<br/>drag points"] --> S2["S2 Crops per lot<br/>many per lot<br/>(NASA data fetch<br/>in background)"]
+    S0["S0 Welcome<br/>no login"] --> S1["S1 Plot your lot<br/>sketch → plot<br/>drag points"] --> S2["S2 Crops per lot<br/>many per lot<br/>(NASA data fetch<br/>in background)"]
   end
   S2 --> S3["S3 Dashboard<br/>results + data<br/>ⓘ explanations"]
   S3 --> Q{"Continue?"}
@@ -24,6 +24,7 @@ flowchart LR
   S5 --> S3
   S3 -. "add anytime<br/>(not onboarding)" .-> S6["S6 Harvest destinations<br/>market / storage + transport<br/>→ travel time per lot"]
   S6 -- "Market access<br/>appears" --> S3
+  S3 -. "+ Add lot<br/>(Lot 2…N)" .-> S1
 ```
 
 ## Screens
@@ -34,16 +35,18 @@ flowchart LR
 - **[suggested]** Language selector (English now; Cebuano labels as stretch).
 - Returning user: goes straight to S3 Dashboard (data loaded from the phone).
 
-### S1 — Plot your lots on the map
+### S1 — Plot your lot on the map
 - Satellite map. **"Find me"** (GPS, which also works offline) or search a place name.
 - **Draw the lot: three ways, one result (an editable plot):**
   1. **✏️ Sketch it (main way, team-defined):** tap **Draw**, then trace roughly around the lot with one finger. On release, the app **analyzes the sketch and converts it into a clean land plot**: it closes the loop, smooths the shaky line into a few corner points, and fixes crossed lines (details in 06, "Freehand sketch → plot").
   2. **📍 Tap the corners:** tap each corner, then tap the first point to close.
   3. **Fallback:** **"Drop a pin + type the area"**, if drawing is hard on the device.
-- **Adjust the plot:** the plot shows **big draggable corner points**. **Drag a point** to move it, **tap the small "+" on an edge** to add a point there, **long-press a point** to remove it. The area (hectares) updates live while dragging. **Undo** and **Redraw** are always visible.
+- **Zoom check:** Draw and Tap corners start only when the map is close enough to see the lot's edges (zoom 16 or closer). Further out, the app zooms in first and asks the farmer to centre the lot and tap again.
+- **Adjust the plot:** a saved lot shows as a **clean outline, without points**. **Adjust** shows the **big draggable corner points**: **drag a point** to move it, **tap the small dot on an edge** to add a point there, **long-press a point** to remove it. The area (hectares) updates live while dragging. **Done** hides the points again. **Undo** and **Redraw** are always visible.
 - **[Could]** "Straighten?" If the sketch is nearly a rectangle, offer to snap it to a clean rectangle (still adjustable).
 - While in Draw mode, **one finger draws and two fingers move/zoom the map**, so sketching doesn't fight with panning.
-- **Name the lot** (default **"Lot 1"**) → **"+ Add lot"** for Lot 2…Lot N. Lots are listed under the map; each can be **renamed, re-adjusted, redrawn, or deleted**.
+- **One lot in onboarding** (D32, proposed): the map fills the screen. Only a round **back** button (top left) and **Find me** + zoom (top right) float on it. The step, the hint, and big labelled buttons sit in one panel at the bottom (a card in the lower right on a wide screen). The farmer draws **Lot 1** (tap its name in the panel to rename it), then **Next → S2**.
+- **More lots come from the dashboard:** **"+ Add lot"** on S3 opens this same map for Lot 2…Lot N, then S2 for that lot's crops. Each lot can be **renamed, re-adjusted, redrawn, or deleted** from its lot menu on the dashboard or from Edit farm.
 - **[suggested]** Optional "Lot details", each defaulting to **"I don't know"**:
   - Land type: lowland/paddy · upland · sloping
   - Water: rain only · some irrigation · full irrigation
@@ -58,7 +61,7 @@ flowchart LR
 - Next → S3. **Onboarding ends here.** Harvest destinations are added later (S6) to keep onboarding short.
 
 ### S3 — Dashboard (results + data + explanations)
-Per lot (tabs or swipe cards):
+Per lot (tabs or swipe cards). **"+ Add lot"** sits next to the lot tabs (opens S1 for the new lot, then S2 for its crops), and each lot has a menu: **Redraw · Rename · Delete** (D32).
 
 | Card | Shows | "ⓘ What am I looking at?" explains |
 |---|---|---|

@@ -20,6 +20,7 @@ import {
   type BasemapId,
   BRIDGE_SOURCE_APP,
   BRIDGE_SOURCE_MAP,
+  type MapInset,
   type MapLot,
   type MapMode,
   type MapPlace,
@@ -78,8 +79,11 @@ const map = L.map("map", {
   maxZoom: 20,
   doubleClickZoom: false,
   attributionControl: true,
+  zoomControl: false,
 });
 map.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
+// Top right, under the app's Find me button (S1 puts its title bar top left).
+L.control.zoom({ position: "topright" }).addTo(map);
 
 let tiles: L.TileLayer | null = null;
 function setBasemap(id: BasemapId) {
@@ -100,7 +104,7 @@ const WHITE = "#FFFFFF";
 
 const adapter = new TerraDrawLeafletAdapter({ lib: L, map });
 
-let mode: MapMode = "select";
+let mode: MapMode = "view";
 let activeLotId: string | undefined;
 
 // While sketching, one finger must draw, never pan. Terra Draw turns map dragging
@@ -123,10 +127,12 @@ const draw = new TerraDraw({
     }),
     new TerraDrawPolygonMode({
       pointerDistance: 30,
+      // Saved lots are stored as polygon features, so this is also how a lot looks
+      // outside adjust mode: a white outline, like the selected lot.
       styles: {
         fillColor: LOT,
         fillOpacity: 0.25,
-        outlineColor: LOT,
+        outlineColor: WHITE,
         outlineWidth: 3,
         closingPointWidth: 10,
         closingPointColor: WHITE,
@@ -258,11 +264,18 @@ function setPlaces(places: MapPlace[]) {
   }
 }
 
+// The part of the map covered by the app's buttons and panels (see MapInset).
+let inset: MapInset = { top: 0, right: 0, bottom: 0, left: 0 };
+
 function fitLots() {
   const rings = [...lotNames.keys()].map(ringOf).filter((r): r is LonLat[] => !!r);
   if (!rings.length) return;
   const bounds = L.latLngBounds(rings.flat().map(([lon, lat]) => [lat, lon] as [number, number]));
-  map.fitBounds(bounds, { padding: [40, 40], maxZoom: 18 });
+  map.fitBounds(bounds, {
+    paddingTopLeft: [inset.left + 40, inset.top + 40],
+    paddingBottomRight: [inset.right + 40, inset.bottom + 40],
+    maxZoom: 18,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -281,7 +294,7 @@ function setMode(next: MapMode, lotId?: string) {
     else if (next === "select") {
       draw.setMode("select");
       if (lotId && draw.hasFeature(lotId)) draw.selectFeature(lotId);
-    } else draw.setMode("static");
+    } else draw.setMode("static"); // "view" and "pin": lots show without points, taps don't select
   }
   document.body.dataset.mode = next;
 }
@@ -329,8 +342,9 @@ function adoptDrawnShape(tempFeatureId: string, kind: "sketch" | "corners") {
   }
   putLot(lotId, ring);
   sendLot(lotId, fix);
-  setMode("select", lotId);
-  post({ type: "modeChanged", mode: "select" });
+  // A clean outline without points; the farmer taps Adjust in the app to show them.
+  setMode("view", lotId);
+  post({ type: "modeChanged", mode: "view" });
 }
 
 draw.on("finish", (id, context) => {
@@ -368,11 +382,13 @@ function receive(msg: AppToMap) {
   switch (msg.type) {
     case "init": {
       setBasemap(msg.basemap ?? DEFAULT_BASEMAP);
+      if (msg.inset) inset = msg.inset;
       setLots(msg.lots);
       setPlaces(msg.places);
       if (msg.lots.length) fitLots();
       else if (msg.center) map.setView([msg.center[1], msg.center[0]], msg.zoom ?? DEFAULT_ZOOM);
       setMode(msg.mode, msg.activeLotId);
+      post({ type: "zoomChanged", zoom: map.getZoom() });
       break;
     }
     case "setMode":
@@ -386,6 +402,12 @@ function receive(msg: AppToMap) {
       break;
     case "fitLots":
       fitLots();
+      break;
+    case "setInset":
+      inset = msg.inset;
+      break;
+    case "zoomIn":
+      if (map.getZoom() < msg.zoom) map.setZoom(msg.zoom);
       break;
     case "gps": {
       gpsLayer?.remove();
@@ -406,5 +428,15 @@ window.addEventListener("message", (e: MessageEvent) => {
   if (data && data.source === BRIDGE_SOURCE_APP && data.msg) receive(data.msg);
 });
 
+// While adjusting, a tap beside the lot would hide its points; keep them showing until Done.
+draw.on("deselect", () => {
+  if (mode !== "select" || !activeLotId) return;
+  const id = activeLotId;
+  setTimeout(() => {
+    if (mode === "select" && activeLotId === id && draw.hasFeature(id)) draw.selectFeature(id);
+  }, 0);
+});
+
+map.on("zoomend", () => post({ type: "zoomChanged", zoom: map.getZoom() }));
 draw.on("ready", () => post({ type: "ready" }));
 draw.start();
