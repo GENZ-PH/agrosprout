@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { Fragment, type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { describeScenario } from "../src/components/what-if-core";
 import { AdjustButton, AdjustSheet } from "../src/components/AdjustControls";
@@ -33,7 +33,8 @@ import { shortCropName, topPick } from "../src/components/recommendations-core";
 import { Screen } from "../src/components/Screen";
 import { MonthsCompareList } from "../src/components/SeasonCompareCard";
 import { SoilHealthChart } from "../src/components/SoilHealthChart";
-import { TopPickCard } from "../src/components/TopPickCard";
+import { FarmerSuggestion } from "../src/components/FarmerSuggestion";
+import { Icon } from "../src/components/Icon";
 import { colors, MAX_CONTENT_WIDTH, radius, space, text } from "../src/components/theme";
 import { useLayout } from "../src/components/useLayout";
 import { useFarmLotViews, useLotAnalysis } from "../src/components/useLotAnalysis";
@@ -305,7 +306,13 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
         <HarvestCard lot={lot} destinations={farm.destinations} harvest={analysis.harvest} cropName={cropName} period={period} />
       );
       const yearCalendar = (
-        <YearCalendar options={analysis.rotations.options} lotName={lot.name} cropById={cropById} period={period} />
+        <YearCalendar
+          options={analysis.rotations.options}
+          lotName={lot.name}
+          cropById={cropById}
+          period={period}
+          initialKey={topPick(analysis.rotations.options)?.key}
+        />
       );
       const whatIf = (
         <WhatIfCard scenario={scenario} onChange={setScenario} notes={analysis.scenario?.notes ?? []} period={period} />
@@ -317,14 +324,13 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
       const a = analysis.rotations.options.find((o) => o.key === "A");
       const pick = topPick(analysis.rotations.options);
       const topCard = pick ? (
-        <TopPickCard
-            lotName={lot.name}
-            pick={pick}
-            a={a}
-            explanation={analysis.explanations.find((e) => e.option_key === pick.key)}
-            cropName={cropName}
-          monthsHref={analysis.stage === 1 ? { pathname: "/months", params: { lot: lot.id } } : undefined}
-          wide={wide}
+        <FarmerSuggestion
+          lotName={lot.name}
+          pick={pick}
+          a={a}
+          explanation={analysis.explanations.find((e) => e.option_key === pick.key)}
+          cropName={cropName}
+          cropById={cropById}
           componentsLeftOut={analysis.rotations.components_left_out}
         />
       ) : null;
@@ -339,16 +345,20 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
               <Button label="Back to today's climate" variant="secondary" onPress={() => setScenario(null)} />
             </Narrow>
           ) : null}
+          {/* Farmer first (dashboard audit 2026-11-15): the answer, the year, then what the farmer can do.
+              The other plans, scores, evidence and charts are under "Details for your technician". */}
           {topCard}
-          <ElNinoNotice />
-          {recommendations}
           {yearCalendar}
-          {monthsCompare}
-          {fit}
-          {soil}
-          {overview}
+          <ElNinoNotice />
           {harvestCard}
           <MonthsPrompt lot={lot} stage={analysis.stage} />
+          <Details startOpen={wide}>
+            {recommendations}
+            {monthsCompare}
+            {fit}
+            {soil}
+            {overview}
+          </Details>
           <AdjustSheet visible={adjustOpen} onClose={closeAdjust}>
             {priorities}
             {whatIf}
@@ -454,6 +464,34 @@ function PanelLot({ lotName, period, demo, extra }: { lotName: string; period: s
   return null;
 }
 
+/**
+ * "Details for your technician": everything past the farmer's answer (other plans with scores and
+ * evidence, months compare, crop fit, soil, the farm map). Closed on a phone so the farmer is not
+ * asked to read it; open on a big window, where judges and technicians look.
+ */
+function Details({ startOpen, children }: { startOpen: boolean; children: ReactNode }) {
+  const [open, setOpen] = useState(startOpen);
+  return (
+    <View style={styles.section}>
+      <Pressable
+        onPress={() => setOpen((v) => !v)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        style={({ pressed }) => [styles.detailsHead, pressed && styles.detailsPressed]}
+      >
+        <View style={styles.flex1}>
+          <Text style={text.heading}>Details for your technician</Text>
+          <Text style={text.caption}>Other plans, scores, NASA data and charts.</Text>
+        </View>
+        <View style={{ transform: [{ rotate: open ? "270deg" : "90deg" }] }}>
+          <Icon name="chevron" size={24} color={colors.green} />
+        </View>
+      </Pressable>
+      {open ? children : null}
+    </View>
+  );
+}
+
 /** Keeps messages and buttons at reading width on a wide screen. */
 function Narrow({ children }: { children: ReactNode }) {
   return <View style={styles.narrow}>{children}</View>;
@@ -485,5 +523,18 @@ const styles = StyleSheet.create({
   promptRow: { flexDirection: "row", gap: space.sm },
   promptCol: { gap: space.sm },
   sheetLinks: { gap: space.sm },
+  detailsHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.sm,
+    minHeight: 64,
+    padding: space.lg,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.green,
+    backgroundColor: colors.surface,
+  },
+  detailsPressed: { backgroundColor: colors.pressed },
+  flex1: { flex: 1, minWidth: 0 },
   footer: { gap: space.xs, marginTop: space.lg },
 });

@@ -24,17 +24,19 @@ type Props = {
   cropById: (id: string) => Crop | undefined;
   /** Years of the lot's data, for the ⓘ. */
   period: string;
+  /** The plan shown first (the suggested one); the farmer can switch. Defaults to their own crops. */
+  initialKey?: RotationOption["key"];
 };
 
 const TILE_W = 58;
 const RISK_ICON: Record<MonthRisk, IconName> = { dry: "sun", hot: "heat", wet: "drop" };
 const RISK_COLOR: Record<MonthRisk, string> = { dry: "#B5641B", hot: "#B3261E", wet: "#1D5FA8" };
 
-export function YearCalendar({ options, lotName, cropById, period }: Props) {
+export function YearCalendar({ options, lotName, cropById, period, initialKey }: Props) {
   const { wide } = useLayout();
   const [info, setInfo] = useState(false);
   const nowMonth = new Date().getMonth() + 1;
-  const [key, setKey] = useState<RotationOption["key"]>(options[0].key);
+  const [key, setKey] = useState<RotationOption["key"]>(initialKey && options.some((o) => o.key === initialKey) ? initialKey : options[0].key);
   const [picked, setPicked] = useState(nowMonth);
   const stripRef = useRef<ComponentRef<typeof ScrollView>>(null);
   const selected = options.find((o) => o.key === key) ?? options[0];
