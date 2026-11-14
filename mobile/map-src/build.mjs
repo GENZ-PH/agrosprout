@@ -39,7 +39,8 @@ html, body, #map { margin: 0; width: 100%; height: 100%; background: #3F4A30; }
   font: 600 13px/1.3 system-ui, -apple-system, Roboto, sans-serif; padding: 3px 8px; }
 .lot-label::before { display: none; }
 .leaflet-control-attribution { font-size: 10px; }
-/* Zoom buttons: 44 px touch targets (Leaflet's default is 30-34 px). */
+/* Zoom buttons: 44 px touch targets (Leaflet's default is 30-34 px), below the app's Find me button. */
+.leaflet-top.leaflet-right { top: 58px; }
 .leaflet-bar a, .leaflet-touch .leaflet-bar a { width: 44px; height: 44px; line-height: 44px; font-size: 22px; }
 </style>
 </head>

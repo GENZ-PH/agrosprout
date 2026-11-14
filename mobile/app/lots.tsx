@@ -5,19 +5,17 @@ import { BackHandler, Pressable, StyleSheet, Text, TextInput, View } from "react
 import { Button } from "../src/components/Button";
 import { Header } from "../src/components/Header";
 import { Icon } from "../src/components/Icon";
-import { LotRow } from "../src/components/LotRow";
 import { Screen } from "../src/components/Screen";
-import { colors, radius, space, text } from "../src/components/theme";
-import type { MapLot, MapMode, MapPlace, MapToApp } from "../src/map/bridge";
-import { MapView, type MapViewHandle } from "../src/map/MapView";
+import { colors, MIN_TOUCH, radius, space, text } from "../src/components/theme";
 import { isPinLot, parseHectares, pinShape } from "../src/lots/lot-editor";
 import { useLotEditor } from "../src/lots/use-lot-editor";
+import type { MapLot, MapMode, MapPlace, MapToApp } from "../src/map/bridge";
+import { MapView, type MapViewHandle } from "../src/map/MapView";
 
-// S1 Plot your lots (#21, docs/11-user-flow.md) with the real map (#19) and
-// sketch → clean plot (#20). A drawn lot is saved in the farm store (#18) at once,
-// and the lot sync starts fetching its NASA data in the background.
-// Drawing opens the map full screen; the icon at the map's lower right opens or
-// closes full screen any time. The map stays mounted, so it never reloads.
+// S1 Draw your lot (#21, docs/11-user-flow.md): a full-screen map for ONE lot, with
+// the actions as floating buttons. More lots are added later from the dashboard
+// (D31, proposed). A drawn lot is saved in the farm store (#18) at once, and the
+// lot sync starts fetching its NASA data in the background. Next → S2 crops.
 
 const MODE_HINT: Partial<Record<MapMode, (lot: string) => string>> = {
   sketch: (lot) => `Trace around ${lot} with one finger. Two fingers move and zoom the map.`,
@@ -25,66 +23,60 @@ const MODE_HINT: Partial<Record<MapMode, (lot: string) => string>> = {
   pin: (lot) => `Tap the map where ${lot} is.`,
 };
 
+const ADJUST_HINT = "Drag a white dot to move a corner, tap a yellow dot to add one, press and hold a corner to remove it.";
+
 export default function LotsScreen() {
-  const { lots, rows, ensureStarted, addPlaceholder, rename, remove, setShape, undo } = useLotEditor();
+  const { lots, rows, ensureStarted, rename, setShape, undo } = useLotEditor();
   const mapRef = useRef<MapViewHandle>(null);
-  const [mode, setMode] = useState<MapMode>("select");
-  const [full, setFull] = useState(false);
-  const [activeLotId, setActiveLotId] = useState<string | undefined>();
-  const [editing, setEditing] = useState<{ id: string; ha: number } | null>(null);
-  const [status, setStatus] = useState(() =>
-    lots.length > 0
-      ? "Tap a lot on the map to adjust its corners, or tap + Add lot for another one."
-      : "Move the map to your farm, then tap Draw and trace around Lot 1.",
-  );
-  const [pinOpen, setPinOpen] = useState(false);
-  const [areaText, setAreaText] = useState("");
 
   // A new farm starts with an empty "Lot 1" to draw.
   useLayoutEffect(() => ensureStarted(), [ensureStarted]);
 
-  const nameOf = (id?: string) => rows.find((r) => r.id === id)?.name ?? "the lot";
-  const nextUnplotted = rows.find((r) => r.area_ha === null);
-  const plottedCount = lots.length;
+  // The one lot on this screen: the saved lot, else the lot not drawn yet.
+  const [savedId, setSavedId] = useState<string | undefined>(() => lots[0]?.id);
+  const lot = rows.find((r) => r.id === savedId) ?? rows.find((r) => r.area_ha === null) ?? rows[0];
+  const saved = lots.find((l) => l.id === lot?.id);
+  const name = lot?.name ?? "your lot";
+
+  const [mode, setMode] = useState<MapMode>("select");
+  const [panel, setPanel] = useState<"pin" | "rename" | null>(null);
+  const [areaText, setAreaText] = useState("");
+  const [nameText, setNameText] = useState("");
+  const [editingHa, setEditingHa] = useState<number | null>(null);
+  const [status, setStatus] = useState(() =>
+    lots.length > 0 ? ADJUST_HINT : "Move the map to your farm, then tap Draw and trace around your lot.",
+  );
+
+  const drawing = mode === "sketch" || mode === "corners" || mode === "pin";
   const typedArea = parseHectares(areaText);
 
-  // Drawn lots are outlines on the map; pin lots are pins.
+  // Only this lot is on the map: an outline, or a pin for a pin lot.
   const mapLots = useMemo<MapLot[]>(
-    () => lots.flatMap((l) => (isPinLot(l) ? [] : [{ id: l.id, name: l.name, geometry: l.geometry }])),
-    [lots],
+    () => (saved && !isPinLot(saved) ? [{ id: saved.id, name: saved.name, geometry: saved.geometry }] : []),
+    [saved],
   );
   const mapPlaces = useMemo<MapPlace[]>(
-    () => lots.flatMap((l) => (isPinLot(l) ? [{ id: l.id, name: l.name, point: l.centroid }] : [])),
-    [lots],
+    () => (saved && isPinLot(saved) ? [{ id: saved.id, name: saved.name, point: saved.centroid }] : []),
+    [saved],
   );
 
-  /**
-   * Starts drawing a lot full screen: the one given, else the next one not plotted
-   * yet, else a new lot (Add lot is hidden in full screen; Undo removes it).
-   */
-  const start = (next: "sketch" | "corners" | "pin", lotId?: string) => {
-    const lot = rows.find((r) => r.id === (lotId ?? nextUnplotted?.id)) ?? addPlaceholder();
-    setActiveLotId(lot.id);
+  const start = (next: "sketch" | "corners" | "pin") => {
     setMode(next);
-    setEditing(null);
-    setFull(true);
-    setStatus(MODE_HINT[next]?.(lot.name) ?? "");
+    setPanel(null);
+    setEditingHa(null);
+    setStatus(MODE_HINT[next]?.(name) ?? "");
   };
 
-  /** Leaves full screen (Done, the corner icon, or Android Back) and stops any drawing. */
-  const closeFull = () => {
-    setFull(false);
-    if (mode !== "select") {
-      setMode("select");
-      setStatus("Drawing stopped. Tap a lot on the map to adjust its corners.");
-    }
+  const cancel = () => {
+    setMode("select");
+    setStatus(saved ? ADJUST_HINT : "Tap Draw to trace your lot, or Corners to tap its corners.");
   };
 
-  // Android Back leaves full screen instead of leaving the screen.
+  // Android Back stops drawing instead of leaving the screen.
   useEffect(() => {
-    if (!full) return;
+    if (!drawing) return;
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
-      closeFull();
+      cancel();
       return true;
     });
     return () => sub.remove();
@@ -93,28 +85,22 @@ export default function LotsScreen() {
   const onMapMessage = (msg: MapToApp) => {
     switch (msg.type) {
       case "lotChanged": {
-        const lot = rows.find((r) => r.id === msg.id);
-        if (!lot) return;
+        if (!lot || msg.id !== lot.id) return;
+        // Tapping the lot also reports it; nothing to save when the outline didn't change.
+        if (saved && JSON.stringify(saved.geometry) === JSON.stringify(msg.geojson)) return;
         const drawn = mode === "sketch" || mode === "corners";
-        // A new lot is saved under the farm store's id; keep editing it under that id.
-        const savedId = setShape(msg.id, { geometry: msg.geojson, area_ha: msg.area_ha, centroid: msg.centroid });
-        if (savedId !== msg.id && activeLotId === msg.id) setActiveLotId(savedId);
-        setEditing(null);
-        const ha = `${msg.area_ha.toFixed(2)} ha`;
-        if (!drawn) setStatus(`${lot.name}: ${ha}. Saved.`);
-        else if (msg.fix === "unkinked")
-          setStatus(`${lot.name}: ${ha}. Your lines crossed, so we kept the biggest part. Check the corners.`);
-        else if (msg.fix === "hull")
-          setStatus(`${lot.name}: ${ha}. We made a simple outline from your sketch. Drag the corners to match your lot.`);
-        else
-          setStatus(
-            `${lot.name}: ${ha}. Drag a white dot to move a corner, tap a yellow dot to add one, press and hold a corner to remove it.`,
-          );
+        // A new lot is saved under the farm store's id.
+        setSavedId(setShape(msg.id, { geometry: msg.geojson, area_ha: msg.area_ha, centroid: msg.centroid }));
+        setEditingHa(null);
+        // The area is on the lot chip above, so the hint doesn't repeat it.
+        if (!drawn) setStatus("Saved.");
+        else if (msg.fix === "unkinked") setStatus("Your lines crossed, so we kept the biggest part. Check the corners.");
+        else if (msg.fix === "hull") setStatus("We made a simple outline from your sketch. Drag the corners to match your lot.");
+        else setStatus(ADJUST_HINT);
         break;
       }
       case "lotEditing":
-        setEditing({ id: msg.id, ha: msg.area_ha });
-        setStatus(`${nameOf(msg.id)}: ${msg.area_ha.toFixed(2)} ha`);
+        setEditingHa(msg.area_ha);
         break;
       case "sketchRejected":
         setStatus(
@@ -127,13 +113,11 @@ export default function LotsScreen() {
         setMode(msg.mode);
         break;
       case "pinPlaced": {
-        if (mode !== "pin" || !activeLotId || typedArea === null) return;
-        setShape(activeLotId, pinShape(msg.point, typedArea));
-        setStatus(`${nameOf(activeLotId)}: pin placed, ${typedArea} ha (your number).`);
+        if (mode !== "pin" || !lot || typedArea === null) return;
+        setSavedId(setShape(lot.id, pinShape(msg.point, typedArea)));
+        setStatus(`Pin placed: ${typedArea} ha (your number). Tap Redraw if you can trace the lot later.`);
         setAreaText("");
-        setPinOpen(false);
         setMode("select");
-        setFull(false);
         break;
       }
       case "error":
@@ -163,125 +147,102 @@ export default function LotsScreen() {
     }
   };
 
-  const drawing = mode === "sketch" || mode === "corners" || mode === "pin";
-
-  const tools = (
-    <View style={styles.tools}>
-      <Button
-        label="Draw"
-        icon="draw"
-        // While drawing, Draw and Corners switch method for the same lot.
-        onPress={() => start("sketch", drawing ? activeLotId : undefined)}
-        style={styles.flex}
-      />
-      <Button
-        label="Corners"
-        icon="corners"
-        variant="secondary"
-        accessibilityLabel="Tap the corners"
-        onPress={() => start("corners", drawing ? activeLotId : undefined)}
-        style={styles.flex}
-      />
-      <Button
-        label="Undo"
-        icon="undo"
-        variant="quiet"
-        onPress={() => {
-          setEditing(null);
-          // Undo can remove the lot being drawn, so drawing stops too.
-          setMode("select");
-          setStatus(undo() ? "Undid the last change." : "Nothing to undo.");
-        }}
-        style={styles.flex}
-      />
-    </View>
-  );
-
-  const statusLine = (
-    <Text style={[text.body, full ? styles.statusFull : styles.status]} accessibilityLiveRegion="polite">
-      {status}
-    </Text>
-  );
+  const area = editingHa ?? lot?.area_ha ?? null;
+  const areaShown = area === null ? "" : lot?.pin && editingHa === null ? `${area} ha (your number)` : `${area.toFixed(2)} ha`;
 
   return (
-    <Screen
-      scrollEnabled={!full}
-      edgeToEdge={full}
-      footer={
-        full ? (
-          <>
-            {statusLine}
-            {tools}
-          </>
-        ) : (
-          <>
-            {plottedCount === 0 ? (
-              <Text style={[text.small, { color: colors.amber }]}>Plot at least one lot to continue.</Text>
-            ) : null}
-            <Button label="Next: your crops" href="/crops" size="lg" disabled={plottedCount === 0} />
-          </>
-        )
-      }
-    >
-      {full ? null : <Header title="Plot your lots" right="Step 1 of 2" />}
-
-      <View style={full ? styles.mapFull : styles.mapWrap}>
+    <Screen scrollEnabled={false} edgeToEdge>
+      <View style={styles.map}>
         <MapView
           ref={mapRef}
           lots={mapLots}
           places={mapPlaces}
           mode={mode}
-          activeLotId={activeLotId}
+          activeLotId={lot?.id}
           onMessage={onMapMessage}
           accessibilityLabel="Satellite map of your farm"
           style={StyleSheet.absoluteFill}
         />
+
+        {/* Top: back + title (left), Find me (right). The map's zoom buttons sit under Find me. */}
+        <View style={[styles.float, styles.top]}>
+          <Header title={saved ? name : "Draw your lot"} right="1 of 2" fallbackHref="/" />
+        </View>
         <Pressable
           onPress={findMe}
           accessibilityRole="button"
           accessibilityLabel="Find me"
-          style={({ pressed }) => [styles.findMe, pressed && { backgroundColor: colors.pressed }]}
+          style={({ pressed }) => [styles.float, styles.findMe, pressed && { backgroundColor: colors.pressed }]}
         >
           <Icon name="locate" color={colors.blue} />
         </Pressable>
-        {full ? (
-          <View style={styles.topBar}>
-            <Text style={styles.topBarText} numberOfLines={1}>
-              {drawing ? `Drawing ${nameOf(activeLotId)}` : "Your lots"}
-            </Text>
+
+        {/* Bottom: the hint and the actions for the current step, kept above the map credits. */}
+        <View style={[styles.float, styles.bottom]}>
+          {saved && !drawing && panel !== "rename" ? (
             <Pressable
-              onPress={closeFull}
+              onPress={() => {
+                setNameText(name);
+                setPanel("rename");
+              }}
               accessibilityRole="button"
-              accessibilityLabel="Done, close full screen"
-              style={({ pressed }) => [styles.doneButton, pressed && { backgroundColor: colors.greenPressed }]}
+              accessibilityLabel={`Rename ${name}`}
+              style={({ pressed }) => [styles.lotChip, pressed && { backgroundColor: colors.pressed }]}
             >
-              <Text style={styles.doneText}>Done</Text>
+              <Text style={[text.bodyStrong, styles.flex]} numberOfLines={1}>
+                {name} · {areaShown}
+              </Text>
+              <Icon name="pencil" size={18} />
             </Pressable>
-          </View>
-        ) : null}
-        <Pressable
-          onPress={full ? closeFull : () => setFull(true)}
-          accessibilityRole="button"
-          accessibilityLabel={full ? "Exit full screen" : "Full screen map"}
-          style={({ pressed }) => [styles.fullButton, pressed && { backgroundColor: colors.pressed }]}
-        >
-          <Icon name={full ? "collapse" : "expand"} />
-        </Pressable>
-      </View>
+          ) : null}
 
-      {full ? null : (
-        <>
-          {statusLine}
-          {tools}
+          <Text style={text.body} accessibilityLiveRegion="polite">
+            {status}
+          </Text>
 
-          <Button
-            label={pinOpen ? "Hide the pin option" : "Can't draw? Drop a pin and type the area"}
-            variant="link"
-            onPress={() => setPinOpen((o) => !o)}
-          />
-          {pinOpen ? (
-            <View style={styles.pinPanel}>
-              <View style={styles.pinRow}>
+          {panel === "rename" ? (
+            <View style={styles.row}>
+              <TextInput
+                value={nameText}
+                onChangeText={setNameText}
+                onSubmitEditing={() => {
+                  if (lot && nameText.trim()) rename(lot.id, nameText);
+                  setPanel(null);
+                }}
+                autoFocus
+                maxLength={40}
+                returnKeyType="done"
+                accessibilityLabel="Lot name"
+                placeholder="e.g. Riverside paddy"
+                placeholderTextColor={colors.muted}
+                style={styles.input}
+              />
+              <Button
+                label="Save"
+                disabled={!nameText.trim()}
+                onPress={() => {
+                  if (lot) rename(lot.id, nameText);
+                  setPanel(null);
+                }}
+              />
+              <Button label="Cancel" variant="quiet" onPress={() => setPanel(null)} />
+            </View>
+          ) : drawing ? (
+            <View style={styles.row}>
+              {mode !== "pin" ? (
+                <Button
+                  label={mode === "sketch" ? "Tap corners instead" : "Draw instead"}
+                  icon={mode === "sketch" ? "corners" : "draw"}
+                  variant="secondary"
+                  onPress={() => start(mode === "sketch" ? "corners" : "sketch")}
+                  style={styles.flex}
+                />
+              ) : null}
+              <Button label="Cancel" variant="quiet" onPress={cancel} style={styles.flex} />
+            </View>
+          ) : panel === "pin" ? (
+            <>
+              <View style={styles.row}>
                 <Text style={text.body}>Lot area</Text>
                 <TextInput
                   value={areaText}
@@ -290,133 +251,99 @@ export default function LotsScreen() {
                   placeholder="e.g. 1.5"
                   placeholderTextColor={colors.muted}
                   accessibilityLabel="Lot area in hectares"
-                  style={styles.areaInput}
+                  style={[styles.input, styles.areaInput]}
                 />
                 <Text style={[text.body, { color: colors.muted }]}>hectares</Text>
               </View>
-              <Button
-                label={nextUnplotted ? `Drop a pin for ${nextUnplotted.name}` : "Drop a pin"}
-                icon="pin"
-                variant="secondary"
-                disabled={typedArea === null}
-                onPress={() => start("pin")}
-              />
-            </View>
-          ) : null}
-
-          <View style={styles.list}>
-            {rows.length === 0 ? <Text style={[text.body, { color: colors.muted }]}>No lots yet.</Text> : null}
-            {rows.map((lot) => (
-              <LotRow
-                key={lot.id}
-                lot={lot}
-                editingAreaHa={editing?.id === lot.id ? editing.ha : undefined}
-                onPlot={() => start("sketch", lot.id)}
-                onRename={(name) => {
-                  rename(lot.id, name);
-                  setStatus(`Renamed to ${name.trim()}.`);
-                }}
-                onDelete={() => {
-                  remove(lot.id);
-                  if (activeLotId === lot.id) setMode("select");
-                  setStatus(`${lot.name} deleted. Tap Undo to bring it back.`);
-                }}
-              />
-            ))}
-            <Button
-              label="Add lot"
-              icon="plus"
-              variant="dashed"
-              onPress={() => {
-                const lot = addPlaceholder();
-                setStatus(`${lot.name} added. Tap Draw to trace it.`);
-              }}
-            />
-          </View>
-        </>
-      )}
+              <View style={styles.row}>
+                <Button
+                  label="Drop the pin"
+                  icon="pin"
+                  disabled={typedArea === null}
+                  onPress={() => start("pin")}
+                  style={styles.flex}
+                />
+                <Button label="Cancel" variant="quiet" onPress={() => setPanel(null)} style={styles.flex} />
+              </View>
+            </>
+          ) : saved ? (
+            <>
+              <View style={styles.row}>
+                <Button
+                  label="Undo"
+                  icon="undo"
+                  variant="quiet"
+                  onPress={() => {
+                    setEditingHa(null);
+                    setMode("select");
+                    setStatus(undo() ? "Undid the last change." : "Nothing to undo.");
+                  }}
+                  style={styles.flex}
+                />
+                <Button label="Redraw" icon="draw" variant="secondary" onPress={() => start("sketch")} style={styles.flex} />
+              </View>
+              <Button label="Next: your crops" href="/crops" size="lg" />
+            </>
+          ) : (
+            <>
+              <View style={styles.row}>
+                <Button label="Draw" icon="draw" onPress={() => start("sketch")} style={styles.flex} />
+                <Button
+                  label="Corners"
+                  icon="corners"
+                  variant="secondary"
+                  accessibilityLabel="Tap the corners"
+                  onPress={() => start("corners")}
+                  style={styles.flex}
+                />
+              </View>
+              <Button label="Can't draw? Drop a pin and type the area" variant="link" onPress={() => setPanel("pin")} />
+            </>
+          )}
+        </View>
+      </View>
     </Screen>
   );
 }
 
+const SHADOW = "0px 2px 8px rgba(0, 0, 0, 0.28)";
+
 const styles = StyleSheet.create({
-  mapWrap: {
-    height: 340,
-    borderRadius: radius.lg,
-    overflow: "hidden",
-    backgroundColor: colors.mapBg,
-  },
+  flex: { flex: 1 },
+  map: { flex: 1, minHeight: 480, backgroundColor: colors.mapBg },
+  float: { position: "absolute", backgroundColor: colors.surface, boxShadow: SHADOW },
+  // Top left, leaving room for Find me (right).
+  top: { top: 10, left: 10, right: 68, borderRadius: radius.lg, paddingHorizontal: 4 },
   findMe: {
-    position: "absolute",
     top: 10,
     right: 10,
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
   },
-  mapFull: { flex: 1, minHeight: 320, backgroundColor: colors.mapBg },
-  // Top centre, between Leaflet's zoom buttons (left) and Find me (right).
-  topBar: {
-    position: "absolute",
-    top: 10,
-    left: 66,
-    right: 68,
+  // Bottom, above the two-line map credits (Leaflet attribution) so they stay readable.
+  bottom: { left: 10, right: 10, bottom: 44, gap: space.sm, padding: space.md, borderRadius: radius.lg },
+  row: { flexDirection: "row", alignItems: "center", gap: space.sm },
+  lotChip: {
     flexDirection: "row",
     alignItems: "center",
     gap: space.sm,
-    backgroundColor: colors.ink,
-    borderRadius: radius.md,
-    paddingVertical: 2,
-    paddingLeft: space.md,
-    paddingRight: 2,
-  },
-  topBarText: { ...text.small, color: colors.white, flex: 1 },
-  doneButton: {
-    minHeight: 44,
-    minWidth: 72,
+    minHeight: MIN_TOUCH,
+    paddingHorizontal: space.md,
     borderRadius: radius.sm,
-    backgroundColor: colors.green,
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: colors.greenTint,
   },
-  doneText: { ...text.bodyStrong, color: colors.white },
-  // Lower right, kept above the map credits (Leaflet attribution) so they stay readable.
-  fullButton: {
-    position: "absolute",
-    right: 10,
-    bottom: 44,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  status: { minHeight: 46 },
-  statusFull: { minHeight: 46, paddingTop: space.xs },
-  tools: { flexDirection: "row", gap: space.sm },
-  flex: { flex: 1, paddingHorizontal: space.sm },
-  pinPanel: {
-    gap: space.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    padding: space.md,
-  },
-  pinRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  areaInput: {
+  input: {
     ...text.body,
     flex: 1,
-    minWidth: 0,
     minHeight: 48,
     borderWidth: 1,
     borderColor: colors.borderStrong,
     borderRadius: radius.sm,
     paddingHorizontal: space.md,
+    backgroundColor: colors.surface,
   },
-  list: { gap: space.sm },
+  areaInput: { flex: 0, width: 96 },
 });

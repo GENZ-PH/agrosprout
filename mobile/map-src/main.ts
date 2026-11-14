@@ -78,8 +78,11 @@ const map = L.map("map", {
   maxZoom: 20,
   doubleClickZoom: false,
   attributionControl: true,
+  zoomControl: false,
 });
 map.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
+// Top right, under the app's Find me button (S1 puts its title bar top left).
+L.control.zoom({ position: "topright" }).addTo(map);
 
 let tiles: L.TileLayer | null = null;
 function setBasemap(id: BasemapId) {

@@ -196,6 +196,8 @@ export function createLotEditor(api: FarmLotsApi): StoreApi<LotEditorState> {
         }
         const lot = findLot(id);
         if (!lot) return id;
+        // The map also reports a lot that was only tapped; an unchanged outline is not an Undo step.
+        if (JSON.stringify(lot.geometry) === JSON.stringify(shape.geometry) && lot.area_ha === shape.area_ha) return id;
         const before: LotShape = { geometry: lot.geometry, area_ha: lot.area_ha, centroid: lot.centroid };
         api.updateLot(id, shape);
         remember(() => api.updateLot(resolve(id), before));
