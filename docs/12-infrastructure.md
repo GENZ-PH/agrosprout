@@ -172,6 +172,19 @@ With no account, uninstalling the app erases the farm, so the farmer can keep a 
 
 Nothing is uploaded. Lots whose climate data is not in the file come back as `pending` and are fetched again when online.
 
+### Pending lots (#36)
+
+A lot saved while offline keeps `data_status: "pending"`. `startLotSync()` (`src/state/lot-sync.ts`, started by the root layout once the stores have loaded) fetches NASA POWER data for every pending live lot with `ensureLotData`:
+
+- at launch, every time the device comes back online, and whenever a lot becomes pending (added, or moved: `updateLot` with a new `centroid` sets `pending`)
+- one lot at a time; a pass stops at the first lot that stays pending (still offline)
+- if lots are still pending while the device reports online (weak signal, Wi-Fi without internet), it tries again every 60 s
+- on web the online state starts from `navigator.onLine`, so an app opened offline from the service worker still sees the reconnect (TanStack Query alone assumes "online" at start)
+- result per lot: `ready` (saved under `lotdata:<id>`), `pending` (try again on reconnect) or `error` (bad response; not retried automatically)
+- demo lots (`data_ref` not `lotdata:`) are never fetched; a lot deleted or moved during the fetch is not overwritten
+
+Screens only read `data_status` to show "will update when online"; they never call POWER themselves.
+
 `useHydrationReport()` (`src/state/hydration.ts`) tells a screen whether each store loaded normally (`ready`), was restored from a backup (`recovered`) or could not be read (`failed`), so the Frontend can show a message. No UI is included.
 
 ## Why it is set up this way
