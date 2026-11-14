@@ -32,7 +32,9 @@ export function PrioritiesCard({ priorities, onToggle, notScored, period }: Prop
       subtitle="Tap what matters most. The scores below are worked out again on your phone. Tap again to undo."
     >
       <View style={styles.row}>
-        {PRIORITY_CHIPS.map((c) => {
+        {/* A chip that changes no score on this lot is hidden (dashboard audit): tapping it did nothing.
+            Kept if already picked, so the farmer can still undo it. The note says why it is missing. */}
+        {PRIORITY_CHIPS.filter((c) => !notScored.includes(c.key) || isPicked(priorities, c.key)).map((c) => {
           const picked = isPicked(priorities, c.key);
           return (
             <Pressable

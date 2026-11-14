@@ -6,6 +6,9 @@
 import type { ComponentKey, Explanation, RotationOption } from "../engine";
 import { scoreRows } from "./recommendations-core";
 import { monthStates } from "./season-guide-core";
+import { seasonLengthDays } from "../engine/season";
+import { seasonsText } from "../lots/months-core";
+import type { Crop, Lot } from "../types";
 
 /** Plain words for each part of the score: what the farmer gets, not what the engine measures. */
 export const PLAIN_GAIN: Readonly<Record<ComponentKey, string>> = {
@@ -65,4 +68,30 @@ export function cropSequence(option: Pick<RotationOption, "slots">, name: (id: s
 /** The first thing the engine says to check locally, or null when it has none. */
 export function checkFirst(explanation: Pick<Explanation, "check_locally"> | undefined): string | null {
   return explanation?.check_locally[0]?.text ?? null;
+}
+
+export interface LongerSeason {
+  crop_id: string;
+  /** The months the farmer gave, e.g. "Jan–Mar". */
+  given: string;
+  /** The crop's season length the results use instead, in days. */
+  days: number;
+}
+
+/**
+ * Seasons the engine does not take as given: when the farmer's months are more than 30% off the
+ * crop's own season length (engine/season.ts, FARMER_SEASON_TOLERANCE), the results use the
+ * crop's length from its planting month. Said on screen so "You now" does not look like a mistake.
+ */
+export function longerSeasons(lot: Pick<Lot, "crops">, cropById: (id: string) => Crop | undefined): LongerSeason[] {
+  const out: LongerSeason[] = [];
+  for (const c of lot.crops) {
+    const crop = cropById(c.crop_id);
+    if (!crop) continue;
+    for (const season of c.seasons) {
+      const used = seasonLengthDays(crop, season);
+      if (used.source !== "farmer" && used.days !== null) out.push({ crop_id: c.crop_id, given: seasonsText([season]), days: used.days });
+    }
+  }
+  return out;
 }

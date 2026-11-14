@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { analyzeLot } from "../engine/analyze";
 import { ILIGAN_LOT_FIXTURE } from "../engine/__fixtures__/iligan-lot.fixture";
 import type { CropLibrary, Lot } from "../types";
-import { checkFirst, cropSequence, PLAIN_GAIN, plainReasons, yearStrip } from "./farmer-core";
+import { checkFirst, cropSequence, longerSeasons, PLAIN_GAIN, plainReasons, yearStrip } from "./farmer-core";
 import { scoreRows, topPick } from "./recommendations-core";
 
 const library = JSON.parse(readFileSync(join(process.cwd(), "assets", "data", "crops.json"), "utf8")) as CropLibrary;
@@ -68,4 +68,18 @@ test("cropSequence and checkFirst: plain names from the plan, the engine's first
   const ex = analysis.explanations.find((e) => e.option_key === pick.key);
   assert.equal(checkFirst(ex), ex?.check_locally[0]?.text ?? null);
   assert.equal(checkFirst(undefined), null);
+});
+
+test("longerSeasons: says when the farmer's months are too short for the crop's season", () => {
+  const byId = (id: string) => library.crops.find((c) => c.id === id);
+  const rice = byId("lowland-rice");
+  assert.ok(rice?.season_days);
+  const short = longerSeasons({ crops: [{ crop_id: "lowland-rice", seasons: [{ plant_month: 1, harvest_month: 3 }] }] }, byId);
+  assert.equal(short.length, 1);
+  assert.equal(short[0].days, rice.season_days);
+  assert.match(short[0].given, /^Jan.*Mar$/);
+  // Months that fit the crop's season (within 30%) are used as given, so no note.
+  const months = Math.round((rice.season_days ?? 0) / 30.44);
+  const fits = longerSeasons({ crops: [{ crop_id: "lowland-rice", seasons: [{ plant_month: 6, harvest_month: 6 + months }] }] }, byId);
+  assert.equal(fits.length, 0);
 });

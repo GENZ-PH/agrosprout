@@ -51,8 +51,8 @@ export function notScoredNote(notScored: readonly PriorityKey[]): string | null 
   if (chips.length === 0) return null;
   const many = chips.length > 1;
   return (
-    `${chipList(chips)} ${many ? "don't" : "doesn't"} change the scores yet: the crop list has no local prices or ` +
-    `labor needs yet. Add a place where you sell or store your harvest and ${many ? "they count" : "it counts"} ` +
-    "how easy the trip to market is."
+    `${chipList(chips)} ${many ? "are" : "is"} not shown yet: the crop list has no local prices or labor needs, so ` +
+    `${many ? "they" : "it"} would change nothing. Add a place where you sell or store your harvest and ` +
+    `${many ? "they come" : "it comes"} back, counting how easy the trip to market is.`
   );
 }

@@ -5,7 +5,7 @@ import type { Crop } from "../types";
 import { CropImage } from "./CropImage";
 import { ExplainWithSI } from "./ExplainWithSI";
 import { explainRequest } from "./explain-core";
-import { checkFirst, cropSequence, plainReasons, yearStrip } from "./farmer-core";
+import { checkFirst, cropSequence, type LongerSeason, plainReasons, yearStrip } from "./farmer-core";
 import { familyStyle, MONTH_NAMES } from "./field-year-core";
 import { Icon } from "./Icon";
 import { OPTION_LABELS } from "./soil-health-chart-core";
@@ -25,6 +25,8 @@ type Props = {
   cropName: (id: string) => string;
   cropById: (id: string) => Crop | undefined;
   componentsLeftOut: readonly ComponentKey[];
+  /** Farmer seasons the results lengthen to the crop's own season (`longerSeasons`). */
+  longer?: readonly LongerSeason[];
 };
 
 const shortName = (name: string) => name.replace(/\s*\(.*\)\s*$/, "").trim();
@@ -49,7 +51,7 @@ function YearRow({ label, strip, cropById }: { label: string; strip: (string | n
   );
 }
 
-export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, cropById, componentsLeftOut }: Props) {
+export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, cropById, componentsLeftOut, longer = [] }: Props) {
   const isA = pick.key === "A";
   const name = (id: string) => shortName(cropName(id));
   const reasons = plainReasons(pick, a, componentsLeftOut);
@@ -89,6 +91,11 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
         </View>
         <YearRow label={isA ? "Your crops" : "Suggestion"} strip={yearStrip(pick)} cropById={cropById} />
         {!isA && a ? <YearRow label="You now" strip={yearStrip(a)} cropById={cropById} /> : null}
+        {longer.map((l) => (
+          <Text key={`${l.crop_id}-${l.given}`} style={text.caption}>
+            {`You gave ${name(l.crop_id)} ${l.given}. That is shorter than its usual season of ${l.days} days, so the results count ${l.days} days from your planting month.`}
+          </Text>
+        ))}
         <View style={styles.legend}>
           {legend.map((id) => (
             <View key={id} style={styles.legendItem}>
@@ -132,7 +139,7 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
 
       {explanation ? <ExplainWithSI request={explainRequest({ pick, a, explanation, cropName, componentsLeftOut })} /> : null}
       <Text style={text.caption}>
-        {isA ? "Your crops already score highest on this lot." : `Plan ${pick.key} (${OPTION_LABELS[pick.key]}) in the details below.`} You
+        {isA ? "Your crops already score highest on this lot." : `This is plan ${pick.key} (${OPTION_LABELS[pick.key]}) in the details for your technician.`} You
         and your technician decide.
       </Text>
     </View>

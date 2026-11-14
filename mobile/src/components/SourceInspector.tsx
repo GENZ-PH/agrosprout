@@ -288,6 +288,7 @@ export function OverviewBody({ c }: { c: PanelContext }) {
         </Pressable>
       </View>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        {c.details}
         <Section title="NASA datasets used">
           {c.sources.map((k) => {
             const s = SOURCES[k];
