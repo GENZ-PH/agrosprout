@@ -62,7 +62,9 @@ export function InspectorBody({ k, period }: { k: keyof typeof SOURCES; period: 
   const s = SOURCES[k];
   const d = SOURCE_DETAILS[k];
   const calls = useSyncExternalStore(subscribeCalls, getCalls, getCalls).filter((c) => c.source === k);
-  const usedIn = Object.values(EXPLAINERS).filter((e) => e.sources.includes(k));
+  // On the sample farm every NASA POWER chip shows the daily data (SourceChip.tsx), so the daily
+  // source is "seen" wherever NASA POWER is.
+  const usedIn = Object.values(EXPLAINERS).filter((e) => e.sources.includes(k) || (k === "power-daily" && e.sources.includes("power")));
   const methods = (METHODS_ON[k] ?? []).map((key) => ({ key, src: SOURCES[key], det: SOURCE_DETAILS[key] }));
   const years = fill(s.years, { period: period || "the years of the lot's data" });
   return (

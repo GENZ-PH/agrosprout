@@ -41,18 +41,6 @@ const RULES: Rule[] = [
     keep: ["parameters", "latitude", "longitude", "start", "end", "community"],
   },
   {
-    test: (u) => u.pathname === "/api/srtm",
-    source: "srtm",
-    purpose: "Field elevation and slope from NASA SRTM, through this site's pass-through to Open Topo Data (it stores nothing).",
-    keep: ["lat", "lon"],
-  },
-  {
-    test: (u) => u.hostname === "api.opentopodata.org",
-    source: "srtm",
-    purpose: "Field elevation and slope from NASA SRTM, served by Open Topo Data.",
-    keep: ["locations"],
-  },
-  {
     test: (u) => u.hostname === "routing.openstreetmap.de",
     source: "osm",
     purpose: "Road distance from the lot to a harvest place.",

@@ -1,5 +1,5 @@
 // NASA satellite side files for demo farms, written by the pipeline (pipeline/fetch_imerg.py,
-// fetch_smap.py, fetch_ndvi.py). Bundled, read only by the "Satellite checks" card; they do not
+// fetch_smap.py). Bundled, read only by the "Satellite checks" card; they do not
 // feed the engine. A file that has not been produced yet is simply absent (null).
 import imerg1 from "../../assets/data/demo/lanao-norte-demo-1-imerg.json";
 import smap1 from "../../assets/data/demo/lanao-norte-demo-1-smap.json";

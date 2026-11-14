@@ -104,7 +104,7 @@ function rainLine(imerg: NonNullable<(typeof SATELLITE)[string]["imerg"]>): stri
   const sum = (xs: (number | null)[]) => xs.reduce<number>((a, b) => a + (b ?? 0), 0);
   const p = Math.round(sum(imerg.power_compare.monthly.map((m) => m.power_p50_mm)));
   const i = Math.round(sum(imerg.monthly.map((m) => m.p50_mm)));
-  return `About ${p} mm a year (NASA POWER) and ${i} mm (IMERG). Whiskers: dry to wet year.`;
+  return `Monthly middle values add up to about ${p} mm (NASA POWER) and ${i} mm (IMERG). Bars: middle year per month; whiskers: dry to wet year.`;
 }
 
 const styles = StyleSheet.create({

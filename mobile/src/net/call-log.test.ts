@@ -9,8 +9,8 @@ test("classify names each tracked endpoint and keeps the parameters that matter"
   assert.equal(m?.endpoint, "power.larc.nasa.gov/api/temporal/monthly/point");
   assert.deepEqual(m?.params.map(([k]) => k), ["parameters", "latitude", "longitude", "start", "end", "community"]);
   assert.equal(classify("https://power.larc.nasa.gov/api/temporal/daily/point?latitude=8.2")?.source, "power-daily");
-  assert.equal(classify("/api/srtm?lat=8.123&lon=124.234", "https://x.pages.dev/dashboard")?.source, "srtm");
-  assert.equal(classify("https://api.opentopodata.org/v1/srtm30m?locations=1,2")?.source, "srtm");
+  // The phone makes no SRTM request on this branch (the sample farm's SRTM comes from the pipeline).
+  assert.equal(classify("https://api.opentopodata.org/v1/srtm30m?locations=1,2"), null);
   assert.equal(classify("https://routing.openstreetmap.de/routed-car/route/v1/driving/1,2;3,4")?.source, "osm");
   assert.equal(classify("https://example.com/other"), null);
 });

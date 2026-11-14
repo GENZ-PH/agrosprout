@@ -115,7 +115,7 @@ export const SOURCES: Readonly<Record<SourceKey, SourceTag>> = {
   },
   modis: {
     name: "NASA MODIS NDVI",
-    by: "NASA LP DAAC (MOD13Q1 v061), via ORNL DAAC",
+    by: "NASA LP DAAC (MOD13Q1 v061)",
     gives: "How green the ground is, every 16 days",
     scale: "About 250 m pixel",
     years: "No data file bundled yet",

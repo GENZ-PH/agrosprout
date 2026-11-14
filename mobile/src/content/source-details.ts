@@ -58,7 +58,7 @@ export const SOURCE_DETAILS: Readonly<Partial<Record<SourceKey, SourceDetail>>> 
     ],
     how: [
       "Sample farm only. The team's pipeline fetched every day of 2001-2025 for the farm point once, and the results are bundled with the app. The phone never asks for daily data.",
-      "Monthly rain is the sum of the daily rain. Highs, lows, humidity, wind, sunshine and root-zone wetness are the mean of the daily values.",
+      "Monthly rain is the sum of the daily rain, scaled up to the whole month when a few days are missing; a month with more than 10% of days missing is left out. Highs, lows, humidity, wind, sunshine and root-zone wetness are the mean of the daily values.",
       "A month with more than 10% of its days missing counts as missing.",
       "Very heavy rain days are counted per month and averaged over the years. They weigh each month in the washout score.",
     ],
@@ -121,7 +121,7 @@ export const SOURCE_DETAILS: Readonly<Partial<Record<SourceKey, SourceDetail>>> 
         "Irr = share × max(0, need − Pe)",
         "D = max(0, need − Pe − Irr)",
       ], note: "Irrigation share by your answer: rain only 0, some 0.5 (an assumption), full 1." },
-      { name: "Water stress index", lines: ["WSI = ΣD ÷ Σneed over the season"], note: "Good fit at WSI ≤ 0.2, Poor fit above 0.6, Watch out in between. The cut-offs are team assumptions to check locally." },
+      { name: "Water stress index", lines: ["WSI = ΣD ÷ Σneed over the season"], note: "Good fit at WSI ≤ 0.2, Poor fit above 0.6, Watch out in between. Also Watch out when the typical year is fine but the dry year (P20) is above 0.6. A water answer of \"not sure\" counts as rain only. The cut-offs are team assumptions to check locally." },
     ],
     cite: "Brouwer, C., Heibloem, M. (1986). Irrigation Water Management Training Manual No. 3: Irrigation Water Needs. FAO.",
     url: "https://www.fao.org/4/s2022e/s2022e08.htm",
