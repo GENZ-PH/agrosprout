@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ILIGAN_LOT_FIXTURE } from "../engine/__fixtures__/iligan-lot.fixture";
 import type { CropLibrary, Lot, LotCrop, LotData } from "../types";
-import { lotView, readLotData, type DemoFarms } from "./lot-analysis-core";
+import { lotView, monthsCompare, readLotData, type DemoFarms } from "./lot-analysis-core";
 
 // Read from disk: Node's test runner can't import JSON without import attributes.
 const readJson = <T>(...path: string[]) => JSON.parse(readFileSync(join(process.cwd(), ...path), "utf8")) as T;
@@ -119,4 +119,18 @@ test("lotView: an engine error becomes a message, not a crash", () => {
   const v = lotView({ farm, lot: lot([rice]), data: broken, library });
   assert.equal(v.kind, "failed");
   if (v.kind === "failed") assert.ok(v.message.length > 0);
+});
+
+test("months compare (S5 on the dashboard): a crop with no months uses its usual months, listed as assumed", () => {
+  const read = (...p: string[]) => JSON.parse(readFileSync(join(process.cwd(), ...p), "utf8"));
+  const library = read("assets", "data", "crops.json");
+  const demo = read("assets", "data", "demo", "lanao-norte-demo-1.json");
+  const details = { land_type: "lowland", water: "rain", soil: "loamy" } as const;
+  const none = monthsCompare({ details, crops: [{ crop_id: "lowland-rice", seasons: [] }, { crop_id: "other:taro", seasons: [] }] }, demo, library);
+  assert.deepEqual(none.assumed, ["lowland-rice"]);
+  assert.ok(none.planting.seasons.length > 0, "the usual rice calendar is compared");
+  assert.ok(none.crops.every((c) => c.crop_id !== "other:taro"), "crops outside the library are left out");
+  const given = monthsCompare({ details, crops: [{ crop_id: "lowland-rice", seasons: [{ plant_month: 11, harvest_month: 3 }] }] }, demo, library);
+  assert.deepEqual(given.assumed, []);
+  assert.deepEqual(given.planting.seasons.map((s) => s.yours.plant_month), [11]);
 });

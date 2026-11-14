@@ -31,6 +31,7 @@ const ready = (levels: FitLevel[], period = "2001-2025"): MapLotView => ({
   kind: "ready",
   analysis: { crop_fits: fits(...levels) } as unknown as LotAnalysis,
   period,
+  months: { planting: { seasons: [], gaps: [] }, crops: [], assumed: [] },
 });
 
 const ring: Lot["geometry"] = {

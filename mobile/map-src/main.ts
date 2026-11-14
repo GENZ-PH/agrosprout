@@ -86,6 +86,22 @@ map.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
 // Top right, under the app's Find me button (S1 puts its title bar top left).
 L.control.zoom({ position: "topright" }).addTo(map);
 
+// Redraw the tiles when the map box changes size (#114): a browser resize, a phone rotation, the
+// dashboard switching to two columns, or the S1 map going full screen. Leaflet only listens for
+// window resizes on its own, so watch the map element itself. One redraw per frame at most.
+const mapEl = map.getContainer();
+if (typeof ResizeObserver !== "undefined") {
+  let queued = false;
+  new ResizeObserver(() => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      map.invalidateSize({ pan: false });
+    });
+  }).observe(mapEl);
+}
+
 let tiles: L.TileLayer | null = null;
 function setBasemap(id: BasemapId) {
   const b = BASEMAPS[id];

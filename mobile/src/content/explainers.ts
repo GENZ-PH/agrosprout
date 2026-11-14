@@ -20,8 +20,11 @@ export type ExplainerId =
   | "priorities"
   | "months-compare"
   | "season-calendar"
+  | "year-calendar"
   | "what-if"
-  | "farm-map";
+  | "farm-map"
+  | "lot-cutout"
+  | "top-crops";
 
 export interface Explainer {
   id: ExplainerId;
@@ -92,6 +95,37 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
       "Without signal the photo under your lots may not load; the lots and their colors still show.",
     ],
   },
+  "top-crops": {
+    id: "top-crops",
+    title: "Top 3 for this lot",
+    what: "The 3 crops from our crop list that suit this lot best, and the planting months when each one does best. Tap one to choose it as the lot's crop, or search for any other crop you grow.",
+    source:
+      "Rain, temperature and soil wetness from NASA POWER at this lot ({period}). Crop water use from FAO-56 (Allen and others, 1998) and temperature ranges from the FAO Ecocrop database, each cited in the crop library (crops.json). It is the same check as \"Your crops here\", and your answer about the lot's water is used. Crop names in the search: FAO Ecocrop © FAO, via OpenCLIM/ecocrop.",
+    read: "Each crop is tried as one season planted in each month of the year. Crops that are a Good fit in some month come first, then Watch out, then Poor fit. Among crops with the same result, the one with more planting months at that result comes first. \"If planted in\" gives those months. A Watch out or Poor fit crop also says its main problem.",
+    limits: [
+      "The order among equally good crops is a team assumption: a crop with more good planting months ranks higher.",
+      "Each crop is checked as one season on its own.",
+      "\"Your crops here\" on your results checks your own months, or the usual months if you gave none, so it can say something different.",
+      "Climate is for a coarse grid cell, not your field alone.",
+      "Soil type and elevation are not part of this check.",
+      "Crops found only by search are not scored.",
+      "Please check with your agricultural technician before you change crops.",
+    ],
+  },
+  "lot-cutout": {
+    id: "lot-cutout",
+    title: "Now vs best option",
+    what: "The shape of the lot you drew, shown twice: on the left with your crops now, on the right with the best other option for this lot (the one with the highest total score). Each shape is filled with one color for the kind of data you pick: Soil health, Crop fit, Root-zone wetness or Rain in a dry year. The number or words on the shape is its value.",
+    source:
+      "Soil health is the 3-year Soil Health Index from this app's rotation model. Crop fit is the same check as \"Your crops here\" (FAO-56 crop water use, FAO Ecocrop temperature ranges). Root-zone wetness is NASA POWER GWETROOT (0 dry, 1 saturated) and rain is NASA POWER PRECTOTCORR in a dry year (the 20th percentile), both over the months a crop is in the field. Years used: {period}.",
+    read: "Compare the two shapes. Soil health: green goes up from the start, gray stays level, orange goes down. Crop fit: the same colors as \"Your crops here\". Wetness and rain: darker blue means wetter, or more of the year's rain falling while a crop is in the field. Gray with \"No data\" means a value is missing.",
+    limits: [
+      "One color per lot: the data has one value for the whole lot, so nothing here shows differences inside your field.",
+      "Soil health is a relative indicator from this model, not a soil test. It does not show carbon or nitrogen.",
+      "Wetness and rain describe a NASA grid cell roughly 50 km across, so they change only when the crop months change.",
+      "This supports your decision. Check it with your agricultural technician.",
+    ],
+  },
   "harvest-out": {
     id: "harvest-out",
     title: "Getting your harvest out",
@@ -146,6 +180,19 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     source: "Your own months, the options from the recommendations and the planting-month scan.",
     read: "Bars that overlap mean crops grown together on the same lot. Empty months mean bare soil, which can wash away in heavy rain.",
     limits: ["Only crops you chose are shown; other possible crops appear as alternatives, not as advice."],
+  },
+  "year-calendar": {
+    id: "year-calendar",
+    title: "Your year on your lot",
+    what: "Each month of the year for the plan you pick: when to plant, when to harvest, and the months a crop may be short of water, too hot or too wet.",
+    source:
+      "The plan comes from the recommendations for this lot. Short of water, too hot and too wet are worked out from NASA POWER data for {period} with the FAO-56 water balance and each crop's temperature range.",
+    read: "Tap a month to see what happens in it. A sun marks a month when a crop in the field may be short of water, the thermometer a month that may be too hot, a drop a month that may be too wet. Pick another plan below the calendar to see its year instead.",
+    limits: [
+      "The months are from monthly averages, so a short dry or hot spell inside a month is not shown.",
+      "A risk is shown only for months when a crop is in the field.",
+      "It supports your own judgment and your agricultural technician; it does not replace them.",
+    ],
   },
   "what-if": {
     id: "what-if",
@@ -280,9 +327,11 @@ export const DATA_SOURCES: readonly DataSource[] = [
   },
   {
     name: "FAO Ecocrop database",
-    used_for: "The temperature range each crop tolerates.",
+    used_for:
+      "The temperature range each crop tolerates, and the crop names you can search for when you pick crops. Crop names: FAO Ecocrop © FAO, via OpenCLIM/ecocrop.",
     period: "Database values",
     resolution: "Per crop, not per place",
+    url: "https://github.com/OpenCLIM/ecocrop",
   },
   {
     name: "Crop library (crops.json)",
@@ -299,17 +348,24 @@ export const DATA_SOURCES: readonly DataSource[] = [
   },
   {
     name: "PSA OpenSTAT",
-    used_for: "Typical yields for palay and corn by province.",
-    period: "Latest full year in the file",
-    resolution: "Province, yearly",
+    used_for: "Typical yield per hectare for each crop with a PSA figure (palay, corn, mungbean, peanut, soybean, string bean, sweet potato, eggplant), used to estimate how many trips a harvest needs. Cited per crop in crops.json.",
+    period: "2022-2024",
+    resolution: "Lanao del Norte, yearly (soybean: Northern Mindanao)",
     url: "https://openstat.psa.gov.ph/",
   },
   {
     name: "NOAA Climate Prediction Center, Oceanic Niño Index",
-    used_for: "Context on El Niño and La Niña for the current season.",
-    period: "Latest season in the file",
+    used_for: "This season's El Niño context, shown on the dashboard next to the PAGASA advisory. Not used in any score.",
+    period: "Latest season in the file (ASO 2026)",
     resolution: "Ocean-wide, three-month averages",
     url: "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
+  },
+  {
+    name: "DOST-PAGASA El Niño advisory",
+    used_for: "This season's El Niño context, shown on the dashboard. Not used in any score.",
+    period: "Issued 2026-11-04",
+    resolution: "Whole country",
+    url: "https://pagasa.dost.gov.ph/press-release/233",
   },
 ];
 
