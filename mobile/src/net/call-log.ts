@@ -72,14 +72,20 @@ const emit = () => listeners.forEach((l) => l());
 const MAX = 50;
 
 /** Start a record for `url` if it is a tracked endpoint. Returns a function to finish it. */
-export function startCall(url: string): ((r: { http?: number; error?: string }) => void) | null {
+export function startCall(url: string): ((r: { http?: number; error?: string; cancelled?: boolean }) => void) | null {
   const base = typeof location !== "undefined" && location?.href ? location.href : "http://localhost";
   const c = classify(url, base);
   if (!c) return null;
   const rec: CallRecord = { ...c, id: nextId++, at: Date.now(), status: "pending" };
   calls = [rec, ...calls].slice(0, MAX);
   emit();
-  return ({ http, error }) => {
+  return ({ http, error, cancelled }) => {
+    // A request the app cancelled itself (a screen closed, a refetch) is not a failure: drop it.
+    if (cancelled) {
+      calls = calls.filter((x) => x.id !== rec.id);
+      emit();
+      return;
+    }
     const ok = error === undefined && http !== undefined && http >= 200 && http < 300;
     calls = calls.map((x) => (x.id === rec.id ? { ...x, http, error: error ?? (ok ? undefined : `HTTP ${http}`), status: ok ? "ok" : "error", ms: Date.now() - rec.at } : x));
     emit();

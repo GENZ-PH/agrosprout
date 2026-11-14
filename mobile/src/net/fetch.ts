@@ -35,17 +35,31 @@ export function fetchWithTimeout(
   }
 
   // Data requests are recorded for the "NASA data on this page" panel (call-log.ts).
-  const url = typeof input === "string" ? input : input instanceof URL ? input.href : (input as Request).url;
-  const done = startCall(url);
+  // The log must never break a request, so any error in it is swallowed.
+  let done: ReturnType<typeof startCall> = null;
+  try {
+    const url = typeof input === "string" ? input : input instanceof URL ? input.href : (input as Request).url;
+    done = startCall(url);
+  } catch {
+    done = null;
+  }
+  const finish = (r: Parameters<NonNullable<typeof done>>[0]) => {
+    try {
+      done?.(r);
+    } catch {
+      // ignore
+    }
+  };
 
   return fetch(input, { ...init, signal: controller.signal })
     .then((res) => {
-      done?.({ http: res.status });
+      finish({ http: res.status });
       return res;
     })
     .catch((e: unknown) => {
       const err = timedOut ? new TimeoutError(timeoutMs) : e;
-      done?.({ error: err instanceof Error ? err.message : String(err) });
+      if (!timedOut && outer?.aborted) finish({ cancelled: true });
+      else finish({ error: err instanceof Error ? err.message : String(err) });
       throw err;
     })
     .finally(() => {

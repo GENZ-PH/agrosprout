@@ -28,3 +28,11 @@ test("startCall records a request and its result", () => {
   assert.equal(startCall("https://example.com/"), null);
   assert.equal(getCalls().length, 2);
 });
+
+test("a request the app cancelled is dropped, not shown as failed", () => {
+  resetCalls();
+  const done = startCall("https://power.larc.nasa.gov/api/temporal/monthly/point?latitude=8.2&longitude=124.2");
+  assert.equal(getCalls().length, 1);
+  done?.({ cancelled: true });
+  assert.equal(getCalls().length, 0);
+});

@@ -8,7 +8,7 @@ import { getCalls, subscribeCalls } from "../net/call-log";
 import { Icon } from "./Icon";
 import { closeInspector, getInspector, subscribeInspector } from "./inspector-store";
 import { useLayout } from "./useLayout";
-import { colors, MIN_TOUCH, radius, space, text } from "./theme";
+import { BREAKPOINTS, colors, MIN_TOUCH, radius, space, text } from "./theme";
 
 // The inspector: one panel for the whole app, opened by clicking a NASA SourceChip. On a wide
 // screen it docks on the right and pushes the page narrower; on a phone it is a sheet from the
@@ -28,14 +28,21 @@ function useInspectorState() {
   return state;
 }
 
+const DOCK_WIDTH = 420;
+/**
+ * Dock only when the page keeps its two-column width beside the panel; pages pick their layout
+ * from the whole window, so a narrower window gets the sheet instead.
+ */
+export const canDock = (width: number) => width >= BREAKPOINTS.expanded + DOCK_WIDTH;
+
 /**
  * Wide screens: the panel docks beside the page and pushes it narrower (the root layout puts
  * this in a row next to the screens). Nothing shows until a NASA source is clicked.
  */
 export function DockedInspector() {
   const state = useInspectorState();
-  const { wide } = useLayout();
-  if (!wide || !state) return null;
+  const { width } = useLayout();
+  if (!canDock(width) || !state) return null;
   return (
     <View style={styles.dock} accessibilityLabel="NASA data inspector">
       <InspectorBody k={state.key} period={state.period} />
@@ -46,8 +53,8 @@ export function DockedInspector() {
 /** Phones: the same panel as a sheet from the bottom. */
 export function SheetInspector() {
   const state = useInspectorState();
-  const { wide } = useLayout();
-  if (wide || !state) return null;
+  const { width } = useLayout();
+  if (canDock(width) || !state) return null;
   return (
     <Modal transparent animationType="slide" visible onRequestClose={closeInspector}>
       <Pressable style={styles.scrim} onPress={closeInspector} accessibilityLabel="Close" />
@@ -189,7 +196,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 const styles = StyleSheet.create({
-  dock: { width: 420, flexShrink: 0, backgroundColor: colors.surface, borderLeftWidth: 1, borderLeftColor: colors.border },
+  dock: { width: DOCK_WIDTH, flexShrink: 0, backgroundColor: colors.surface, borderLeftWidth: 1, borderLeftColor: colors.border },
   scrim: { flex: 1, backgroundColor: "rgba(0,0,0,0.35)" },
   sheet: { maxHeight: "82%", backgroundColor: colors.surface, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg },
   head: { flexDirection: "row", alignItems: "flex-start", gap: space.sm, padding: space.lg, paddingBottom: space.md, borderBottomWidth: 1, borderBottomColor: colors.border },

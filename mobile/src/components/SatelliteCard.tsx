@@ -101,9 +101,13 @@ function lotKey(keys: string[], lotName: string): string {
 }
 
 function rainLine(imerg: NonNullable<(typeof SATELLITE)[string]["imerg"]>): string {
-  const sum = (xs: (number | null)[]) => xs.reduce<number>((a, b) => a + (b ?? 0), 0);
-  const p = Math.round(sum(imerg.power_compare.monthly.map((m) => m.power_p50_mm)));
-  const i = Math.round(sum(imerg.monthly.map((m) => m.p50_mm)));
+  const sum = (xs: (number | null)[]) => (xs.some((x) => x === null) ? null : xs.reduce<number>((a, b) => a + (b ?? 0), 0));
+  const ps = sum(imerg.power_compare.monthly.map((m) => m.power_p50_mm));
+  const is = sum(imerg.monthly.map((m) => m.p50_mm));
+  // A missing month would make the sum too small, so say nothing rather than a wrong total.
+  if (ps === null || is === null) return "Bars: middle year per month; whiskers: dry to wet year.";
+  const p = Math.round(ps);
+  const i = Math.round(is);
   return `Monthly middle values add up to about ${p} mm (NASA POWER) and ${i} mm (IMERG). Bars: middle year per month; whiskers: dry to wet year.`;
 }
 
