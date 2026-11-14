@@ -145,13 +145,30 @@ How the pieces behave, checked against the installed library code (zustand 5.1.0
 
 The plumbing follows patterns from two larger React Native apps (Bluesky's social app and delvo.ph), kept to what a 40-hour build needs: one env module, key factories, named freshness values, no retries on 4xx, NetInfo/AppState sync, saving only successful queries, and versioned stores. Their heavier parts (MMKV, OpenAPI codegen, offline mutation queues, custom rollouts) are left out on purpose.
 
+## Web app as a PWA
+
+The React Native Web build is a Progressive Web App: it can be installed from the browser (Android Chrome: *Add to Home screen*; desktop Chrome/Edge: install icon in the address bar) and opens offline after the first visit.
+
+| File | What it does |
+|---|---|
+| `mobile/public/manifest.json` | Name, icons, colors, standalone display |
+| `mobile/public/index.html` | Links the manifest and registers `/sw.js` (skipped on `localhost` so dev never serves stale code) |
+| `mobile/workbox-config.js` | Builds `dist/sw.js`: precaches the app shell and falls back to `index.html` for every route offline |
+| `mobile/public/_headers` | Cloudflare headers: `sw.js`, `manifest.json`, `index.html` never cached; hashed `_expo/static/*` cached for a year |
+
+- **Offline data** on web still comes from the saved TanStack Query cache and Zustand stores (AsyncStorage → `localStorage`). The service worker only caches the app's own files.
+- **Updates:** a new deploy takes over on the next page load (`skipWaiting` + `clientsClaim`). If a phone seems stuck on an old version, close and reopen the app.
+- **Map tiles and NASA/OSRM calls are not cached by the service worker.** Add `runtimeCaching` in `workbox-config.js` if a feature needs it, and respect the basemap provider's caching terms (R20).
+- **Icons** are generated from `assets/icon.png`; replace `public/logo192.png`, `logo512.png` and `apple-touch-icon.png` when the team has a real icon.
+- **Test it:** open the deployed URL in Chrome → DevTools → Application → Service workers / Manifest; then tick *Offline* and reload.
+
 ## Deployments
 
 All automatic, through Cloudflare's own Git integration. No GitHub Actions.
 
 | What | Trigger | Build | Result |
 |---|---|---|---|
-| Web (Pages) | push touching `mobile/` or `api/` | `npm ci && npm ci --prefix ../api && npm run check && npx expo export --platform web` | `main` → production; other branches → preview URL (posted on the PR) |
+| Web (Pages) | push touching `mobile/` or `api/` | `npm ci && npm ci --prefix ../api && npm run check && npm run build:web` (Expo export + service worker) | `main` → production; other branches → preview URL (posted on the PR) |
 | API (Workers Builds) | push touching `api/` | `npm ci && npm run check` | `main` → `npm run deploy` (migrations + deploy); other branches → `npm run deploy:preview` |
 
 - A failed build leaves the last good version live.

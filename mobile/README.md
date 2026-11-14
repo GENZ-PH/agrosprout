@@ -13,7 +13,7 @@ npx expo start
 
 - **Android phone:** install **Expo Go** from the Play Store, then scan the QR code shown in the terminal. Phone and laptop must be on the same Wi-Fi (or run `npx expo start --tunnel`).
 - **Web:** press `w` in the terminal, or run `npx expo start --web`.
-- **Web build (what Cloudflare Pages deploys):** `npx expo export --platform web` writes `dist/`.
+- **Web build (what Cloudflare Pages deploys):** `npm run build:web` writes `dist/` (Expo export + PWA service worker). Install it from the browser like an app; see "Web app as a PWA" in `docs/12-infrastructure.md`.
 
 To reach a local API from the phone, set `EXPO_PUBLIC_API_URL` to your laptop's LAN IP, e.g. `http://192.168.1.20:8787`.
 
