@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Button } from "../src/components/Button";
 import { Header } from "../src/components/Header";
 import { Icon } from "../src/components/Icon";
+import { DataTracePanel } from "../src/components/DataTracePanel";
 import { Screen } from "../src/components/Screen";
 import { colors, MIN_TOUCH, radius, space, text } from "../src/components/theme";
 import { CROP_LIBRARY } from "../src/data/crops";
@@ -86,6 +87,7 @@ export default function CropsScreen() {
           {lots.map((lot) => (
             <LotCrops key={lot.id} lot={lot} />
           ))}
+          <DataTracePanel />
         </>
       )}
     </Screen>

@@ -7,6 +7,7 @@ import { cropLabel } from "../i18n/strings";
 import type { Crop } from "../types";
 import { familyStyle } from "./field-year-core";
 import { Icon, type IconName } from "./Icon";
+import { useExplainer } from "./InfoToggle";
 import { listText } from "./plan-text";
 import { planReasons, type Reason } from "./plan-facts";
 import { monthStates, nowSummary, type MonthRisk } from "./season-guide-core";
@@ -28,14 +29,17 @@ type Props = {
   /** Show the El Niño reminder (bundled PAGASA advisory). */
   elNino?: boolean;
   wide?: boolean;
+  /** Years of the lot's data, for the ⓘ. */
+  period?: string;
 };
 
 const TILE_W = 58;
 const RISK_ICON: Record<MonthRisk, IconName> = { dry: "sun", hot: "heat", wet: "drop" };
 const RISK_COLOR: Record<MonthRisk, string> = { dry: "#B5641B", hot: "#B3261E", wet: "#1D5FA8" };
 
-export function SeasonGuide({ options, selected, onSelect, lotName, cropById, onEvidence, elNino, wide }: Props) {
+export function SeasonGuide({ options, selected, onSelect, lotName, cropById, onEvidence, elNino, wide, period = "" }: Props) {
   const { t, lang, months } = useT();
+  const ex = useExplainer({ id: "season-guide", period }, t("guide.year", { lot: lotName }));
   const nowMonth = new Date().getMonth() + 1;
   const [picked, setPicked] = useState<number>(nowMonth);
   const [done, setDone] = useState<Record<string, boolean>>({});
@@ -76,7 +80,7 @@ export function SeasonGuide({ options, selected, onSelect, lotName, cropById, on
             <View style={[styles.heroIcon, { backgroundColor: st?.fill ?? colors.greenTint }]}>
               <Icon name={l.icon} size={26} color={st?.ink ?? colors.green} />
             </View>
-            <Text style={[styles.heroText, i > 0 && styles.heroTextSmall]}>{l.text}</Text>
+            <Text style={[styles.heroText, (i > 0 || l.text.length > 28) && styles.heroTextSmall]}>{l.text}</Text>
           </View>
         );
       })}
@@ -104,9 +108,13 @@ export function SeasonGuide({ options, selected, onSelect, lotName, cropById, on
 
   const calendar = (
     <View style={styles.block}>
-      <Text style={styles.blockTitle} accessibilityRole="header">
-        {t("guide.year", { lot: lotName })}
-      </Text>
+      <View style={styles.titleRow}>
+        <Text style={[styles.blockTitle, styles.flex]} accessibilityRole="header">
+          {t("guide.year", { lot: lotName })}
+        </Text>
+        {ex.button}
+      </View>
+      {ex.box}
       <Text style={[text.small, styles.muted]}>{t("guide.tap")}</Text>
       <ScrollView
         ref={stripRef}
@@ -304,6 +312,7 @@ function DetailLine({ icon, color, text: body }: { icon: IconName; color: string
 }
 
 const styles = StyleSheet.create({
+  titleRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
   gap: { gap: space.lg },
   row: { flexDirection: "row", gap: space.lg, alignItems: "flex-start" },
   col: { flex: 1, minWidth: 0, gap: space.lg },
@@ -315,7 +324,7 @@ const styles = StyleSheet.create({
   heroKicker: { ...text.small, color: "#CFE3D4", fontWeight: "700" },
   heroLine: { flexDirection: "row", alignItems: "center", gap: space.md },
   heroIcon: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
-  heroText: { flex: 1, fontSize: 26, lineHeight: 32, fontWeight: "800", color: colors.white },
+  heroText: { flex: 1, fontSize: 24, lineHeight: 30, fontWeight: "800", color: colors.white },
   heroTextSmall: { fontSize: 20, lineHeight: 26, fontWeight: "700" },
   tip: { flexDirection: "row", alignItems: "center", gap: space.sm, backgroundColor: "#FBF3E6", borderRadius: radius.md, padding: space.sm },
   next: { ...text.body, color: "#E4F0E7" },

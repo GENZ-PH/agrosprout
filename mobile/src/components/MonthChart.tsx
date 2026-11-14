@@ -21,6 +21,7 @@ export type MonthSeries = {
 const SVG_FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
 const H = 150;
 const AXIS_W = 34;
+const PAD_TOP = 8; // room for the top tick label
 
 /** Round axis steps covering 0 (or `min`) to `max`. */
 export function niceTicks(min: number, max: number, count = 4): number[] {
@@ -44,7 +45,7 @@ export function MonthChart({ series, min = 0, unit, decimals = 0 }: { series: Mo
   const bottom = ticks[0];
   const plotW = Math.max(0, width - AXIS_W);
   const colW = plotW / 12;
-  const y = (v: number) => H - ((v - bottom) / (top - bottom)) * H;
+  const y = (v: number) => PAD_TOP + H - ((v - bottom) / (top - bottom)) * H;
   const bars = series.filter((s) => s.kind === "bar");
   const barW = bars.length ? Math.min(18, (colW - 6) / bars.length) : 0;
 
@@ -52,7 +53,7 @@ export function MonthChart({ series, min = 0, unit, decimals = 0 }: { series: Mo
     <View style={styles.wrap}>
       <View onLayout={onLayout}>
         {width > 0 ? (
-          <Svg width={width} height={H + 22} accessibilityLabel={series.map((s) => s.label).join(", ")}>
+          <Svg width={width} height={PAD_TOP + H + 22} accessibilityLabel={series.map((s) => s.label).join(", ")}>
             {ticks.map((v) => (
               <G key={v}>
                 <Line x1={AXIS_W} x2={width} y1={y(v)} y2={y(v)} stroke={v === bottom ? colors.borderStrong : colors.border} strokeWidth={1} />
@@ -99,7 +100,7 @@ export function MonthChart({ series, min = 0, unit, decimals = 0 }: { series: Mo
               );
             })}
             {months.map((m, i) => (
-              <SvgText key={i} x={AXIS_W + i * colW + colW / 2} y={H + 16} fontSize={11} textAnchor="middle" fontFamily={SVG_FONT} fill={colors.muted}>
+              <SvgText key={i} x={AXIS_W + i * colW + colW / 2} y={PAD_TOP + H + 16} fontSize={11} textAnchor="middle" fontFamily={SVG_FONT} fill={colors.muted}>
                 {m.slice(0, 1)}
               </SvgText>
             ))}

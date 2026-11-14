@@ -4,6 +4,7 @@ import Svg, { Circle, G, Line, Path, Rect, Text as SvgText } from "react-native-
 
 import type { OptionKey, RotationOption, SoilHealthResult } from "../engine";
 import { Icon } from "./Icon";
+import { ExplainerBox } from "./InfoCard";
 import {
   chartSummary,
   monthCells,
@@ -31,6 +32,8 @@ type Props = {
   cropName?: (id: string) => string;
   /** Open the dashboard's shared ⓘ sheet instead of the inline text. */
   onInfoPress?: () => void;
+  /** The years of the lot's data, for the shared explainer. */
+  period?: string;
 };
 
 /** Each option has its own line style as well as its color, so color is never the only cue. */
@@ -51,7 +54,7 @@ const STRIP_ROW = 12;
 const STRIP_GAP = 6;
 const LABEL_GAP = 15;
 
-export function SoilHealthChart({ result, options, cropName, onInfoPress }: Props) {
+export function SoilHealthChart({ result, options, cropName, onInfoPress, period = "" }: Props) {
   const [width, setWidth] = useState(0);
   const [infoOpen, setInfoOpen] = useState(false);
   const rows = useMemo(() => soilHealthRows(result, options, cropName), [result, options, cropName]);
@@ -238,6 +241,7 @@ export function SoilHealthChart({ result, options, cropName, onInfoPress }: Prop
 
       {!onInfoPress && infoOpen ? (
         <View style={styles.infoBox}>
+          <ExplainerBox id="soil-health" period={period} />
           {result.info.map((l) => (
             <Text key={l.code} style={text.small}>
               {l.text}

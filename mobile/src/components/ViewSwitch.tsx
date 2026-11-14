@@ -16,7 +16,7 @@ export function ViewSwitch<K extends string>({ items, value, onChange }: { items
             accessibilityState={{ selected: on }}
             style={({ pressed }) => [styles.tab, on && styles.on, pressed && !on && styles.pressed]}
           >
-            <Text style={[text.bodyStrong, on && styles.onText]} numberOfLines={2}>
+            <Text style={[text.bodyStrong, styles.label, on && styles.onText]} numberOfLines={2}>
               {it.label}
             </Text>
           </Pressable>
@@ -28,6 +28,7 @@ export function ViewSwitch<K extends string>({ items, value, onChange }: { items
 
 const styles = StyleSheet.create({
   row: { flexDirection: "row", gap: 4, padding: 4, borderRadius: radius.lg, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  label: { textAlign: "center" },
   tab: { flex: 1, minHeight: MIN_TOUCH + 4, alignItems: "center", justifyContent: "center", paddingHorizontal: space.sm, borderRadius: radius.md },
   on: { backgroundColor: colors.green },
   onText: { color: colors.white, textAlign: "center" },

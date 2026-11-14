@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { type ReactNode, useCallback, useState } from "react";
+import { Fragment, type ReactNode, useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { Button } from "../src/components/Button";
@@ -8,6 +8,7 @@ import { Disclaimer } from "../src/components/Disclaimer";
 import { FarmMapCard } from "../src/components/FarmMapCard";
 import { FieldYear } from "../src/components/FieldYear";
 import { FooterLinks } from "../src/components/FooterLinks";
+import { DataTracePanel } from "../src/components/DataTracePanel";
 import { HarvestCard } from "../src/components/HarvestCard";
 import { Header } from "../src/components/Header";
 import { LanguageSwitch } from "../src/components/LanguageSwitch";
@@ -62,15 +63,7 @@ export default function DashboardScreen() {
   const selectLot = useCallback((id: string) => router.setParams({ lot: id }), []);
 
   return (
-    <Screen
-      width="wide"
-      footer={
-        <>
-          <FooterLinks />
-          <Disclaimer />
-        </>
-      }
-    >
+    <Screen width="wide">
       <Header title={t("dash.title")} right={wide ? <LanguageSwitch /> : undefined} />
       {wide ? null : <LanguageSwitch />}
       {lot ? (
@@ -92,6 +85,11 @@ export default function DashboardScreen() {
           <Button label={t("dash.draw")} href="/lots" />
         </Narrow>
       )}
+      {/* In the scroll, not pinned: on a phone a pinned footer hides about 110 px of results. */}
+      <View style={styles.footer}>
+        <FooterLinks />
+        <Disclaimer />
+      </View>
     </Screen>
   );
 }
@@ -204,11 +202,14 @@ function Results({
         onEvidence={() => setTab("evidence")}
         elNino={ensoLine() !== null}
         wide={wide}
+        period={period}
       />
       {wide ? (
         <View style={styles.row}>
           <View style={styles.col}>{harvest}</View>
-          <View style={styles.col} />
+          <View style={styles.col}>
+            <MonthsPrompt lot={lot} stage={analysis.stage} bare />
+          </View>
         </View>
       ) : (
         harvest
@@ -233,15 +234,28 @@ function Results({
       <Text style={[text.small, styles.muted]}>{t("evidence.intro")}</Text>
       <FieldYear options={options} selected={selected.key} onSelect={setPicked} monthly={analysis.monthly} cropById={cropById} info={{ id: "lot-snapshot", period }} />
       <Text style={text.caption}>{t("year.source")}</Text>
-      {data ? <LotDataCard data={data} info={{ id: "data-sources", period }} /> : null}
-      {data ? <ClimateExtremesCard data={data} info={{ id: "climate-extremes", period }} /> : null}
+      {data && wide ? (
+        <View style={styles.row}>
+          <View style={styles.col}>
+            <LotDataCard data={data} info={{ id: "data-sources", period }} />
+          </View>
+          <View style={styles.col}>
+            <ClimateExtremesCard data={data} info={{ id: "climate-extremes", period }} />
+          </View>
+        </View>
+      ) : data ? (
+        <>
+          <LotDataCard data={data} info={{ id: "data-sources", period }} />
+          <ClimateExtremesCard data={data} info={{ id: "climate-extremes", period }} />
+        </>
+      ) : null}
       {fit}
       {wide ? (
         <View style={styles.row}>
           <View style={styles.col}>
             <PlanTable options={options} selected={selected.key} onSelect={setPicked} info={{ id: "season-calendar", period }} />
             <WhatIfCard scenario={scenario} onChange={setScenario} notes={analysis.scenario?.notes ?? []} period={period} />
-            <SoilHealthChart result={analysis.soil_health} options={options} cropName={cropName} />
+            <SoilHealthChart result={analysis.soil_health} options={options} cropName={cropName} period={period} />
           </View>
           <View style={styles.col}>{detail}</View>
         </View>
@@ -250,7 +264,7 @@ function Results({
           <PlanTable options={options} selected={selected.key} onSelect={setPicked} info={{ id: "season-calendar", period }} />
           {detail}
           <WhatIfCard scenario={scenario} onChange={setScenario} notes={analysis.scenario?.notes ?? []} period={period} />
-          <SoilHealthChart result={analysis.soil_health} options={options} cropName={cropName} />
+          <SoilHealthChart result={analysis.soil_health} options={options} cropName={cropName} period={period} />
         </>
       )}
     </>
@@ -258,7 +272,7 @@ function Results({
 
   return (
     <>
-      <PriorityChips priorities={farm.priorities} onChange={choose} unavailable={unavailable} />
+      <PriorityChips priorities={farm.priorities} onChange={choose} unavailable={unavailable} period={period} />
       <ViewSwitch
         items={[
           { key: "plant", label: t("view.plant") },
@@ -268,7 +282,9 @@ function Results({
         onChange={setTab}
       />
       {tab === "plant" ? plantView : evidenceView}
-      <MonthsPrompt lot={lot} stage={analysis.stage} />
+      <DataTracePanel data={data} />
+      {/* On a wide plant view the prompt already sits beside the harvest card. */}
+      {wide && tab === "plant" ? null : <MonthsPrompt lot={lot} stage={analysis.stage} />}
     </>
   );
 }
@@ -278,15 +294,16 @@ function Results({
  * planting months for a sharper comparison, or Later. Once months are given, a way to change them.
  * Kept from main as is.
  */
-function MonthsPrompt({ lot, stage }: { lot: Lot; stage: 1 | 2 }) {
+function MonthsPrompt({ lot, stage, bare = false }: { lot: Lot; stage: 1 | 2; bare?: boolean }) {
   const [later, setLater] = useState(false);
   if (stage === 1 && later) return null;
   const listed = lot.crops.filter((c) => !isOtherCrop(c.crop_id));
   const given = listed.filter((c) => c.seasons.length > 0);
   const usual = listed.filter((c) => c.seasons.length === 0);
   const short = (id: string) => shortCropName(cropName(id));
+  const Wrap = bare ? Fragment : Narrow;
   return (
-    <Narrow>
+    <Wrap>
       <View style={styles.prompt}>
         <Text style={text.heading} accessibilityRole="header">
           {stage === 1 ? "Want a sharper comparison?" : "Your planting months"}
@@ -313,7 +330,7 @@ function MonthsPrompt({ lot, stage }: { lot: Lot; stage: 1 | 2 }) {
           )}
         </View>
       </View>
-    </Narrow>
+    </Wrap>
   );
 }
 
@@ -323,6 +340,7 @@ function Narrow({ children }: { children: ReactNode }) {
 }
 
 const styles = StyleSheet.create({
+  footer: { gap: space.sm, marginTop: space.lg },
   strong: { fontWeight: "700" },
   muted: { color: colors.muted },
   lotLine: { gap: 2 },

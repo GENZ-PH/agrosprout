@@ -9,6 +9,7 @@
 // This is a first draft of the wording. Data and Engine leads check the facts; the Story
 // lead edits the voice.
 
+import type { SourceKey } from "./sources";
 import { COMPONENT_LABELS } from "../engine/explain";
 
 export type ExplainerId =
@@ -23,7 +24,9 @@ export type ExplainerId =
   | "what-if"
   | "farm-map"
   | "data-sources"
-  | "climate-extremes";
+  | "climate-extremes"
+  | "season-guide"
+  | "soil-health";
 
 export interface Explainer {
   id: ExplainerId;
@@ -33,6 +36,8 @@ export interface Explainer {
   what: string;
   /** Where it comes from. */
   source: string;
+  /** The datasets and methods behind it, shown the same way in every ⓘ (sources.ts). */
+  sources: readonly SourceKey[];
   /** How to read it. */
   read: string;
   /** Its limits, one short sentence each. */
@@ -49,6 +54,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     what: "The average rain and the water that crops and the air would use up, month by month, for your lot. Bars show rain next to the crop water need. Dry and wet months are marked.",
     source:
       "NASA POWER. Rain, temperature, humidity and wind come from NASA's MERRA-2 weather model, and sunshine from NASA's CERES satellite data. Years used: {period}. Evaporation (ET₀) is worked out on your phone from those NASA values with the FAO-56 Penman-Monteith method (Allen and others, 1998).",
+    sources: ["power", "fao56", "brouwer"],
     read: "Where the rain bar is shorter than the water-need bar, crops would need extra water that month. A dry year and a wet year are shown too: they are the 20th and the 80th percentile of the years used, so most years fall between them.",
     limits: [
       "The numbers describe a NASA grid cell, roughly 50 km across, not your exact field. The weather model's cell is 0.5° × 0.625°, and the sunshine data is coarser still (1° × 1°).",
@@ -62,6 +68,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     title: "Soil moisture",
     what: "How wet the soil is around the roots, month by month, from 0 (dry) to 1 (saturated). Months of dry stress for crops are marked.",
     source: "NASA POWER root-zone soil wetness (GWETROOT), a model estimate. Years used: {period}.",
+    sources: ["power"],
     read: "A low number means the root zone is usually dry in that month; a very high number means it is usually soaked, which some crops do not tolerate.",
     limits: [
       "It is a model estimate for a large grid cell, not a measurement in your field.",
@@ -74,6 +81,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     what: "For each crop you chose, whether this lot suits it: Good fit, Watch out or Poor fit, with the one or two main reasons (water, heat, waterlogging and, once you add places, the distance to market).",
     source:
       "Crop water use from FAO-56 (Allen and others, 1998), temperature ranges from the FAO Ecocrop database, and rain and temperature from NASA POWER. Each crop value is cited in the crop library (crops.json).",
+    sources: ["power", "fao56", "ecocrop", "crop-library"],
     read: "The fit is mainly about water: how much of the crop's water need the rain would not cover in a typical year, and in a dry year. Heat, cold and waterlogging can lower it too. When you have not given your months, a typical local planting calendar is used and labelled assumed.",
     limits: [
       "Crop values are general, not specific to a variety.",
@@ -87,6 +95,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     what: "Each lot you drew, colored by how well it suits the crops you grow there. A lot shows the result of its weakest crop, the same Good fit, Watch out or Poor fit as in \"Your crops here\". The label on each lot gives its name, its area and the result in words.",
     source:
       "The same check as \"Your crops here\": crop water use from FAO-56 (Allen and others, 1998), temperature ranges from the FAO Ecocrop database, and rain and temperature from NASA POWER at the middle of each lot. Years used: {period}. The area is worked out from the outline you drew.",
+    sources: ["power", "fao56", "ecocrop", "crop-library", "farmer"],
     read: "Green is a good fit, orange means watch out, red is a poor fit, and dark gray means there is not enough data to judge. Light gray lots have no result yet: pick their crops, or wait for the NASA data to download. Tap a lot to see its results below.",
     limits: [
       "The numbers describe a NASA grid cell, roughly 50 km across, not your exact field, so lots close together will often share a color.",
@@ -100,6 +109,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     what: "How long it takes to bring the harvest from each lot to the places where you sell or store it, and which crops suit that trip.",
     source:
       "Your own travel time if you entered it. Otherwise a road route from OpenStreetMap data (© OpenStreetMap contributors) divided by a mode speed, and if you are offline a rough straight-line estimate. The card always says which one was used.",
+    sources: ["osm", "crop-library", "farmer"],
     read: "Crops that spoil within days need a short trip; crops that keep for weeks or months, such as dried grain, can travel further. A time marked rough estimate should be confirmed by you.",
     limits: [
       "Travel speeds and the load per trip are assumptions, not measurements, and your own numbers always win.",
@@ -113,6 +123,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     what: "Several ways to use your lot over the year: your own crops, and options that add or swap crops. Each option says why it was suggested, what evidence it rests on, what it improves, what is not known and what to check locally.",
     source:
       "The scores combine the water balance (FAO-56 crop water use and effective rain, Brouwer and Heibloem, 1986), the crop's temperature range, and crop traits from the crop library. Your options are compared with your own crops.",
+    sources: ["power", "srtm", "fao56", "brouwer", "ecocrop", "crop-library", "feedipedia", "rusle", "tr55"],
     read: `Each option gets a score from 0 to 100 on: ${Object.values(COMPONENT_LABELS).join("; ")}. The badge (High, Medium or Low) shows how sure we are: it drops when the order of the options changes between a dry and a wet year, and to Low when two or more of your answers are "I don't know".`,
     limits: [
       "It is a comparison tool, not a promise of yield or income.",
@@ -126,6 +137,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     title: "What matters to you",
     what: "Five choices: save water, build soil, extra income, less work and feed animals. Tapping them re-ranks the options straight away, on your phone.",
     source: "Your own answers. The choices only change how much each score counts; they do not change the data.",
+    sources: ["farmer", "feedipedia"],
     read: "All five start equal. Tap the ones that matter most to you: they count twice as much as the others. See which option moves to the top, and tap again to undo.",
     limits: [
       "A priority can only count when the data behind it exists; for example income and market access need crop and destination information.",
@@ -137,6 +149,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     title: "Your months vs better months",
     what: "For each crop and season, your planting months next to the best nearby months we found, with the same crop and season length.",
     source: "The same water balance and temperature checks as the recommendations, run for each of the 12 possible planting months, using NASA POWER data for {period}.",
+    sources: ["power", "fao56", "ecocrop", "crop-library", "farmer"],
     read: "A better month is shown only when it clearly beats yours and does not clash with your other crops on the same lot. If a clearly better month would clash with another crop of yours, the card says so and names that crop: it is a trade-off to weigh with your technician, not a move to make. Only when nothing beats your month, even on a lot with nothing else on it, does the card say your timing is already good.",
     limits: [
       "It cannot see things we have no data for, such as when seed or labor are available.",
@@ -149,6 +162,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     title: "Whole-lot calendar",
     what: "Your calendar next to a better-timed calendar and alternative rotations, across the whole year for one lot.",
     source: "Your own months, the options from the recommendations and the planting-month scan.",
+    sources: ["power", "crop-library", "farmer"],
     read: "Bars that overlap mean crops grown together on the same lot. Empty months mean bare soil, which can wash away in heavy rain.",
     limits: ["Only crops you chose are shown; other possible crops appear as alternatives, not as advice."],
   },
@@ -158,6 +172,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     what: "Each NASA dataset that feeds this lot's results, the value it gives for this lot, and how coarse it is.",
     source:
       "NASA POWER for climate ({period}), NASA SRTM for the field's elevation and slope, and on the sample farm also NASA satellite checks (MODIS vegetation, GPM IMERG rain and SMAP soil moisture) when they are bundled. El Niño context is from PAGASA and NOAA.",
+    sources: ["power", "srtm", "oni", "pagasa"],
     read: "Read the value line first: it is what this lot gets from that dataset. The grey line says how wide an area the value covers and which years it comes from.",
     limits: [
       "A value for a large grid cell describes the area around your lot, not the lot itself.",
@@ -169,6 +184,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     title: "What if it is drier or warmer?",
     what: "The same results recalculated for a change in rainfall and temperature that you pick with the sliders.",
     source: "Your lot's NASA POWER data with the rainfall and temperature changed as set; evaporation is recalculated for the warmer temperature.",
+    sources: ["power", "fao56"],
     read: "It shows how the options hold up under a drier, wetter or warmer climate.",
     limits: [
       "It is a what-if, not a forecast.",
@@ -181,12 +197,40 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     what: "How many days a month are usually very hot (above 35 °C), have very heavy rain (above 50 mm in one day) or frost (below 0 °C), and whether rain, the dry-season water shortage and the daytime heat have been going up or down over the years.",
     source:
       "NASA POWER daily data (community AG): daily maximum and minimum air temperature at 2 m (T2M_MAX, T2M_MIN) and corrected rain (PRECTOTCORR), from NASA's MERRA-2 weather model. Years used: {period}. The frost line, below 0 °C, is the frost-day index of the WMO climate-extremes indices (ETCCDI); 35 °C and 50 mm are the cut-offs this app uses for heat and heavy-rain days. Trends use Sen's slope with the Mann-Kendall test.",
+    sources: ["power-daily"],
     read: "Each number is the average count of days in that month across the years used, so 0.2 means about one such day every five years. A trend is called clear only when the Mann-Kendall p-value is below 0.05; otherwise the change could be chance, and the card says there is no clear trend.",
     limits: [
       "The numbers describe a NASA grid cell, roughly 50 km across (0.5° × 0.625°), not your exact field.",
       "It is weather-model data, not a rain gauge or weather station on your farm, and a single storm can be missed or spread out.",
       "Temperatures are for the air 2 m above the ground at the cell's average height; a field higher or lower than that is cooler or warmer.",
       "A trend over these years describes the past; it is not a forecast.",
+    ],
+  },
+  "season-guide": {
+    id: "season-guide",
+    title: "This month and your year",
+    what: "What the chosen plan asks of you this month, what comes next, and each month of the year: when to plant, when to harvest, and the months a crop may be short of water, too hot or too wet.",
+    source:
+      "The plan comes from the recommendations for this lot. Short of water, too hot and too wet are worked out from NASA POWER data for {period} with FAO-56 crop water use and the crop's temperature range. The El Niño line is from the latest PAGASA advisory and the NOAA Oceanic Niño Index.",
+    sources: ["power", "fao56", "ecocrop", "crop-library", "pagasa", "oni"],
+    read: "Tap a month to see what happens in it. A sun marks a month when a crop in the field may be short of water, the heat sign a month that may be too hot, a drop a month that may be too wet. Pick another way below to see its year instead.",
+    limits: [
+      "Months come from a typical year, not a forecast for this season.",
+      "Planting months are the usual local ones unless you give your own.",
+      "Please check the plan with your agricultural technician before changing crops.",
+    ],
+  },
+  "soil-health": {
+    id: "soil-health",
+    title: "Soil health over three years",
+    what: "A relative soil-health line for each plan over three years, if the plan's year repeats: it rises with soil-building crops and falls with bare soil in heavy rain.",
+    source:
+      "Worked out in this app from each plan's Builds soil and Protects from washout scores. Those come from the crop library (legumes, residue) and the bare months against NASA POWER rain for {period}, with the RUSLE slope factor when the slope is known.",
+    sources: ["power", "srtm", "rusle", "crop-library"],
+    read: "Compare the lines with each other. A line above the start means the plan builds soil; below it means it loses soil.",
+    limits: [
+      "It is a relative indicator from this model, not a soil test.",
+      "The two weights in the formula are team assumptions that still need a local check.",
     ],
   },
 };

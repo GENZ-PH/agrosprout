@@ -2,6 +2,7 @@ import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Disclaimer } from "../src/components/Disclaimer";
 import { Header } from "../src/components/Header";
+import { DataTracePanel } from "../src/components/DataTracePanel";
 import { Screen } from "../src/components/Screen";
 import { colors, MIN_TOUCH, radius, space, text } from "../src/components/theme";
 import { CHALLENGE_DATASETS, DATA_SOURCES, fill, LIMITATIONS } from "../src/content/explainers";
@@ -13,6 +14,7 @@ export default function DataScreen() {
   return (
     <Screen footer={<Disclaimer />}>
       <Header title="Data and limits" fallbackHref="/dashboard" />
+      <DataTracePanel />
       <Text style={text.heading} accessibilityRole="header">
         Where the numbers come from
       </Text>

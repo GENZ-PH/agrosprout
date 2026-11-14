@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { PriorityKey } from "../engine/scores";
 import type { Priorities } from "../types";
 import { Icon } from "./Icon";
+import { useExplainer } from "./InfoToggle";
 import { useT } from "../i18n/lang-store";
 import { chosenPriorities, PRIORITY_KEYS, togglePriority } from "./plan-text";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
@@ -12,15 +13,22 @@ type Props = {
   onChange: (next: Priorities) => void;
   /** Priorities no score can answer on this lot yet; shown, but not selectable. */
   unavailable: readonly PriorityKey[];
+  /** The years of the lot's data, for the ⓘ. */
+  period: string;
 };
 
 /** "What matters to you": tap to re-rank the plans. Works offline, on the phone. */
-export function PriorityChips({ priorities, onChange, unavailable }: Props) {
+export function PriorityChips({ priorities, onChange, unavailable, period }: Props) {
   const { t } = useT();
+  const ex = useExplainer({ id: "priorities", period }, t("chips.title"));
   const chosen = new Set(chosenPriorities(priorities));
   return (
     <View style={styles.wrap}>
-      <Text style={text.bodyStrong}>{t("chips.title")}</Text>
+      <View style={styles.titleRow}>
+        <Text style={[text.bodyStrong, styles.flex]}>{t("chips.title")}</Text>
+        {ex.button}
+      </View>
+      {ex.box}
       <View style={styles.row}>
         {PRIORITY_KEYS.map((k) => {
           const off = unavailable.includes(k);
@@ -46,6 +54,8 @@ export function PriorityChips({ priorities, onChange, unavailable }: Props) {
 }
 
 const styles = StyleSheet.create({
+  titleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  flex: { flex: 1 },
   wrap: { gap: space.sm },
   row: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
   chip: {

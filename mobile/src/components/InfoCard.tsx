@@ -2,6 +2,7 @@ import { type ReactNode, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { EXPLAINERS, fill, type ExplainerId } from "../content/explainers";
+import { SOURCES, type SourceKey } from "../content/sources";
 import { Icon } from "./Icon";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
@@ -52,11 +53,37 @@ export function ExplainerBox({ id, period }: { id: ExplainerId; period: string }
     <View style={styles.box}>
       <Part label="What it is">{e.what}</Part>
       <Part label="Where it comes from">{fill(e.source, { period })}</Part>
+      <SourceList keys={e.sources} period={period} />
       <Part label="How to read it">{e.read}</Part>
       <View style={styles.part}>
         <Text style={text.bodyStrong}>Limits</Text>
         <Bullets lines={e.limits} />
       </View>
+    </View>
+  );
+}
+
+/**
+ * The datasets behind a card, from the one list in sources.ts, so every ⓘ names a source the
+ * same way: name, who publishes it, what it gives, how coarse it is and which years.
+ */
+export function SourceList({ keys, period }: { keys: readonly SourceKey[]; period: string }) {
+  if (keys.length === 0) return null;
+  return (
+    <View style={styles.part}>
+      <Text style={text.bodyStrong}>Data used</Text>
+      {keys.map((k) => {
+        const s = SOURCES[k];
+        return (
+          <View key={k} style={styles.source} accessible accessibilityLabel={`${s.name}, ${s.by}. ${s.gives}. ${s.scale}. ${fill(s.years, { period })}.`}>
+            <View style={styles.sourceHead}>
+              <Text style={[text.small, styles.sourceName]}>{s.name}</Text>
+              {s.nasa ? <Text style={styles.nasa}>NASA data</Text> : null}
+            </View>
+            <Text style={[text.caption, styles.muted]}>{`${s.gives}. ${s.scale}, ${fill(s.years, { period })}. ${s.by}.`}</Text>
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -111,4 +138,9 @@ const styles = StyleSheet.create({
   bullets: { gap: space.xs },
   bullet: { flexDirection: "row", gap: space.sm },
   dot: { width: 10 },
+  muted: { color: colors.muted },
+  source: { gap: 2, backgroundColor: colors.surface, borderRadius: radius.sm, paddingHorizontal: space.sm, paddingVertical: 6 },
+  sourceHead: { flexDirection: "row", alignItems: "center", gap: space.sm, flexWrap: "wrap" },
+  sourceName: { fontWeight: "700" },
+  nasa: { ...text.caption, fontWeight: "700", color: colors.green, borderWidth: 1, borderColor: colors.green, borderRadius: radius.pill, paddingHorizontal: 6 },
 });
