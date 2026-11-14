@@ -39,7 +39,7 @@ export function SatelliteCard({ farmId, lotName, info }: { farmId: string; lotNa
       {imerg ? (
         <View style={styles.block}>
           <View style={styles.blockHead}>
-            <Text style={[text.bodyStrong, styles.flex]}>Rain in a typical year</Text>
+            <Text style={[text.bodyStrong, styles.fullLine]}>Rain in a typical year</Text>
             <SourceChip k="imerg" />
             <SourceChip k="power-daily" />
           </View>
@@ -115,7 +115,9 @@ const styles = StyleSheet.create({
   card: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: space.lg, gap: space.md },
   titleRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
   flex: { flex: 1, minWidth: 0 },
+  fullLine: { width: "100%" },
   muted: { color: colors.muted },
   block: { gap: space.sm, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: space.md },
-  blockHead: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
+  // Title on its own line, then the source chips (wrapping), so a narrow panel never squeezes the title.
+  blockHead: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: space.xs },
 });
