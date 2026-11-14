@@ -24,6 +24,7 @@ import Thermometer from "lucide-react-native/icons/thermometer";
 import Trash2 from "lucide-react-native/icons/trash-2";
 import Undo2 from "lucide-react-native/icons/undo-2";
 import VectorSquare from "lucide-react-native/icons/vector-square";
+import WifiOff from "lucide-react-native/icons/wifi-off";
 import X from "lucide-react-native/icons/x";
 
 import { colors } from "./theme";
@@ -65,6 +66,8 @@ const ICONS = {
   basket: ShoppingBasket,
   /** A shape with corner handles: "Adjust the corners". */
   shape: VectorSquare,
+  /** No signal: the Offline notice (#36). */
+  offline: WifiOff,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;
