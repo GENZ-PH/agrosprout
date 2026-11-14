@@ -383,3 +383,17 @@ export const EXPLAIN_MIN_DELTA_POINTS = 1;
  * (docs/07 §5, "two or more key inputs"). One such input gives Medium.
  */
 export const CONFIDENCE_LOW_UNKNOWN_INPUTS = 2;
+
+// ---------------------------------------------------------------------------
+// "What if" climate scenario (#47)
+// ---------------------------------------------------------------------------
+
+/**
+ * Slider ranges for the what-if scenario: rainfall change in percent and
+ * temperature rise in degrees C. Source: team spec (issue #47). The UI labels
+ * the result a "what if", not a forecast.
+ */
+export const SCENARIO_RANGE = {
+  rain_pct: { min: -30, max: 20 },
+  temp_c: { min: 0, max: 2 },
+} as const;
