@@ -221,6 +221,21 @@ test("noCropFits: the trouble is named only when more than half of the rated cro
   assert.deepEqual(noCropFits(sugs(sug("poor", "missing-climate"))), { why: null });
 });
 
+/** A crop rated on temperature only: its water use could not be checked (e.g. no Kc in crops.json). */
+const partial = (level: "watch" | "poor", code: string): CropSuggestion => {
+  const c = sug(level, code);
+  return { ...c, crop_id: `partial-${code}`, reasons: [...c.reasons, { code: "no-crop-data", level: "unknown", months: [], value: null, limit: null }] };
+};
+
+test("a crop rated without its water check is never a top crop, and doesn't count for 'none grow well'", () => {
+  // Sesbania on the Sahara probe: Watch out for cool January, but its water use is not in crops.json.
+  const s = sugs(partial("watch", "cool"), sug("poor", "water"), sug("poor", "water"));
+  assert.deepEqual(topCrops(s), []);
+  assert.deepEqual(noCropFits(s), { why: "too dry" });
+  assert.deepEqual(topCrops(sugs(sug("watch", "cool"), partial("watch", "warm"))).map((c) => c.crop_id), ["watch-cool"]);
+  assert.equal(noCropFits(sugs(partial("poor", "too-cold"))), null, "only partly rated crops: nothing to say");
+});
+
 test("noCropFits is null when any crop fits, or when no crop can be rated", () => {
   assert.equal(noCropFits(lotSuggestions(UNKNOWN, ILIGAN_LOT_FIXTURE, CROP_LIBRARY)), null);
   assert.equal(noCropFits(sugs(sug("watch", "cool"), sug("poor", "too-cold"))), null);

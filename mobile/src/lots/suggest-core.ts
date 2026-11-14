@@ -58,17 +58,25 @@ export function lotSuggestions(details: LotDetails, data: Pick<LotData, "monthly
 
 /**
  * The `n` crops that suit the lot best: best level first (Good, then Watch out), then more planting months at
- * that level (a team assumption: a wider window is more forgiving), then library order. Poor fit and unknown
- * crops are never listed: a "top" crop that grows poorly in every month would mislead (`noCropFits` covers that).
+ * that level (a team assumption: a wider window is more forgiving), then library order. Never listed: Poor fit
+ * and unknown crops, and crops rated without part of the check (`fullyRated`): a "top" crop that grows poorly
+ * in every month, or whose water use was never checked, would mislead (`noCropFits` covers that case).
  */
 export function topCrops(s: LotSuggestions, n = 3): CropSuggestion[] {
   return s.crops
     .map((c, i) => ({ c, i }))
-    .filter(({ c }) => c.level === "good" || c.level === "watch")
+    .filter(({ c }) => (c.level === "good" || c.level === "watch") && fullyRated(c))
     .sort((a, b) => RANK[a.c.level] - RANK[b.c.level] || b.c.best_months.length - a.c.best_months.length || a.i - b.i)
     .slice(0, n)
     .map(({ c }) => c);
 }
+
+/**
+ * False when part of the crop's check could not run (a reason at level unknown: no Kc in crops.json, or NASA data
+ * missing), so its Watch out or Poor comes from the other checks alone. E.g. Sesbania on the Sahara probe
+ * (2026-11-14): Watch out for a cool January, its water need never checked. A Good fit is always fully rated.
+ */
+const fullyRated = (c: CropSuggestion) => c.reasons.every((r) => r.level !== "unknown");
 
 /** The lot's trouble in plain words, from a crop's main reason. */
 export type NoFitTrouble = "too dry" | "too cold" | "too hot" | "too wet";
@@ -88,7 +96,7 @@ const TROUBLE: Partial<Record<FitReasonCode, NoFitTrouble>> = {
  * main reasons, or null when they differ. Null when some crop fits, or when no crop can be rated at all.
  */
 export function noCropFits(s: LotSuggestions): { why: NoFitTrouble | null } | null {
-  const rated = s.crops.filter((c) => c.level !== "unknown");
+  const rated = s.crops.filter((c) => c.level !== "unknown" && fullyRated(c));
   if (rated.length === 0 || rated.some((c) => c.level !== "poor")) return null;
   const counts = new Map<NoFitTrouble, number>();
   for (const c of rated) {
