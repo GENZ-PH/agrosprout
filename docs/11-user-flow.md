@@ -62,7 +62,7 @@ Per lot (tabs or swipe cards):
 
 | Card | Shows | "ⓘ What am I looking at?" explains |
 |---|---|---|
-| **Lot snapshot** | Area, location, 12-month **rain vs crop water need** bars; dry and wet months highlighted | Rainfall and evaporation estimates from NASA POWER (satellite + weather model), 2001–2024 average; how to read the bars; ~50 km resolution caveat |
+| **Lot snapshot** | Area, location, 12-month **rain vs crop water need** bars; dry and wet months highlighted | Rainfall and evaporation estimates from NASA POWER (satellite + weather model), 2001–2025 average; how to read the bars; ~50 km resolution caveat |
 | **Soil moisture** | Root-zone wetness by month (0–1), dry-stress months marked | What root-zone soil moisture is; satellite/model vs a hand test in the field |
 | **Your crops here** | Each selected crop: **Good fit / Watch out / Poor fit**, with the 1–2 main reasons (water, heat, waterlogging, **distance to market**) | How "fit" is calculated in plain words, and which data drives it |
 | **Getting your harvest out** | **Before S6:** an empty-state invite: "Where do you sell or store your harvest? **Add a place** to see travel time and which crops suit the trip." → opens S6. **After S6:** travel time per lot → each destination (mode, source label); which crops suit that trip (e.g. "Tomato spoils fast: 1 h 10 min is long", "Dried mungbean stores well"); **[Should]** trips needed per harvest; **[Should]** months when heavy rain may slow the roads | How travel time was found (road route / estimate / your time); why perishable crops need short trips; that transport costs aren't calculated unless the farmer enters a fare |
@@ -90,7 +90,7 @@ Per lot, per crop:
  │ Fit score 62                 │   │ Fit score 81  (+19)           │
  │ [rain vs need chart]         │   │ [rain vs need chart]          │
  └──────────────────────────────┘   └───────────────────────────────┘
-  Why: "Planting about a month earlier avoids the September dry spell seen in most years (NASA POWER 2001–2024)."
+  Why: "Planting about a month earlier avoids the September dry spell seen in most years (NASA POWER 2001–2025)."
   Confidence: Medium. Check locally: water availability for land preparation in May?
 ```
 *(Numbers above are illustrative placeholders. Real values come from the engine.)*

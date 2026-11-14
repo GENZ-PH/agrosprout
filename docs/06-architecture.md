@@ -36,7 +36,7 @@ flowchart TB
     ST <--> ENG --> UI
   end
 
-  POWER["NASA POWER API<br/>monthly 2001–2024<br/>~33 KB · ~1.5 s per lot"]
+  POWER["NASA POWER API<br/>monthly 2001–2025<br/>~33 KB · ~1.5 s per lot"]
   OSRM["OSRM routing (optional)"]
 
   OUT --> BUILD
