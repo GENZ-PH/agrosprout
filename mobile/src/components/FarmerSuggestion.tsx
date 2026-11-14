@@ -115,10 +115,8 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
             {order.map(({ month, year }, i) => (
               <View key={i} style={[styles.headCell, month === 0 && i > 0 && styles.newYear]}>
                 {/* The year over the first month and over January. */}
-                <Text style={styles.yearLabel} numberOfLines={1}>
-                  {i === 0 || month === 0 ? String(year) : " "}
-                </Text>
-                <Text style={[styles.month, i === 0 && styles.monthNow]}>{i === 0 ? "Now" : MONTH_NAMES[month][0]}</Text>
+                {i === 0 || month === 0 ? <Text style={styles.yearLabel}>{String(year)}</Text> : null}
+                <Text style={[styles.month, i === 0 && styles.monthNow]}>{MONTH_NAMES[month][0]}</Text>
               </View>
             ))}
           </View>
@@ -141,8 +139,12 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
             <View style={[styles.swatch, styles.cellEmpty]} />
             <Text style={text.caption}>Nothing planted</Text>
           </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.swatch, styles.swatchNow]} />
+            <Text style={text.caption}>This month</Text>
+          </View>
         </View>
-        <Text style={text.caption}>From this month on. The plan repeats the same way every year.</Text>
+        <Text style={text.caption}>Starts this month. The plan repeats the same way every year.</Text>
       </View>
 
       {reasons.length > 0 ? (
@@ -190,10 +192,12 @@ const styles = StyleSheet.create({
   cells: { flex: 1, flexDirection: "row", gap: 2 },
   cell: { flex: 1, height: 26, borderRadius: 4 },
   cellEmpty: { backgroundColor: colors.bg, borderWidth: 1, borderStyle: "dashed", borderColor: colors.dashed },
-  headCell: { flex: 1, minWidth: 0, overflow: "visible" },
+  // Room above the month letters for the year, which sits over the first month and over January.
+  headCell: { flex: 1, minWidth: 0, paddingTop: 15, overflow: "visible" },
   month: { textAlign: "center", fontSize: 12, lineHeight: 16, color: colors.muted },
-  monthNow: { color: colors.green, fontWeight: "700", fontSize: 11 },
-  yearLabel: { fontSize: 11, lineHeight: 14, fontWeight: "700", color: colors.ink, width: 40 },
+  monthNow: { color: colors.green, fontWeight: "800" },
+  yearLabel: { position: "absolute", top: 0, left: 0, width: 48, fontSize: 11, lineHeight: 14, fontWeight: "700", color: colors.ink },
+  swatchNow: { borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface },
   cellNow: { borderWidth: 2, borderStyle: "solid", borderColor: colors.ink },
   newYear: { marginLeft: 4 },
   legend: { flexDirection: "row", flexWrap: "wrap", gap: space.md, marginTop: space.xs },
