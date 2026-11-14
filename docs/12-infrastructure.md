@@ -130,7 +130,7 @@ How the pieces behave, checked against the installed library code (zustand 5.1.0
 
 | Rule | Why |
 |---|---|
-| **Anything the dashboard needs offline goes in a Zustand store**, including per-lot NASA POWER data (`LotData`) and its fetch date. Save it as soon as it is fetched (06-architecture offline checklist). | The TanStack Query cache is a convenience cache: it is deleted when the app version changes, when `CACHE_SCHEMA` is bumped, after **7 days** (`QUERY_CACHE_MAX_AGE`), or if it cannot be read. Stores have none of these limits. |
+| **Anything the dashboard needs offline is saved on the device, not only in the query cache.** The farm (lots, crops, months, places, priorities) is in the farm store (`useFarmStore`, key `farm`). Per-lot NASA POWER data is saved under `lotdata:<lotId>` by `ensureLotData` (`src/data/power.ts`) as soon as it is fetched. | The TanStack Query cache is a convenience cache: it is deleted when the app version changes, when `CACHE_SCHEMA` is bumped, after **7 days** (`QUERY_CACHE_MAX_AGE`), or if it cannot be read. |
 | **Screens only render after every store has loaded.** The root layout waits (`useStoresReady`, usually a few milliseconds). | With plain zustand `persist`, a change made before saved data finishes loading writes the empty defaults over the farmer's saved data. A test in `src/state/persist-core.test.ts` reproduces it. |
 | **Nothing is written until saved data has been read**, even if a store is created later than launch. | Same reason. The early change is dropped with a console warning instead of erasing saved data. |
 | **Saved data is backed up before it is migrated or replaced.** If it is unreadable, from another `version`, or `migrate` throws, the original text is kept under `agrosprout-<store>:backup:<time>` and the store starts from its defaults. | Plain zustand drops old-version data silently, and never finishes loading if `migrate` throws. |
@@ -138,6 +138,39 @@ How the pieces behave, checked against the installed library code (zustand 5.1.0
 | **Lots fetched while offline stay `data_status: "pending"`** and are fetched again with `onReconnect` / `useOnReconnect` (`src/net/reconnect.ts`). | 06-architecture: "fetch automatically when back online". Online state comes from NetInfo on Android and the browser on web. |
 | **Direct calls (NASA POWER, OSRM) use `fetchWithTimeout`** from `src/net/fetch.ts` (15 s default) and pass the query's `signal`. | A cancelled or hung request stops instead of waiting forever. |
 | **Keep stores small.** Store the processed monthly values, not the raw ~33 KB POWER response. | AsyncStorage on Android is capped at 6 MB in total by default (`AsyncStorage_db_size_in_MB`). |
+
+### Farm store
+
+`src/state/farm-store.ts` (#18) holds everything the farmer enters, saved under the AsyncStorage key `farm` in the `Farm` shape from `src/types.ts` (version 1). Every screen reads and writes the farm through it:
+
+```ts
+import { useFarmStore, useFarm, useLot } from "../src/state/farm-store";
+
+const lots = useFarmStore((s) => s.lots);          // pick only what the screen needs
+const addLot = useFarmStore((s) => s.addLot);
+const id = addLot({ geometry, area_ha, centroid }); // "lot-1", named "Lot 1", data_status "pending"
+const farm = useFarm();                             // whole Farm for the engine / dashboard
+```
+
+| Action | Notes |
+|---|---|
+| `addLot`, `updateLot`, `deleteLot` | Ids `lot-N` are never reused. `deleteLot` also removes `lotdata:<id>`. |
+| `setCrops`, `setSeasons` | Empty `seasons` = use the crop's typical calendar ("assumed"). |
+| `setTravel` | One entry per lot and destination; a new one replaces the old. |
+| `addDestination`, `updateDestination`, `deleteDestination` | Deleting a place also removes every lot's travel to it. |
+| `setPriorities` | Values are clamped to 0-100. Defaults are 50 each (types.ts). |
+| `clearAll` | Deletes the farm and every lot's saved climate data. |
+
+The logic is in `farm-core.ts` (no React Native imports) and is tested in `farm-core.test.ts`. A change to the saved shape needs `FARM_VERSION` bumped, `Farm.version` updated in types.ts, and a `migrate` in `farmPersistOptions`.
+
+### Backup file (#49)
+
+With no account, uninstalling the app erases the farm, so the farmer can keep a backup file. `src/state/backup.ts` builds and applies it; the screen does the file part.
+
+1. **Save:** `serializeBackup(await makeBackup())`, named `backupFileName(backup)`. The file holds the `Farm` and each lot's saved NASA POWER data. Web: download. Android: share sheet.
+2. **Restore:** read the picked file, `parseBackup(text)` (checks it against the `Farm` type and versions and gives a plain reason when it is not valid), show `describeBackup(backup)` (e.g. "2 lots, 2 crops, 1 place") and ask to confirm, then `applyBackup(backup)`.
+
+Nothing is uploaded. Lots whose climate data is not in the file come back as `pending` and are fetched again when online.
 
 `useHydrationReport()` (`src/state/hydration.ts`) tells a screen whether each store loaded normally (`ready`), was restored from a backup (`recovered`) or could not be read (`failed`), so the Frontend can show a message. No UI is included.
 
