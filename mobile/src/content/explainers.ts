@@ -20,6 +20,7 @@ export type ExplainerId =
   | "priorities"
   | "months-compare"
   | "season-calendar"
+  | "year-calendar"
   | "what-if"
   | "farm-map"
   | "lot-cutout";
@@ -161,6 +162,19 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     source: "Your own months, the options from the recommendations and the planting-month scan.",
     read: "Bars that overlap mean crops grown together on the same lot. Empty months mean bare soil, which can wash away in heavy rain.",
     limits: ["Only crops you chose are shown; other possible crops appear as alternatives, not as advice."],
+  },
+  "year-calendar": {
+    id: "year-calendar",
+    title: "Your year on your lot",
+    what: "Each month of the year for the plan you pick: when to plant, when to harvest, and the months a crop may be short of water, too hot or too wet.",
+    source:
+      "The plan comes from the recommendations for this lot. Short of water, too hot and too wet are worked out from NASA POWER data for {period} with the FAO-56 water balance and each crop's temperature range.",
+    read: "Tap a month to see what happens in it. A sun marks a month when a crop in the field may be short of water, the thermometer a month that may be too hot, a drop a month that may be too wet. Pick another plan below the calendar to see its year instead.",
+    limits: [
+      "The months are from monthly averages, so a short dry or hot spell inside a month is not shown.",
+      "A risk is shown only for months when a crop is in the field.",
+      "It supports your own judgment and your agricultural technician; it does not replace them.",
+    ],
   },
   "what-if": {
     id: "what-if",
