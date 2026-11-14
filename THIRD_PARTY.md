@@ -15,3 +15,16 @@ Free public services the app calls from the device. Light use only. None needs a
 - Only points rounded to about 100 m (3 decimals) are sent, one request per lot and destination, and only when the farmer adds or moves a destination.
 - Attribution shown wherever a road route is used: "Routing © OpenStreetMap contributors". The exact wording the OSM Foundation asks for is in https://osmfoundation.org/wiki/Licence/Attribution_Guidelines and was not checked.
 - OpenStreetMap data is under the ODbL: https://www.openstreetmap.org/copyright.
+
+## Map tiles (S1 lot map, S6 places)
+
+- Basemap is decision **D25, still open**. Until the team picks, the map page uses **Esri World Imagery** as a placeholder (`https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}`). Switching to EOX Sentinel-2 cloudless or OpenStreetMap is one line in `mobile/map-src/main.ts` (`DEFAULT_BASEMAP`). The terms of use of each option were not checked here; that is part of D25.
+- The provider's attribution is always shown on the map (Leaflet attribution control).
+- Tiles are requested only for the area on screen, as the farmer looks around. No bulk download or tile caching. Offline, lot shapes still draw on a plain background.
+- Like any web map, tile requests show the tile server which area is being viewed (zoom level and tile numbers). No lot shapes, names, or other farm data are sent.
+
+## Bundled map libraries (`mobile/map-src/`, built into one offline HTML file)
+
+- Leaflet 1.9.4, BSD-2-Clause: https://leafletjs.com
+- Terra Draw 1.39.0 and terra-draw-leaflet-adapter 1.4.0, MIT: https://terradraw.io
+- Turf.js 7.4.0 (`@turf/area`, `centroid`, `convex`, `helpers`, `simplify`, `unkink-polygon`), MIT: https://turfjs.org
