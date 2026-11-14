@@ -45,6 +45,14 @@ export function plantingWindow(..._args: unknown[]): never {
 }
 
 /** Template-driven explanations and confidence (07 §5). */
-export function explain(..._args: unknown[]): never {
-  throw new NotImplementedYet("explain", "#28");
-}
+export { explain, formatMinutes, formatMonths, COMPONENT_LABELS, TECHNICIAN_LINE } from "./explain";
+export type {
+  Confidence,
+  ConfidenceLevel,
+  EvidenceItem,
+  ExplainInput,
+  ExplainResult,
+  OptionExplanation,
+  ScoreChange,
+  WeakInput,
+} from "./explain";

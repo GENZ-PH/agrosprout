@@ -340,3 +340,32 @@ export const SALE_DESTINATION_TYPES: readonly DestinationType[] = ["market", "bu
  * practice, actual prices unknown). Source: team spec.
  */
 export const STORAGE_PERISHABILITY: readonly Level[] = ["low", "medium"];
+
+// ---------------------------------------------------------------------------
+// Explanations and confidence (docs/07-rotation-engine.md §5, #28)
+// ---------------------------------------------------------------------------
+
+/**
+ * "Why this?" names this many components where an option beats the farmer's
+ * crops (A), each with the data point behind it.
+ * Source: team spec, docs/07 §5 ("Top 2 components where it beats Current").
+ */
+export const WHY_TOP_COMPONENTS = 2;
+
+/**
+ * Scores are shown as whole points (docs/07 §5: "numbers rounded"), so a
+ * component counts as a benefit or a trade-off only when the rounded scores
+ * differ by at least this much. Display rule, not agronomy.
+ */
+export const EXPLAIN_MIN_DELTA_POINTS = 1;
+
+/**
+ * Confidence is Low when this many key inputs or more are "I don't know" or
+ * assumed. Source: team spec, docs/07 §5 ("two or more key inputs are farmer
+ * estimates or 'I don't know'"). Which inputs count is a team choice
+ * (explain.ts `weakInputs`): land type, water source, soil type (only when
+ * ponded rice is in the comparison, the one place soil feel enters the water
+ * balance), planting months not given, and a rough travel estimate.
+ * assumption: validate locally.
+ */
+export const CONFIDENCE_LOW_WEAK_INPUTS = 2;

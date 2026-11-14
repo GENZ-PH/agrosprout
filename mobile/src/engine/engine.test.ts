@@ -30,7 +30,7 @@ test("engine entry points exist; later ones say which issue implements them", ()
   assert.equal(typeof engine.rotations, "function");
   assert.equal(typeof engine.marketAccess, "function");
   assert.throws(() => engine.plantingWindow(), /#33/);
-  assert.throws(() => engine.explain(), /#28/);
+  assert.equal(typeof engine.explain, "function");
 });
 
 test("Iligan mock lot fixture has 12 months per series and is labeled a test fixture", () => {
