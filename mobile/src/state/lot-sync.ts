@@ -1,10 +1,29 @@
 import { asyncStorageLotDataStore } from "../data/lotdata-store";
+import { onlineManager } from "@tanstack/react-query";
 import { onReconnect } from "../net/reconnect";
 import { useFarmStore } from "./farm-store";
 import { syncPendingLots } from "./lot-sync-core";
 
 let running: Promise<unknown> | null = null;
 let again = false;
+
+/**
+ * Safety net: if lots are still pending while the device reports online (weak signal,
+ * Wi-Fi without internet), no reconnect event may come, so try again after this delay.
+ */
+export const RETRY_WHILE_ONLINE_MS = 60_000;
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+const hasPending = () =>
+  useFarmStore.getState().lots.some((l) => l.data_status === "pending" && l.data_ref.startsWith("lotdata:"));
+
+function scheduleRetry() {
+  if (retryTimer || !hasPending() || !onlineManager.isOnline()) return;
+  retryTimer = setTimeout(() => {
+    retryTimer = null;
+    void runLotSync();
+  }, RETRY_WHILE_ONLINE_MS);
+}
 
 /** Runs one pass over pending lots, never two at once. A call during a pass queues one more pass. */
 export function runLotSync(): Promise<unknown> {
@@ -23,6 +42,8 @@ export function runLotSync(): Promise<unknown> {
       if (again) {
         again = false;
         void runLotSync();
+      } else {
+        scheduleRetry();
       }
     });
   return running;
@@ -45,5 +66,7 @@ export function startLotSync() {
   return () => {
     stopReconnect();
     stopStore();
+    if (retryTimer) clearTimeout(retryTimer);
+    retryTimer = null;
   };
 }
