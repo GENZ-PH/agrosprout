@@ -84,13 +84,13 @@ export default function DashboardScreen() {
               <LotCutoutCard lot={lot} analysis={v.analysis} library={CROP_LIBRARY} cropName={cropName} period={v.period} />
             ) : null;
           })()}
-          <ElNinoNotice />
           <LotTabs
             lots={farm.lots}
             selectedId={lot.id}
             onSelect={selectLot}
             onAdd={() => router.push({ pathname: "/lots", params: { new: "1" } })}
           />
+          <ElNinoNotice />
           <LotResults key={lot.id} farm={farm} lot={lot} />
         </>
       ) : (
