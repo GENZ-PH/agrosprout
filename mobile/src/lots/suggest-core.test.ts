@@ -8,7 +8,9 @@ import { cropFit, type FitLevel } from "../engine/cropFit";
 import { cropSeasonDays, harvestMonthOf } from "../engine/season";
 import { ILIGAN_LOT_FIXTURE } from "../engine/__fixtures__/iligan-lot.fixture";
 import type { CropLibrary, LotDetails } from "../types";
-import { goodMonthsText, lotSuggestions, topCrops, type CropSuggestion } from "./suggest-core";
+import { goodMonthsText, lotSuggestions, safeTopCrops, topCropReason, topCrops, type CropSuggestion } from "./suggest-core";
+import { fitReasonText } from "../components/recommendations-core";
+import { monthShort } from "./months-core";
 
 // Read from disk: Node's test runner can't import JSON without import attributes (same as crops.test.ts).
 const CROP_LIBRARY = JSON.parse(readFileSync(join(process.cwd(), "assets", "data", "crops.json"), "utf8")) as CropLibrary;
@@ -160,4 +162,35 @@ test("good months read as short ranges, wrapping over the new year", () => {
   assert.equal(goodMonthsText([2, 3, 4, 9]), "Feb–Apr, Sep");
   assert.equal(goodMonthsText([1, 2, 11, 12]), "Nov–Feb");
   assert.equal(goodMonthsText([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]), "any month");
+});
+
+test("a Watch out or Poor reason names its month when the crop has more than one best month", () => {
+  const { crops } = lotSuggestions(UNKNOWN, ILIGAN_LOT_FIXTURE, CROP_LIBRARY);
+  let checked = 0;
+  for (const s of crops) {
+    if (s.level === "good" || s.level === "unknown") {
+      assert.equal(topCropReason(s), null, s.crop_id);
+      continue;
+    }
+    const text = fitReasonText(s.reasons[0]);
+    const expected = s.best_months.length > 1 ? `If planted in ${monthShort(s.best_months[0])}: ${text}` : text;
+    assert.equal(topCropReason(s), expected, s.crop_id);
+    checked++;
+  }
+  assert.ok(checked > 0);
+  const one: CropSuggestion = { crop_id: "x", level: "watch", good_months: [], best_months: [4], reasons: crops.find((c) => c.reasons.length)!.reasons };
+  assert.equal(topCropReason(one), fitReasonText(one.reasons[0]), "one best month: the row already says which");
+});
+
+test("bad saved data gives no top crops instead of a crash", () => {
+  const broken = { monthly: { ...ILIGAN_LOT_FIXTURE.monthly, tmax_c: undefined } } as unknown as typeof ILIGAN_LOT_FIXTURE;
+  assert.throws(() => lotSuggestions(UNKNOWN, broken, CROP_LIBRARY), "the engine throws on it, or this test proves nothing");
+  const warn = console.warn;
+  console.warn = () => {};
+  try {
+    assert.deepEqual(safeTopCrops(UNKNOWN, broken, CROP_LIBRARY), []);
+  } finally {
+    console.warn = warn;
+  }
+  assert.deepEqual(safeTopCrops(UNKNOWN, ILIGAN_LOT_FIXTURE, CROP_LIBRARY), topCrops(lotSuggestions(UNKNOWN, ILIGAN_LOT_FIXTURE, CROP_LIBRARY)));
 });

@@ -3,11 +3,11 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { cropById } from "../data/crops";
 import { cropShortName } from "../lots/crop-picks";
-import { goodMonthsText, type CropSuggestion } from "../lots/suggest-core";
+import { goodMonthsText, topCropReason, type CropSuggestion } from "../lots/suggest-core";
 import { FitBadge } from "./CropFitCard";
 import { Icon } from "./Icon";
 import { ExplainerBox } from "./InfoCard";
-import { FIT_LABELS, fitReasonText } from "./recommendations-core";
+import { FIT_LABELS } from "./recommendations-core";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
 // S2 "Top 3 for this lot" (#152): the library crops that suit the lot best on its NASA data, best first.
@@ -63,7 +63,7 @@ function TopRow({ rank, s, selected, onPress }: { rank: number; s: CropSuggestio
   const name = crop ? cropShortName(crop) : s.crop_id;
   const local = crop?.local_name ?? null;
   const when = `if planted in ${goodMonthsText(s.best_months)}`;
-  const reason = s.reasons[0] ? fitReasonText(s.reasons[0]) : null;
+  const reason = topCropReason(s);
   const label = [`${rank}. ${name}${local ? `, ${local}` : ""}.`, `${FIT_LABELS[s.level]} ${when}.`, reason].filter(Boolean).join(" ");
   return (
     <Pressable

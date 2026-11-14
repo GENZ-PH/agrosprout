@@ -1,6 +1,7 @@
 import { cropFit, type CropFit, type FitLevel, type FitReason } from "../engine/cropFit";
 import { cropSeasonDays, harvestMonthOf } from "../engine/season";
 import type { CropLibrary, LotData, LotDetails } from "../types";
+import { fitReasonText } from "../components/recommendations-core";
 import { monthShort } from "./months-core";
 
 // S2 "Top 3 for this lot" (#152): every crop in the library rated on this lot's NASA data with the engine's
@@ -66,6 +67,26 @@ export function topCrops(s: LotSuggestions, n = 3): CropSuggestion[] {
     .sort((a, b) => RANK[a.c.level] - RANK[b.c.level] || b.c.best_months.length - a.c.best_months.length || a.i - b.i)
     .slice(0, n)
     .map(({ c }) => c);
+}
+
+/** `topCrops(lotSuggestions(...))` that never throws: bad saved data gives no top crops, not a blank S2 screen. */
+export function safeTopCrops(details: LotDetails, data: Pick<LotData, "monthly">, library: CropLibrary, n?: number): CropSuggestion[] {
+  try {
+    return topCrops(lotSuggestions(details, data, library), n);
+  } catch (e) {
+    console.warn(`[crops] top crops skipped: ${e instanceof Error ? e.message : String(e)}`);
+    return [];
+  }
+}
+
+/**
+ * The main problem of a Watch out or Poor fit crop, in plain words. The reason belongs to its first best month,
+ * so with several best months it says which ("If planted in Jan: ..."); null for Good fit and unknown.
+ */
+export function topCropReason(s: CropSuggestion): string | null {
+  if (s.level === "good" || s.level === "unknown" || s.reasons.length === 0) return null;
+  const text = fitReasonText(s.reasons[0]);
+  return s.best_months.length > 1 ? `If planted in ${monthShort(s.best_months[0])}: ${text}` : text;
 }
 
 /** Good planting months as short ranges: [4..11] → "Apr–Nov", [1, 2, 11, 12] → "Nov–Feb", all 12 → "any month". */

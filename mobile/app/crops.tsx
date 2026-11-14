@@ -15,7 +15,7 @@ import { CROP_LIBRARY, cropById } from "../src/data/crops";
 import { ECOCROP_NAMES } from "../src/data/ecocrop";
 import { chooseCrop, cropShortName, dataLine, isOtherCrop, lotsWithoutCrops, otherCropName, toggleCrop } from "../src/lots/crop-picks";
 import { buildSearchEntries } from "../src/lots/crop-search-core";
-import { lotSuggestions, topCrops } from "../src/lots/suggest-core";
+import { safeTopCrops } from "../src/lots/suggest-core";
 import { areaLabel, isPinLot } from "../src/lots/lot-editor";
 import { useFarmStore } from "../src/state/farm-store";
 import type { Lot, LotCrop } from "../src/types";
@@ -100,7 +100,7 @@ function LotCrops({ lot }: { lot: Lot }) {
   const updateLot = useFarmStore((s) => s.updateLot);
   const online = useOnline();
   const data = useLotData(lot);
-  const top = useMemo(() => (data ? topCrops(lotSuggestions(lot.details, data, CROP_LIBRARY)) : []), [data, lot.details]);
+  const top = useMemo(() => (data ? safeTopCrops(lot.details, data, CROP_LIBRARY) : []), [data, lot.details]);
 
   // One crop per lot: a crop counts as chosen only when it is the lot's only crop.
   const chosen = lot.crops.length === 1 ? lot.crops[0].crop_id : null;

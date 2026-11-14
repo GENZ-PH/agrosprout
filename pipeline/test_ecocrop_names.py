@@ -38,6 +38,13 @@ class SplitNamesTests(unittest.TestCase):
     def test_split_names_collapses_spaces_and_stray_quotes(self):
         self.assertEqual(b.split_names("  sweet   potato ,bende'"), ["sweet potato", "bende"])
 
+    def test_offensive_names_are_dropped(self):
+        self.assertEqual(
+            b.split_names("sorghum, kafir corn, Kaffir orange, Hottentot tobacco, jew's apple, jew'-myrtle, gypsy onion, "
+                          "bushman's tea, tropical jewel-hibiscus, zapote negro, mammy apple"),
+            ["sorghum", "tropical jewel-hibiscus", "zapote negro", "mammy apple"],
+        )
+
 
 class BuildIndexTests(unittest.TestCase):
     def test_library_rows_leave_species_and_merge_names(self):

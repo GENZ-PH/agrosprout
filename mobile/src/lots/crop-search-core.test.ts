@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 
 import type { CropLibrary, EcocropNames } from "../types";
-import { buildSearchEntries, normalizeName, searchCrops, type SearchResult } from "./crop-search-core";
+import { buildSearchEntries, enterChoice, normalizeName, searchCrops, searchSummary, type SearchResult } from "./crop-search-core";
 
 // Read from disk: Node's test runner can't import JSON without import attributes (same as crops.test.ts).
 const read = <T>(file: string) => JSON.parse(readFileSync(join(process.cwd(), "assets", "data", file), "utf8")) as T;
@@ -148,4 +148,33 @@ test("with the index disabled only our crops and Add remain", () => {
   assert.equal(out.results.length, 0);
   assert.equal(out.add, "cassava");
   assert.equal(libraryId(searchCrops(entries, "talong").results[0]), "eggplant");
+});
+
+test("an Ecocrop name that is also one of our crops' names finds only our crop", () => {
+  const ours = new Set(ENTRIES.filter((e) => e.kind === "library").flatMap((e) => e.names.map(normalizeName)));
+  for (const q of ["mung", "mung bean", "groundnut", "batata", "yard long bean", "rice", "corn", "kamote", "sorghum"]) {
+    const clash = searchCrops(ENTRIES, q).results.filter((r) => r.entry.kind === "ecocrop" && ours.has(normalizeName(r.title)));
+    assert.deepEqual(clash.map((r) => `${r.title} (${r.entry.sci})`), [], q);
+  }
+  assert.ok(searchCrops(ENTRIES, "black gram").results.some((r) => sci(r) === "Vigna mungo"), "Vigna mungo is still found by its other names");
+});
+
+test("Enter chooses only an exact name, or the typed name when nothing matched", () => {
+  const pick = (q: string) => {
+    const c = enterChoice(searchCrops(ENTRIES, q), q);
+    return c === null || c === "add" ? c : c.title;
+  };
+  assert.equal(pick("sorghum"), "Sorghum");
+  assert.equal(pick("camote"), "Sweet potato");
+  assert.equal(pick("okra"), "Okra");
+  assert.equal(pick("ampalaya"), "add");
+  for (const q of ["", "  ", "-", "var", "ka", "toma", "ric"]) assert.equal(pick(q), null, JSON.stringify(q));
+});
+
+test("the screen reader hears a short summary, not every row", () => {
+  assert.equal(searchSummary(0, null, true), "");
+  assert.equal(searchSummary(10, null, true), "");
+  assert.equal(searchSummary(1, null, false), "1 crop found.");
+  assert.equal(searchSummary(8, "Toma", false), "8 crops found. You can also choose “Toma” as typed.");
+  assert.equal(searchSummary(0, "Ampalaya", false), "No crop found. You can choose “Ampalaya” as typed.");
 });

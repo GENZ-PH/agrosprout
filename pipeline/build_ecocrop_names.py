@@ -15,7 +15,8 @@ given", without implying FAO endorsement. The app is free and non-commercial; th
 Our library crops are matched to their Ecocrop species by `MAPPING` (codes cited in `crops.json`, plus the parent
 species for rice and corn). Their names go to `library` (merged into the library crop's search names by the app)
 and their rows leave `species`, so a crop never shows up twice. Every name is kept: COMNAME lists names A-Z, so a
-cap would drop common ones ("okra" is 40th of 54 for Abelmoschus esculentus). Standard library only.
+cap would drop common ones ("okra" is 40th of 54 for Abelmoschus esculentus), except names built on an ethnic slur
+(`OFFENSIVE`), which the app would otherwise show as "Also called ...". Standard library only.
 """
 
 from __future__ import annotations
@@ -63,14 +64,21 @@ MAPPING: dict[str, list[str]] = {
 }
 
 
+# Old common names built on ethnic slurs, found by scanning every name in the CSV (2026-11-14): "kafir corn" (sorghum),
+# "kaffir orange", "Hottentot tobacco", "jew's apple" (eggplant), "jew'-myrtle", "gypsy onion", "bushman's tea".
+# Kept on purpose: Spanish/Portuguese "negro" (= black, e.g. "zapote negro") and "mammy apple" (from "mamey").
+OFFENSIVE = re.compile(r"\b(kaff?ir|hottentot|jew'|jews?\b|g[iy]psy|bushman)", re.IGNORECASE)
+
+
 def split_names(comname: str) -> list[str]:
-    """COMNAME "a (region), b, A" -> ["a", "b"]: notes in parentheses removed, spaces collapsed, case-insensitive unique."""
+    """COMNAME "a (region), b, A" -> ["a", "b"]: notes in parentheses removed, spaces collapsed, case-insensitive unique,
+    names in `OFFENSIVE` dropped."""
     out: list[str] = []
     seen: set[str] = set()
     for part in comname.split(","):
         name = re.sub(r"\([^)]*\)", "", part)
         name = re.sub(r"\s+", " ", name).strip().strip("'").strip()
-        if name and name.lower() not in seen:
+        if name and name.lower() not in seen and not OFFENSIVE.search(name):
             seen.add(name.lower())
             out.append(name)
     return out

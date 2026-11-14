@@ -112,8 +112,10 @@ out / Poor rows add the main reason **at the first best-level month**, reusing `
   Source: OpenCLIM/ecocrop `EcoCrop_DB.csv` (FAO Ecocrop, full copy), **pinned to commit
   `f13577f4237604b15d85d8e43741714a2d1eb2d4`**, cached in `pipeline/raw/`. Same mirror `crops.json` already cites.
 - Per species: `code` (EcoPortCode), `sci` (ScientificName), `names` (COMNAME split on commas, regional notes in
-  parentheses removed, case-insensitive de-duplicated, max 12). Keep species with no common name (searchable by scientific
-  name). Measured size: ~250–300 KB JSON.
+  parentheses removed, case-insensitive de-duplicated, **every name kept**: COMNAME is A–Z, so a cap of 12 dropped "okra"
+  and "kamote"; names built on an ethnic slur are dropped, e.g. "kafir corn"). Keep species with no common name (searchable
+  by scientific name). Built file: 2,555 species, 329 KB. An Ecocrop name that equals one of our crops' names finds only our
+  crop ("mung bean" is also Ecocrop's name for black gram).
 - File `meta`: source URL, commit, retrieved date, licence note. OpenCLIM repo: UK Open Government Licence v3. Data © FAO
   (Ecocrop). FAO's website terms (https://www.fao.org/contact-us/terms/en/, read 2026-11-14): content may be used "in
   non-commercial products or services, provided that appropriate acknowledgement of FAO as the source and copyright holder
@@ -168,7 +170,8 @@ out / Poor rows add the main reason **at the first best-level month**, reusing `
   best months and reason for a Watch-out crop, top 5 length ≤ 5.
 - `crop-search-core.test.ts`: library first; "kamote"/"camote" → Sweet potato (library); "cassava" → Ecocrop
   *Manihot esculenta* while it is not in the library; accent folding; max 8; no duplicate of a library crop; empty query →
-  library crops; "Add …" row whenever the text is not an exact result name (e.g. "sili" shows carob **and** Add "sili").
+  library crops; "Add …" row whenever the text is not an exact result name (e.g. "toma" shows Tomato **and** Add "toma";
+  "ampalaya" shows only Add). Enter chooses only an exact name or the Add row when nothing matched.
 - `pipeline/test_ecocrop_names.py`: name splitting and de-duplication, parenthetical removal, every mapped code exists in
   the CSV, every `crops.json` crop id is mapped.
 - `npm run typecheck`, `npm run lint`, `npm test`, `python3 -m unittest discover -s pipeline`.

@@ -89,8 +89,11 @@ export function buildSearchEntries(library: CropLibrary, index: EcocropNames | n
       keys: keysOf(names),
     };
   });
+  // An Ecocrop name that is also one of our crops' names ("mung bean" is Ecocrop's name for black gram too) finds
+  // only our crop, so a farmer never picks an unscored look-alike of a crop we score.
+  const ourNames = new Set(ours.flatMap((e) => e.names.map(normalizeName)));
   const species: SearchEntry[] = (index?.species ?? []).map((s) => {
-    const names = uniqueNames([...s.names, s.sci]);
+    const names = uniqueNames([...s.names.filter((n) => !ourNames.has(normalizeName(n))), s.sci]);
     return { kind: "ecocrop", code: s.code, sci: s.sci, names, main: 1, keys: keysOf(names) };
   });
   return [...ours, ...species];
@@ -163,4 +166,26 @@ export function searchCrops(entries: readonly SearchEntry[], query: string, max 
   const clean = query.trim().replace(/\s+/g, " ").slice(0, ADD_MAX_CHARS).trim();
   const named = results.some((r) => r.entry.keys.includes(` ${q}`));
   return { results, add: clean && !named ? clean : null };
+}
+
+/**
+ * What Enter (the keyboard's Done key) chooses: the first result whose name is exactly what was typed, or the
+ * typed name when nothing matched. Otherwise nothing, so a farmer who only wants the keyboard gone never
+ * replaces the lot's crop by accident.
+ */
+export function enterChoice(out: SearchOutput, query: string): SearchResult | "add" | null {
+  const q = normalizeName(query);
+  if (!q) return null;
+  const exact = out.results.find((r) => r.entry.keys.includes(` ${q}`));
+  if (exact) return exact;
+  return out.results.length === 0 && out.add ? "add" : null;
+}
+
+/** One short line for screen readers after each keystroke, instead of every row again. Empty while browsing. */
+export function searchSummary(count: number, addName: string | null, browsing: boolean): string {
+  if (browsing) return "";
+  const asTyped = addName ? `choose “${addName}” as typed.` : "";
+  if (count === 0) return asTyped ? `No crop found. You can ${asTyped}` : "No crop found.";
+  const found = `${count} crop${count === 1 ? "" : "s"} found.`;
+  return asTyped ? `${found} You can also ${asTyped}` : found;
 }

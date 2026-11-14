@@ -2,7 +2,7 @@ import { type ComponentRef, useMemo, useRef, useState } from "react";
 import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { otherCropId } from "../lots/crop-picks";
-import { ADD_MAX_CHARS, searchCrops, type SearchEntry, type SearchResult } from "../lots/crop-search-core";
+import { ADD_MAX_CHARS, enterChoice, searchCrops, searchSummary, type SearchEntry, type SearchResult } from "../lots/crop-search-core";
 import { Icon } from "./Icon";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
@@ -44,11 +44,16 @@ export function CropSearch({ lotName, entries, chosen, onPick }: Props) {
     if (id !== chosen) onPick(id);
     close();
   };
+  // Done on the keyboard: choose only an exact name, or the typed name when nothing matched; otherwise just hide
+  // the keyboard. With one crop per lot a wrong guess would replace the farmer's crop.
   const submit = () => {
-    const first = out.results.find((r) => pickId(r) !== chosen);
-    if (first) pick(pickId(first));
-    else if (addId && addId !== chosen) pick(addId);
+    const choice = enterChoice(out, query);
+    if (choice === "add" && addId) pick(addId);
+    else if (choice && choice !== "add") pick(pickId(choice));
+    else Keyboard.dismiss();
   };
+  const browsing = query.trim() === "";
+  const summary = searchSummary(out.results.length, addName, browsing);
 
   return (
     <View style={styles.block}>
@@ -62,7 +67,7 @@ export function CropSearch({ lotName, entries, chosen, onPick }: Props) {
           onFocus={() => setOpen(true)}
           onSubmitEditing={submit}
           maxLength={ADD_MAX_CHARS}
-          returnKeyType="search"
+          returnKeyType="done"
           autoCorrect={false}
           autoCapitalize="none"
           placeholder="Rice, mais, kamote, cassava…"
@@ -83,8 +88,14 @@ export function CropSearch({ lotName, entries, chosen, onPick }: Props) {
       </View>
 
       {showing ? (
-        <View style={styles.results} accessibilityLiveRegion="polite">
-          {query.trim() === "" ? (
+        <View style={styles.results}>
+          {/* Screen readers hear this one line after each keystroke, not every row. */}
+          {summary ? (
+            <Text style={text.caption} accessibilityLiveRegion="polite" aria-live="polite">
+              {summary}
+            </Text>
+          ) : null}
+          {browsing ? (
             <Text style={text.caption}>
               Our crop list{moreCount > 0 ? `. Type to search ${moreCount.toLocaleString("en-US")} more crops from FAO Ecocrop.` : "."}
             </Text>
@@ -94,7 +105,7 @@ export function CropSearch({ lotName, entries, chosen, onPick }: Props) {
               key={r.entry.kind === "library" ? r.entry.crop_id : r.entry.code}
               r={r}
               last={i === out.results.length - 1 && !addName}
-              browsing={query.trim() === ""}
+              browsing={browsing}
               added={pickId(r) === chosen}
               onPress={() => pick(pickId(r))}
             />
