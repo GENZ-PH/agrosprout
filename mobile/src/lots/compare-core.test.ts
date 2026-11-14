@@ -68,7 +68,8 @@ test("the season already in the wet months says the timing is good, with one col
   const jun = r.seasons.find((s) => s.season_index === 0) as SeasonWindow;
   const c = seasonCompare(jun, ctx(twoRice));
   assert.equal(c.status, "already-good");
-  assert.equal(c.headline.text, "Your timing is already good ✓");
+  const risky = jun.yours.stress_months.length > 0 || jun.yours.heat_months.length > 0;
+  assert.equal(c.headline.text, risky ? "No better month found, but plan for the risks" : "Your timing is already good ✓");
   assert.equal(c.otherTitle, null);
   assert.ok(c.rows.every((r) => r.other === null));
   assert.match(c.detail?.text ?? "", /10-point margin is assumed/);
@@ -95,4 +96,18 @@ test("rain covers = 1 − the typical-year water stress index, never below 0% or
   assert.equal(rainCovers(m(0)), "100%");
   assert.equal(rainCovers(m(1.4)), "0%");
   assert.equal(rainCovers(m(null)), "unknown");
+});
+
+test("already good only when the farmer's months have no dry or heat risk; otherwise it names the risky months", () => {
+  const r = scan(twoRice, wetSummer);
+  const jun = r.seasons.find((s) => s.season_index === 0) as SeasonWindow;
+  const calm: SeasonWindow = { ...jun, status: "already-good", yours: { ...jun.yours, stress_months: [], heat_months: [] } };
+  const good = seasonCompare(calm, ctx(twoRice));
+  assert.equal(good.headline.text, "Your timing is already good ✓");
+  assert.equal(good.tone, "good");
+  const dry: SeasonWindow = { ...calm, yours: { ...calm.yours, stress_months: [7, 8, 9] } };
+  const c = seasonCompare(dry, ctx(twoRice));
+  assert.equal(c.headline.text, "No better month found, but plan for the risks");
+  assert.notEqual(c.tone, "good");
+  assert.match(c.detail?.text ?? "", /Your months still have dry stress in Jul, Aug and Sep: plan for them with your agricultural technician\.$/);
 });
