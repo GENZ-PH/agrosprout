@@ -43,7 +43,7 @@ export default function WelcomeScreen() {
       }
     >
       <View style={styles.brand}>
-        {/* Team logo (#177), cropped from the brand sheet; aspect 1285 x 315. */}
+        {/* Team wordmark (#177), from the team brand folder; aspect 1400 x 320. */}
         <Image
           source={require("../assets/images/agrosprout-logo.png")}
           style={styles.logo}
@@ -72,7 +72,7 @@ export default function WelcomeScreen() {
 
 const styles = StyleSheet.create({
   brand: { flexDirection: "row", alignItems: "center", gap: 10, paddingTop: space.xl },
-  logo: { width: 220, height: 220 * (315 / 1285) },
+  logo: { width: 220, height: 220 * (320 / 1400) },
   middle: { flexGrow: 1, justifyContent: "center", gap: 20, paddingVertical: space.xl },
   lead: { fontSize: 18, lineHeight: 27, color: colors.muted },
 });
