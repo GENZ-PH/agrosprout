@@ -1,17 +1,22 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { COMPONENT_LABELS, type Explanation } from "../engine/explain";
+import type { Explanation } from "../engine/explain";
 import type { RotationOption } from "../engine/rotations";
 import { COMPONENT_KEYS, type ComponentKey } from "../engine/scores";
+import { useT } from "../i18n/lang-store";
+import { cropLabel } from "../i18n/strings";
 import type { Crop } from "../types";
-import { MONTH_NAMES, monthsText, PLAN_NAME, shortCropName } from "./field-year-core";
+import { bareText, monthsText, planName } from "./field-year-core";
 import { Icon } from "./Icon";
-import { CONFIDENCE_REASON, mergeCropLines } from "./plan-text";
+import { mergeCropLines } from "./plan-text";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
-// Everything the challenge asks for about one plan: why it was suggested, the evidence,
-// the benefits, the information gaps, and what needs local review (engine/explain.ts).
+// One plan, in two layers. First the short farmer view in the chosen language: the crops and
+// months, what gets better and worse against the farmer's own crops, when the field is empty
+// or short of water, and what to ask the technician. Then, on request, the engine's full
+// explanation (engine/explain.ts, in English): why, benefits, trade-offs, gaps, local checks
+// and every source.
 
 type Props = {
   option: RotationOption;
@@ -20,114 +25,139 @@ type Props = {
   explanation: Explanation | undefined;
   leftOut: readonly ComponentKey[];
   cropById: (id: string) => Crop | undefined;
+  /** Show the full explanation from the start (wide screens). */
+  defaultOpen?: boolean;
 };
 
-const CONFIDENCE_WORD = { high: "High", medium: "Medium", low: "Low" } as const;
-
-export function PlanDetail({ option, baseline, explanation, leftOut, cropById }: Props) {
-  const [showEvidence, setShowEvidence] = useState(false);
+export function PlanDetail({ option, baseline, explanation, leftOut, cropById, defaultOpen = false }: Props) {
+  const { t, lang, months } = useT();
+  const [open, setOpen] = useState(defaultOpen);
   const isBaseline = option.key === baseline.key;
-  const scored = COMPONENT_KEYS.filter((k) => !leftOut.includes(k));
   const dry = option.water_fit_range.p20;
   const wet = option.water_fit_range.p80;
+  const crop = (id: string) => cropLabel(lang, cropById(id), id);
+
+  const rows = COMPONENT_KEYS.filter((k) => !leftOut.includes(k)).map((k) => {
+    const v = option.scores[k];
+    const base = baseline.scores[k];
+    return { k, v, base, delta: !isBaseline && v !== null && base !== null ? Math.round(v - base) : 0 };
+  });
+  const better = rows.filter((r) => r.delta > 0);
+  const worse = rows.filter((r) => r.delta < 0);
+  const same = rows.filter((r) => r.delta === 0);
+
+  const bar = (r: (typeof rows)[number]) => (
+    <View key={r.k} style={styles.barRow} accessible accessibilityLabel={`${t(`comp.${r.k}`)}: ${r.v === null ? "?" : Math.round(r.v)} ${t("detail.outOf")}`}>
+      <Text style={styles.barLabel}>{t(`comp.${r.k}`)}</Text>
+      <View style={styles.track}>
+        {r.v !== null ? <View style={[styles.fill, { width: `${Math.max(2, Math.min(100, r.v))}%` }]} /> : null}
+        {!isBaseline && r.base !== null ? <View style={[styles.baseMark, { left: `${Math.min(100, r.base)}%` }]} /> : null}
+      </View>
+      <Text style={styles.barValue}>{r.v === null ? "?" : Math.round(r.v)}</Text>
+      <Text style={[styles.delta, r.delta > 0 && styles.up, r.delta < 0 && styles.down]}>
+        {r.delta === 0 ? "" : r.delta > 0 ? `+${r.delta}` : `${r.delta}`}
+      </Text>
+    </View>
+  );
 
   return (
     <View style={styles.card}>
       <View style={styles.head}>
         <View style={styles.headText}>
-          <Text style={text.caption}>Plan {option.key}</Text>
+          <Text style={text.caption}>{t("plan.label", { key: option.key })}</Text>
           <Text style={text.title} accessibilityRole="header">
-            {PLAN_NAME[option.kind]}
+            {planName(option.kind, t)}
           </Text>
         </View>
         <View style={styles.total}>
           <Text style={styles.totalNumber}>{option.total === null ? "?" : Math.round(option.total)}</Text>
-          <Text style={text.caption}>out of 100</Text>
+          <Text style={text.caption}>{t("detail.outOf")}</Text>
         </View>
       </View>
 
       <View style={styles.sequence}>
         {option.slots.map((s, i) => (
           <Text key={i} style={text.body}>
-            <Text style={text.bodyStrong}>{shortCropName(cropById(s.crop_id), s.crop_id)}</Text>
-            {`  plant ${MONTH_NAMES[s.plant_month - 1]}, harvest ${MONTH_NAMES[s.harvest_month - 1]}`}
-            {option.new_crop_ids.includes(s.crop_id) ? "  (new for this lot)" : ""}
+            <Text style={text.bodyStrong}>{crop(s.crop_id)}</Text>
+            {`  ${t("detail.slot", { plant: months[s.plant_month - 1], harvest: months[s.harvest_month - 1] })}`}
+            {option.new_crop_ids.includes(s.crop_id) ? `  (${t("detail.new")})` : ""}
           </Text>
         ))}
       </View>
 
-      <View style={styles.bars}>
-        {scored.map((k) => {
-          const v = option.scores[k];
-          const base = baseline.scores[k];
-          const delta = v !== null && base !== null ? Math.round(v - base) : null;
-          return (
-            <View key={k} style={styles.barRow} accessible accessibilityLabel={`${COMPONENT_LABELS[k]}: ${v === null ? "no score" : Math.round(v)} out of 100`}>
-              <Text style={styles.barLabel}>{COMPONENT_LABELS[k]}</Text>
-              <View style={styles.track}>
-                {v !== null ? <View style={[styles.fill, { width: `${Math.max(2, Math.min(100, v))}%` }]} /> : null}
-                {!isBaseline && base !== null ? <View style={[styles.baseMark, { left: `${Math.min(100, base)}%` }]} /> : null}
-              </View>
-              <Text style={styles.barValue}>{v === null ? "?" : Math.round(v)}</Text>
-              <Text style={[styles.delta, delta !== null && delta > 0 && styles.up, delta !== null && delta < 0 && styles.down]}>
-                {isBaseline || delta === null || delta === 0 ? "" : delta > 0 ? `+${delta}` : `${delta}`}
-              </Text>
-            </View>
-          );
-        })}
-        {!isBaseline ? <Text style={text.caption}>The dark line on each bar is your crops now (plan A).</Text> : null}
-        {leftOut.length > 0 ? (
-          <Text style={text.caption}>
-            Not scored on this lot yet: {leftOut.map((k) => COMPONENT_LABELS[k]).join(", ")}.
-          </Text>
+      {isBaseline ? <Text style={text.small}>{t("detail.yours")}</Text> : null}
+
+      {better.length > 0 ? (
+        <View style={styles.bars}>
+          <Text style={[text.bodyStrong, styles.up]}>{t("detail.gain")}</Text>
+          {better.map(bar)}
+        </View>
+      ) : null}
+      {worse.length > 0 ? (
+        <View style={styles.bars}>
+          <Text style={[text.bodyStrong, styles.down]}>{t("detail.lose")}</Text>
+          {worse.map(bar)}
+        </View>
+      ) : null}
+      {same.length > 0 ? <View style={styles.bars}>{same.map(bar)}</View> : null}
+
+      <View style={styles.notes}>
+        {!isBaseline ? <Text style={text.caption}>{t("detail.marker")}</Text> : null}
+        {leftOut.length > 0 ? <Text style={text.caption}>{t("detail.leftOut", { list: leftOut.map((k) => t(`comp.${k}`)).join(", ") })}</Text> : null}
+      </View>
+
+      <View style={styles.facts}>
+        <Text style={text.small}>
+          {isBaseline
+            ? `${bareText(option.metrics, t, months)}.`
+            : t("detail.empty", { days: option.metrics.bare_days, base: baseline.metrics.bare_days })}
+        </Text>
+        {dry !== null && wet !== null ? <Text style={text.small}>{t("detail.waterRange", { dry: Math.round(dry), wet: Math.round(wet) })}</Text> : null}
+        {option.metrics.stress_months.length > 0 ? (
+          <Text style={text.small}>{t("detail.stress", { months: monthsText(option.metrics.stress_months, t, months) })}</Text>
         ) : null}
       </View>
 
-      {dry !== null && wet !== null ? (
-        <Text style={text.small}>
-          Water fit runs from <Text style={styles.strong}>{Math.round(dry)}</Text> in a dry year to{" "}
-          <Text style={styles.strong}>{Math.round(wet)}</Text> in a wet year
-          {option.metrics.stress_months.length > 0 ? `. Crops run short of water in ${monthsText(option.metrics.stress_months)}` : ""}.
-        </Text>
-      ) : null}
+      <View style={styles.ask}>
+        <Text style={text.bodyStrong}>{t("detail.ask")}</Text>
+        {option.new_crop_ids.map((id) => (
+          <Text key={id} style={text.small}>
+            {t("detail.askNew", { crop: crop(id) })}
+          </Text>
+        ))}
+        <Text style={text.small}>{t("detail.askConfirm")}</Text>
+      </View>
 
       {explanation ? (
         <>
-          <Section title={isBaseline ? "About this plan" : "Why this plan"} lines={explanation.why} />
-          <Section title="What you gain" lines={explanation.benefits} tone="up" />
-          <Section title="What you give up" lines={explanation.tradeoffs} tone="down" />
-          <Section title="What we do not know" lines={mergeCropLines(explanation.unknowns)} />
-          <Section title="Check with your technician" lines={explanation.check_locally} />
-
           <View style={styles.confidence}>
-            <Text style={text.bodyStrong}>Confidence: {CONFIDENCE_WORD[explanation.confidence.level]}</Text>
+            <Text style={text.bodyStrong}>{t("conf.title", { level: t(`conf.${explanation.confidence.level}`) })}</Text>
             {explanation.confidence.reasons.map((r) => (
               <Text key={r} style={text.small}>
-                {CONFIDENCE_REASON[r]}
+                {t(`conf.${r}`)}
               </Text>
             ))}
           </View>
 
           <Pressable
-            onPress={() => setShowEvidence((v) => !v)}
+            onPress={() => setOpen((v) => !v)}
             accessibilityRole="button"
-            accessibilityState={{ expanded: showEvidence }}
-            style={({ pressed }) => [styles.evidenceToggle, pressed && styles.pressed]}
+            accessibilityState={{ expanded: open }}
+            style={({ pressed }) => [styles.moreToggle, pressed && styles.pressed]}
           >
-            <Text style={styles.evidenceLabel}>
-              {showEvidence ? "Hide the sources" : `Where these numbers come from (${explanation.evidence.length} sources)`}
-            </Text>
-            <View style={showEvidence ? styles.chevUp : styles.chevDown}>
+            <Text style={styles.moreLabel}>{open ? t("detail.moreHide") : t("detail.moreShow")}</Text>
+            <View style={open ? styles.chevUp : styles.chevDown}>
               <Icon name="chevron" size={20} color={colors.green} />
             </View>
           </Pressable>
-          {showEvidence ? (
-            <View style={styles.evidence}>
-              {explanation.evidence.map((l) => (
-                <Text key={l.code} style={text.small}>
-                  {l.text}
-                </Text>
-              ))}
+          {open ? (
+            <View style={styles.more}>
+              <Section title={isBaseline ? "About this plan" : "Why this plan"} lines={explanation.why} />
+              <Section title="What you gain" lines={explanation.benefits} tone="up" />
+              <Section title="What you give up" lines={explanation.tradeoffs} tone="down" />
+              <Section title="What we do not know" lines={mergeCropLines(explanation.unknowns)} />
+              <Section title="Check with your technician" lines={explanation.check_locally} />
+              <Section title={`Where these numbers come from (${explanation.evidence.length} sources)`} lines={explanation.evidence} />
             </View>
           ) : null}
         </>
@@ -160,7 +190,7 @@ const styles = StyleSheet.create({
   sequence: { gap: 4, paddingLeft: space.md, borderLeftWidth: 3, borderLeftColor: colors.green },
   bars: { gap: 10 },
   barRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  barLabel: { ...text.small, width: 150 },
+  barLabel: { ...text.small, width: 164 },
   track: { flex: 1, height: 10, borderRadius: 5, backgroundColor: colors.bg, justifyContent: "center" },
   fill: { height: 10, borderRadius: 5, backgroundColor: colors.green },
   baseMark: { position: "absolute", top: -4, width: 2, height: 18, marginLeft: -1, backgroundColor: colors.ink },
@@ -168,7 +198,9 @@ const styles = StyleSheet.create({
   delta: { ...text.caption, width: 40, textAlign: "right", fontVariant: ["tabular-nums"] },
   up: { color: colors.green, fontWeight: "700" },
   down: { color: colors.danger, fontWeight: "700" },
-  strong: { fontWeight: "700" },
+  notes: { gap: 4 },
+  facts: { gap: 4 },
+  ask: { gap: 6, padding: space.md, borderRadius: radius.sm, backgroundColor: colors.amberTint },
   section: { gap: 6 },
   line: { flexDirection: "row", gap: space.sm, alignItems: "flex-start" },
   bullet: { width: 6, height: 6, borderRadius: 3, marginTop: 8, backgroundColor: colors.dashed },
@@ -176,10 +208,10 @@ const styles = StyleSheet.create({
   bulletDown: { backgroundColor: colors.danger },
   lineText: { ...text.small, flex: 1 },
   confidence: { gap: 4, padding: space.md, borderRadius: radius.sm, backgroundColor: colors.bg },
-  evidenceToggle: { minHeight: MIN_TOUCH, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space.sm },
+  moreToggle: { minHeight: MIN_TOUCH, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space.sm },
   pressed: { backgroundColor: colors.pressed },
-  evidenceLabel: { ...text.bodyStrong, color: colors.green, flex: 1 },
+  moreLabel: { ...text.bodyStrong, color: colors.green, flex: 1 },
   chevDown: { transform: [{ rotate: "90deg" }] },
   chevUp: { transform: [{ rotate: "-90deg" }] },
-  evidence: { gap: 6 },
+  more: { gap: space.lg },
 });

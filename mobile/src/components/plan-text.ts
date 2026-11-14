@@ -1,62 +1,18 @@
-import type { ConfidenceReason } from "../engine/explain";
-import type { FitLevel, FitReason } from "../engine/cropFit";
+import type { FitReason } from "../engine/cropFit";
 import { PRIORITY_COMPONENTS } from "../engine/params";
 import type { ComponentKey, PriorityKey } from "../engine/scores";
 import type { Priorities } from "../types";
-import { monthsText } from "./field-year-core";
+import { type T, tEn } from "../i18n/strings";
+import { MONTH_NAMES, monthsText } from "./field-year-core";
 
 // Farmer-facing wording for engine codes shown on the dashboard. No React Native imports.
 
-export const FIT_LABEL: Readonly<Record<FitLevel, string>> = {
-  good: "Good fit",
-  watch: "Watch out",
-  poor: "Poor fit",
-  unknown: "Not enough data",
-};
-
 /** One plain sentence for a crop-fit reason, with the months it applies to. */
-export function fitReasonText(r: Pick<FitReason, "code" | "months">): string {
-  const when = r.months.length > 0 ? ` in ${monthsText(r.months)}` : "";
-  switch (r.code) {
-    case "water":
-      return `Rain covers too little of its water need${when} in a typical year.`;
-    case "dry-year":
-      return `Fine in a typical year, but short of water${when} in a dry year.`;
-    case "too-hot":
-      return `Hotter than this crop can take${when}.`;
-    case "too-cold":
-      return `Colder than this crop can take${when}.`;
-    case "warm":
-      return `Warmer than this crop likes${when}.`;
-    case "cool":
-      return `Cooler than this crop likes${when}.`;
-    case "waterlogging":
-      return `Very wet soil${when}, and this crop does not like wet feet.`;
-    case "no-crop-data":
-      return "We do not have water-use data for this crop yet.";
-    case "no-months":
-      return "We do not know its planting months yet.";
-    case "missing-climate":
-      return `NASA data is missing${when}.`;
-  }
+export function fitReasonText(r: Pick<FitReason, "code" | "months">, t: T = tEn, names: readonly string[] = MONTH_NAMES): string {
+  const when = r.months.length > 0 ? t("fit.in", { months: monthsText(r.months, t, names) }) : "";
+  return t(`fit.${r.code}`, { when });
 }
 
-export const CONFIDENCE_REASON: Readonly<Record<ConfidenceReason, string>> = {
-  "ranking-flips-dry-wet": "The best plan changes between a dry year and a wet year.",
-  "dry-wet-not-checked": "The dry-year and wet-year check could not run.",
-  "unknown-inputs": "Several lot details are not known yet.",
-  "one-unknown-input": "One lot detail is not known yet.",
-  "scores-missing": "Some scores have no data on this lot.",
-  "crop-data-missing": "Some crop data is missing.",
-  "water-not-scored": "Water fit could not be scored.",
-};
-
-export const PRIORITY_LABEL: Readonly<Record<PriorityKey, string>> = {
-  water: "Save water",
-  soil: "Build soil",
-  income: "Extra income",
-  labor: "Less work",
-};
 export const PRIORITY_KEYS: readonly PriorityKey[] = ["water", "soil", "income", "labor"];
 
 const ON = 100;
@@ -103,26 +59,30 @@ export const unavailablePriorities = (leftOut: readonly ComponentKey[]): Priorit
   PRIORITY_KEYS.filter((k) => (PRIORITY_COMPONENTS[k] as readonly ComponentKey[]).every((c) => leftOut.includes(c)));
 
 /** "Save water", "Save water and Build soil", "Save water, Build soil and Less work". */
-export const listText = (items: readonly string[]) =>
-  items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+export const listText = (items: readonly string[], t: T = tEn) =>
+  items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} ${t("list.and")} ${items[items.length - 1]}`;
 
 /**
  * The one-sentence answer that changes with every choice: which plan fits best for the
  * chosen goals, its score, and how far it is from the farmer's own crops (plan A).
  */
-export function verdictText(input: {
-  chosen: readonly PriorityKey[];
-  bestKey: string;
-  bestName: string;
-  bestTotal: number | null;
-  baselineTotal: number | null;
-  bestIsBaseline: boolean;
-}): string {
-  const goals = input.chosen.length === 0 ? "With every goal counted the same" : `With ${listText(input.chosen.map((k) => PRIORITY_LABEL[k]))} first`;
-  if (input.bestTotal === null) return `${goals}, the plans cannot be scored on this lot yet.`;
+export function verdictText(
+  input: {
+    chosen: readonly PriorityKey[];
+    bestKey: string;
+    bestName: string;
+    bestTotal: number | null;
+    baselineTotal: number | null;
+    bestIsBaseline: boolean;
+  },
+  t: T = tEn,
+): string {
+  const goals =
+    input.chosen.length === 0 ? t("verdict.equal") : t("verdict.first", { goals: listText(input.chosen.map((k) => t(`prio.${k}`)), t) });
+  if (input.bestTotal === null) return t("verdict.none", { goals });
   const score = Math.round(input.bestTotal);
-  if (input.bestIsBaseline) return `${goals}, your crops now already fit best: ${score} out of 100.`;
+  if (input.bestIsBaseline) return t("verdict.yours", { goals, score });
   const gap = input.baselineTotal === null ? null : score - Math.round(input.baselineTotal);
-  const versus = gap === null ? "" : gap > 0 ? `, ${gap} above your crops now` : gap < 0 ? `, ${-gap} below your crops now` : ", level with your crops now";
-  return `${goals}, plan ${input.bestKey} (${input.bestName}) fits best: ${score} out of 100${versus}.`;
+  const versus = gap === null ? "" : gap > 0 ? t("verdict.above", { n: gap }) : gap < 0 ? t("verdict.below", { n: -gap }) : t("verdict.level");
+  return t("verdict.best", { goals, key: input.bestKey, name: input.bestName, score, versus });
 }

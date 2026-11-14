@@ -65,9 +65,9 @@ test("monthsText keeps a run that crosses the year end together", () => {
 });
 
 test("bareText says how long and when the field is empty", () => {
-  assert.equal(bareText({ bare_days: 0, bare_months: [] }), "Never bare");
-  assert.equal(bareText({ bare_days: 48, bare_months: [] }), "Bare 48 days");
-  assert.equal(bareText({ bare_days: 150, bare_months: [12, 1, 2, 3] }), "Bare 150 days, mostly Dec to Mar");
+  assert.equal(bareText({ bare_days: 0, bare_months: [] }), "Field is never empty");
+  assert.equal(bareText({ bare_days: 48, bare_months: [] }), "Field is empty 48 days");
+  assert.equal(bareText({ bare_days: 150, bare_months: [12, 1, 2, 3] }), "Field is empty 150 days, mostly Dec to Mar");
 });
 
 test("shortCropName drops the part in brackets and falls back to the id", () => {

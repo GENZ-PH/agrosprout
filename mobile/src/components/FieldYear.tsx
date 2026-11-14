@@ -3,6 +3,8 @@ import { type LayoutChangeEvent, Pressable, StyleSheet, Text, View } from "react
 import Svg, { G, Line, Path, Rect, Text as SvgText } from "react-native-svg";
 
 import type { OptionKey, RotationOption } from "../engine/rotations";
+import { useT } from "../i18n/lang-store";
+import { cropLabel } from "../i18n/strings";
 import type { Crop, PrecipPercentiles } from "../types";
 import {
   bandPieces,
@@ -10,10 +12,8 @@ import {
   dayX,
   familiesIn,
   familyStyle,
-  MONTH_LETTERS,
   monthX,
-  PLAN_NAME,
-  shortCropName,
+  planName,
 } from "./field-year-core";
 import { colors, radius, space, text } from "./theme";
 
@@ -38,6 +38,7 @@ const SOIL = "#CFC6B4";
 const SOIL_LINE = "#9C917B";
 
 export function FieldYear({ options, selected, onSelect, precip, cropById }: Props) {
+  const { t, lang, months } = useT();
   const [width, setWidth] = useState(0);
   const onLayout = (e: LayoutChangeEvent) => setWidth(Math.round(e.nativeEvent.layout.width));
   const median = precip.p50.map((v) => v ?? 0);
@@ -52,10 +53,9 @@ export function FieldYear({ options, selected, onSelect, precip, cropById }: Pro
         {width > 0 ? (
           <>
             <Text style={styles.axisNote}>
-              Rain in a typical year. Wettest {monthName(wettest)} ({Math.round(median[wettest])} mm), driest{" "}
-              {monthName(driest)} ({Math.round(median[driest])} mm).
+              {t("year.rain", { wet: months[wettest], wetMm: Math.round(median[wettest]), dry: months[driest], dryMm: Math.round(median[driest]) })}
             </Text>
-            <Svg width={width} height={RAIN_H + 20} accessibilityLabel="Monthly rain in a typical year">
+            <Svg width={width} height={RAIN_H + 20} accessibilityLabel={t("legend.range")}>
               {median.map((mm, i) => {
                 const x = monthX(i + 1) * width;
                 const mw = (i === 11 ? width : monthX(i + 2) * width) - x;
@@ -68,7 +68,7 @@ export function FieldYear({ options, selected, onSelect, precip, cropById }: Pro
                     {/* dry year to wet year */}
                     <Line x1={x + mw / 2} x2={x + mw / 2} y1={RAIN_H - hi} y2={RAIN_H - lo} stroke={colors.blue} strokeWidth={1.5} />
                     <SvgText x={x + mw / 2} y={RAIN_H + 15} fontSize={12} fontFamily={SVG_FONT} fill={colors.muted} textAnchor="middle">
-                      {MONTH_LETTERS[i]}
+                      {months[i].charAt(0)}
                     </SvgText>
                   </G>
                 );
@@ -89,7 +89,7 @@ export function FieldYear({ options, selected, onSelect, precip, cropById }: Pro
             onPress={() => onSelect(o.key)}
             accessibilityRole="button"
             accessibilityState={{ selected: isSelected }}
-            accessibilityLabel={`Plan ${o.key}, ${PLAN_NAME[o.kind]}. ${o.slots.map((s) => shortCropName(cropById(s.crop_id), s.crop_id)).join(", then ")}. ${bareText(o.metrics)}.`}
+            accessibilityLabel={`${t("plan.label", { key: o.key })}, ${planName(o.kind, t)}. ${o.slots.map((s) => cropLabel(lang, cropById(s.crop_id), s.crop_id)).join(", ")}. ${bareText(o.metrics, t, months)}.`}
             style={({ pressed }) => [styles.row, isSelected && styles.rowSelected, pressed && !isSelected && styles.rowPressed]}
           >
             <View style={styles.rowHead}>
@@ -97,13 +97,13 @@ export function FieldYear({ options, selected, onSelect, precip, cropById }: Pro
                 <Text style={[styles.keyText, isSelected && styles.keyTextSelected]}>{o.key}</Text>
               </View>
               <Text style={styles.planName} numberOfLines={1}>
-                {PLAN_NAME[o.kind]}
+                {planName(o.kind, t)}
               </Text>
-              {o.top_total ? <Text style={styles.best}>Best match</Text> : null}
+              {o.top_total ? <Text style={styles.best}>{t("plan.best")}</Text> : null}
               <View style={styles.meter}>
                 <View style={[styles.meterFill, isSelected && styles.meterFillSelected, { width: `${Math.max(0, Math.min(100, o.total ?? 0))}%` }]} />
               </View>
-              <Text style={styles.score}>{o.total === null ? "No score" : Math.round(o.total)}</Text>
+              <Text style={styles.score}>{o.total === null ? t("year.noScore") : Math.round(o.total)}</Text>
             </View>
 
             {width > 0 ? (
@@ -120,7 +120,7 @@ export function FieldYear({ options, selected, onSelect, precip, cropById }: Pro
                   const x = dayX(p.start) * width;
                   const w = Math.max(2, dayX(p.end) * width - x);
                   const y = p.lane * (LANE_H + LANE_GAP);
-                  const label = shortCropName(crop, p.crop_id);
+                  const label = cropLabel(lang, crop, p.crop_id);
                   const fits = p.labeled && w > label.length * 7 + 12;
                   return (
                     <G key={i}>
@@ -142,8 +142,8 @@ export function FieldYear({ options, selected, onSelect, precip, cropById }: Pro
             ) : null}
 
             <Text style={styles.rowFoot}>
-              {bareText(o.metrics)}
-              {o.assumed_calendar ? ". Typical planting months assumed; you can give your own later" : ""}
+              {bareText(o.metrics, t, months)}
+              {o.assumed_calendar ? `. ${t("year.assumed")}` : "."}
             </Text>
           </Pressable>
         );
@@ -151,31 +151,29 @@ export function FieldYear({ options, selected, onSelect, precip, cropById }: Pro
 
       <View style={styles.legend}>
         {families.map((f) => (
-          <View key={f.label} style={styles.legendItem}>
+          <View key={f.key} style={styles.legendItem}>
             <View style={[styles.swatch, { backgroundColor: f.fill }]} />
-            <Text style={text.caption}>{f.label}</Text>
+            <Text style={text.caption}>{t(f.key)}</Text>
           </View>
         ))}
         <View style={styles.legendItem}>
           <Svg width={18} height={12}>
             <BareSoil x={0} w={18} h={12} />
           </Svg>
-          <Text style={text.caption}>Bare soil</Text>
+          <Text style={text.caption}>{t("legend.bare")}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={styles.stressMark} />
-          <Text style={text.caption}>Crop short of water</Text>
+          <Text style={text.caption}>{t("legend.stress")}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={styles.whisker} />
-          <Text style={text.caption}>Dry year to wet year</Text>
+          <Text style={text.caption}>{t("legend.range")}</Text>
         </View>
       </View>
     </View>
   );
 }
-
-const monthName = (i: number) => ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"][i];
 
 /** Hatched earth for a stretch with nothing growing. */
 function BareSoil({ x, w, h }: { x: number; w: number; h: number }) {

@@ -7,9 +7,10 @@ import { CropFitList } from "../src/components/CropFitList";
 import { Disclaimer } from "../src/components/Disclaimer";
 import { FieldYear } from "../src/components/FieldYear";
 import { Header } from "../src/components/Header";
+import { LanguageSwitch } from "../src/components/LanguageSwitch";
 import { LotTabs } from "../src/components/LotTabs";
 import { Notice } from "../src/components/Notice";
-import { PLAN_NAME } from "../src/components/field-year-core";
+import { planName } from "../src/components/field-year-core";
 import { PlanDetail } from "../src/components/PlanDetail";
 import { chosenPriorities, unavailablePriorities, verdictText } from "../src/components/plan-text";
 import { PriorityChips } from "../src/components/PriorityChips";
@@ -19,6 +20,7 @@ import { colors, radius, space, text, TWO_COLUMN_MIN } from "../src/components/t
 import { useLotAnalysis } from "../src/components/useLotAnalysis";
 import { cropById } from "../src/data/crops";
 import type { LotAnalysis, OptionKey } from "../src/engine";
+import { useT } from "../src/i18n/lang-store";
 import { isDemoFarm } from "../src/state/demo-farm";
 import { useFarm, useFarmStore } from "../src/state/farm-store";
 import type { Farm, Lot, Priorities } from "../src/types";
@@ -29,37 +31,33 @@ import type { Farm, Lot, Priorities } from "../src/types";
 // check locally, sources), how the farmer's crops fit, and the 3-year Soil Health card (#43).
 
 const cropName = (id: string) => cropById(id)?.name ?? id;
-const LAND = { lowland: "Lowland", upland: "Upland", sloping: "Sloping", unknown: "Land type not given" } as const;
-const WATER = { rain: "rain only", some: "some irrigation", full: "full irrigation", unknown: "water source not given" } as const;
-
 export default function DashboardScreen() {
   const farm = useFarm();
+  const { t } = useT();
   const { lot: lotParam } = useLocalSearchParams<{ lot?: string }>();
   const lot = farm.lots.find((l) => l.id === lotParam) ?? farm.lots[0];
 
   return (
     <Screen wide footer={<Disclaimer />}>
-      <Header title="Your farm" />
+      <Header title={t("dash.title")} right={<LanguageSwitch />} />
       {lot ? (
         <>
           {isDemoFarm(farm.lots) ? (
-            <Notice icon="info">
-              This is the demo farm, a made-up two-lot farm in Lanao del Norte. Its numbers are real NASA data for that place.
-            </Notice>
+            <Notice icon="info">{t("dash.demo")}</Notice>
           ) : null}
           <View style={styles.lotRow}>
             <LotTabs lots={farm.lots} selectedId={lot.id} onSelect={(id) => router.setParams({ lot: id })} />
             <Text style={text.small}>
               <Text style={styles.strong}>{lot.area_ha} ha</Text>
-              {`  ${LAND[lot.details.land_type]}, ${WATER[lot.details.water]}`}
+              {`  ${t(`land.${lot.details.land_type}`)}, ${t(`water.${lot.details.water}`)}`}
             </Text>
           </View>
           <LotResults key={lot.id} farm={farm} lot={lot} />
         </>
       ) : (
         <>
-          <Notice tone="warn">Draw your lots on the map first, then pick the crops for each lot.</Notice>
-          <Button label="Draw your lots" href="/lots" />
+          <Notice tone="warn">{t("dash.drawFirst")}</Notice>
+          <Button label={t("dash.draw")} href="/lots" />
         </>
       )}
     </Screen>
@@ -69,29 +67,31 @@ export default function DashboardScreen() {
 function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
   const view = useLotAnalysis(farm, lot);
   const updateLot = useFarmStore((s) => s.updateLot);
+  const { t } = useT();
+  const lotName = { lot: lot.name };
 
   switch (view.kind) {
     case "loading":
-      return <Text style={text.caption}>Loading {lot.name}...</Text>;
+      return <Text style={text.caption}>{t("dash.loading", lotName)}</Text>;
     case "no-crops":
       return (
         <>
-          <Notice tone="warn">Pick the crops you grow on {lot.name} to see its results.</Notice>
-          <Button label="Pick crops" href="/crops" />
+          <Notice tone="warn">{t("dash.noCrops", lotName)}</Notice>
+          <Button label={t("dash.pickCrops")} href="/crops" />
         </>
       );
     case "no-data":
       // The lot sync downloads pending lots by itself when the phone has signal.
       return view.status === "pending" ? (
-        <Notice icon="clock">Getting NASA climate data for {lot.name}. It downloads by itself when the phone has signal.</Notice>
+        <Notice icon="clock">{t("dash.getting", lotName)}</Notice>
       ) : (
         <>
-          <Notice tone="warn">We couldn&apos;t get NASA climate data for {lot.name}.</Notice>
-          <Button label="Try again" variant="secondary" onPress={() => updateLot(lot.id, { data_status: "pending" })} />
+          <Notice tone="warn">{t("dash.noData", lotName)}</Notice>
+          <Button label={t("dash.retry")} variant="secondary" onPress={() => updateLot(lot.id, { data_status: "pending" })} />
         </>
       );
     case "failed":
-      return <Notice tone="warn">Something went wrong while working out the results for {lot.name}.</Notice>;
+      return <Notice tone="warn">{t("dash.failed", lotName)}</Notice>;
     case "ready":
       return <Results farm={farm} analysis={view.analysis} />;
   }
@@ -99,6 +99,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
 
 function Results({ farm, analysis }: { farm: Farm; analysis: LotAnalysis }) {
   const setPriorities = useFarmStore((s) => s.setPriorities);
+  const { t } = useT();
   const { width } = useWindowDimensions();
   const twoColumns = width >= TWO_COLUMN_MIN;
   const { options } = analysis.rotations;
@@ -112,38 +113,41 @@ function Results({ farm, analysis }: { farm: Farm; analysis: LotAnalysis }) {
     setPicked(null);
     setPriorities(next);
   };
-  const verdict = verdictText({
-    chosen: chosenPriorities(farm.priorities).filter((k) => !unavailable.includes(k)),
-    bestKey: best.key,
-    bestName: PLAN_NAME[best.kind],
-    bestTotal: best.total,
-    baselineTotal: baseline.total,
-    bestIsBaseline: best.key === baseline.key,
-  });
+  const verdict = verdictText(
+    {
+      chosen: chosenPriorities(farm.priorities).filter((k) => !unavailable.includes(k)),
+      bestKey: best.key,
+      bestName: planName(best.kind, t),
+      bestTotal: best.total,
+      baselineTotal: baseline.total,
+      bestIsBaseline: best.key === baseline.key,
+    },
+    t,
+  );
 
   const compare = (
     <>
       <View style={styles.intro}>
         <Text style={text.heading} accessibilityRole="header">
-          Your year next to {options.length - 1} other {options.length - 1 === 1 ? "plan" : "plans"}
+          {t("year.title")}
         </Text>
         <Text style={[text.small, styles.muted]}>
-          Each row is one year on this lot. Tap a plan to see why it was suggested and what to check first.
+          {t("year.hint")}
         </Text>
       </View>
       <FieldYear options={options} selected={selected.key} onSelect={setPicked} precip={analysis.monthly.precip_mm} cropById={cropById} />
-      <Text style={text.caption}>
-        Climate numbers are from NASA POWER for a grid cell about 50 km across, not your exact field.
-      </Text>
+      <Text style={text.caption}>{t("year.source")}</Text>
     </>
   );
   const detail = (
     <PlanDetail
+      key={selected.key}
       option={selected}
       baseline={baseline}
       explanation={analysis.explanations.find((e) => e.option_key === selected.key)}
       leftOut={analysis.rotations.components_left_out}
       cropById={cropById}
+      defaultOpen={twoColumns}
     />
   );
   const rest = (

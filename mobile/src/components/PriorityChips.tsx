@@ -3,7 +3,8 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { PriorityKey } from "../engine/scores";
 import type { Priorities } from "../types";
 import { Icon } from "./Icon";
-import { chosenPriorities, listText, PRIORITY_KEYS, PRIORITY_LABEL, togglePriority } from "./plan-text";
+import { useT } from "../i18n/lang-store";
+import { chosenPriorities, listText, PRIORITY_KEYS, togglePriority } from "./plan-text";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
 type Props = {
@@ -15,10 +16,11 @@ type Props = {
 
 /** "What matters to you": tap to re-rank the plans. Works offline, on the phone. */
 export function PriorityChips({ priorities, onChange, unavailable }: Props) {
+  const { t } = useT();
   const chosen = new Set(chosenPriorities(priorities));
   return (
     <View style={styles.wrap}>
-      <Text style={text.bodyStrong}>What matters most to you?</Text>
+      <Text style={text.bodyStrong}>{t("chips.title")}</Text>
       <View style={styles.row}>
         {PRIORITY_KEYS.map((k) => {
           const off = unavailable.includes(k);
@@ -26,8 +28,8 @@ export function PriorityChips({ priorities, onChange, unavailable }: Props) {
           if (off) {
             return (
               <View key={k} style={[styles.chip, styles.off]} accessibilityRole="checkbox" accessibilityState={{ disabled: true, checked: false }}>
-                <Text style={[text.bodyStrong, styles.offLabel]}>{PRIORITY_LABEL[k]}</Text>
-                <Text style={[text.caption, styles.offLabel]}>needs data</Text>
+                <Text style={[text.bodyStrong, styles.offLabel]}>{t(`prio.${k}`)}</Text>
+                <Text style={[text.caption, styles.offLabel]}>{t("chips.needsData")}</Text>
               </View>
             );
           }
@@ -40,15 +42,14 @@ export function PriorityChips({ priorities, onChange, unavailable }: Props) {
               style={({ pressed }) => [styles.chip, on ? styles.on : pressed && styles.pressed]}
             >
               {on ? <Icon name="check" size={18} color={colors.white} /> : null}
-              <Text style={[text.bodyStrong, on && styles.onLabel]}>{PRIORITY_LABEL[k]}</Text>
+              <Text style={[text.bodyStrong, on && styles.onLabel]}>{t(`prio.${k}`)}</Text>
             </Pressable>
           );
         })}
       </View>
       {unavailable.length > 0 ? (
         <Text style={text.caption}>
-          {listText(unavailable.map((k) => PRIORITY_LABEL[k]))} cannot be scored yet: the crop library has no local price or labor
-          figures and no harvest place is added. We do not make numbers up.
+          {t("chips.unavailable", { goals: listText(unavailable.map((k) => t(`prio.${k}`)), t) })}
         </Text>
       ) : null}
     </View>

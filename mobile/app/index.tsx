@@ -4,9 +4,11 @@ import { StyleSheet, Text, View } from "react-native";
 import { Button } from "../src/components/Button";
 import { Disclaimer } from "../src/components/Disclaimer";
 import { Icon } from "../src/components/Icon";
+import { LanguageSwitch } from "../src/components/LanguageSwitch";
 import { Notice } from "../src/components/Notice";
 import { Screen } from "../src/components/Screen";
 import { colors, space, text } from "../src/components/theme";
+import { useT } from "../src/i18n/lang-store";
 import { isDemoFarm, loadDemoFarm } from "../src/state/demo-farm";
 import { useFarmStore } from "../src/state/farm-store";
 
@@ -15,6 +17,7 @@ import { useFarmStore } from "../src/state/farm-store";
 // straight to the dashboard: `if (hasSavedFarm) return <Redirect href="/dashboard" />`.
 export default function WelcomeScreen() {
   const lots = useFarmStore((s) => s.lots);
+  const { t } = useT();
   // The demo never replaces a farm the farmer has drawn: it is offered only on an empty
   // farm, or when the saved farm already is the demo.
   const demoAllowed = lots.length === 0 || isDemoFarm(lots);
@@ -32,8 +35,8 @@ export default function WelcomeScreen() {
     <Screen
       footer={
         <>
-          {hasOwnFarm ? <Button label="Open your farm" href="/dashboard" size="lg" /> : <Button label="Start" onPress={startOwn} size="lg" />}
-          {demoAllowed ? <Button label="See a demo farm" variant="secondary" onPress={openDemo} /> : null}
+          {hasOwnFarm ? <Button label={t("welcome.open")} href="/dashboard" size="lg" /> : <Button label={t("welcome.start")} onPress={startOwn} size="lg" />}
+          {demoAllowed ? <Button label={t("welcome.demo")} variant="secondary" onPress={openDemo} /> : null}
           <Disclaimer />
         </>
       }
@@ -42,17 +45,18 @@ export default function WelcomeScreen() {
         <Icon name="sprout" size={34} color={colors.green} strokeWidth={1.8} />
         <Text style={styles.brandName}>AgriResilience</Text>
       </View>
+      <LanguageSwitch />
 
       <View style={styles.middle}>
         <Text style={text.display} accessibilityRole="header">
-          Plan your crops with NASA climate data
+          {t("welcome.title")}
         </Text>
         <Text style={[text.body, styles.lead]}>
-          Draw your lots, tell us what you plant, and compare crop plans for each lot.
+          {t("welcome.lead")}
         </Text>
-        <Notice icon="lock">Your farm information stays on this phone. No sign-up, no account.</Notice>
+        <Notice icon="lock">{t("welcome.private")}</Notice>
         <Text style={[text.small, { color: colors.muted }]}>
-          You need signal to load the map and the climate data. Your saved results work offline.
+          {t("welcome.signal")}
         </Text>
       </View>
     </Screen>

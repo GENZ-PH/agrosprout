@@ -4,7 +4,9 @@ import { useFarmStore } from "./farm-store";
 // The bundled demo farm (#36): two lots at the provisional demo point (pipeline/demo_farms.json,
 // 8.0 N, 123.8 E), read from assets/data/demo/lanao-norte-demo-1.json, so results show with no
 // signal and no drawing. The persona is fictional (docs/05). Both lots sit in the same NASA
-// POWER cell, so they share climate numbers and differ by land type, water and crops.
+// POWER cell, so they share climate numbers and differ by land type, water and crops. The
+// crops are everyday ones in the Philippines: rice (humay) on the paddy, corn (mais) and peanut
+// (mani) on the upland lot.
 
 const DEMO_REF = "demo/lanao-norte-demo-1";
 
@@ -40,7 +42,7 @@ export const DEMO_FARM: Farm = {
       name: "Upland lot",
       ...square([123.802, 8.001], 70),
       details: { land_type: "sloping", water: "rain", soil: "loamy" },
-      crops: [{ crop_id: "corn", seasons: [] }, { crop_id: "eggplant", seasons: [] }],
+      crops: [{ crop_id: "corn", seasons: [] }, { crop_id: "peanut", seasons: [] }],
       data_status: "ready",
       data_ref: DEMO_REF,
       travel: [],
