@@ -1,10 +1,11 @@
 import { router, useLocalSearchParams } from "expo-router";
-import type { ReactNode } from "react";
+import { type ReactNode, useCallback } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { Button } from "../src/components/Button";
 import { CropFitCard } from "../src/components/CropFitCard";
 import { Disclaimer } from "../src/components/Disclaimer";
+import { FarmMapCard } from "../src/components/FarmMapCard";
 import { Header } from "../src/components/Header";
 import { LotTabs } from "../src/components/LotTabs";
 import { Notice } from "../src/components/Notice";
@@ -13,7 +14,7 @@ import { Screen } from "../src/components/Screen";
 import { SoilHealthChart } from "../src/components/SoilHealthChart";
 import { MAX_CONTENT_WIDTH, space, text } from "../src/components/theme";
 import { useLayout } from "../src/components/useLayout";
-import { useLotAnalysis } from "../src/components/useLotAnalysis";
+import { useFarmLotViews, useLotAnalysis } from "../src/components/useLotAnalysis";
 import { cropById } from "../src/data/crops";
 import { useFarm, useFarmStore } from "../src/state/farm-store";
 import type { Farm, Lot } from "../src/types";
@@ -28,6 +29,9 @@ import type { Farm, Lot } from "../src/types";
 // crops here and Soil Health sit side by side, and the Recommendations options go two per row.
 // Phones keep one column in the same order as before. Messages and buttons stay in the narrow
 // reading column so they don't stretch across a wide window.
+//
+// Farm map (#124): "Your lots on the map" sits above the lot tabs as the whole-farm overview.
+// Each lot is colored by its crop fit; tapping a lot selects it like its tab.
 
 const cropName = (id: string) => cropById(id)?.name ?? id;
 
@@ -35,16 +39,26 @@ export default function DashboardScreen() {
   const farm = useFarm();
   const { lot: lotParam } = useLocalSearchParams<{ lot?: string }>();
   const lot = farm.lots.find((l) => l.id === lotParam) ?? farm.lots[0];
+  const views = useFarmLotViews(farm);
+  const { wide } = useLayout();
+  const selectLot = useCallback((id: string) => router.setParams({ lot: id }), []);
 
   return (
     <Screen width="wide" footer={<Disclaimer />}>
       <Header title="Your farm" />
       {lot ? (
         <>
+          <FarmMapCard
+            lots={farm.lots}
+            views={views}
+            selectedId={lot.id}
+            onSelect={selectLot}
+            wide={wide}
+          />
           <LotTabs
             lots={farm.lots}
             selectedId={lot.id}
-            onSelect={(id) => router.setParams({ lot: id })}
+            onSelect={selectLot}
             onAdd={() => router.push({ pathname: "/lots", params: { new: "1" } })}
           />
           <LotResults key={lot.id} farm={farm} lot={lot} />
