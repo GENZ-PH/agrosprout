@@ -3,6 +3,7 @@ import { type ReactNode, useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { Button } from "../src/components/Button";
+import { ClimateContextCard } from "../src/components/ClimateContextCard";
 import { CropFitCard } from "../src/components/CropFitCard";
 import { Disclaimer } from "../src/components/Disclaimer";
 import { FarmMapCard } from "../src/components/FarmMapCard";
@@ -212,6 +213,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
               {monthsCompare}
               {harvestCard}
               {whatIf}
+              <ClimateContextCard period={period} />
               <MonthsPrompt lot={lot} stage={analysis.stage} />
             </>
           ) : (
@@ -223,6 +225,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
               {monthsCompare}
               {harvestCard}
               {whatIf}
+              <ClimateContextCard period={period} />
               {soil}
               <MonthsPrompt lot={lot} stage={analysis.stage} />
             </>

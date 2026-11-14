@@ -23,7 +23,8 @@ export type ExplainerId =
   | "year-calendar"
   | "what-if"
   | "farm-map"
-  | "lot-cutout";
+  | "lot-cutout"
+  | "climate-context";
 
 export interface Explainer {
   id: ExplainerId;
@@ -185,6 +186,18 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     limits: [
       "It is a what-if, not a forecast.",
       "Humidity, wind, sunshine and soil wetness are kept at today's values.",
+    ],
+  },
+  "climate-context": {
+    id: "climate-context",
+    title: "Climate right now",
+    what: "The latest ocean temperature reading for the tropical Pacific and the latest national advisory, for background.",
+    source: "NOAA Climate Prediction Center, Oceanic Niño Index (read on the date shown), and the DOST-PAGASA advisory, summarized by hand from its press release. Neither is NASA data.",
+    read: "It tells you what is happening in the wider climate right now. It does not change any score on this page.",
+    limits: [
+      "It is for the whole country or ocean region, not for your lot.",
+      "The advisory text is a short summary written by hand; read the original with the link.",
+      "It is not a forecast for your lot. Ask your agricultural technician or your local PAGASA office.",
     ],
   },
 };
