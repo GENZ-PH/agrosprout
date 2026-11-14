@@ -8,7 +8,10 @@ import { Icon, type IconName } from "../src/components/Icon";
 import { LotDetailsForm } from "../src/components/LotDetailsForm";
 import { Screen } from "../src/components/Screen";
 import { colors, MIN_TOUCH, radius, space, text } from "../src/components/theme";
+import { LAND_WATER } from "../src/data/land-water";
+import { lotLooksLikeWater } from "../src/lots/land-water-core";
 import { isPinLot, parseHectares, pinShape } from "../src/lots/lot-editor";
+import { findOverlap } from "../src/lots/lot-overlap";
 import { useLotEditor } from "../src/lots/use-lot-editor";
 import type { MapInset, MapLot, MapMode, MapPlace, MapToApp } from "../src/map/bridge";
 import { MapView, type MapViewHandle } from "../src/map/MapView";
@@ -33,6 +36,10 @@ const START_HINT = "Move the map to your farm and zoom in until you can see the 
 const ADD_HINT = "Move the map to your new lot until you can see its edges. Your other lots show as named dots.";
 const SAVED_HINT = "Your lot is saved. To fix its edges, tap Adjust.";
 const ADJUST_HINT = "Drag the white dots to fit your lot. Tap a yellow dot to add a corner. Press and hold a dot to remove it.";
+// #176: the existing land-water check (Natural Earth 1:10m), shown here as soon as the lot is drawn. A warning,
+// not a block: the coastline is coarse, so a real shore farm or fishpond can read as water.
+const WATER_HINT =
+  "This lot looks like it is on the sea or a lake. Redraw it on your land, or keep it if it really is land (a shore farm or fishpond).";
 
 // Zoom check before drawing (UI choice, not a sourced number). Web Mercator ground
 // resolution is 156,543 m × cos(latitude) / 2^zoom per pixel: at Iligan (8.2° N) about
@@ -171,11 +178,23 @@ export default function LotsScreen() {
         // Tapping the lot also reports it; nothing to save when the outline didn't change.
         if (saved && JSON.stringify(saved.geometry) === JSON.stringify(msg.geojson)) return;
         const drawn = mode === "sketch" || mode === "corners";
+        setEditingHa(null);
+        // #176: a lot must not cover another lot. Not saved: the map goes back to the saved shape (or none).
+        const hit = findOverlap(msg.geojson.coordinates[0] ?? [], lot.id, lots);
+        if (hit) {
+          mapRef.current?.send({ type: "setLots", lots: mapLots });
+          setStatus(
+            drawn
+              ? `This lot covers part of ${hit.name}, so we did not save it. Draw it again inside your own lot.`
+              : `That moved ${name} into ${hit.name}, so we put it back. Keep the corners inside your own lot.`,
+          );
+          return;
+        }
         // A new lot is saved under the farm store's id.
         setSavedId(setShape(msg.id, { geometry: msg.geojson, area_ha: msg.area_ha, centroid: msg.centroid }));
-        setEditingHa(null);
         // The area is shown big in the panel, so the hint doesn't repeat it.
-        if (!drawn) setStatus("Saved.");
+        if (lotLooksLikeWater(LAND_WATER, { geometry: msg.geojson, centroid: msg.centroid })) setStatus(WATER_HINT);
+        else if (!drawn) setStatus("Saved.");
         else if (msg.fix === "unkinked") setStatus("Your lines crossed, so we kept the biggest part. Tap Adjust to check the corners.");
         else if (msg.fix === "hull") setStatus("We made a simple outline from your sketch. Tap Adjust to match the corners to your lot.");
         else setStatus(SAVED_HINT);
@@ -199,8 +218,11 @@ export default function LotsScreen() {
         break;
       case "pinPlaced": {
         if (mode !== "pin" || !lot || typedArea === null) return;
-        setSavedId(setShape(lot.id, pinShape(msg.point, typedArea)));
-        setStatus("Pin placed. Tap Redraw if you can trace the lot later.");
+        const pinned = pinShape(msg.point, typedArea);
+        setSavedId(setShape(lot.id, pinned));
+        setStatus(
+          lotLooksLikeWater(LAND_WATER, pinned) ? WATER_HINT : "Pin placed. Tap Redraw if you can trace the lot later.",
+        );
         setAreaText("");
         setMode("view");
         break;
