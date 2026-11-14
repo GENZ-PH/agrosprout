@@ -75,12 +75,13 @@ export default function DataScreen() {
             key={c.crop}
             onPress={() => void Linking.openURL(c.url)}
             accessibilityRole="link"
-            accessibilityLabel={`${c.crop} picture by ${c.author}, ${c.license}. Open the source page`}
+            accessibilityLabel={`${c.crop} picture: ${c.title} by ${c.author}, ${c.license}. Open the source page`}
             style={styles.linkRow}
           >
             <Text style={text.small}>
-              {c.crop}: {c.author}, <Text style={styles.link}>{c.license}</Text>
+              {c.crop}: “{c.title}” by {c.author}, {c.license}{c.licenseUrl ? ` (${c.licenseUrl})` : ""}, via Wikimedia Commons. Cropped and made smaller.
             </Text>
+            <Text style={styles.link}>{c.url}</Text>
           </Pressable>
         ))}
       </View>

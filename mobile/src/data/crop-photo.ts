@@ -25,8 +25,17 @@ type Saved = { photo: CropPhoto | null; at: number };
 let queue: Promise<unknown> = Promise.resolve();
 const memory = new Map<string, CropPhoto | null>();
 
+// After HTTP 429 Wikimedia asks callers to wait (Retry-After, else at least 5 seconds): nothing is sent before then.
+let pausedUntil = 0;
+
 async function getJson(url: string): Promise<unknown> {
+  const wait = pausedUntil - Date.now();
+  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
   const res = await fetch(url, { headers: HEADERS });
+  if (res.status === 429) {
+    const secs = Number(res.headers.get("retry-after"));
+    pausedUntil = Date.now() + Math.max(5, Number.isFinite(secs) ? secs : 0) * 1000;
+  }
   if (res.status === 404) return null; // no page for this name
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();

@@ -11,6 +11,8 @@ export interface CropPhoto {
   uri: string;
   /** Commons file page, which shows the full credit. */
   page: string;
+  /** Title of the work (the Commons file name without "File:" and the extension). */
+  title: string;
   author: string;
   license: string;
   licenseUrl: string | null;
@@ -99,7 +101,9 @@ export function parseImageInfo(
   if (!license || !author || !isAcceptableLicense(license)) return null;
   const cleanAuthor = stripHtml(author);
   if (!cleanAuthor) return null;
+  const title = stripHtml(str(obj(meta.ObjectName)?.value) ?? fileName.replace(/_/g, " ").replace(/\.[A-Za-z0-9]+$/, ""));
   return {
+    title,
     page: `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(fileName.replace(/ /g, "_"))}`,
     author: cleanAuthor,
     license: license.trim(),

@@ -51,24 +51,35 @@ export function CropImage({ cropId, size = 48, sci = null }: Props) {
   );
 }
 
-/** The author and license of an online picture, under the crop it belongs to. Shows nothing when there is no online picture. */
+/** The title, author and license of an online picture, under the crop it belongs to. Shows nothing when there is no online picture. */
 export function CropPhotoCredit({ sci }: { sci: string | null }) {
   const photo = useCropPhoto(sci);
   if (!photo) return null;
   return (
-    <Pressable
-      onPress={() => void Linking.openURL(photo.page)}
-      accessibilityRole="link"
-      accessibilityLabel={`${photoCreditLine(photo)}. Open the source page`}
-      style={styles.credit}
-    >
-      <Text style={text.caption}>{photoCreditLine(photo)}</Text>
-    </Pressable>
+    <View style={styles.credit}>
+      <Pressable
+        onPress={() => void Linking.openURL(photo.page)}
+        accessibilityRole="link"
+        accessibilityLabel={`${photoCreditLine(photo)}. Open the source page`}
+      >
+        <Text style={text.caption}>{photoCreditLine(photo)}</Text>
+      </Pressable>
+      {photo.licenseUrl ? (
+        <Pressable
+          onPress={() => void Linking.openURL(photo.licenseUrl as string)}
+          accessibilityRole="link"
+          accessibilityLabel={`Read the ${photo.license} license`}
+        >
+          <Text style={[text.caption, styles.creditLink]}>{photo.license} license</Text>
+        </Pressable>
+      ) : null}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  credit: { paddingVertical: space.xs },
+  credit: { paddingVertical: space.xs, gap: space.xs },
+  creditLink: { color: colors.blue, textDecorationLine: "underline" },
   box: { alignItems: "center", justifyContent: "center", backgroundColor: colors.greenTint, overflow: "hidden" },
   image: { backgroundColor: colors.greenTint },
 });

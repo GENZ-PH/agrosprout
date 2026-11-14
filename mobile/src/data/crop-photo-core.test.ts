@@ -60,6 +60,7 @@ const imageInfo = {
               LicenseUrl: {
                 value: "https://creativecommons.org/licenses/by-sa/3.0",
               },
+              ObjectName: { value: "Solanum melongena" },
               Artist: {
                 value:
                   '<a href="//commons.wikimedia.org/wiki/User:Joydeep" title="User:Joydeep">Joydeep</a>',
@@ -110,6 +111,12 @@ test("the author is cleaned of HTML and the credit has a link to the file page",
     photoCreditLine(c!),
     "Photo: Joydeep, CC BY-SA 3.0 (Wikimedia Commons)",
   );
+});
+
+test("without an object name the file name is the title", () => {
+  const noName = JSON.parse(JSON.stringify(imageInfo));
+  delete noName.query.pages["1"].imageinfo[0].extmetadata.ObjectName;
+  assert.equal(parseImageInfo(noName, "Rice_plant.jpg")?.title, "Rice plant");
 });
 
 test("only licenses we can credit are accepted", () => {

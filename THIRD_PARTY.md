@@ -51,8 +51,8 @@ Free public services, light use only. None needs an account or a key.
 
 ### Wikipedia and Wikimedia Commons (pictures of search-only crops)
 
-- For a crop saved from the search that has no bundled picture, the app asks the Wikipedia page-summary API (`https://en.wikipedia.org/api/rest_v1/page/summary/<scientific name>`) for the page's lead picture, then the Commons API (`https://commons.wikimedia.org/w/api.php`, `prop=imageinfo`) for its author and license. Code: `mobile/src/data/crop-photo-core.ts` and `crop-photo.ts`. Used only on S2, under the chosen crop, with "Photo: author, license (Wikimedia Commons)" linking to the file page.
-- Only the crop's scientific name is sent. Nothing about the farmer or lots, no location. Wikimedia sees the phone's IP address like any website would. The result is saved on the phone (a "none found" answer for 7 days), requests go one at a time with a 1 second pause, and offline or on any error the app shows the placeholder.
+- For a crop saved from the search that has no bundled picture, the app asks the Wikipedia page-summary API (`https://en.wikipedia.org/api/rest_v1/page/summary/<scientific name>`) for the page's lead picture, then the Commons API (`https://commons.wikimedia.org/w/api.php`, `prop=imageinfo`) for its author and license. Code: `mobile/src/data/crop-photo-core.ts` and `crop-photo.ts`. Used only on S2, under the chosen crop, with `Photo: “title” by author, license, via Wikimedia Commons` linking to the file page, and a link to the license text. The picture itself is Wikimedia's own scaled thumbnail, not changed by us.
+- Only the crop's scientific name is sent. Nothing about the farmer or lots, no location. Wikimedia sees the phone's IP address like any website would. The result is saved on the phone (a "none found" answer for 7 days), requests go one at a time with a 1 second pause (and after an HTTP 429 nothing is sent for the `Retry-After` time, at least 5 seconds), and offline or on any error the app shows the placeholder.
 - Only pictures on Commons under CC0, public domain, CC BY or CC BY-SA with an author are shown. The lead picture is chosen by Wikipedia editors, so it can be an illustration instead of a photo (cassava shows a 19th-century plate). A name that fits more than one Ecocrop species gets no lookup.
 - Policies: https://foundation.wikimedia.org/wiki/Policy:User-Agent_policy (read 2026-11-15; the app sends a descriptive User-Agent on Android, and none on web because browsers cannot set it). Wikimedia limits fast callers with HTTP 429. Not yet checked by a human: the Wikimedia API terms for an app with many users.
 
@@ -137,20 +137,20 @@ Python 3.11+ standard library only (`urllib`, `json`, `csv`, `unittest`, …). N
 - **UI icons:** drawn by the team as SVG paths in `mobile/src/components/Icon.tsx`. No icon font, no emoji.
 - **Fonts:** the system font of each platform. No font files are bundled.
 - **App icon, Android adaptive icon, splash, and favicon** (`mobile/assets/*.png`): these are still the **Expo project template's default images** (the Expo logo), added with the scaffold (#55). Replace them with the team's own icon before the final build (#50); then update this line.
-- **Crop pictures** (`mobile/assets/crops/*.webp`, #169): square crops of free-license photos from Wikimedia Commons, resized to 160 px (so each is a modified copy; the photographer's license applies to our copy). Shown in the app and credited on the Data and limits page. The team should confirm the choice of pictures.
+- **Crop pictures** (`mobile/assets/crops/*.webp`, #169): square crops of free-license photos from Wikimedia Commons, resized to 160 px, so each is a modified copy (changes: cropped and resized; the photographer's license applies to our copy). Shown in the app and credited on the Data and limits page. The team should confirm the choice of pictures.
 
-| Picture | Crop | Author | License | Source |
-|---|---|---|---|---|
-| `assets/crops/lowland-rice.webp` | Rice | Douglas Paul Perkins | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | <https://commons.wikimedia.org/wiki/File:Rice_plant.jpg> |
-| `assets/crops/corn.webp` | Corn | Forest and Kim Starr | [CC BY 3.0 US](https://creativecommons.org/licenses/by/3.0/us/) | <https://commons.wikimedia.org/wiki/File:Starr-160618-0718-Zea_mays-immature_cob_with_silks-Hawea_Pl_Olinda-Maui_(28067473235).jpg> |
-| `assets/crops/mungbean.webp` | Mung bean | Sanjay Acharya | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) | <https://commons.wikimedia.org/wiki/File:Bean_pod_of_Vigna_radiata_(mung_bean).jpg> |
-| `assets/crops/peanut.webp` | Peanut | Pollinator | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) | <https://commons.wikimedia.org/wiki/File:Peanut_9417.jpg> |
-| `assets/crops/soybean.webp` | Soybean | United Soybean Board | [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/) | <https://commons.wikimedia.org/wiki/File:Soybean_Pods_(10059910446).jpg> |
-| `assets/crops/string-bean.webp` | String bean | David | Public domain | <https://commons.wikimedia.org/wiki/File:Long_Bean.JPG> |
-| `assets/crops/sweet-potato.webp` | Sweet potato | miya | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | <https://commons.wikimedia.org/wiki/File:Ipomoea_batatasL_ja01.jpg> |
-| `assets/crops/sorghum.webp` | Sorghum | Chris Light | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | <https://commons.wikimedia.org/wiki/File:Sorghum_6364.jpg> |
-| `assets/crops/eggplant.webp` | Eggplant | Joydeep | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) | <https://commons.wikimedia.org/wiki/File:Solanum_melongena_24_08_2012_(1).JPG> |
-| `assets/crops/sesbania-rostrata.webp` | Sesbania rostrata | NMNH (Smithsonian National Museum of Natural History, herbarium specimen) | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) | <https://commons.wikimedia.org/wiki/File:Sesbania_rostrata-NMNH-13374155.jpg> |
+| Picture | Crop | Title | Author | License | Source |
+|---|---|---|---|---|---|
+| `assets/crops/lowland-rice.webp` | Rice | “Rice plant.jpg” | Douglas Paul Perkins | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | <https://commons.wikimedia.org/wiki/File:Rice_plant.jpg> |
+| `assets/crops/corn.webp` | Corn | “Starr-160618-0718-Zea mays-immature cob with silks-Hawea Pl Olinda-Maui (28067473235).jpg” | Forest and Kim Starr | [CC BY 3.0 US](https://creativecommons.org/licenses/by/3.0/us/) | <https://commons.wikimedia.org/wiki/File:Starr-160618-0718-Zea_mays-immature_cob_with_silks-Hawea_Pl_Olinda-Maui_(28067473235).jpg> |
+| `assets/crops/mungbean.webp` | Mung bean | “Bean pod of Vigna radiata (mung bean).jpg” | Sanjay Acharya | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) | <https://commons.wikimedia.org/wiki/File:Bean_pod_of_Vigna_radiata_(mung_bean).jpg> |
+| `assets/crops/peanut.webp` | Peanut | “Peanut 9417.jpg” | Pollinator | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) | <https://commons.wikimedia.org/wiki/File:Peanut_9417.jpg> |
+| `assets/crops/soybean.webp` | Soybean | “Soybean Pods (10059910446).jpg” | United Soybean Board | [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/) | <https://commons.wikimedia.org/wiki/File:Soybean_Pods_(10059910446).jpg> |
+| `assets/crops/string-bean.webp` | String bean | “Long Bean.JPG” | David | Public domain | <https://commons.wikimedia.org/wiki/File:Long_Bean.JPG> |
+| `assets/crops/sweet-potato.webp` | Sweet potato | “Ipomoea batatasL ja01.jpg” | miya | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | <https://commons.wikimedia.org/wiki/File:Ipomoea_batatasL_ja01.jpg> |
+| `assets/crops/sorghum.webp` | Sorghum | “Sorghum 6364.jpg” | Chris Light | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | <https://commons.wikimedia.org/wiki/File:Sorghum_6364.jpg> |
+| `assets/crops/eggplant.webp` | Eggplant | “Solanum melongena 24 08 2012 (1).JPG” | Joydeep | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) | <https://commons.wikimedia.org/wiki/File:Solanum_melongena_24_08_2012_(1).JPG> |
+| `assets/crops/sesbania-rostrata.webp` | Sesbania rostrata | “Sesbania rostrata-NMNH-13374155.jpg” | NMNH (Smithsonian National Museum of Natural History, herbarium specimen) | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) | <https://commons.wikimedia.org/wiki/File:Sesbania_rostrata-NMNH-13374155.jpg> |
 
 - **SI-generated images:** none so far. Any that are added must carry a visible "SI-generated" watermark and be listed here (CLAUDE.md rule 4).
 - **Screenshots** in the demo deck and README come from the app itself (#51).
