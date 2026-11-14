@@ -2,6 +2,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { View } from "react-native";
+import { ConsoleColumn } from "../src/components/ConsoleColumn";
 import { DockedInspector, SheetInspector } from "../src/components/SourceInspector";
 import { startQuerySync } from "../src/net/sync";
 import { useStoresReady } from "../src/state/hydration";
@@ -42,6 +43,7 @@ export default function RootLayout() {
           <View style={{ flex: 1, minWidth: 0 }}>
             <Stack screenOptions={{ headerShown: false }} />
           </View>
+          <ConsoleColumn />
           <DockedInspector />
           <SheetInspector />
         </View>

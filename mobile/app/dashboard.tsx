@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { Fragment, type ReactNode, useCallback, useState } from "react";
+import { Fragment, type ReactNode, useCallback, useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { Button } from "../src/components/Button";
@@ -16,6 +16,7 @@ import { ensoLine } from "../src/components/LotDataCard";
 import { SatelliteCard } from "../src/components/SatelliteCard";
 import { NasaDataStrip } from "../src/components/NasaDataStrip";
 import { DemoDataContext } from "../src/components/SourceChip";
+import { setConsole } from "../src/components/console-store";
 import { SeasonGuide } from "../src/components/SeasonGuide";
 import { ClimateExtremesCard } from "../src/components/ClimateExtremesCard";
 import { LotTabs } from "../src/components/LotTabs";
@@ -181,6 +182,12 @@ function Results({
   const best = options.find((o) => o.top_total) ?? options[0];
   const [picked, setPicked] = useState<OptionKey | null>(null);
   const selected = options.find((o) => o.key === picked) ?? best;
+  // Tell the NASA data console what is on screen: this lot, its data and the chosen plan.
+  useEffect(() => {
+    const short = (id: string) => shortCropName(cropName(id));
+    const crops = [...new Set(selected.slots.map((x) => x.crop_id))].map(short);
+    setConsole({ lotName: lot.name, data: data ?? null, plan: selected, planLabel: crops.join(" and "), cropName: short });
+  }, [lot.name, data, selected]);
   const baseline = options[0];
   const unavailable = unavailablePriorities(analysis.rotations.components_left_out);
   // A new choice of goals brings the answer back to the plan that now fits best.

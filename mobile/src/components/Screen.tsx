@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { colors, MAX_CONTENT_WIDTH, MAX_WIDE_WIDTH, space } from "./theme";
+import { usePresenter } from "./useLayout";
 
 type Props = {
   children: ReactNode;
@@ -22,7 +23,9 @@ type Props = {
 
 /** Page frame for every screen: safe area, scrolling body, optional pinned footer. */
 export function Screen({ children, footer, scrollEnabled = true, edgeToEdge = false, width = "narrow" }: Props) {
-  const max = width === "wide" ? styles.wide : null;
+  // Beside the NASA data console the app keeps its phone-like reading column.
+  const presenter = usePresenter();
+  const max = width === "wide" && !presenter ? styles.wide : null;
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom", "left", "right"]}>
       <ScrollView

@@ -8,6 +8,7 @@ import type { Crop } from "../types";
 import { familyStyle } from "./field-year-core";
 import { Icon, type IconName } from "./Icon";
 import { useExplainer } from "./InfoToggle";
+import { setConsole } from "./console-store";
 import { listText } from "./plan-text";
 import { planReasons, type Reason } from "./plan-facts";
 import { monthStates, nowSummary, type MonthRisk } from "./season-guide-core";
@@ -129,7 +130,10 @@ export function SeasonGuide({ options, selected, onSelect, lotName, cropById, on
           return (
             <Pressable
               key={s.month}
-              onPress={() => setPicked(s.month)}
+              onPress={() => {
+                setPicked(s.month);
+                setConsole({ month: s.month });
+              }}
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
               accessibilityLabel={`${months[s.month - 1]}${isNow ? `, ${t("guide.now")}` : ""}`}

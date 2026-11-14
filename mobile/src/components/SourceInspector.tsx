@@ -34,8 +34,9 @@ function useInspectorState() {
  */
 export function DockedInspector() {
   const state = useInspectorState();
-  const { wide } = useLayout();
-  if (!wide || !state) return null;
+  const { wide, presenter } = useLayout();
+  // In the presenter layout the detail opens inside the NASA data console instead.
+  if (presenter || !wide || !state) return null;
   return (
     <View style={styles.dock} accessibilityLabel="NASA data inspector">
       <InspectorBody k={state.key} period={state.period} />
@@ -46,8 +47,8 @@ export function DockedInspector() {
 /** Phones: the same panel as a sheet from the bottom. */
 export function SheetInspector() {
   const state = useInspectorState();
-  const { wide } = useLayout();
-  if (wide || !state) return null;
+  const { wide, presenter } = useLayout();
+  if (wide || presenter || !state) return null;
   return (
     <Modal transparent animationType="slide" visible onRequestClose={closeInspector}>
       <Pressable style={styles.scrim} onPress={closeInspector} accessibilityLabel="Close" />
@@ -58,7 +59,7 @@ export function SheetInspector() {
   );
 }
 
-function InspectorBody({ k, period }: { k: keyof typeof SOURCES; period: string }) {
+export function InspectorBody({ k, period }: { k: keyof typeof SOURCES; period: string }) {
   const s = SOURCES[k];
   const d = SOURCE_DETAILS[k];
   const calls = useSyncExternalStore(subscribeCalls, getCalls, getCalls).filter((c) => c.source === k);
