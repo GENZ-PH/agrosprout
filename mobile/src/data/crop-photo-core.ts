@@ -128,3 +128,42 @@ export async function fetchCropPhoto(
 /** "Photo: Joydeep, CC BY-SA 3.0 (Wikimedia Commons)". */
 export const photoCreditLine = (p: Pick<CropPhoto, "author" | "license">) =>
   `Photo: ${p.author}, ${p.license} (Wikimedia Commons)`;
+
+/** AsyncStorage key prefix for a looked-up picture, followed by the scientific name (crop-photo.ts). */
+export const CACHE_PREFIX = "crop-photo:";
+
+/** A picture saved on this phone with the scientific name it was looked up for. */
+export interface SavedCropPhoto {
+  sci: string;
+  photo: CropPhoto;
+}
+
+/**
+ * The pictures saved on this phone, from AsyncStorage entries, for the Licenses and credits screen.
+ * Skips other keys, "no picture found" entries, unreadable or incomplete entries, and pictures without
+ * an author or a license we accept. Sorted by scientific name.
+ */
+export function savedPhotosFromCache(
+  entries: readonly (readonly [string, string | null])[],
+): SavedCropPhoto[] {
+  const out: SavedCropPhoto[] = [];
+  for (const [key, raw] of entries) {
+    if (!key.startsWith(CACHE_PREFIX) || !raw) continue;
+    const sci = key.slice(CACHE_PREFIX.length);
+    let photo: unknown;
+    try {
+      photo = obj(JSON.parse(raw))?.photo;
+    } catch {
+      continue;
+    }
+    const p = obj(photo);
+    const uri = str(p?.uri);
+    const page = str(p?.page);
+    const title = str(p?.title);
+    const author = str(p?.author);
+    const license = str(p?.license);
+    if (!sci || !uri || !page || !title || !author || !license || !isAcceptableLicense(license)) continue;
+    out.push({ sci, photo: { uri, page, title, author, license, licenseUrl: str(p?.licenseUrl) } });
+  }
+  return out.sort((a, b) => a.sci.localeCompare(b.sci));
+}
