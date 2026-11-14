@@ -21,7 +21,8 @@ export type ExplainerId =
   | "months-compare"
   | "season-calendar"
   | "what-if"
-  | "farm-map";
+  | "farm-map"
+  | "lot-cutout";
 
 export interface Explainer {
   id: ExplainerId;
@@ -90,6 +91,20 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
       "The numbers describe a NASA grid cell, roughly 50 km across, not your exact field, so lots close together will often share a color.",
       "The cut-offs between Good fit, Watch out and Poor fit are team assumptions that still need a local check.",
       "Without signal the photo under your lots may not load; the lots and their colors still show.",
+    ],
+  },
+  "lot-cutout": {
+    id: "lot-cutout",
+    title: "Now vs best option",
+    what: "The shape of the lot you drew, shown twice: on the left with your crops now, on the right with the best other option for this lot (the one with the highest total score). Each shape is filled with one color for the kind of data you pick: Soil health, Crop fit, Root-zone wetness or Rain in a dry year. The number or words on the shape is its value.",
+    source:
+      "Soil health is the 3-year Soil Health Index from this app's rotation model. Crop fit is the same check as \"Your crops here\" (FAO-56 crop water use, FAO Ecocrop temperature ranges). Root-zone wetness is NASA POWER GWETROOT (0 dry, 1 saturated) and rain is NASA POWER PRECTOTCORR in a dry year (the 20th percentile), both over the months a crop is in the field. Years used: {period}.",
+    read: "Compare the two shapes. Soil health: green goes up from the start, gray stays level, orange goes down. Crop fit: the same colors as \"Your crops here\". Wetness and rain: darker blue means wetter, or more of the year's rain falling while a crop is in the field. Gray with \"No data\" means a value is missing.",
+    limits: [
+      "One color per lot: the data has one value for the whole lot, so nothing here shows differences inside your field.",
+      "Soil health is a relative indicator from this model, not a soil test. It does not show carbon or nitrogen.",
+      "Wetness and rain describe a NASA grid cell roughly 50 km across, so they change only when the crop months change.",
+      "This supports your decision. Check it with your agricultural technician.",
     ],
   },
   "harvest-out": {
