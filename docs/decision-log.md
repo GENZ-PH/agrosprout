@@ -1,28 +1,63 @@
 # Decision Log
 
-> Every significant decision, with who decided and why. **The team owns these decisions.** Items marked *Proposed* came out of planning (with SI assistance, see `si-usage-log.md`) and need team confirmation at kickoff.
-> Status: Proposed → Accepted / Changed / Rejected.
+> Every significant decision, with who decided and why. **The team owns these decisions.** Items marked *Proposed* came out of planning (with SI assistance, see `si-usage-log.md`) and need team confirmation.
+> Status: Open → Proposed → Accepted / Changed / Rejected.
 
-| ID | Decision | Options considered | Proposed choice & rationale | Status | Decided by / when |
+## Decide before building (kickoff blockers)
+
+> Ordered by what they block. **Tier 1** blocks the 09:00 start. **Tier 2** must be settled by Checkpoint 1 (Sat 13:00). **Tier 3** can wait until Checkpoint 2 (Sat 20:00) or Sunday.
+
+| Tier | ID | Decision | Blocks | Status |
+|---|---|---|---|---|
+| 1 | D23 | Team roles / track owners | Everything (schedule assumes 4 tracks) | **Open** |
+| 1 | D4 | App stack | Scaffolding | **Accepted**: Expo React Native, Android + web |
+| 1 | D21 | Lot-drawing library | S1, the riskiest screen | **Accepted**: Leaflet + Terra Draw in a WebView |
+| 1 | D22 | Git workflow | Parallel work without merge pain | **Accepted**: folder ownership + short PRs |
+| 1 | D1 | Demo site coordinates (lowland paddy + upland lot) | AppEEARS request, demo farm data | Proposed, **coordinates missing** |
+| 1 | D24 | Crop list v0 (8–12 crops + local names) | S2 crop picker, crop library | **Open** |
+| 2 | D8 | Hosting for the web build | Public demo link | **Open** (skipped at kickoff) |
+| 2 | D25 | Satellite basemap provider | S1 map | **Open** |
+| 2 | D26 | Source for typical local planting calendars | Stage-1 dashboard (D15) | **Open** |
+| 2 | D27 | Engine v0 default values: owner and validator | Scores, thresholds, travel assumptions | **Open** |
+| 2 | D29 | Expo account for EAS Android builds | First APK build Sat evening | **Open** |
+| 2 | D30 | Chart library (must render on Android and web) | Dashboard charts | **Open** |
+| 2 | D14, D16, D18 | Priority chips · lot details · travel-time method | S1 / S3 UI, engine | Proposed |
+| 2 | D28 | Local agriculture expert to validate assumptions | Sanity review Sat 20:00 | **Open** |
+| 3 | D5, D6, D7, D9 | Regional view · demo format · project name · language | Polish and submission | Proposed / Open |
+| 3 | D11 | When to make the repo public | Submission (must be public) | Repo created **private** |
+
+## All decisions
+
+| ID | Decision | Options considered | Choice & rationale | Status | Decided by / when |
 |---|---|---|---|---|---|
-| D1 | **Demo site** | Lanao del Norte lowland rice farm · a U.S. farm (rich USDA data) · both | **Lanao del Norte lowland point near Iligan.** Local judges, a strong smallholder impact story, matches the team's rice–mungbean idea. U.S.-only datasets get dropped. Exact coordinates TBD (must be lowland, see R5). | Proposed | |
+| D1 | **Demo site** | Lanao del Norte lowland rice farm · a U.S. farm (rich USDA data) · both | **Lanao del Norte, near Iligan: one lowland paddy lot + one upland/sloping lot** (matches the persona). Local judges, a strong smallholder impact story, matches the team's rice–mungbean idea. U.S.-only datasets get dropped. **Exact coordinates still needed** (lowland point, see R5). | Proposed | |
 | D2 | **Data backbone** | Google Earth Engine pipeline (initial plan) · NASA POWER API + AppEEARS extracts | **NASA POWER (verified, no auth) as Core; SMAP/MODIS/SRTM via AppEEARS as enrichment; ESA Sentinel-2 as partner data.** GEE optional. | Proposed | |
-| D3 | **Where the logic runs** | Python API server · precompute + in-browser engine | **Precompute data in Python → static JSON; engine in TypeScript in the browser.** Offline, instant sliders, nothing to keep alive. | Proposed | |
-| D4 | **Frontend stack** | React · Vue (both allowed by the initial plan) | **React + Vite + TS + vite-plugin-pwa**, unless the frontend lead is faster in Vue | Proposed | |
+| D3 | **Where the logic runs** | Python API server · precompute + on-device engine | **Precompute crop + demo data in Python; engine in pure TypeScript on the device.** Offline, instant sliders, nothing to keep alive. | Proposed | |
+| D3 rev. | **Where data comes from for a farmer's lot** | Precompute only (earlier D3) · live fetch | **The app calls NASA POWER directly per lot** (native fetch on Android; CORS verified for web) + precomputed demo farm(s) as offline/demo fallback | Proposed | |
+| D4 | **App stack** | React + Vite PWA (earlier proposal) · Vue · **React Native** | **Expo React Native + TypeScript + expo-router, building an Android app (farmers) and a web build (judges) from one codebase.** Farmers get an installable app that works offline from first launch; judges get a public URL with nothing to install. | **Accepted (changed from PWA)** | Team, 2026-11-14 |
 | D5 | **Admin/cooperative dashboard** | Full dashboard (initial plan) · single stretch page · cut | **Single stretch "Regional view" page.** The farmer flow is what gets scored. | Proposed | |
 | D6 | **Demo format** | 7-slide deck · ≤30-s video | **7-slide deck**: comparisons and data read better | Proposed | |
 | D7 | **Project name** | AgriResilience (initial) · AgroSprout (repo folder) · other | Team to choose; docs use **AgriResilience** for now | Open | |
-| D8 | **Hosting** | GitHub Pages · Cloudflare Pages · Netlify | **GitHub Pages via Actions** (one account, public repo doubles as the "Final Project" link) | Proposed | |
+| D8 | **Hosting for the web build** | Cloudflare Pages · Netlify · public repo + GitHub Pages | Undecided. Note: **GitHub Pages doesn't serve private repos on a free org plan**, and the repo is private. Cloudflare Pages and Netlify both deploy free from private repos. The Android APK is shared via a link to the EAS build or a GitHub Release (a Release only works once the repo is public). | **Open** (skipped at kickoff) | |
 | D9 | **Language** | English only · English + Cebuano | **English** (required); Cebuano labels as stretch | Proposed | |
 | D10 | **Strategy set** | Single recommendation (initial plan) · Current + 2–3 alternatives | **Current + Best-for-water + Best-for-soil + Balanced-for-your-priorities**, which satisfies "≥3 including existing" | Proposed | |
-| D11 | **Version control** | — | Init git, create a **public GitHub repo** at kickoff; `.gitignore` covers `pipeline/raw/`, `.netrc`, `.env` | Proposed | |
+| D11 | **Version control** | — | Git repo **GENZ-PH/agrosprout created private** (2026-11-14). `.gitignore` covers `pipeline/raw/`, `.netrc`, `.env`. **Must be public before submission.** | Partly done | Team, 2026-11-14 |
 | D12 | **Accounts / login** | Accounts · no accounts | **No login, no account, no sign-up.** Farm data stays on the device. | **Accepted** | Team, 2026-11-14 |
 | D13 | **Onboarding flow** | Single farm pin (earlier draft) · team flow | **Team flow**: plot lots on map (Lot 1..N) → crops per lot (many) → dashboard with explained data → optional planting months → your months vs better months side by side ([11](11-user-flow.md)) | **Accepted** | Team, 2026-11-14 |
-| D3 rev. | **Where data comes from for a farmer's lot** | Precompute only (earlier D3) · live fetch | **Browser calls NASA POWER directly per lot** (CORS verified) + precomputed demo farm(s) as offline/demo fallback. Engine still runs in the browser. Supersedes the "precompute only" part of D3. | Proposed | |
 | D14 | **Where farmer priorities live** (needed for challenge R4; not in the team flow) | Onboarding step · dashboard control · leave out | **Dashboard chips/sliders with equal defaults.** Keeps onboarding short. | Proposed | |
 | D15 | **"Your crops" before months are given** | Hide comparison until S4 · assume typical calendar | **Assume a typical local planting calendar (labeled "assumed")** so ≥3 strategies incl. existing show on the dashboard even if the farmer skips S4 | Proposed | |
 | D16 | **Optional lot details** (land type, water source, soil feel) | Ask · don't ask | **Ask in S1 with "I don't know" defaults.** Live lots only have coarse climate data, so these are what make lots differ. | Proposed | |
 | D17 | **Transport constraint** | — | Farmer pins harvest destinations (market / storage / buyer / co-op), picks a transport mode, and the system **calculates travel time per lot**; this feeds a Market access score and explanations ([11](11-user-flow.md) S6, [07](07-rotation-engine.md) §3c) | **Accepted** | Team, 2026-11-14 |
-| D18 | **How travel time is calculated** | Straight-line only · routing API only · layered | **Layered: farmer's own time > online road route (OSRM, CORS verified) > rough offline estimate**, always labeled with its source. Straight-line alone underestimates badly in hilly terrain (test: car route 2.8× straight line). | Proposed | |
+| D18 | **How travel time is calculated** | Straight-line only · routing API only · layered | **Layered: farmer's own time > online road route (OSRM) > rough offline estimate**, always labeled with its source. Straight-line alone underestimates badly in hilly terrain (test: car route 2.8× straight line). | Proposed | |
 | D19 | **Lot drawing** | Tap corners only · freehand sketch | **Freehand sketch → auto-converted clean plot → draggable points** as the main way; tap-corners and pin + area as alternatives | **Accepted** | Team, 2026-11-14 |
 | D20 | **When destinations are asked** | During onboarding · add anytime later | **Not in onboarding.** Onboarding is S0 → S1 lots → S2 crops → dashboard. Destinations and transport (S6) are added later from the dashboard card or Edit farm. Market access stays off until then. | **Accepted** | Team, 2026-11-14 |
+| D21 | **Lot-drawing library** | Leaflet + Geoman + custom freehand · **Leaflet + Terra Draw** · react-native-maps · MapLibre RN | **Leaflet + Terra Draw in a WebView** (Android) / iframe (web). Built-in freehand + draggable points, works in Expo Go, no Google Maps key or billing, same map page on both targets ([06](06-architecture.md#map-webview-bridge)). **Verify Terra Draw's freehand touch behavior and select-mode flags in hour 1.** | **Accepted** | Team, 2026-11-14 |
+| D22 | **Git workflow** | Everyone on main · folder ownership + short PRs · full review | **Folder ownership + short-lived branches, merged to `main` within ~2 h via quick PR; `main` always works.** Owners per folder in [06](06-architecture.md#repository-layout-and-folder-ownership-d22); rules in [08](08-hackathon-schedule.md#repo-workflow-d22). | **Accepted** | Team, 2026-11-14 |
+| D23 | **Team roles** | — | Assign Data / Engine / Frontend / Story owners (merge tracks if fewer than 4 people) and add names in `docs/README.md` | **Open** | |
+| D24 | **Crop list v0** | — | 8–12 crops with English + local (Cebuano) names. Candidates: lowland rice, corn, mungbean, peanut, soybean, cowpea/string bean, sweet potato, sorghum, eggplant, a green manure (e.g. *Sesbania*). Confirm with someone local. | **Open** | |
+| D25 | **Satellite basemap** | Esri World Imagery · EOX Sentinel-2 cloudless · OpenStreetMap (not satellite) | Pick one whose free terms allow this use; show attribution; no bulk tile caching | **Open** | |
+| D26 | **Typical planting calendar source** | PhilRice / DA materials · local farmer or technician · both | Needed for stage-1 "assumed" calendars (D15). Cite whatever is used. | **Open** | |
+| D27 | **Engine v0 defaults** | — | Engine lead sets v0 values for weights, thresholds, travel speeds, and perishability limits by 13:00, each with a source or an "assumption" label; validated at the 20:00 sanity review | **Open** | |
+| D28 | **Local expert** | — | Someone finds an agriculturist / technician / mentor at the Iligan event to check the crop list, calendars, and travel assumptions | **Open** | |
+| D29 | **Expo account for EAS builds** | EAS cloud build · local Android build | A free Expo account (owned by a team member) for `eas build`; first test APK Sat evening | **Open** | |
+| D30 | **Chart library** | react-native-gifted-charts · Victory · plain `react-native-svg` | Must render on **Android and web**. Decide in hour 1 by rendering one bars + line chart on both. | **Open** | |

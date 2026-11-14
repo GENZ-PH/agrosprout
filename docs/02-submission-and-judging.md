@@ -21,7 +21,7 @@
 | Project Name | Short name | `docs/submission/fields.md` | Story lead |
 | High-Level Project Summary | What we built, how it addresses the challenge, why it matters | same | Story lead |
 | Link to Project Demo | Public link to the ≤7-slide deck or ≤30-second video (YouTube/Drive/GitHub…). It **can't be uploaded to the Space Apps site.** | same | Story lead |
-| Link to Final Project | Public link: deployed app plus GitHub repo (repo README links to the app) | same | Frontend lead |
+| Link to Final Project | Public link: **web build URL** for judges, plus the **Android APK link** and the public GitHub repo (README links to both) | same | Frontend lead |
 | Detailed Project Description | What it does, how it works, benefits, goals, tools/languages/hardware/software used | same | Everyone, edited by Story lead |
 | Use of SI | Whether and how SI tools were used. **Judges don't see this answer**, but they **do** see the SI markers inside the project. | `docs/si-usage-log.md` | Whoever uses SI logs it |
 | NASA Data | Exactly which NASA data and resources we used | `docs/03-data-sources.md` | Data lead |
@@ -42,8 +42,8 @@
 
 | Criterion | What the "5" looks like (paraphrased) | How we earn it |
 |---|---|---|
-| **Impact** | Solves a significant problem; broad reach; could change lives | Smallholder rice farmers in Northern Mindanao; works **offline** in the field; low-end phones; no login |
-| **Creativity** | Novel, or a meaningful improvement on existing ideas | Offline-first PWA; **side-by-side comparison of ≥3 strategies** with farmer-weighted priorities; "why / evidence / risks" cards; scenario slider for rainfall/temperature |
+| **Impact** | Solves a significant problem; broad reach; could change lives | Smallholder rice farmers in Northern Mindanao; Android app works **offline** in the field; low-end phones; no login |
+| **Creativity** | Novel, or a meaningful improvement on existing ideas | Offline-first mobile app (Android) that also runs on the web; **side-by-side comparison of ≥3 strategies** with farmer-weighted priorities; "why / evidence / risks" cards; scenario slider for rainfall/temperature |
 | **Validity** | Scientifically sound, technically feasible, usable | FAO-56 water balance from NASA POWER inputs; **every number traceable to a source**; uncertainty shown; limits stated; **no invented statistics** |
 | **Relevance** | Fully addresses the challenge; NASA data is **core, not decoration** | Covers R1–R8 ([01-challenge-brief.md](01-challenge-brief.md)); the NASA data directly drives the scores and the calendar |
 | **Presentation** | Clear, engaging story about the challenge, solution, and significance. **Judged on the demo plus the full project** | Tight 7-slide story built around one farmer persona; real screenshots; clean README |

@@ -3,7 +3,7 @@
 **NASA Space Apps Challenge 2026 · "Field Shift: Adapting Farms with NASA Data"**
 Team **Jeoleecation** · Local Event: Iligan City, Philippines
 
-An offline-first web app (PWA) that helps smallholder farmers compare crop-rotation strategies and planting months, using NASA Earth observations, crop characteristics, and the farmer's own priorities. No login, and farm data stays on the phone.
+An offline-first mobile app (Expo React Native: an Android app for farmers, plus a web version for judges) that helps smallholder farmers compare crop-rotation strategies and planting months, using NASA Earth observations, crop characteristics, and the farmer's own priorities. No login, and farm data stays on the phone.
 
 > **Status:** planning. The app code hasn't been started yet.
 

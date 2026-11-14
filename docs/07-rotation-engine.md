@@ -1,7 +1,7 @@
 # 07 — Rotation Engine Specification (v0)
 
 > Goal: a **transparent, explainable** engine that turns NASA-derived lot data plus crop characteristics plus farmer inputs into (1) **crop fit** per lot, (2) **≥3 comparable rotation strategies (including the farmer's current crops)**, and (3) a **"your months vs better months"** planting-window comparison. Every formula here is simple on purpose. **Validity comes from traceability, not complexity.**
-> Implemented in TypeScript (`app/src/engine/`), running **per lot** on the device. Python only prepares crop data and demo farms ([06](06-architecture.md)). UI flow: [11](11-user-flow.md).
+> Implemented in pure TypeScript (`mobile/src/engine/`, no React Native imports), running **per lot** on the device (Android app and web build). Python only prepares crop data and demo farms ([06](06-architecture.md)). UI flow: [11](11-user-flow.md).
 
 ## Engine data flow
 
