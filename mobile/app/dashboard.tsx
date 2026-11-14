@@ -8,6 +8,8 @@ import { Disclaimer } from "../src/components/Disclaimer";
 import { Header } from "../src/components/Header";
 import { LotTabs } from "../src/components/LotTabs";
 import { Notice } from "../src/components/Notice";
+import { PrioritiesCard } from "../src/components/PrioritiesCard";
+import { togglePriority } from "../src/components/priorities-core";
 import { RecommendationsCard } from "../src/components/RecommendationsCard";
 import { Screen } from "../src/components/Screen";
 import { SoilHealthChart } from "../src/components/SoilHealthChart";
@@ -19,7 +21,8 @@ import { useFarm, useFarmStore } from "../src/state/farm-store";
 import type { Farm, Lot } from "../src/types";
 
 // S3 Dashboard (#29, docs/11-user-flow.md): results per lot, worked out on the phone from the
-// lot's NASA data. So far: the lot tabs with "+ Add lot" (D32: S1 then S2 for the new lot), Your crops here, Recommendations (options A-D with
+// lot's NASA data. So far: the lot tabs with "+ Add lot" (D32: S1 then S2 for the new lot), Your crops here,
+// What matters to you (priority chips, #40), Recommendations (options A-D with
 // their explanations) and the 3-year Soil Health card (#43). The other S3 cards (lot snapshot,
 // soil moisture, getting your harvest out, continue prompt) go in LotResults too.
 // `useLotAnalysis` already returns everything they need (`LotAnalysis` in src/engine/analyze.ts).
@@ -62,6 +65,7 @@ export default function DashboardScreen() {
 function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
   const view = useLotAnalysis(farm, lot);
   const updateLot = useFarmStore((s) => s.updateLot);
+  const setPriorities = useFarmStore((s) => s.setPriorities);
   const { wide } = useLayout();
 
   switch (view.kind) {
@@ -98,6 +102,15 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
       const { analysis, period } = view;
       const fit = <CropFitCard fits={analysis.crop_fits} cropName={cropName} period={period} />;
       const soil = <SoilHealthChart result={analysis.soil_health} options={analysis.rotations.options} cropName={cropName} />;
+      // Farm-wide choice (#40): the same chips on every lot tab; each lot re-ranks with it.
+      const priorities = (
+        <PrioritiesCard
+          priorities={farm.priorities}
+          onToggle={(key) => setPriorities(togglePriority(farm.priorities, key))}
+          notScored={analysis.rotations.priorities_not_scored}
+          period={period}
+        />
+      );
       const recommendations = (
         <RecommendationsCard
           options={analysis.rotations.options}
@@ -122,11 +135,13 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
                 <View style={styles.col}>{fit}</View>
                 <View style={styles.col}>{soil}</View>
               </View>
+              {priorities}
               {recommendations}
             </>
           ) : (
             <>
               {fit}
+              {priorities}
               {recommendations}
               {soil}
             </>

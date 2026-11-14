@@ -108,9 +108,9 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   priorities: {
     id: "priorities",
     title: "What matters to you",
-    what: "Four sliders: save water, build soil, extra income and less work. Moving them re-ranks the options straight away, on your phone.",
-    source: "Your own answers. The sliders only change how much each score counts; they do not change the data.",
-    read: "All sliders start equal. Raise the ones that matter most to you and see which option moves to the top.",
+    what: "Four choices: save water, build soil, extra income and less work. Tapping them re-ranks the options straight away, on your phone.",
+    source: "Your own answers. The choices only change how much each score counts; they do not change the data.",
+    read: "All four start equal. Tap the ones that matter most to you: they count twice as much as the others. See which option moves to the top, and tap again to undo.",
     limits: ["A priority can only count when the data behind it exists; for example income and market access need crop and destination information."],
   },
   "months-compare": {
