@@ -1,10 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { COMPONENT_LABELS } from "../engine/explain";
-import { DATA_SOURCES, DISCLAIMER, EXPLAINERS, GLOSSARY, LIMITATIONS, fill } from "./explainers";
+import { CHALLENGE_DATASETS, DATA_SOURCES, DISCLAIMER, EXPLAINERS, GLOSSARY, LIMITATIONS, fill } from "./explainers";
 
 const ALL_TEXT = (): string =>
-  JSON.stringify([DISCLAIMER, EXPLAINERS, GLOSSARY, DATA_SOURCES, LIMITATIONS]);
+  JSON.stringify([DISCLAIMER, EXPLAINERS, GLOSSARY, DATA_SOURCES, LIMITATIONS, CHALLENGE_DATASETS]);
 
 test("every explainer answers what, where from, how to read and limits", () => {
   for (const [id, e] of Object.entries(EXPLAINERS)) {
@@ -36,4 +36,9 @@ test("the months card never says already good for a blocked month", () => {
 
 test("the recommendations text uses the same score names the app shows", () => {
   for (const label of Object.values(COMPONENT_LABELS)) assert.ok(EXPLAINERS.recommendations.read.includes(label), label);
+});
+
+test("only NASA POWER is listed as used for every lot, and each dataset has a note", () => {
+  assert.deepEqual(CHALLENGE_DATASETS.filter((d) => d.status === "Used").map((d) => d.name), ["NASA POWER"]);
+  for (const d of CHALLENGE_DATASETS) assert.ok(d.note, d.name);
 });
