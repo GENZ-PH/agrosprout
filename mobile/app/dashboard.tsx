@@ -18,6 +18,7 @@ import { togglePriority } from "../src/components/priorities-core";
 import { RecommendationsCard } from "../src/components/RecommendationsCard";
 import { shortCropName } from "../src/components/recommendations-core";
 import { Screen } from "../src/components/Screen";
+import { MonthsCompareList } from "../src/components/SeasonCompareCard";
 import { SoilHealthChart } from "../src/components/SoilHealthChart";
 import { colors, MAX_CONTENT_WIDTH, radius, space, text } from "../src/components/theme";
 import { useLayout } from "../src/components/useLayout";
@@ -127,7 +128,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
         </Narrow>
       );
     case "ready": {
-      const { analysis, period } = view;
+      const { analysis, period, months } = view;
       const fit = <CropFitCard fits={analysis.crop_fits} cropName={cropName} period={period} />;
       const soil = <SoilHealthChart result={analysis.soil_health} options={analysis.rotations.options} cropName={cropName} />;
       // Farm-wide choice (#40): the same chips on every lot tab; each lot re-ranks with it.
@@ -149,6 +150,20 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
           columns={wide ? 2 : 1}
         />
       );
+      // S5 (#34, #95): always under Recommendations, on the usual months (assumed) until the farmer gives theirs.
+      const monthsCompare =
+        months.planting.seasons.length > 0 ? (
+          <View style={styles.section}>
+            <Text style={text.title} accessibilityRole="header">
+              Your months vs better months
+            </Text>
+            <Text style={[text.body, { color: colors.muted }]}>
+              Your planting months next to the best months we found for this lot from NASA rain and temperature data. You
+              and your agricultural technician decide.
+            </Text>
+            <MonthsCompareList months={months} period={period} />
+          </View>
+        ) : null;
       const harvestCard = (
         <HarvestCard lot={lot} destinations={farm.destinations} harvest={analysis.harvest} cropName={cropName} period={period} />
       );
@@ -178,6 +193,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
               </View>
               {priorities}
               {recommendations}
+              {monthsCompare}
               {harvestCard}
               {whatIf}
               <MonthsPrompt lot={lot} stage={analysis.stage} />
@@ -187,6 +203,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
               {fit}
               {priorities}
               {recommendations}
+              {monthsCompare}
               {harvestCard}
               {whatIf}
               {soil}
@@ -224,7 +241,7 @@ function MonthsPrompt({ lot, stage }: { lot: Lot; stage: 1 | 2 }) {
                 ? ` ${usual.map((c) => short(c.crop_id)).join(", ")} ${usual.length === 1 ? "keeps" : "keep"} the usual months (assumed).`
                 : "")}
         </Text>
-        {/* Stage 2 stacks its two longer buttons so their labels fit on a phone. */}
+        {/* Stage 2: the comparison itself is above (S5 under Recommendations), so only the change button. */}
         <View style={stage === 1 ? styles.promptRow : styles.promptCol}>
           {stage === 1 ? (
             <>
@@ -238,11 +255,6 @@ function MonthsPrompt({ lot, stage }: { lot: Lot; stage: 1 | 2 }) {
             </>
           ) : (
             <>
-              <Button
-                label="Compare your months"
-                iconAfter="chevron"
-                href={{ pathname: "/compare", params: { lot: lot.id } }}
-              />
               <Button
                 label="Change your months"
                 variant="secondary"
@@ -265,6 +277,7 @@ const styles = StyleSheet.create({
   // Each card keeps its own height, so a short card doesn't get an empty stretched bottom.
   row: { flexDirection: "row", alignItems: "flex-start", gap: space.lg },
   col: { flex: 1, minWidth: 0 },
+  section: { gap: space.lg },
   narrow: { width: "100%", maxWidth: MAX_CONTENT_WIDTH, gap: space.lg },
   prompt: {
     gap: space.md,
