@@ -4,6 +4,7 @@ import { useMemo, useSyncExternalStore } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "../src/components/Button";
+import { CropImage } from "../src/components/CropImage";
 import { CropSearch } from "../src/components/CropSearch";
 import { Header } from "../src/components/Header";
 import { Icon } from "../src/components/Icon";
@@ -181,6 +182,7 @@ function YourCrops({ lotName, crops, onRemove }: { lotName: string; crops: reado
                 accessibilityLabel={`Remove ${name} from ${lotName}${other ? ". It is not scored" : ""}`}
                 style={({ pressed }) => [styles.chip, pressed && styles.pressed]}
               >
+                <CropImage cropId={c.crop_id} size={32} />
                 <Text style={text.bodyStrong}>
                   {name}
                   {sub ? <Text style={[text.small, { color: colors.muted }]}> · {sub}</Text> : null}

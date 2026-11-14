@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { cropById } from "../data/crops";
 import { cropShortName } from "../lots/crop-picks";
 import { goodMonthsText, topCropReason, type CropSuggestion } from "../lots/suggest-core";
+import { CropImage } from "./CropImage";
 import { FitBadge } from "./CropFitCard";
 import { Icon } from "./Icon";
 import { ExplainerBox } from "./InfoCard";
@@ -75,6 +76,7 @@ function TopRow({ rank, s, selected, onPress }: { rank: number; s: CropSuggestio
       accessibilityLabel={label}
       style={({ pressed }) => [styles.row, selected && styles.rowOn, pressed && styles.pressed]}
     >
+      <CropImage cropId={s.crop_id} />
       <View style={[styles.flex, styles.body]}>
         <Text style={text.bodyStrong}>
           <Text style={{ color: colors.muted }}>{rank}. </Text>
