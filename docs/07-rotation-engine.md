@@ -53,7 +53,7 @@ Following FAO-56 (Allen et al., 1998):
 - **Effective rain** Peff: the FAO/AGLW monthly rule (Brouwer & Heibloem 1986): `Peff = 0.8P − 25` if P > 75 mm, else `max(0, 0.6P − 10)`. *(Cite it; it's simple, standard, and explainable.)*
 - **Rice adjustment**: ponded rice also loses water to seepage, percolation, and land preparation. Add a cited per-month allowance (parameter `rice_extra_mm`). Ask a local expert for typical values.
 - **Deficit**: `D_m = max(0, ETc_m − Peff_m − Irr_m)`.
-- **Water stress index (WSI)** for a crop instance = Σ D / Σ ETc (0 = no stress, 1 = fully unmet).
+- **Water stress index (WSI)** for a crop instance = Σ D / Σ ETc (0 = no stress, 1 = fully unmet). For ponded rice the allowance is part of the water need (need = ETc + allowance, D = max(0, need − Peff − Irr)), so WSI = Σ D / Σ need and stays within 0–1 (`mobile/src/engine/waterBalance.ts`, #23).
 - **Stress window** (chart shading) = months where `D_m > 0.25 × ETc_m`.
 - **Dry-year / wet-year**: repeat with P20 and P80 to get a range.
 
