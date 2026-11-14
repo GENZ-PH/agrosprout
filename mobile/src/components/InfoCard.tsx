@@ -48,14 +48,12 @@ export function InfoCard({ title, explainer, period, subtitle, children }: Props
   );
 }
 
-/** The four parts of an explainer, in the order a farmer asks them. */
+/** What it is, how to read it and its limits. Where it comes from is on the card as source chips (click a NASA one for the detail). */
 export function ExplainerBox({ id, period }: { id: ExplainerId; period: string }) {
   const e = EXPLAINERS[id];
   return (
     <View style={styles.box}>
       <Part label="What it is">{e.what}</Part>
-      <Part label="Where it comes from">{fill(e.source, { period })}</Part>
-      <SourceList keys={e.sources} period={period} />
       <Part label="How to read it">{e.read}</Part>
       <View style={styles.part}>
         <Text style={text.bodyStrong}>Limits</Text>

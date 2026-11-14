@@ -67,29 +67,27 @@ export function LotDataCard({ data, extra = [], info }: { data: LotData; extra?:
         {ex.button}
       </View>
       {ex.box}
+      {ex.box && data.caveats.length > 0 ? (
+        <View style={styles.row}>
+          <Text style={text.bodyStrong}>Keep in mind for this lot</Text>
+          {data.caveats.map((c) => (
+            <Text key={c} style={[text.small, styles.muted]}>
+              {`• ${c}`}
+            </Text>
+          ))}
+        </View>
+      ) : null}
       {ex.chips}
       {rows.map((r) => (
         <View key={r.name} style={styles.row}>
           <Text style={text.bodyStrong}>{r.name}</Text>
           <Text style={text.body}>{r.value}</Text>
-          {r.detail ? <Text style={[text.small, styles.muted]}>{r.detail}</Text> : null}
         </View>
       ))}
       {enso ? (
         <View style={styles.enso}>
           <Text style={text.bodyStrong}>This season: El Niño</Text>
           <Text style={text.small}>{enso.text}</Text>
-          <Text style={[text.caption, styles.muted]}>{enso.source}</Text>
-        </View>
-      ) : null}
-      {data.caveats.length > 0 ? (
-        <View style={styles.row}>
-          <Text style={text.bodyStrong}>Keep in mind</Text>
-          {data.caveats.map((c) => (
-            <Text key={c} style={[text.small, styles.muted]}>
-              {`• ${c}`}
-            </Text>
-          ))}
         </View>
       ) : null}
     </View>

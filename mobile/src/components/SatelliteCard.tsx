@@ -33,7 +33,7 @@ export function SatelliteCard({ farmId, lotName, info }: { farmId: string; lotNa
       </View>
       {ex.box}
       <Text style={[text.small, styles.muted]}>
-        NASA satellite data for the sample farm, beside the NASA POWER numbers the results use. A check on the data, not an input to the scores.
+        A check on the NASA POWER numbers. Not used in the scores.
       </Text>
 
       {imerg ? (
@@ -69,7 +69,7 @@ export function SatelliteCard({ farmId, lotName, info }: { farmId: string; lotNa
             ]}
           />
           <Text style={[text.caption, styles.muted]}>
-            {`${smap.period}, 9 km cell. Lines are the mean, the band runs from a dry to a wet year. NASA POWER soil wetness is a share of saturation, a different number, so it is not drawn here.`}
+            {`${smap.period}. Band: dry to wet year.`}
           </Text>
         </View>
       ) : null}
@@ -86,7 +86,7 @@ export function SatelliteCard({ farmId, lotName, info }: { farmId: string; lotNa
             series={[{ label: "MODIS NDVI, middle year", color: GREEN, kind: "line", values: ndviSeries.map((m) => m.median), lo: ndviSeries.map((m) => m.p20), hi: ndviSeries.map((m) => m.p80) }]}
           />
           <Text style={[text.caption, styles.muted]}>
-            {`${ndvi?.period ?? ""}, one pixel of about 230 m around ${lotName}. Higher means more green leaves. The band runs from the 20th to the 80th percentile.`}
+            {`Around ${lotName}. Higher means greener.`}
           </Text>
         </View>
       ) : null}
@@ -104,7 +104,7 @@ function rainLine(imerg: NonNullable<(typeof SATELLITE)[string]["imerg"]>): stri
   const sum = (xs: (number | null)[]) => xs.reduce<number>((a, b) => a + (b ?? 0), 0);
   const p = Math.round(sum(imerg.power_compare.monthly.map((m) => m.power_p50_mm)));
   const i = Math.round(sum(imerg.monthly.map((m) => m.p50_mm)));
-  return `Typical-year months add up to about ${p} mm (NASA POWER, ${imerg.power_compare.power.period}) and ${i} mm (IMERG, ${imerg.period}). The cells differ in size (about 50 km and 11 km), so the two are not expected to match. Bars are the middle year; whiskers run from a dry to a wet year.`;
+  return `About ${p} mm a year (NASA POWER) and ${i} mm (IMERG). Whiskers: dry to wet year.`;
 }
 
 const styles = StyleSheet.create({

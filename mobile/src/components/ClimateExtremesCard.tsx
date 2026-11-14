@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 
 import type { LotData } from "../types";
-import { hasDays, monthsLine, trendPeriod, trendSentences } from "./climate-extremes-core";
+import { hasDays, trendPeriod, trendSentences } from "./climate-extremes-core";
 import { type InfoRef, useExplainer } from "./InfoToggle";
 import { MonthChart, type MonthSeries } from "./MonthChart";
 import { colors, radius, space, text } from "./theme";
@@ -15,11 +15,6 @@ export function ClimateExtremesCard({ data, info }: { data: LotData; info?: Info
   const ex = useExplainer(info, title);
   const m = data.monthly;
   const missing = data.kind === "live" ? "Not loaded yet. It loads with a signal." : "Not available for this farm.";
-  const rows = [
-    { name: "Very hot days (above 35 °C)", series: m.heat_days_gt35 },
-    { name: "Very heavy rain days (above 50 mm in a day)", series: m.heavy_rain_days_gt50mm },
-    { name: "Frost days (below 0 °C)", series: m.frost_days_lt0 },
-  ];
   const chart: MonthSeries[] = [];
   if (hasDays(m.heat_days_gt35)) chart.push({ label: "Above 35 °C", color: colors.amber, kind: "bar", values: m.heat_days_gt35 ?? [] });
   if (hasDays(m.heavy_rain_days_gt50mm)) chart.push({ label: "Above 50 mm rain", color: colors.blue, kind: "bar", values: m.heavy_rain_days_gt50mm ?? [] });
@@ -37,23 +32,16 @@ export function ClimateExtremesCard({ data, info }: { data: LotData; info?: Info
       </View>
       {ex.box}
       {ex.chips}
-      <Text style={[text.small, styles.muted]}>{`Average days per month, NASA POWER daily data, ${period}.`}</Text>
-      {rows.map((r) => {
-        const line = monthsLine(r.series);
-        return (
-          <View key={r.name} style={styles.row}>
-            <Text style={text.bodyStrong}>{r.name}</Text>
-            <Text style={[text.body, line ? null : styles.muted]}>{line ?? missing}</Text>
-          </View>
-        );
-      })}
-      {chart.length > 0 ? <MonthChart series={chart} unit="days per month" decimals={2} /> : null}
+      <Text style={[text.small, styles.muted]}>{`Days per month, ${period}.`}</Text>
+      {chart.length > 0 ? <MonthChart series={chart} unit="days per month" decimals={2} /> : <Text style={[text.body, styles.muted]}>{missing}</Text>}
+      {chart.length > 0 && !hasDays(m.frost_days_lt0) && m.frost_days_lt0 ? <Text style={text.small}>No frost days.</Text> : null}
       <View style={styles.row}>
         <Text style={text.bodyStrong}>Long-term trends</Text>
         {trends ? (
           trends.map((s) => (
             <Text key={s} style={text.small}>
-              {`• ${s}`}
+              {/* The Mann-Kendall p-value shows when the ⓘ is open; the card keeps the plain sentence. */}
+              {`• ${ex.box ? s : s.replace(/ \(Mann-Kendall p [^)]*\)/, "")}`}
             </Text>
           ))
         ) : (

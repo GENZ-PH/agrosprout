@@ -234,7 +234,6 @@ function Results({
     <>
       <Text style={[text.small, styles.muted]}>{t("evidence.intro")}</Text>
       <FieldYear options={options} selected={selected.key} onSelect={setPicked} monthly={analysis.monthly} cropById={cropById} info={{ id: "lot-snapshot", period }} />
-      <Text style={text.caption}>{t("year.source")}</Text>
       {data && wide ? (
         <View style={styles.row}>
           <View style={styles.col}>
