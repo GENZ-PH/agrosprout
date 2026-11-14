@@ -348,17 +348,24 @@ export const DATA_SOURCES: readonly DataSource[] = [
   },
   {
     name: "PSA OpenSTAT",
-    used_for: "Typical yields for palay and corn by province.",
-    period: "Latest full year in the file",
-    resolution: "Province, yearly",
+    used_for: "Typical yield per hectare for each crop with a PSA figure (palay, corn, mungbean, peanut, soybean, string bean, sweet potato, eggplant), used to estimate how many trips a harvest needs. Cited per crop in crops.json.",
+    period: "2022-2024",
+    resolution: "Lanao del Norte, yearly (soybean: Northern Mindanao)",
     url: "https://openstat.psa.gov.ph/",
   },
   {
     name: "NOAA Climate Prediction Center, Oceanic Niño Index",
-    used_for: "Context on El Niño and La Niña for the current season.",
-    period: "Latest season in the file",
+    used_for: "This season's El Niño context, shown on the dashboard next to the PAGASA advisory. Not used in any score.",
+    period: "Latest season in the file (ASO 2026)",
     resolution: "Ocean-wide, three-month averages",
     url: "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
+  },
+  {
+    name: "DOST-PAGASA El Niño advisory",
+    used_for: "This season's El Niño context, shown on the dashboard. Not used in any score.",
+    period: "Issued 2026-11-04",
+    resolution: "Whole country",
+    url: "https://pagasa.dost.gov.ph/press-release/233",
   },
 ];
 

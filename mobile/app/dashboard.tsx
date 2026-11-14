@@ -10,6 +10,7 @@ import { FooterLinks } from "../src/components/FooterLinks";
 import { Header } from "../src/components/Header";
 import { HarvestCard } from "../src/components/HarvestCard";
 import { WhatIfCard } from "../src/components/WhatIfCard";
+import { ElNinoNotice } from "../src/components/ElNinoNotice";
 import { YearCalendar } from "../src/components/YearCalendar";
 import type { Scenario } from "../src/engine/scenario";
 import { LotCutoutCard } from "../src/components/LotCutoutCard";
@@ -89,6 +90,7 @@ export default function DashboardScreen() {
             onSelect={selectLot}
             onAdd={() => router.push({ pathname: "/lots", params: { new: "1" } })}
           />
+          <ElNinoNotice />
           <LotResults key={lot.id} farm={farm} lot={lot} />
         </>
       ) : (
