@@ -15,6 +15,8 @@ type Props = {
   /** lg = the screen's main action (56), md = everything else (48). */
   size?: "lg" | "md";
   icon?: IconName;
+  /** An icon after the label, e.g. a chevron on a "Next" button. */
+  iconAfter?: IconName;
   disabled?: boolean;
   accessibilityLabel?: string;
   accessibilityHint?: string;
@@ -37,6 +39,7 @@ export function Button({
   variant = "primary",
   size = "md",
   icon,
+  iconAfter,
   disabled = false,
   accessibilityLabel,
   accessibilityHint,
@@ -80,6 +83,7 @@ export function Button({
       >
         {label}
       </Text>
+      {iconAfter ? <Icon name={iconAfter} size={20} color={fg} /> : null}
     </Pressable>
   );
 }

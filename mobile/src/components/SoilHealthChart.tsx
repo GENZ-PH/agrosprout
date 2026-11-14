@@ -15,7 +15,7 @@ import {
   yForValue,
   type PlotBox,
 } from "./soil-health-chart-core";
-import { colors, MIN_TOUCH, radius, space, text } from "./theme";
+import { colors, MIN_TOUCH, optionColors, radius, space, text } from "./theme";
 
 // 3-year Soil Health Index card (#43, docs/07 §4): one line per rotation option
 // from the start to the end of Year 3, and under it each option's calendar for Year 1-3
@@ -35,10 +35,10 @@ type Props = {
 
 /** Each option has its own line style as well as its color, so color is never the only cue. */
 const LINE: Record<OptionKey, { color: string; width: number; dash?: string }> = {
-  A: { color: colors.ink, width: 3 },
-  B: { color: colors.blue, width: 2.5, dash: "7 5" },
-  C: { color: colors.green, width: 2.5 },
-  D: { color: colors.amber, width: 2.5, dash: "2 4" },
+  A: { color: optionColors.A, width: 3 },
+  B: { color: optionColors.B, width: 2.5, dash: "7 5" },
+  C: { color: optionColors.C, width: 2.5 },
+  D: { color: optionColors.D, width: 2.5, dash: "2 4" },
 };
 
 /** SVG text is a serif font on web unless told otherwise; match the app's system font. */

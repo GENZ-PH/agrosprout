@@ -1,83 +1,68 @@
-import type { ReactNode } from "react";
-import Svg, { Circle, G, Path, Rect } from "react-native-svg";
+import { View } from "react-native";
+import type { LucideIcon } from "lucide-react-native";
+import Check from "lucide-react-native/icons/check";
+import ChevronLeft from "lucide-react-native/icons/chevron-left";
+import ChevronRight from "lucide-react-native/icons/chevron-right";
+import CircleAlert from "lucide-react-native/icons/circle-alert";
+import Clock from "lucide-react-native/icons/clock";
+import Droplet from "lucide-react-native/icons/droplet";
+import Info from "lucide-react-native/icons/info";
+import LocateFixed from "lucide-react-native/icons/locate-fixed";
+import Lock from "lucide-react-native/icons/lock";
+import MapPin from "lucide-react-native/icons/map-pin";
+import Maximize2 from "lucide-react-native/icons/maximize-2";
+import Minimize2 from "lucide-react-native/icons/minimize-2";
+import Pencil from "lucide-react-native/icons/pencil";
+import Plus from "lucide-react-native/icons/plus";
+import Scan from "lucide-react-native/icons/scan";
+import ShoppingBasket from "lucide-react-native/icons/shopping-basket";
+import Spline from "lucide-react-native/icons/spline";
+import Sprout from "lucide-react-native/icons/sprout";
+import Sun from "lucide-react-native/icons/sun";
+import Thermometer from "lucide-react-native/icons/thermometer";
+import Trash2 from "lucide-react-native/icons/trash-2";
+import Undo2 from "lucide-react-native/icons/undo-2";
+import VectorSquare from "lucide-react-native/icons/vector-square";
+import X from "lucide-react-native/icons/x";
 
 import { colors } from "./theme";
 
-// Stroke icons drawn in a 24x24 box. No emoji and no icon font, so they look the
-// same on Android and web and need nothing from the network.
+// Lucide icons (lucide-react-native, ISC, #114): SVG through react-native-svg, no icon font and
+// nothing from the network, so they look the same on Android and web and work offline. Each icon
+// is imported from its own file, so only these icons go into the bundle (Metro doesn't tree-shake
+// the package's index). Screens use our names; swap a Lucide icon here without touching them.
 const ICONS = {
-  back: <Path d="M15 18l-6-6 6-6" />,
-  close: <Path d="M6 6l12 12M18 6L6 18" />,
-  check: <Path d="M5 12l5 5 9-10" />,
-  chevron: <Path d="M9 6l6 6-6 6" />,
-  plus: <Path d="M12 5v14M5 12h14" />,
-  info: (
-    <>
-      <Circle cx={12} cy={12} r={9} />
-      <Path d="M12 11v5M12 8h.01" />
-    </>
-  ),
-  alert: (
-    <>
-      <Circle cx={12} cy={12} r={9} />
-      <Path d="M12 8v5M12 16h.01" />
-    </>
-  ),
-  clock: (
-    <>
-      <Circle cx={12} cy={12} r={9} />
-      <Path d="M12 7v5l3 2" />
-    </>
-  ),
-  locate: (
-    <>
-      <Circle cx={12} cy={12} r={4} />
-      <Path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
-    </>
-  ),
-  pencil: (
-    <>
-      <Path d="M12 20h9" />
-      <Path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
-    </>
-  ),
-  trash: (
-    <>
-      <Path d="M3 6h18" />
-      <Path d="M8 6V4h8v2" />
-      <Path d="M6 6l1 14h10l1-14" />
-    </>
-  ),
-  lock: (
-    <>
-      <Rect x={5} y={11} width={14} height={10} rx={2} />
-      <Path d="M8 11V8a4 4 0 0 1 8 0v3" />
-    </>
-  ),
-  sprout: (
-    <>
-      <Path d="M12 21v-9" />
-      <Path d="M12 12C12 8 9 5.5 4.5 5.5c0 4.2 3 6.5 7.5 6.5z" />
-      <Path d="M12 14c0-4 3-6.5 7.5-6.5 0 4.2-3 6.5-7.5 6.5z" />
-    </>
-  ),
-  undo: (
-    <>
-      <Path d="M9 14L4 9l5-5" />
-      <Path d="M4 9h10a6 6 0 0 1 0 12h-3" />
-    </>
-  ),
-  draw: <Path d="M3 17c3-3 5 1 8-2s3-7 6-7 3 3 4 4" />,
-  expand: <Path d="M14 4h6v6M10 20H4v-6M20 4l-6 6M4 20l6-6" />,
-  collapse: <Path d="M4 14h6v6M20 10h-6V4M14 10l6-6M10 14l-6 6" />,
-  corners: <Path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4" />,
-  pin: (
-    <>
-      <Path d="M12 21s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z" />
-      <Circle cx={12} cy={9} r={2.5} />
-    </>
-  ),
-} satisfies Record<string, ReactNode>;
+  back: ChevronLeft,
+  close: X,
+  check: Check,
+  chevron: ChevronRight,
+  plus: Plus,
+  info: Info,
+  alert: CircleAlert,
+  clock: Clock,
+  locate: LocateFixed,
+  pencil: Pencil,
+  trash: Trash2,
+  lock: Lock,
+  sprout: Sprout,
+  undo: Undo2,
+  /** "Draw with your finger": a freehand line. */
+  draw: Spline,
+  expand: Maximize2,
+  collapse: Minimize2,
+  corners: Scan,
+  pin: MapPin,
+  /** Dry month: a sun. */
+  sun: Sun,
+  /** Wet month: a rain drop. */
+  drop: Droplet,
+  /** Hot month: a thermometer. */
+  heat: Thermometer,
+  /** Harvest: a basket. */
+  basket: ShoppingBasket,
+  /** A shape with corner handles: "Adjust the corners". */
+  shape: VectorSquare,
+} satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;
 
@@ -90,17 +75,12 @@ type Props = {
 
 /** Decorative icon. The control around it carries the accessible label. */
 export function Icon({ name, size = 24, color = colors.ink, strokeWidth = 2 }: Props) {
+  const Glyph = ICONS[name];
+  // Hidden from screen readers (#45): the View's aria-hidden works on web, Android and iOS.
+  // (react-native-svg would pass the native-only accessibility props to the DOM on web.)
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24">
-      <G
-        fill="none"
-        stroke={color}
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        {ICONS[name]}
-      </G>
-    </Svg>
+    <View aria-hidden style={{ width: size, height: size }}>
+      <Glyph size={size} color={color} strokeWidth={strokeWidth} />
+    </View>
   );
 }

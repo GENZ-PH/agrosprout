@@ -47,6 +47,20 @@ export const corners = (ring: LonLat[]) => Math.max(0, ring.length - 1);
 export const ringAreaM2 = (ring: LonLat[]) => area(polygon([ring]));
 
 /**
+ * True when `p` is inside the closed ring (even-odd ray casting in lon/lat, exact
+ * enough at lot size). Finds the lot a tap landed on (#124).
+ */
+export function pointInRing(p: LonLat, ring: LonLat[]): boolean {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i];
+    const [xj, yj] = ring[j];
+    if (yi > p[1] !== yj > p[1] && p[0] < ((xj - xi) * (p[1] - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+/**
  * Douglas-Peucker with a tolerance scaled to the sketch size: start at 2.5% of the
  * bounding-box diagonal and grow until the ring has at most `targetMaxCorners`.
  */

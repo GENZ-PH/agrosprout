@@ -38,9 +38,20 @@ html, body, #map { margin: 0; width: 100%; height: 100%; background: #3F4A30; }
 .lot-label { background: #FFFFFF; color: #1B1F1A; border: 0; border-radius: 8px; box-shadow: none;
   font: 600 13px/1.3 system-ui, -apple-system, Roboto, sans-serif; padding: 3px 8px; }
 .lot-label::before { display: none; }
+/* Dashboard farm map (#124): the lot's color next to its status words. White ring so dark colors show on the label. */
+.lot-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px;
+  vertical-align: -1px; box-shadow: 0 0 0 1.5px #FFFFFF, 0 0 0 2.5px #1B1F1A; }
+.lot-label.compact .lot-detail { display: none; }
+.lot-label.hidden { visibility: hidden; }
 .leaflet-control-attribution { font-size: 10px; }
-/* Zoom buttons: 44 px touch targets (Leaflet's default is 30-34 px). */
-.leaflet-bar a, .leaflet-touch .leaflet-bar a { width: 44px; height: 44px; line-height: 44px; font-size: 22px; }
+/* Zoom buttons: 48 px touch targets (Leaflet's default is 30-34 px) in a rounded pill that
+   matches the app's round Back and Find me buttons, below Find me. */
+.leaflet-top.leaflet-right { top: 58px; }
+.leaflet-bar, .leaflet-touch .leaflet-bar { border: 0; border-radius: 24px; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28); }
+.leaflet-bar a, .leaflet-touch .leaflet-bar a { width: 48px; height: 48px; line-height: 48px; font-size: 24px;
+  color: #1B1F1A; border-radius: 0; }
+.leaflet-bar a:first-child { border-bottom: 1px solid #D9D7CE; }
 </style>
 </head>
 <body>

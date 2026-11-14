@@ -7,5 +7,11 @@
     "url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
     "retrieved": "2026-11-14"
   },
-  "advisory": null
+  "advisory": {
+    "issuer": "DOST-PAGASA",
+    "title": "Very Strong El Niño Is Present in the Tropical Pacific",
+    "issued": "2026-11-04",
+    "summary_by_hand": "PAGASA says a very strong El Niño is present in the tropical Pacific, is expected to persist until the first half of 2027 and may peak by the end of 2026. It says El Niño increases the likelihood of rainfall deficits, which may bring dry spells and drought in several areas, and expects below normal to way below normal rainfall over most parts of the country in November 2026. It names no Mindanao-specific impact. Read from the press release page on 2026-11-14; the PDF linked from it was not read.",
+    "url": "https://pagasa.dost.gov.ph/press-release/233"
+  }
 }

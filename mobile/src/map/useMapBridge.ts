@@ -2,7 +2,7 @@ import { type Ref, useCallback, useEffect, useImperativeHandle, useLayoutEffect,
 import type { StyleProp, ViewStyle } from "react-native";
 
 import type { LonLat } from "../types";
-import type { AppToMap, BasemapId, MapLot, MapMode, MapPlace, MapToApp } from "./bridge";
+import type { AppToMap, BasemapId, MapInset, MapLot, MapMode, MapPlace, MapToApp } from "./bridge";
 
 export type MapViewHandle = {
   /** One-off commands: `gps`, `fitLots`. Lots, places and mode follow the props. */
@@ -16,7 +16,11 @@ export type MapViewProps = {
   activeLotId?: string;
   /** Starting view when there are no lots yet. */
   center?: LonLat;
+  /** Starting zoom with `center` (the map page's default otherwise). */
+  zoom?: number;
   basemap?: BasemapId;
+  /** Space covered by the screen's floating buttons and panels; fitting the lots avoids it. */
+  inset?: MapInset;
   onMessage?: (msg: MapToApp) => void;
   accessibilityLabel?: string;
   style?: StyleProp<ViewStyle>;
@@ -32,7 +36,7 @@ const NO_PLACES: MapPlace[] = [];
  * Returns the handler for messages coming back from the page.
  */
 export function useMapBridge(props: MapViewProps, postToPage: (msg: AppToMap) => void) {
-  const { lots, places = NO_PLACES, mode, activeLotId, ref } = props;
+  const { lots, places = NO_PLACES, mode, activeLotId, inset, ref } = props;
   const ready = useRef(false);
   const latest = useRef(props);
   useLayoutEffect(() => {
@@ -50,6 +54,9 @@ export function useMapBridge(props: MapViewProps, postToPage: (msg: AppToMap) =>
   useEffect(() => send({ type: "setMode", mode, activeLotId }), [send, mode, activeLotId]);
   useEffect(() => send({ type: "setLots", lots }), [send, lots]);
   useEffect(() => send({ type: "setPlaces", places }), [send, places]);
+  useEffect(() => {
+    if (inset) send({ type: "setInset", inset });
+  }, [send, inset]);
 
   return useCallback(
     (msg: MapToApp) => {
@@ -63,7 +70,9 @@ export function useMapBridge(props: MapViewProps, postToPage: (msg: AppToMap) =>
           mode: p.mode,
           activeLotId: p.activeLotId,
           center: p.center,
+          zoom: p.zoom,
           basemap: p.basemap,
+          inset: p.inset,
         });
       }
       latest.current.onMessage?.(msg);

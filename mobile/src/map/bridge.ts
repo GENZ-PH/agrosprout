@@ -15,15 +15,29 @@ export type MapMode =
   | "sketch"
   /** Tap each corner, then tap the first point to close. */
   | "corners"
-  /** One finger moves the map. Tap a lot to show its points: drag a point, tap an edge dot to add one, long-press to remove one. */
+  /** One finger moves the map. Lots show as clean outlines, without points. Tapping a lot posts `lotTapped`. */
+  | "view"
+  /** Adjust the active lot: its points show. Drag a point, tap an edge dot to add one, long-press to remove one. */
   | "select"
   /** Tap once to drop a pin (S1 fallback, S6 places). */
   | "pin";
+
+/**
+ * How the dashboard's farm map (#124) colors a lot. Without it a lot keeps the S1 drawing
+ * look. The status words go in the lot's label, so color is never the only cue.
+ */
+export interface MapLotStyle {
+  /** Fill and outline color, `#RRGGBB` (from the app's theme.ts). Anything else is ignored. */
+  color: string;
+  /** Short status in words, shown after the name and area, e.g. "Watch out". */
+  status: string;
+}
 
 export interface MapLot {
   id: string;
   name: string;
   geometry: LotPolygon;
+  style?: MapLotStyle;
 }
 
 export interface MapPlace {
@@ -34,6 +48,12 @@ export interface MapPlace {
 
 /** Satellite basemap candidates for decision D25 (still open). */
 export type BasemapId = "esri-world-imagery" | "eox-s2cloudless" | "osm";
+
+/**
+ * Screen space (px) covered by the app's floating buttons and panels. Fitting the map
+ * to the lots keeps the lots clear of it.
+ */
+export type MapInset = { top: number; right: number; bottom: number; left: number };
 
 /** App → map page. */
 export type AppToMap =
@@ -48,6 +68,7 @@ export type AppToMap =
       center?: LonLat;
       zoom?: number;
       basemap?: BasemapId;
+      inset?: MapInset;
     }
   | { type: "setMode"; mode: MapMode; activeLotId?: string }
   /** Replace all lots (after add, rename, delete, undo). The map keeps unchanged shapes as they are. */
@@ -55,7 +76,11 @@ export type AppToMap =
   | { type: "setPlaces"; places: MapPlace[] }
   /** The phone's position from expo-location (works without signal). */
   | { type: "gps"; lat: number; lon: number; accuracy_m?: number }
-  | { type: "fitLots" };
+  | { type: "fitLots" }
+  /** The app's panels changed size. Used by the next fit; the view doesn't move. */
+  | { type: "setInset"; inset: MapInset }
+  /** Zoom in to at least this level, keeping the centre (the S1 zoom check before drawing). */
+  | { type: "zoomIn"; zoom: number };
 
 export type SketchRejectReason =
   /** The stroke was too short to be a lot outline. */
@@ -75,8 +100,12 @@ export type MapToApp =
   | { type: "lotEditing"; id: string; area_ha: number }
   | { type: "sketchRejected"; reason: SketchRejectReason }
   | { type: "pinPlaced"; point: LonLat }
-  /** The map switched mode by itself (e.g. to "select" after a lot is drawn). */
+  /** A tap inside a lot in "view" mode (the dashboard map selects that lot; S1 ignores it). */
+  | { type: "lotTapped"; id: string }
+  /** The map switched mode by itself (e.g. to "view" after a lot is drawn). */
   | { type: "modeChanged"; mode: MapMode }
+  /** After every zoom, and once after `init`. The app uses it to check the map is close enough to draw. */
+  | { type: "zoomChanged"; zoom: number }
   | { type: "error"; message: string };
 
 /** Envelope tags so each side ignores unrelated window messages (web only). */

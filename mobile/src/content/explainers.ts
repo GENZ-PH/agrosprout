@@ -20,7 +20,10 @@ export type ExplainerId =
   | "priorities"
   | "months-compare"
   | "season-calendar"
-  | "what-if";
+  | "year-calendar"
+  | "what-if"
+  | "farm-map"
+  | "lot-cutout";
 
 export interface Explainer {
   id: ExplainerId;
@@ -78,6 +81,33 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
       "Irrigation counts only as far as you told us: with \"some\" irrigation we assume it covers half of the rain shortage (an assumption), with full irrigation all of it, and if the water source is unknown we assume rain only.",
     ],
   },
+  "farm-map": {
+    id: "farm-map",
+    title: "Your lots on the map",
+    what: "Each lot you drew, colored by how well it suits the crops you grow there. A lot shows the result of its weakest crop, the same Good fit, Watch out or Poor fit as in \"Your crops here\". The label on each lot gives its name, its area and the result in words.",
+    source:
+      "The same check as \"Your crops here\": crop water use from FAO-56 (Allen and others, 1998), temperature ranges from the FAO Ecocrop database, and rain and temperature from NASA POWER at the middle of each lot. Years used: {period}. The area is worked out from the outline you drew.",
+    read: "Green is a good fit, orange means watch out, red is a poor fit, and dark gray means there is not enough data to judge. Light gray lots have no result yet: pick their crops, or wait for the NASA data to download. Tap a lot to see its results below.",
+    limits: [
+      "The numbers describe a NASA grid cell, roughly 50 km across, not your exact field, so lots close together will often share a color.",
+      "The cut-offs between Good fit, Watch out and Poor fit are team assumptions that still need a local check.",
+      "Without signal the photo under your lots may not load; the lots and their colors still show.",
+    ],
+  },
+  "lot-cutout": {
+    id: "lot-cutout",
+    title: "Now vs best option",
+    what: "The shape of the lot you drew, shown twice: on the left with your crops now, on the right with the best other option for this lot (the one with the highest total score). Each shape is filled with one color for the kind of data you pick: Soil health, Crop fit, Root-zone wetness or Rain in a dry year. The number or words on the shape is its value.",
+    source:
+      "Soil health is the 3-year Soil Health Index from this app's rotation model. Crop fit is the same check as \"Your crops here\" (FAO-56 crop water use, FAO Ecocrop temperature ranges). Root-zone wetness is NASA POWER GWETROOT (0 dry, 1 saturated) and rain is NASA POWER PRECTOTCORR in a dry year (the 20th percentile), both over the months a crop is in the field. Years used: {period}.",
+    read: "Compare the two shapes. Soil health: green goes up from the start, gray stays level, orange goes down. Crop fit: the same colors as \"Your crops here\". Wetness and rain: darker blue means wetter, or more of the year's rain falling while a crop is in the field. Gray with \"No data\" means a value is missing.",
+    limits: [
+      "One color per lot: the data has one value for the whole lot, so nothing here shows differences inside your field.",
+      "Soil health is a relative indicator from this model, not a soil test. It does not show carbon or nitrogen.",
+      "Wetness and rain describe a NASA grid cell roughly 50 km across, so they change only when the crop months change.",
+      "This supports your decision. Check it with your agricultural technician.",
+    ],
+  },
   "harvest-out": {
     id: "harvest-out",
     title: "Getting your harvest out",
@@ -108,9 +138,9 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   priorities: {
     id: "priorities",
     title: "What matters to you",
-    what: "Four sliders: save water, build soil, extra income and less work. Moving them re-ranks the options straight away, on your phone.",
-    source: "Your own answers. The sliders only change how much each score counts; they do not change the data.",
-    read: "All sliders start equal. Raise the ones that matter most to you and see which option moves to the top.",
+    what: "Four choices: save water, build soil, extra income and less work. Tapping them re-ranks the options straight away, on your phone.",
+    source: "Your own answers. The choices only change how much each score counts; they do not change the data.",
+    read: "All four start equal. Tap the ones that matter most to you: they count twice as much as the others. See which option moves to the top, and tap again to undo.",
     limits: ["A priority can only count when the data behind it exists; for example income and market access need crop and destination information."],
   },
   "months-compare": {
@@ -132,6 +162,19 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     source: "Your own months, the options from the recommendations and the planting-month scan.",
     read: "Bars that overlap mean crops grown together on the same lot. Empty months mean bare soil, which can wash away in heavy rain.",
     limits: ["Only crops you chose are shown; other possible crops appear as alternatives, not as advice."],
+  },
+  "year-calendar": {
+    id: "year-calendar",
+    title: "Your year on your lot",
+    what: "Each month of the year for the plan you pick: when to plant, when to harvest, and the months a crop may be short of water, too hot or too wet.",
+    source:
+      "The plan comes from the recommendations for this lot. Short of water, too hot and too wet are worked out from NASA POWER data for {period} with the FAO-56 water balance and each crop's temperature range.",
+    read: "Tap a month to see what happens in it. A sun marks a month when a crop in the field may be short of water, the thermometer a month that may be too hot, a drop a month that may be too wet. Pick another plan below the calendar to see its year instead.",
+    limits: [
+      "The months are from monthly averages, so a short dry or hot spell inside a month is not shown.",
+      "A risk is shown only for months when a crop is in the field.",
+      "It supports your own judgment and your agricultural technician; it does not replace them.",
+    ],
   },
   "what-if": {
     id: "what-if",
@@ -299,6 +342,29 @@ export const DATA_SOURCES: readonly DataSource[] = [
   },
 ];
 
+/**
+ * NASA datasets the challenge names and how this app treats them (#112, Part 4). Checked against the
+ * code on main, not against plans: say "not used" until a dataset really drives a result.
+ */
+export interface DatasetStatus {
+  name: string;
+  status: "Used" | "Demo farm only" | "Not used";
+  note: string;
+}
+
+export const CHALLENGE_DATASETS: readonly DatasetStatus[] = [
+  { name: "NASA POWER", status: "Used", note: "Drives every result for every lot you draw." },
+  {
+    name: "SRTM (elevation and slope)",
+    status: "Demo farm only",
+    note: "The demo farm file has elevation and slope from SRTM. Lots you draw do not use it yet, so their evaporation is calculated at sea level and their erosion check relies on the land type you give.",
+  },
+  { name: "SMAP (soil moisture)", status: "Not used", note: "Soil wetness comes from NASA POWER, a model estimate, not from the SMAP satellite." },
+  { name: "GPM (rainfall)", status: "Not used", note: "Rainfall comes from NASA POWER." },
+  { name: "MODIS, Landsat (vegetation)", status: "Not used", note: "Vegetation stress is not measured." },
+  { name: "ECOSTRESS, GRACE and GRACE-FO", status: "Not used", note: "Not needed for the lot-level questions this app answers." },
+];
+
 /** Known limitations to state openly (docs/07 §8), plus the ones found while building. */
 export const LIMITATIONS: readonly string[] = [
   "Climate is for a coarse grid cell, not field scale. There is no field-scale water model.",
@@ -312,6 +378,10 @@ export const LIMITATIONS: readonly string[] = [
   // D31 (#107): ground area = map area x sqrt(1 + (slope % / 100)^2), so 20% -> +2.0%, 30% -> +4.4%.
   "Lot area is measured flat, as on a map. On sloping land the ground itself is a little larger: about 2% more on a 20% slope and about 4% more on a 30% slope.",
   "Results are for comparing options, not for predicting yield or income.",
+  "The results come from statistics and rules (a water balance and scores worked out on your phone), not from a trained SI model. SI tools helped to build the app.",
+  "Frost is not modelled. The app checks each crop's lower temperature limit instead.",
+  "Forage value and the equipment you have are not part of the scores, and water soaking into the soil is not modelled separately: ground cover and erosion stand in for it.",
+  "Soil comes only from what you tell us (soil feel and land type). The app does not use a soil map.",
 ];
 
 /** Fill `{name}` tokens, e.g. `fill(text, { period: "2001-2025" })`. Unknown tokens are left as they are. */
