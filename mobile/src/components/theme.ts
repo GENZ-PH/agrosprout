@@ -27,6 +27,13 @@ export const colors = {
   white: "#FFFFFF",
 } as const;
 
+/**
+ * One color per rotation option (A Your crops, B Best for water, C Best for soil, D Balanced), shared
+ * by the Soil Health chart and the Recommendations card so an option looks the same everywhere.
+ * Each is also drawn with its letter, so color is never the only cue.
+ */
+export const optionColors = { A: colors.ink, B: colors.blue, C: colors.green, D: colors.amber } as const;
+
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 } as const;
 
 export const radius = { sm: 10, md: 12, lg: 14, pill: 999 } as const;
@@ -34,8 +41,18 @@ export const radius = { sm: 10, md: 12, lg: 14, pill: 999 } as const;
 /** Smallest touch target in dp. Main actions use 48-56. */
 export const MIN_TOUCH = 44;
 
-/** Widest the content gets on a desktop browser (judges use the web build). */
+/** Widest a reading column gets (forms, S0, S2, S4, S6): long lines are hard to read. */
 export const MAX_CONTENT_WIDTH = 560;
+
+/** Widest a "wide" screen (the dashboard) gets on a big monitor (#114). A layout choice, not data. */
+export const MAX_WIDE_WIDTH = 1200;
+
+/**
+ * Window size classes (#114), from Material 3: compact < 600 dp (phones, the Android app),
+ * medium 600-839 dp, expanded >= 840 dp (laptops, where judges open the web build).
+ * https://m3.material.io/foundations/layout/applying-layout/window-size-classes
+ */
+export const BREAKPOINTS = { medium: 600, expanded: 840 } as const;
 
 export const text = {
   display: { fontSize: 32, lineHeight: 38, fontWeight: "700", color: colors.ink },

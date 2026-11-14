@@ -84,6 +84,7 @@ test("lotView: on the Iligan test lot with crops.json, the Soil Health card gets
   const v = lotView({ farm, lot: lot([rice]), data: ILIGAN_LOT_FIXTURE, library });
   assert.equal(v.kind, "ready");
   if (v.kind !== "ready") return;
+  assert.equal(v.period, ILIGAN_LOT_FIXTURE.period, "the ⓘ texts name the years of the lot's own data");
   const { rotations, soil_health, stage } = v.analysis;
   assert.equal(stage, 1, "no months given yet, so option A uses the typical calendar");
   assert.ok(rotations.options.length >= 3, `at least 3 options (DoD #6), got ${rotations.options.length}`);

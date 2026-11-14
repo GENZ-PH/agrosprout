@@ -154,6 +154,16 @@ test("placeholders: rename, remove and Undo stay on the screen and never reach t
   assert.equal(farm.getState().lots.length, 0);
 });
 
+test("saving an unchanged outline (a tapped lot) adds no Undo step", () => {
+  const { farm, editor } = setup();
+  editor.ensureStarted();
+  const id = editor.setShape("new-1", square(124.2, 8.2, 1));
+  editor.rename(id, "Hill lot");
+  editor.setShape(id, square(124.2, 8.2, 1));
+  editor.undo();
+  assert.equal(farm.getState().lots[0].name, "Lot 1");
+});
+
 test("a pin lot is a zero-area ring at the pin with the typed area", () => {
   const { farm, editor, rows } = setup();
   editor.ensureStarted();
