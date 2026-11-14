@@ -2,6 +2,7 @@ import { useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Button } from "../src/components/Button";
+import { CropChips } from "../src/components/CropChips";
 import { Disclaimer } from "../src/components/Disclaimer";
 import { Header } from "../src/components/Header";
 import { LotDetailsForm } from "../src/components/LotDetailsForm";
@@ -9,6 +10,7 @@ import { Notice } from "../src/components/Notice";
 import { Screen } from "../src/components/Screen";
 import { colors, radius, space, text } from "../src/components/theme";
 import { cropById } from "../src/data/crops";
+import { isOtherCrop, otherCropName } from "../src/lots/crop-picks";
 import { modeLabel, typeLabel } from "../src/places/places-core";
 import { useFarm, useFarmStore } from "../src/state/farm-store";
 import type { Lot } from "../src/types";
@@ -58,7 +60,8 @@ function LotCard({ lot }: { lot: Lot }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const trimmed = name.trim();
   const changed = trimmed !== "" && trimmed !== lot.name;
-  const crops = lot.crops.map((c) => cropById(c.crop_id)?.name ?? c.crop_id);
+  const cropName = (id: string) => (isOtherCrop(id) ? otherCropName(id) : (cropById(id)?.name ?? id));
+  const crops = lot.crops.map((c) => cropName(c.crop_id));
 
   return (
     <View style={styles.card}>
@@ -75,6 +78,7 @@ function LotCard({ lot }: { lot: Lot }) {
       <Text style={text.caption}>
         {lot.area_ha.toFixed(2)} ha · {crops.length > 0 ? crops.join(", ") : "no crops yet"}
       </Text>
+      <CropChips cropIds={lot.crops.map((c) => c.crop_id)} cropName={cropName} />
 
       <View style={styles.row}>
         <Button

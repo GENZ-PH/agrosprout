@@ -3,6 +3,7 @@ import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from "react-na
 
 import { otherCropId } from "../lots/crop-picks";
 import { ADD_MAX_CHARS, enterChoice, searchCrops, searchSummary, type SearchEntry, type SearchResult } from "../lots/crop-search-core";
+import { CropImage } from "./CropImage";
 import { Icon } from "./Icon";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
@@ -174,6 +175,7 @@ function ResultRow({
       accessibilityState={{ disabled: added }}
       style={({ pressed }) => [styles.row, last && styles.lastRow, pressed && styles.pressed]}
     >
+      <CropImage cropId={ours ? e.crop_id : ""} size={40} />
       <View style={[styles.flex, styles.body]}>
         <Text style={text.bodyStrong}>
           {r.title}
