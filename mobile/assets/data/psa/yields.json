@@ -1,0 +1,21 @@
+{
+  "source": "PSA OpenSTAT, tables 0012E4EVCP0 (production) and 0022E4EAHC0 (area harvested)",
+  "retrieved": "2026-11-14",
+  "provinces": {
+    "80": {
+      "name": "Lanao del Norte",
+      "palay": {
+        "year": 2025,
+        "production_t": 213163.75,
+        "area_ha": 47026.09,
+        "yield_t_per_ha": 4.533
+      },
+      "corn": {
+        "year": 2025,
+        "production_t": 329513.58,
+        "area_ha": 105592.0,
+        "yield_t_per_ha": 3.121
+      }
+    }
+  }
+}
