@@ -44,7 +44,7 @@ flowchart TD
 - [ ] **S2 multiple crops per lot**
 - [ ] **Short onboarding: S0 → S1 lots → S2 crops → dashboard** (nothing else is required before results)
 - [ ] **S6 harvest destinations (add anytime, outside onboarding)**: opened from the dashboard card or Edit farm; pin market/storage/buyer/co-op, transport mode per destination, **travel time per lot** (rough offline estimate at minimum) that the **farmer can confirm or correct**; travel time feeds the Market access score and explanations
-- [ ] **Live NASA POWER fetch per lot** by the app at onboarding (monthly 2001–2024), cached for offline. Plus **≥1 precomputed demo farm** so the demo works even without a connection.
+- [ ] **Live NASA POWER fetch per lot** by the app at onboarding (monthly 2001–2025), cached for offline. Plus **≥1 precomputed demo farm** so the demo works even without a connection.
 - [ ] Crop library JSON with **8–12 crops** relevant to the Philippines (season length, Kc stages, temperature range, N-fixing, root depth, rough labor and market notes) **plus a typical local planting calendar per crop**, every parameter **cited**
 - [ ] **S3 dashboard** per lot: rain vs water need, soil moisture, crop fit, **≥3 rotation options including "your crops"**, explanation fields, **ⓘ explainer on every chart**
 - [ ] **S4 planting months** (optional step) + **S5 side-by-side "your months vs better months"** per crop, with data, plus the whole-lot calendar comparison

@@ -32,7 +32,7 @@ flowchart LR
 
 | Input | From | Notes |
 |---|---|---|
-| Monthly P (p20/p50/p80), ET₀, Tmax/Tmin, root-zone wetness | `lot-data/<lotId>` (live NASA POWER monthly 2001–2024) or `demo/<farm>.json` | Same shape for both. Demo farms also carry daily-derived heat days, heavy-rain days, SMAP, NDVI, slope. |
+| Monthly P (p20/p50/p80), ET₀, Tmax/Tmin, root-zone wetness | `lot-data/<lotId>` (live NASA POWER monthly 2001–2025) or `demo/<farm>.json` | Same shape for both. Demo farms also carry daily-derived heat days, heavy-rain days, SMAP, NDVI, slope. |
 | Slope / land type | Demo: SRTM. Live lots: farmer's "lowland / upland / sloping" answer | Erosion factor; "unknown" falls back to a moderate default and lowers confidence |
 | Soil feel → total available water (TAW) | Farmer: sandy / loamy / clayey / unknown | Use FAO-56 typical ranges, cited |
 | Water source | Farmer: rain only / some irrigation / full | Some = supplemental mm/month |
@@ -80,7 +80,7 @@ For each crop the farmer plants on a lot, for each of their seasons:
 2. For each start month compute: WSI (P50 and P20), stress months, heat-risk months, waterlogging months (intolerant crops), bare months created on the lot, and **Fit = weighted W + H** (plus E for sloping lots).
 3. **Feasibility constraints**: the shifted season must not collide with the farmer's **other** crops on that lot, unless they're already intercropped (overlapping in the farmer's own calendar). The farmer's other seasons stay fixed unless a joint shift is better (stretch). The crop must stay within its temperature range.
 4. **Better months** = the feasible start month with the highest Fit, shown only if it beats the farmer's month by a meaningful margin (e.g. ≥ 10 points, or one fewer stress month). Otherwise show **"Your timing is already good ✓"**. Prefer the smallest shift that captures most of the gain, so the advice stays easy to act on.
-5. **Explain** with the driving data: "Planting in May instead of June avoids the September dry spell. In 2001–2024, rain covered on average X% vs Y% of rice water need (NASA POWER)." Add confidence: Low if the best month differs between P20 and P50, or if lot details are "unknown".
+5. **Explain** with the driving data: "Planting in May instead of June avoids the September dry spell. In 2001–2025, rain covered on average X% vs Y% of rice water need (NASA POWER)." Add confidence: Low if the best month differs between P20 and P50, or if lot details are "unknown".
 6. Output per crop: `{ yours: {start, end, metrics}, better: {start, end, metrics} | null, delta, why, evidence, unknowns, check_locally, confidence }`.
 
 ## 3c. Market access & transport (team-defined constraint)
