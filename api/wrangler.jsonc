@@ -1,0 +1,45 @@
+// Cloudflare config for the AgroSprout API (issue #2).
+// Production deploys from `main`; `--env preview` is used for every other branch,
+// so previews never touch production data.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "agrosprout-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": true,
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
+  "vars": { "ENVIRONMENT": "production" },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "agrosprout-db",
+      "database_id": "29c77751-f6cb-4369-8173-b5458b1873aa",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [{ "binding": "ASSETS", "bucket_name": "agrosprout-assets" }],
+  // Public API with no login: per-IP limit on /v1. Raise "limit" here if the demo hits it.
+  "ratelimits": [
+    { "name": "RATE_LIMITER", "namespace_id": "4201", "simple": { "limit": 120, "period": 60 } }
+  ],
+  "env": {
+    "preview": {
+      "name": "agrosprout-api-preview",
+      "vars": { "ENVIRONMENT": "preview" },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "agrosprout-db-preview",
+          "database_id": "f4854500-f98e-4df3-91fb-ec2df1ea6107",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "r2_buckets": [{ "binding": "ASSETS", "bucket_name": "agrosprout-assets-preview" }],
+      "ratelimits": [
+        { "name": "RATE_LIMITER", "namespace_id": "4202", "simple": { "limit": 120, "period": 60 } }
+      ]
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "agrosprout-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run build:types",
+    "cf-typegen": "wrangler types",
+    "db:migrations:create": "wrangler d1 migrations create agrosprout-db",
+    "db:migrate:local": "wrangler d1 migrations apply agrosprout-db --local",
+    "db:seed": "npm run db:migrate:local && wrangler d1 execute agrosprout-db --local --file=seed/local.sql",
+    "deploy": "wrangler d1 migrations apply agrosprout-db --remote && wrangler deploy",
+    "deploy:preview": "wrangler d1 migrations apply agrosprout-db-preview --remote --env preview && wrangler deploy --env preview",
+    "tail": "wrangler tail",
+    "tail:preview": "wrangler tail --env preview",
+    "build:types": "tsc -p tsconfig.types.json"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.9.1",
+    "hono": "^4.13.18",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "wrangler": "^4.162.0"
+  }
+}

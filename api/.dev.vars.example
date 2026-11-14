@@ -1,0 +1,3 @@
+# Copy to .dev.vars for local dev (never commit .dev.vars).
+# Production/preview values are set with: npx wrangler secret put NAME [--env preview]
+# EARTHDATA_TOKEN=
