@@ -23,3 +23,9 @@ test("a crop with no picture, a saved-from-search crop and an unknown id all giv
   assert.equal(cropImage("other:cassava"), null);
   assert.equal(cropImage("no-such-crop"), null);
 });
+
+// #169 acceptance: every library crop shows a picture. Marked todo (reported, not failing) until the
+// team has picked a source and added the files; then remove `todo` so a crop without a picture fails.
+test("every crop in the library has a real picture", { todo: "pictures not added yet (#169)" }, () => {
+  for (const c of library.crops) assert.ok(CROP_IMAGES[c.id] !== null, `${c.id} has no picture yet`);
+});
