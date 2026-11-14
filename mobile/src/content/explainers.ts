@@ -20,8 +20,10 @@ export type ExplainerId =
   | "priorities"
   | "months-compare"
   | "season-calendar"
+  | "year-calendar"
   | "what-if"
   | "farm-map"
+  | "lot-cutout"
   | "top-crops";
 
 export interface Explainer {
@@ -110,6 +112,20 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
       "Please check with your agricultural technician before you change crops.",
     ],
   },
+  "lot-cutout": {
+    id: "lot-cutout",
+    title: "Now vs best option",
+    what: "The shape of the lot you drew, shown twice: on the left with your crops now, on the right with the best other option for this lot (the one with the highest total score). Each shape is filled with one color for the kind of data you pick: Soil health, Crop fit, Root-zone wetness or Rain in a dry year. The number or words on the shape is its value.",
+    source:
+      "Soil health is the 3-year Soil Health Index from this app's rotation model. Crop fit is the same check as \"Your crops here\" (FAO-56 crop water use, FAO Ecocrop temperature ranges). Root-zone wetness is NASA POWER GWETROOT (0 dry, 1 saturated) and rain is NASA POWER PRECTOTCORR in a dry year (the 20th percentile), both over the months a crop is in the field. Years used: {period}.",
+    read: "Compare the two shapes. Soil health: green goes up from the start, gray stays level, orange goes down. Crop fit: the same colors as \"Your crops here\". Wetness and rain: darker blue means wetter, or more of the year's rain falling while a crop is in the field. Gray with \"No data\" means a value is missing.",
+    limits: [
+      "One color per lot: the data has one value for the whole lot, so nothing here shows differences inside your field.",
+      "Soil health is a relative indicator from this model, not a soil test. It does not show carbon or nitrogen.",
+      "Wetness and rain describe a NASA grid cell roughly 50 km across, so they change only when the crop months change.",
+      "This supports your decision. Check it with your agricultural technician.",
+    ],
+  },
   "harvest-out": {
     id: "harvest-out",
     title: "Getting your harvest out",
@@ -164,6 +180,19 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     source: "Your own months, the options from the recommendations and the planting-month scan.",
     read: "Bars that overlap mean crops grown together on the same lot. Empty months mean bare soil, which can wash away in heavy rain.",
     limits: ["Only crops you chose are shown; other possible crops appear as alternatives, not as advice."],
+  },
+  "year-calendar": {
+    id: "year-calendar",
+    title: "Your year on your lot",
+    what: "Each month of the year for the plan you pick: when to plant, when to harvest, and the months a crop may be short of water, too hot or too wet.",
+    source:
+      "The plan comes from the recommendations for this lot. Short of water, too hot and too wet are worked out from NASA POWER data for {period} with the FAO-56 water balance and each crop's temperature range.",
+    read: "Tap a month to see what happens in it. A sun marks a month when a crop in the field may be short of water, the thermometer a month that may be too hot, a drop a month that may be too wet. Pick another plan below the calendar to see its year instead.",
+    limits: [
+      "The months are from monthly averages, so a short dry or hot spell inside a month is not shown.",
+      "A risk is shown only for months when a crop is in the field.",
+      "It supports your own judgment and your agricultural technician; it does not replace them.",
+    ],
   },
   "what-if": {
     id: "what-if",

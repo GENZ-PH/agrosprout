@@ -84,6 +84,29 @@ const ICONS = {
       <Circle cx={12} cy={9} r={2.5} />
     </>
   ),
+  /** Dry month: a sun. */
+  sun: (
+    <>
+      <Circle cx={12} cy={12} r={4} />
+      <Path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8" />
+    </>
+  ),
+  /** Wet month: a rain drop. */
+  drop: <Path d="M12 3.5s6 6.6 6 10.8a6 6 0 0 1-12 0C6 10.1 12 3.5 12 3.5z" />,
+  /** Hot month: a thermometer. */
+  heat: (
+    <>
+      <Path d="M10 14.5V5a2 2 0 0 1 4 0v9.5a4 4 0 1 1-4 0z" />
+      <Path d="M12 9v7" />
+    </>
+  ),
+  /** Harvest: a basket. */
+  basket: (
+    <>
+      <Path d="M3.5 10h17l-2 9.5h-13z" />
+      <Path d="M8 10l3-6M16 10l-3-6M9 14v2.5M15 14v2.5" />
+    </>
+  ),
   /** A lot outline with corner points: "Adjust the corners". */
   shape: (
     <>
