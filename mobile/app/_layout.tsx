@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { startQuerySync } from "../src/net/sync";
 import { useStoresReady } from "../src/state/hydration";
+import { startLotSync } from "../src/state/lot-sync";
 import {
   QUERY_CACHE_BUSTER,
   QUERY_CACHE_MAX_AGE,
@@ -18,6 +19,8 @@ export default function RootLayout() {
   // Saved farm data loads asynchronously. Showing screens earlier would let them read defaults
   // or write over saved data, so nothing renders until every store has loaded (usually a few ms).
   const storesReady = useStoresReady();
+  // Fetch NASA data for lots saved while offline, once the farm has loaded (06-architecture).
+  useEffect(() => (storesReady ? startLotSync() : undefined), [storesReady]);
   return (
     <PersistQueryClientProvider
       client={queryClient}
