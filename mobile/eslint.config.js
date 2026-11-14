@@ -5,6 +5,7 @@ const expoConfig = require("eslint-config-expo/flat");
 module.exports = defineConfig([
   expoConfig,
   { ignores: ["dist/*"] },
+  { files: ["workbox-config.js"], languageOptions: { sourceType: "commonjs" } },
   {
     // The rotation engine is pure TypeScript (docs/06-architecture.md, #22):
     // it must run offline on Android, on web, and in Node tests.
