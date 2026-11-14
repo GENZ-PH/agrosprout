@@ -14,9 +14,7 @@ import { useFarm, useFarmStore } from "../src/state/farm-store";
 import type { Lot } from "../src/types";
 
 // Edit farm (#35, docs/11 "Always available"): change anything entered earlier. Each lot can be
-// renamed, given other crops, months or details, or deleted (after a confirm). Places open S6.
-// TODO "Adjust or redraw": add it when S1 can open one lot (`/lots?lot=<id>`, johnrald1's PR); until
-// then S1 always opens the first lot, so a button here would edit the wrong lot.
+// renamed, adjusted or redrawn on the map, given other crops, months or details, or deleted (after a confirm). Places open S6.
 // A hub: the screens that do the work already exist, this page only links to them.
 
 export default function EditFarmScreen() {
@@ -79,6 +77,12 @@ function LotCard({ lot }: { lot: Lot }) {
       </Text>
 
       <View style={styles.row}>
+        <Button
+          label="Adjust or redraw"
+          variant="secondary"
+          href={{ pathname: "/lots", params: { lot: lot.id } }}
+          style={styles.grow}
+        />
         <Button label="Crops" variant="secondary" href={{ pathname: "/crops", params: { lot: lot.id } }} style={styles.grow} />
         <Button label="Months" variant="secondary" href={{ pathname: "/months", params: { lot: lot.id } }} style={styles.grow} />
       </View>
