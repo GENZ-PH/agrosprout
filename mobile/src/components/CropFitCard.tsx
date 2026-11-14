@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import type { CropFit, FitLevel } from "../engine";
 import { FIT_COLORS } from "./farm-map-core";
+import { CropImage } from "./CropImage";
 import { Bullets, InfoCard } from "./InfoCard";
 import { FIT_LABELS, fitReasonText, fitSeasonsText, GOOD_FIT_TEXT, shortCropName } from "./recommendations-core";
 import { colors, radius, space, text } from "./theme";
@@ -38,6 +39,7 @@ export function CropFitCard({ fits, cropName, period }: Props) {
           return (
             <View key={`${fit.crop_id}-${i}`} style={[styles.crop, i > 0 && styles.divider]}>
               <View style={styles.row}>
+                <CropImage cropId={fit.crop_id} size={40} />
                 <Text style={[text.bodyStrong, styles.flex]}>{name}</Text>
                 <FitBadge level={fit.level} />
               </View>

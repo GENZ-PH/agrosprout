@@ -4,6 +4,7 @@ import type { HarvestLeg } from "../engine/analyze";
 import { formatMinutes, modeLabel, sourceLabel, typeLabel } from "../places/places-core";
 import type { Destination, Lot } from "../types";
 import { Button } from "./Button";
+import { CropImage } from "./CropImage";
 import { InfoCard } from "./InfoCard";
 import { colors, space, text } from "./theme";
 
@@ -46,11 +47,14 @@ export function HarvestCard({ lot, destinations, harvest, cropName, period }: Pr
                     : "working out the travel time…"}
                 </Text>
                 {legs.map((h) => (
-                  <Text key={h.crop_id} style={text.caption}>
-                    {cropName(h.crop_id)}: {h.trips.trips} {h.trips.trips === 1 ? "trip" : "trips"} of{" "}
-                    {Math.round(h.trips.load_kg ?? 0)} kg ({h.trips.load_source === "farmer" ? "your load" : "assumed load"}), about{" "}
-                    {formatMinutes((h.hours ?? 0) * 60)} on the road
-                  </Text>
+                  <View key={h.crop_id} style={styles.leg}>
+                    <CropImage cropId={h.crop_id} size={24} />
+                    <Text style={[text.caption, styles.legText]}>
+                      {cropName(h.crop_id)}: {h.trips.trips} {h.trips.trips === 1 ? "trip" : "trips"} of{" "}
+                      {Math.round(h.trips.load_kg ?? 0)} kg ({h.trips.load_source === "farmer" ? "your load" : "assumed load"}), about{" "}
+                      {formatMinutes((h.hours ?? 0) * 60)} on the road
+                    </Text>
+                  </View>
                 ))}
               </View>
             );
@@ -68,5 +72,7 @@ export function HarvestCard({ lot, destinations, harvest, cropName, period }: Pr
 
 const styles = StyleSheet.create({
   list: { gap: space.md },
+  leg: { flexDirection: "row", alignItems: "center", gap: space.sm },
+  legText: { flex: 1 },
   place: { gap: 2, paddingBottom: space.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
 });
