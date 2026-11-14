@@ -11,6 +11,8 @@ export type { CropFit, FitLevel, FitReason, FitReasonCode, SeasonFit } from "./c
 /** A/B/C/D rotation options with component scores (07 §3-4, #26). */
 export { rotations, tooSimilar } from "./rotations";
 export { plantingWindow } from "./plantingWindow";
+export { explain } from "./explain";
+export type { Confidence, ConfidenceLevel, ConfidenceReason, ExplainInput, ExplainLine, Explanation } from "./explain";
 export type {
   PlantingWindowInput,
   PlantingWindowResult,
@@ -41,15 +43,3 @@ export type {
   RotationSlot,
   SlotOrigin,
 } from "./scores";
-
-class NotImplementedYet extends Error {
-  constructor(what: string, issue: string) {
-    super(`${what} is not implemented yet (${issue})`);
-    this.name = "NotImplementedYet";
-  }
-}
-
-/** Template-driven explanations and confidence (07 §5). */
-export function explain(..._args: unknown[]): never {
-  throw new NotImplementedYet("explain", "#28");
-}

@@ -24,13 +24,13 @@ test("src/engine imports no React, React Native or Expo module", () => {
   for (const f of files) assert.doesNotMatch(readFileSync(f, "utf8"), FORBIDDEN, f);
 });
 
-test("engine entry points exist; later ones say which issue implements them", () => {
+test("engine entry points exist", () => {
   assert.equal(typeof engine.waterBalance, "function");
   assert.equal(typeof engine.cropFit, "function");
   assert.equal(typeof engine.rotations, "function");
   assert.equal(typeof engine.plantingWindow, "function");
   assert.equal(typeof engine.marketAccess, "function");
-  assert.throws(() => engine.explain(), /#28/);
+  assert.equal(typeof engine.explain, "function");
 });
 
 test("Iligan mock lot fixture has 12 months per series and is labeled a test fixture", () => {
