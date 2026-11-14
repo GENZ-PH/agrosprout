@@ -364,3 +364,22 @@ export const SALE_DESTINATION_TYPES: readonly DestinationType[] = ["market", "bu
  * practice, actual prices unknown). Source: team spec.
  */
 export const STORAGE_PERISHABILITY: readonly Level[] = ["low", "medium"];
+
+// ---------------------------------------------------------------------------
+// Explanations and confidence (docs/07-rotation-engine.md §5, #28)
+// ---------------------------------------------------------------------------
+
+/**
+ * A component counts as better (or worse) than the farmer's own crops only
+ * when it differs by at least this many points (0-100 scale); smaller
+ * differences are noise and are not written up. assumption: validate locally.
+ */
+export const EXPLAIN_MIN_DELTA_POINTS = 1;
+
+/**
+ * Confidence is Low when this many key inputs are farmer estimates or
+ * "I don't know" (land type, water source, soil feel, or planting months that
+ * are the typical calendar instead of the farmer's). Source: team spec
+ * (docs/07 §5, "two or more key inputs"). One such input gives Medium.
+ */
+export const CONFIDENCE_LOW_UNKNOWN_INPUTS = 2;
