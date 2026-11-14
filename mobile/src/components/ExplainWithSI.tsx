@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { hc } from "hono/client";
 
@@ -10,60 +10,99 @@ import { Button } from "./Button";
 import { explainErrorText, type ExplainRequest } from "./explain-core";
 import { colors, radius, space, text } from "./theme";
 
-// "Explain this plan with SI" (D33): a few plain sentences about the best plan, written by Claude
-// from the engine's own results (explain-core.ts says what is sent). Labeled SI-generated, and the
-// API drops any answer that holds a number the engine did not give. Needs signal; hidden offline.
+// "In plain words" (D33): a few plain sentences about the suggested plan, written by Claude from
+// the engine's own results (explain-core.ts says what is sent). Labeled SI-generated, and the API
+// drops any answer that holds a number the engine did not give. Needs signal; hidden offline.
+//
+// `auto` (farmer-first dashboard): it loads by itself for the plan on screen, and if anything goes
+// wrong it shows nothing, because the plain reasons on the card already stand on their own. Answers
+// are kept for the visit, so going back and forth between lots doesn't ask again. During a what-if
+// it is a button instead (`auto` false), so each tap on the what-if does not call the model.
 
 /** The model can take a while to think, so this call gets longer than the API's usual 15 s. */
 const siApi = hc<AppType>(API_URL, { fetch: (i: RequestInfo | URL, init?: RequestInit) => fetchWithTimeout(i, init, 60_000) });
 
+/** Answers (or the request in flight) for this visit, by request. */
+const answers = new Map<string, Promise<string>>();
+
+function explain(request: ExplainRequest): Promise<string> {
+  const key = JSON.stringify(request);
+  let p = answers.get(key);
+  if (!p) {
+    p = unwrap(siApi.v1.explain.$post({ json: request })).then((d) => d.text);
+    // A failed call is not kept, so the next visit can try again.
+    p.catch(() => answers.delete(key));
+    answers.set(key, p);
+  }
+  return p;
+}
+
 type State = { kind: "idle" } | { kind: "loading" } | { kind: "done"; text: string } | { kind: "error"; message: string };
 
-export function ExplainWithSI({ request }: { request: ExplainRequest }) {
+export function ExplainWithSI({ request, auto = false }: { request: ExplainRequest; auto?: boolean }) {
   const online = useOnline();
-  const [state, setState] = useState<State>({ kind: "idle" });
-  if (!online && state.kind !== "done") return null;
+  // Auto starts out loading; the parent keys this component by request, so a new plan starts fresh.
+  const [state, setState] = useState<State>(() => (auto && online ? { kind: "loading" } : { kind: "idle" }));
 
-  const ask = async () => {
+  const ask = async (quiet: boolean) => {
     setState({ kind: "loading" });
     try {
-      const data = await unwrap(siApi.v1.explain.$post({ json: request }));
-      setState({ kind: "done", text: data.text });
+      setState({ kind: "done", text: await explain(request) });
     } catch (e) {
-      setState({ kind: "error", message: explainErrorText(e instanceof ApiError ? e.code : "unknown") });
+      setState(quiet ? { kind: "idle" } : { kind: "error", message: explainErrorText(e instanceof ApiError ? e.code : "unknown") });
     }
   };
+
+  useEffect(() => {
+    if (!auto || !online) return;
+    let live = true;
+    explain(request).then(
+      (t) => live && setState({ kind: "done", text: t }),
+      () => live && setState({ kind: "idle" }),
+    );
+    return () => {
+      live = false;
+    };
+    // Keyed by request in the parent, so `request` is fixed for this instance.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auto, online]);
+
+  if (!online && state.kind !== "done") return null;
 
   if (state.kind === "done") {
     return (
       <View style={styles.box} accessibilityRole="summary">
-        <Text style={styles.label}>SI-generated explanation (Claude, by Anthropic)</Text>
+        <Text style={styles.label}>In plain words</Text>
         <Text style={text.body}>{state.text}</Text>
-        <Text style={text.caption}>
-          Written by SI from the results above and checked so it uses only their numbers. It can still be wrong: talk it over
-          with your agricultural technician.
-        </Text>
+        <Text style={text.caption}>Written by SI (Claude, by Anthropic) from these results only. It can be wrong: talk it over with your technician.</Text>
       </View>
     );
+  }
+  if (auto) {
+    // Quiet while it loads, nothing at all if it fails.
+    return state.kind === "loading" ? (
+      <View style={styles.loading} accessibilityLiveRegion="polite">
+        <ActivityIndicator color={colors.green} />
+        <Text style={text.caption}>Writing it in plain words…</Text>
+      </View>
+    ) : null;
   }
   return (
     <View style={styles.wrap}>
       {state.kind === "loading" ? (
         <View style={styles.loading} accessibilityLiveRegion="polite">
           <ActivityIndicator color={colors.green} />
-          <Text style={text.caption}>Writing a plain explanation…</Text>
+          <Text style={text.caption}>Writing it in plain words…</Text>
         </View>
       ) : (
-        <Button label="Explain this plan with SI" variant="secondary" icon="sprout" onPress={ask} />
+        <Button label="Explain this plan with SI" variant="secondary" icon="sprout" onPress={() => ask(false)} />
       )}
       {state.kind === "error" ? (
         <Text style={text.caption} accessibilityLiveRegion="polite">
           {state.message}
         </Text>
       ) : null}
-      {state.kind === "idle" ? (
-        <Text style={text.caption}>Sends only these results, not where your farm is. Needs signal.</Text>
-      ) : null}
+      {state.kind === "idle" ? <Text style={text.caption}>Sends only these results, not where your farm is. Needs signal.</Text> : null}
     </View>
   );
 }

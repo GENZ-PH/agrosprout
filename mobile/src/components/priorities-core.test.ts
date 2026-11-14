@@ -45,12 +45,12 @@ test("chip lists read as plain English", () => {
   assert.equal(chipList([{ label: "Extra income" }, { label: "Less work" }]), "Extra income and Less work");
 });
 
-test("the note under the chips names the priorities that can't count yet and why", () => {
+test("the note under the chips names the hidden priorities and why", () => {
   assert.equal(notScoredNote([]), null);
   assert.equal(
     notScoredNote(["income", "labor"]),
-    "Extra income and Less work don't change the scores yet: the crop list has no local prices or labor needs yet. " +
-      "Add a place where you sell or store your harvest and they count how easy the trip to market is.",
+    "Extra income and Less work are not shown yet: the crop list has no local prices or labor needs, so they would change nothing. " +
+      "Add a place where you sell or store your harvest and they come back, counting how easy the trip to market is.",
   );
-  assert.match(notScoredNote(["income"]) ?? "", /^Extra income doesn't change .* and it counts /);
+  assert.match(notScoredNote(["income"]) ?? "", /^Extra income is not shown yet: .* and it comes back, /);
 });

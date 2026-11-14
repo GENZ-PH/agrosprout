@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { Fragment, type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -33,7 +33,8 @@ import { shortCropName, topPick } from "../src/components/recommendations-core";
 import { Screen } from "../src/components/Screen";
 import { MonthsCompareList } from "../src/components/SeasonCompareCard";
 import { SoilHealthChart } from "../src/components/SoilHealthChart";
-import { TopPickCard } from "../src/components/TopPickCard";
+import { FarmerSuggestion } from "../src/components/FarmerSuggestion";
+import { longerSeasons } from "../src/components/farmer-core";
 import { colors, MAX_CONTENT_WIDTH, radius, space, text } from "../src/components/theme";
 import { useLayout } from "../src/components/useLayout";
 import { useFarmLotViews, useLotAnalysis } from "../src/components/useLotAnalysis";
@@ -116,6 +117,10 @@ export default function DashboardScreen() {
     },
     [lot],
   );
+
+  // Nothing to show yet (no lot with crops, e.g. a shared /dashboard link on a new phone): the
+  // dashboard is not a starting point, so go to the welcome screen (S0), where Start begins.
+  if (!farm.lots.some((l) => l.crops.length > 0)) return <Redirect href="/" />;
 
   // The sample farm's numbers come from NASA POWER daily: its source chips say so (#144).
   return (
@@ -266,7 +271,9 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
       );
     case "ready": {
       const { analysis, period, months, data } = view;
-      const fit = <CropFitCard fits={analysis.crop_fits} cropName={cropName} period={period} />;
+      // The NASA cell's average height (POWER caveat) explains "cooler than it likes" on a lowland lot.
+      const heightNote = data.caveats.find((c) => /elevation/i.test(c) && /average/i.test(c));
+      const fit = <CropFitCard fits={analysis.crop_fits} cropName={cropName} period={period} note={heightNote} />;
       const soil = <SoilHealthChart result={analysis.soil_health} options={analysis.rotations.options} cropName={cropName} />;
       // Farm-wide choice (#40): the same chips on every lot tab; each lot re-ranks with it.
       const priorities = (
@@ -305,7 +312,13 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
         <HarvestCard lot={lot} destinations={farm.destinations} harvest={analysis.harvest} cropName={cropName} period={period} />
       );
       const yearCalendar = (
-        <YearCalendar options={analysis.rotations.options} lotName={lot.name} cropById={cropById} period={period} />
+        <YearCalendar
+          options={analysis.rotations.options}
+          lotName={lot.name}
+          cropById={cropById}
+          period={period}
+          initialKey={topPick(analysis.rotations.options)?.key}
+        />
       );
       const whatIf = (
         <WhatIfCard scenario={scenario} onChange={setScenario} notes={analysis.scenario?.notes ?? []} period={period} />
@@ -317,15 +330,16 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
       const a = analysis.rotations.options.find((o) => o.key === "A");
       const pick = topPick(analysis.rotations.options);
       const topCard = pick ? (
-        <TopPickCard
-            lotName={lot.name}
-            pick={pick}
-            a={a}
-            explanation={analysis.explanations.find((e) => e.option_key === pick.key)}
-            cropName={cropName}
-          monthsHref={analysis.stage === 1 ? { pathname: "/months", params: { lot: lot.id } } : undefined}
-          wide={wide}
+        <FarmerSuggestion
+          lotName={lot.name}
+          pick={pick}
+          a={a}
+          explanation={analysis.explanations.find((e) => e.option_key === pick.key)}
+          cropName={cropName}
+          cropById={cropById}
           componentsLeftOut={analysis.rotations.components_left_out}
+          longer={longerSeasons(lot, cropById)}
+          whatIf={scenario !== null}
         />
       ) : null;
       const monthsHref = { pathname: "/months", params: { lot: lot.id } } as const;
@@ -339,16 +353,15 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
               <Button label="Back to today's climate" variant="secondary" onPress={() => setScenario(null)} />
             </Narrow>
           ) : null}
+          {/* Farmer first (dashboard audit 2026-11-15): the answer, the year, then what the farmer can do.
+              The other plans, scores, evidence, charts and the farm map live in the NASA data panel
+              ("Details for your technician"), docked beside the page on a big window. */}
           {topCard}
-          <ElNinoNotice />
-          {recommendations}
           {yearCalendar}
-          {monthsCompare}
-          {fit}
-          {soil}
-          {overview}
+          <ElNinoNotice />
           {harvestCard}
           <MonthsPrompt lot={lot} stage={analysis.stage} />
+          <Button label="Details for your technician" variant="secondary" icon="info" onPress={openOverview} style={styles.detailsButton} />
           <AdjustSheet visible={adjustOpen} onClose={closeAdjust}>
             {priorities}
             {whatIf}
@@ -373,6 +386,15 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
             lotName={lot.name}
             period={period}
             demo={data.kind === "demo"}
+            details={
+              <>
+                {recommendations}
+                {monthsCompare}
+                {fit}
+                {soil}
+                {overview}
+              </>
+            }
             extra={
               <>
                 {satellite}
@@ -410,7 +432,7 @@ function MonthsPrompt({ lot, stage }: { lot: Lot; stage: 1 | 2 }) {
         <Text style={text.body}>
           {stage === 1
             ? `Tell us which months you plant on ${lot.name}. Option A then uses your months instead of the usual ones.`
-            : `Option A uses your months: ${given.map((c) => `${short(c.crop_id)} ${seasonsText(c.seasons)}`).join("; ")}.` +
+            : `Your crops are worked out on your months: ${given.map((c) => `${short(c.crop_id)} ${seasonsText(c.seasons)}`).join("; ")}.` +
               (usual.length > 0
                 ? ` ${usual.map((c) => short(c.crop_id)).join(", ")} ${usual.length === 1 ? "keeps" : "keep"} the usual months (assumed).`
                 : "")}
@@ -446,10 +468,10 @@ function MonthsPrompt({ lot, stage }: { lot: Lot; stage: 1 | 2 }) {
  * Tells the NASA data panel (#165) which lot the dashboard shows, and hands it the cards that
  * live there (satellite checks, NASA requests). Renders nothing itself.
  */
-function PanelLot({ lotName, period, demo, extra }: { lotName: string; period: string; demo: boolean; extra: ReactNode }) {
+function PanelLot({ lotName, period, demo, extra, details }: { lotName: string; period: string; demo: boolean; extra: ReactNode; details: ReactNode }) {
   useEffect(() => {
     const sources: SourceKey[] = demo ? ["power-daily", "srtm", "imerg", "smap"] : ["power"];
-    setPanelContext({ lotName, period, demo, sources, extra });
+    setPanelContext({ lotName, period, demo, sources, extra, details });
   });
   return null;
 }
@@ -485,5 +507,6 @@ const styles = StyleSheet.create({
   promptRow: { flexDirection: "row", gap: space.sm },
   promptCol: { gap: space.sm },
   sheetLinks: { gap: space.sm },
+  detailsButton: { alignSelf: "flex-start" },
   footer: { gap: space.xs, marginTop: space.lg },
 });

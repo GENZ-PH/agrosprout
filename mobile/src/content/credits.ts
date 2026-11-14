@@ -98,7 +98,7 @@ export const SI_CREDITS: readonly CreditItem[] = [
     name: "Claude by Anthropic",
     lines: [
       "Claude Code helped the team with research, documents and code. Every use is logged in the project (docs/si-usage-log.md). The team made the ideas and decisions.",
-      "\"Explain this plan with SI\" on the best plan sends the plan's results (no location, no lot shape, no names) to Claude and shows its answer labeled SI-generated.",
+      "\"In plain words\" on the suggestion card sends the suggested plan's results (no location, no lot shape, no names) to Claude and shows its answer labeled as written by SI. During a what-if it is the \"Explain this plan with SI\" button.",
     ],
     url: "https://www.anthropic.com",
   },

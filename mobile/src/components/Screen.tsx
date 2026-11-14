@@ -29,7 +29,7 @@ export function Screen({ children, footer, scrollEnabled = true, edgeToEdge = fa
     <SafeAreaView style={styles.safe} edges={["top", "bottom", "left", "right"]}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={edgeToEdge ? styles.edge : [styles.content, max]}
+        contentContainerStyle={edgeToEdge ? styles.edge : [styles.content, max, overlay ? styles.underOverlay : null]}
         scrollEnabled={scrollEnabled}
         keyboardShouldPersistTaps="handled"
       >
@@ -52,6 +52,8 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   scroll: { flex: 1 },
   content: { ...column, flexGrow: 1, gap: space.lg, paddingTop: space.sm, paddingBottom: space.xl },
+  /** Room under the last card so a floating button (e.g. Adjust results) never covers it. */
+  underOverlay: { paddingBottom: 96 },
   edge: { flexGrow: 1 },
   footer: { ...column, gap: space.sm, paddingTop: space.sm, paddingBottom: space.lg },
   wide: { maxWidth: MAX_WIDE_WIDTH },

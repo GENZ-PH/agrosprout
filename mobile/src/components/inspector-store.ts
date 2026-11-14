@@ -22,6 +22,8 @@ export type PanelContext = {
   /** NASA datasets this lot's results rest on, in the order to list them. */
   sources: SourceKey[];
   extra?: ReactNode;
+  /** Technician details moved off the farmer's page (other plans, scores, charts, map), shown first. */
+  details?: ReactNode;
 };
 
 let state: InspectorState = null;

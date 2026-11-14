@@ -15,6 +15,8 @@ type Props = {
   fits: readonly CropFit[];
   cropName: (id: string) => string;
   period: string;
+  /** A data caveat to show under the crops, e.g. the NASA cell's average height. */
+  note?: string;
 };
 
 /**
@@ -28,7 +30,7 @@ const BADGE: Record<FitLevel, { bg: string; fg: string; border: string }> = {
   unknown: { bg: colors.disabledBg, fg: FIT_COLORS.unknown, border: colors.disabledBg },
 };
 
-export function CropFitCard({ fits, cropName, period }: Props) {
+export function CropFitCard({ fits, cropName, period, note }: Props) {
   return (
     <InfoCard title="Your crops here" explainer="your-crops" period={period} subtitle="How well this lot suits each crop you grow.">
       <View style={styles.list}>
@@ -49,6 +51,7 @@ export function CropFitCard({ fits, cropName, period }: Props) {
           );
         })}
       </View>
+      {note ? <Text style={text.caption}>{note}</Text> : null}
     </InfoCard>
   );
 }
