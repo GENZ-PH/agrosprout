@@ -10,6 +10,16 @@ export { cropFit } from "./cropFit";
 export type { CropFit, FitLevel, FitReason, FitReasonCode, SeasonFit } from "./cropFit";
 /** A/B/C/D rotation options with component scores (07 §3-4, #26). */
 export { rotations, tooSimilar } from "./rotations";
+export { plantingWindow } from "./plantingWindow";
+export type {
+  PlantingWindowInput,
+  PlantingWindowResult,
+  SeasonWindow,
+  WindowDriver,
+  WindowGap,
+  WindowMetrics,
+  WindowUnknown,
+} from "./plantingWindow";
 export type {
   OptionKey,
   OptionKind,
@@ -34,11 +44,6 @@ class NotImplementedYet extends Error {
     super(`${what} is not implemented yet (${issue})`);
     this.name = "NotImplementedYet";
   }
-}
-
-/** "Your months vs better months" planting-window scan (07 §3b). */
-export function plantingWindow(..._args: unknown[]): never {
-  throw new NotImplementedYet("plantingWindow", "#33");
 }
 
 /** Market access score and layered travel time (07 §3c). */

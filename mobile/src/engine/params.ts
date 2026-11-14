@@ -259,3 +259,27 @@ export const PRIORITY_COMPONENTS = {
   income: ["I", "M"],
   labor: ["L", "M"],
 } as const;
+
+/**
+ * Planting-window scan (docs/07 §3b, #33).
+ *
+ * Fit of one planting month = weighted mean of the water fit (W), climate
+ * risk (H) and, on sloping lots, erosion protection (E) of the lot's rotation
+ * with that month, each 0-100. Equal weights. assumption: validate locally.
+ */
+export const WINDOW_FIT_WEIGHTS = { W: 1, H: 1, E: 1 } as const;
+
+/**
+ * "Better months" are shown only when the best month beats the farmer's by
+ * at least this many Fit points, or has at least one fewer typical-year
+ * stress month while also scoring higher. The 10 points come from the team
+ * spec (docs/07 §3b, "e.g. 10 points"). assumption: validate locally.
+ */
+export const WINDOW_MARGIN_POINTS = 10;
+
+/**
+ * Among months that clear the margin, pick the smallest shift that still
+ * captures at least this share of the best month's gain, so the advice stays
+ * easy to act on (docs/07 §3b). assumption: validate locally.
+ */
+export const WINDOW_GAIN_CAPTURE_SHARE = 0.8;
