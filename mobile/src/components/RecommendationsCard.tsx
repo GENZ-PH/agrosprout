@@ -57,7 +57,11 @@ export function RecommendationsCard({ options, explanations, componentsLeftOut, 
       title="Recommendations"
       explainer="recommendations"
       period={period}
-      subtitle="Your crops (A) next to other ways to use this lot over a year. Scores go from 0 to 100; higher is better."
+      subtitle={
+        grid
+          ? "Your crops (A) next to other ways to use this lot over a year. Scores go from 0 to 100; higher is better."
+          : "Your crops (A) next to three other plans for a year. Score out of 100."
+      }
     >
       <View style={styles.list}>
         {rowsOf(items, columns).map((row) => {
@@ -76,6 +80,7 @@ export function RecommendationsCard({ options, explanations, componentsLeftOut, 
                     open={!!open[o.key]}
                     onToggle={() => toggle(o.key)}
                     fill={matchHeights}
+                    compact={!grid}
                   />
                 </View>
               ))}
@@ -101,13 +106,17 @@ type ItemProps = {
   onToggle: () => void;
   /** Fill the grid cell's height (closed grid rows), with the details button at the bottom. */
   fill?: boolean;
+  /** Phones: a closed option shows its name, score and crops only; the reason opens with the details. */
+  compact?: boolean;
 };
 
-function OptionItem({ option: o, a, explanation: ex, sameAs, componentsLeftOut, cropName, open, onToggle, fill = false }: ItemProps) {
+function OptionItem({ option: o, a, explanation: ex, sameAs, componentsLeftOut, cropName, open, onToggle, fill = false, compact = false }: ItemProps) {
   const title = OPTION_LABELS[o.key];
   const crops = optionCropsText(o, cropName);
   const color = optionColors[o.key];
   const newCrops = o.new_crop_ids.map((id) => shortCropName(cropName(id)));
+  // Phone, closed (concise): only the tags that change the reading of the score stay.
+  const brief = compact && !open;
 
   return (
     <View style={[styles.option, fill && styles.fillCell, { borderLeftColor: color }]}>
@@ -128,19 +137,21 @@ function OptionItem({ option: o, a, explanation: ex, sameAs, componentsLeftOut, 
 
       <View style={styles.tags}>
         {o.top_total ? <Tag label="Top score" tone="good" /> : null}
-        <ConfidenceTag level={ex.confidence.level} />
+        {brief ? null : <ConfidenceTag level={ex.confidence.level} />}
         {o.assumed_calendar ? <Tag label="Typical months, assumed" tone="warn" /> : null}
         {sameAs ? <Tag label={`Same crops as ${sameAs}, other months`} tone="plain" /> : null}
-        {newCrops.length > 0 ? <Tag label={`New on your lot: ${newCrops.join(", ")}`} tone="plain" /> : null}
+        {newCrops.length > 0 && !brief ? <Tag label={`New on your lot: ${newCrops.join(", ")}`} tone="plain" /> : null}
       </View>
 
       <CropChips cropIds={o.slots.map((s) => s.crop_id)} cropName={cropName} />
       <Text style={text.small}>{crops}</Text>
 
-      <Section title="Why this option">
-        {/* Progressive disclosure (#165): the main reason; the rest opens with the details. */}
-        <Bullets lines={(open ? ex.why : ex.why.slice(0, 1)).map((l) => l.text)} />
-      </Section>
+      {brief ? null : (
+        <Section title="Why this option">
+          {/* Progressive disclosure (#165): the main reason; the rest opens with the details. */}
+          <Bullets lines={(open ? ex.why : ex.why.slice(0, 1)).map((l) => l.text)} />
+        </Section>
+      )}
 
       <Pressable
         onPress={onToggle}
@@ -149,7 +160,7 @@ function OptionItem({ option: o, a, explanation: ex, sameAs, componentsLeftOut, 
         accessibilityState={{ expanded: open }}
         style={({ pressed }) => [styles.toggle, pressed && styles.pressed]}
       >
-        <Text style={[text.bodyStrong, styles.toggleText]}>{open ? "Hide details" : "More reasons, scores and checks"}</Text>
+        <Text style={[text.bodyStrong, styles.toggleText]}>{open ? "Hide details" : compact ? "Why, scores and checks" : "More reasons, scores and checks"}</Text>
         <View style={open ? styles.chevronOpen : styles.chevron}>
           <Icon name="chevron" size={20} color={colors.green} />
         </View>
