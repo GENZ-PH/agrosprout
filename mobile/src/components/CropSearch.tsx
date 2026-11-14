@@ -57,7 +57,7 @@ export function CropSearch({ lotName, entries, chosen, onPick }: Props) {
 
   return (
     <View style={styles.block}>
-      <Text style={text.bodyStrong}>Search for a crop</Text>
+      <Text style={text.heading}>Search for a crop</Text>
       <View style={[styles.field, showing && styles.fieldOpen]}>
         <Icon name="search" size={20} color={colors.muted} />
         <TextInput

@@ -128,6 +128,13 @@ function LotCrops({ lot }: { lot: Lot }) {
 
       <CropSearch lotName={lot.name} entries={SEARCH_ENTRIES} chosen={chosen} onPick={(id) => setCrops(lot.id, chooseCrop(lot.crops, id))} />
 
+      <YourCrops
+        lotName={lot.name}
+        crops={lot.crops}
+        hasTop={top.length > 0}
+        onRemove={(id) => setCrops(lot.id, toggleCrop(lot.crops, id))}
+      />
+
       <View
         style={[styles.dataLine, line.tone === "ready" ? styles.dataReady : line.tone === "error" ? styles.dataError : null]}
         accessibilityLiveRegion="polite"
@@ -166,17 +173,14 @@ function LotCrops({ lot }: { lot: Lot }) {
         />
       ) : null}
 
-      <YourCrops
-        lotName={lot.name}
-        crops={lot.crops}
-        hasTop={top.length > 0}
-        onRemove={(id) => setCrops(lot.id, toggleCrop(lot.crops, id))}
-      />
     </View>
   );
 }
 
-/** The lot's crop with a ✕ to take it off. A farm saved before D13 changed may show several, until one is chosen. */
+/**
+ * The lot's crop, right under the search and bigger than the top crops (the farmer's own answer comes first), with a
+ * ✕ to take it off. A farm saved before D13 changed may show several, until one is chosen.
+ */
 function YourCrops({
   lotName,
   crops,
@@ -185,46 +189,48 @@ function YourCrops({
 }: {
   lotName: string;
   crops: readonly LotCrop[];
-  /** Top crops are shown above, so the empty text can point to them. */
+  /** Top crops are shown below, so the empty text can point to them. */
   hasTop: boolean;
   onRemove: (cropId: string) => void;
 }) {
   return (
     <View style={styles.yours} accessibilityLiveRegion="polite">
-      <Text style={text.bodyStrong} accessibilityRole="header">
+      <Text style={text.heading} accessibilityRole="header">
         {crops.length > 1 ? `Your crops on ${lotName}` : `Your crop on ${lotName}`}
       </Text>
       {crops.length > 1 ? (
         <Text style={[text.small, { color: colors.muted }]}>One crop per lot now: the crop you choose next replaces these.</Text>
       ) : null}
       {crops.length === 0 ? (
-        <Text style={[text.small, { color: colors.muted }]}>
-          {hasTop ? "None yet. Search for a crop above, or tap one of the top crops." : "None yet. Search for a crop above."}
-        </Text>
+        <View style={styles.emptyCrop}>
+          <Text style={[text.body, { color: colors.muted }]}>
+            {hasTop ? "None yet. Search for a crop above, or tap one of the top crops below." : "None yet. Search for a crop above."}
+          </Text>
+        </View>
       ) : (
-        <View style={styles.chips}>
-          {crops.map((c) => {
-            const other = isOtherCrop(c.crop_id);
-            const crop = other ? undefined : cropById(c.crop_id);
-            const name = other ? otherCropName(c.crop_id) : crop ? cropShortName(crop) : c.crop_id;
-            const sub = other ? "not scored" : (crop?.local_name ?? null);
-            return (
+        crops.map((c) => {
+          const other = isOtherCrop(c.crop_id);
+          const crop = other ? undefined : cropById(c.crop_id);
+          const name = other ? otherCropName(c.crop_id) : crop ? cropShortName(crop) : c.crop_id;
+          const sub = other ? "Not scored yet" : (crop?.local_name ?? null);
+          return (
+            <View key={c.crop_id} style={styles.cropCard}>
+              <Icon name="check" size={24} color={colors.green} />
+              <View style={[styles.flex, styles.cropText]}>
+                <Text style={text.title}>{name}</Text>
+                {sub ? <Text style={[text.body, { color: colors.muted }]}>{sub}</Text> : null}
+              </View>
               <Pressable
-                key={c.crop_id}
                 onPress={() => onRemove(c.crop_id)}
                 accessibilityRole="button"
                 accessibilityLabel={`Remove ${name} from ${lotName}${other ? ". It is not scored" : ""}`}
-                style={({ pressed }) => [styles.chip, pressed && styles.pressed]}
+                style={({ pressed }) => [styles.remove, pressed && styles.pressed]}
               >
-                <Text style={text.bodyStrong}>
-                  {name}
-                  {sub ? <Text style={[text.small, { color: colors.muted }]}> · {sub}</Text> : null}
-                </Text>
-                <Icon name="close" size={18} color={colors.muted} />
+                <Icon name="close" size={22} color={colors.ink} />
               </Pressable>
-            );
-          })}
-        </View>
+            </View>
+          );
+        })
       )}
     </View>
   );
@@ -254,18 +260,39 @@ const styles = StyleSheet.create({
   dataReady: { backgroundColor: colors.greenTint },
   dataError: { backgroundColor: colors.amberTint },
   yours: { gap: space.sm },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
-  chip: {
+  cropCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: space.sm,
-    minHeight: MIN_TOUCH,
+    gap: space.md,
+    minHeight: 64,
     paddingLeft: space.md,
     paddingRight: space.sm,
+    paddingVertical: space.sm,
     borderWidth: 2,
     borderColor: colors.green,
-    borderRadius: radius.pill,
+    borderRadius: radius.md,
     backgroundColor: colors.greenTint,
+  },
+  cropText: { gap: 2 },
+  remove: {
+    width: MIN_TOUCH,
+    height: MIN_TOUCH,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.surface,
+  },
+  emptyCrop: {
+    minHeight: 56,
+    justifyContent: "center",
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+    borderWidth: 2,
+    borderStyle: "dashed",
+    borderColor: colors.borderStrong,
+    borderRadius: radius.md,
   },
   pressed: { backgroundColor: colors.pressed },
 });
