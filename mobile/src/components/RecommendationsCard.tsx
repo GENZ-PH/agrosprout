@@ -22,7 +22,7 @@ import { colors, MIN_TOUCH, optionColors, radius, space, text } from "./theme";
 
 // Recommendations (#29, docs/11-user-flow.md S3, challenge objectives O16-O21): the farmer's own
 // crops (option A) next to the alternatives B-D, each with its scores and the engine's
-// Why Â· Evidence Â· Benefits Â· Trade-offs Â· Unknowns Â· Check locally and a confidence badge
+// Why · Evidence · Benefits · Trade-offs · Unknowns · Check locally and a confidence badge
 // (engine/explain.ts). The card only shows the engine's output; it decides nothing itself.
 
 type Props = {
@@ -115,7 +115,7 @@ function OptionItem({ option: o, a, explanation: ex, componentsLeftOut, cropName
         </View>
         <Text style={[text.bodyStrong, styles.flex]}>{title}</Text>
         <Text style={styles.total}>
-          {o.total === null ? "â€“" : Math.round(o.total)}
+          {o.total === null ? "–" : Math.round(o.total)}
           <Text style={text.caption}> /100</Text>
         </Text>
       </View>

@@ -101,7 +101,7 @@ export function SoilHealthChart({ result, options, cropName, onInfoPress }: Prop
               xKey="x"
               series={lined.map((r) => ({
                 yKey: r.key,
-                label: `${r.key} ${r.title}: ${r.end}`,
+                label: `${r.key} ${r.title}`,
                 color: LINE[r.key].color,
                 strokeWidth: LINE[r.key].width,
                 strokeDasharray: LINE[r.key].dash,
@@ -109,6 +109,7 @@ export function SoilHealthChart({ result, options, cropName, onInfoPress }: Prop
                 dot: { radius: 3.5, fill: "background", stroke: "series" },
               }))}
               yDomain={[axis.min, axis.max]}
+              formatYLabel={(v) => String(Math.round(v))}
               referenceLines={[{ y: axis.start, color: colors.dashed, strokeDasharray: [4, 4], strokeWidth: 1 }]}
               showVerticalGridLines={false}
               legend={{ position: "bottom", wrap: true }}
