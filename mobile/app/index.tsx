@@ -1,3 +1,4 @@
+import { Redirect } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 
 import { Button } from "../src/components/Button";
@@ -6,11 +7,16 @@ import { Icon } from "../src/components/Icon";
 import { Notice } from "../src/components/Notice";
 import { Screen } from "../src/components/Screen";
 import { colors, space, text } from "../src/components/theme";
+import { useFarmStore } from "../src/state/farm-store";
 
 // S0 Welcome (#21, docs/11-user-flow.md). No login, no account (D12).
-// TODO(#18): when the farm store lands, send a returning user (a saved farm with lots)
-// straight to the dashboard: `if (hasSavedFarm) return <Redirect href="/dashboard" />`.
+// A returning user goes straight to the dashboard: someone who finished onboarding once
+// (a lot with crops). A farmer still in onboarding (a lot drawn, no crops yet) who goes
+// Back from S1 stays here. The root layout renders screens only after the saved farm has
+// loaded, so `lots` is real here.
 export default function WelcomeScreen() {
+  const returning = useFarmStore((s) => s.lots.some((l) => l.crops.length > 0));
+  if (returning) return <Redirect href="/dashboard" />;
   return (
     <Screen
       footer={

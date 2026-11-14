@@ -1,5 +1,5 @@
 import * as Location from "expo-location";
-import { router } from "expo-router";
+import { type Href, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { BackHandler, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 
@@ -15,8 +15,9 @@ import { MapView, type MapViewHandle } from "../src/map/MapView";
 // S1 Draw your lot (#21, docs/11-user-flow.md): a full-screen map for ONE lot. Only a
 // back button floats at the top; the steps and actions sit in one panel at the bottom
 // (lower right on a wide screen). More lots are added later from the dashboard
-// (D32, proposed). A drawn lot is saved in the farm store (#18) at once, and the
-// lot sync starts fetching its NASA data in the background. Next → S2 crops.
+// (D32, proposed): "+ Add lot" opens this screen as /lots?new=1 for the next "Lot N",
+// then S2 for that lot only. A drawn lot is saved in the farm store (#18) at once, and
+// the lot sync starts fetching its NASA data in the background. Next → S2 crops.
 
 const MODE_HINT: Partial<Record<MapMode, (lot: string) => string>> = {
   sketch: (lot) => `Trace around ${lot} with one finger. Two fingers move and zoom the map.`,
@@ -25,6 +26,7 @@ const MODE_HINT: Partial<Record<MapMode, (lot: string) => string>> = {
 };
 
 const START_HINT = "Move the map to your farm and zoom in until you can see the edges of your lot.";
+const ADD_HINT = "Move the map to your new lot until you can see its edges. Your other lots show as named dots.";
 const SAVED_HINT = "Your lot is saved. To fix its edges, tap Adjust.";
 const ADJUST_HINT = "Drag the white dots to fit your lot. Tap a yellow dot to add a corner. Press and hold a dot to remove it.";
 
@@ -42,7 +44,9 @@ const SHEET_WIDE_WIDTH = 400;
 const SHEET_PHONE_BOTTOM = 44;
 
 export default function LotsScreen() {
-  const { lots, rows, ensureStarted, rename, setShape, undo } = useLotEditor();
+  const { lots, rows, ensureStarted, startNewLot, clearHistory, rename, setShape, undo } = useLotEditor();
+  /** Opened from "+ Add lot" on the dashboard: draw one more lot. */
+  const adding = useLocalSearchParams<{ new?: string }>().new === "1";
   const mapRef = useRef<MapViewHandle>(null);
   const wide = useWindowDimensions().width >= WIDE;
   const [sheetHeight, setSheetHeight] = useState(0);
@@ -55,12 +59,17 @@ export default function LotsScreen() {
     [wide, sheetHeight],
   );
 
-  // A new farm starts with an empty "Lot 1" to draw.
-  useLayoutEffect(() => ensureStarted(), [ensureStarted]);
-
   // The one lot on this screen: the saved lot, else the lot not drawn yet.
-  const [savedId, setSavedId] = useState<string | undefined>(() => lots[0]?.id);
-  const lot = rows.find((r) => r.id === savedId) ?? rows.find((r) => r.area_ha === null) ?? rows[0];
+  const [savedId, setSavedId] = useState<string | undefined>(() => (adding ? undefined : lots[0]?.id));
+  // Undo covers this visit only. A new farm starts with an empty "Lot 1" to draw;
+  // "+ Add lot" starts the next "Lot N" (the lot not drawn yet, found below).
+  useLayoutEffect(() => {
+    clearHistory();
+    if (adding) startNewLot();
+    else ensureStarted();
+  }, [adding, clearHistory, ensureStarted, startNewLot]);
+  const lot =
+    rows.find((r) => r.id === savedId) ?? rows.find((r) => r.area_ha === null) ?? (adding ? undefined : rows[0]);
   const saved = lots.find((l) => l.id === lot?.id);
   const name = lot?.name ?? "your lot";
 
@@ -70,22 +79,28 @@ export default function LotsScreen() {
   const [areaText, setAreaText] = useState("");
   const [nameText, setNameText] = useState("");
   const [editingHa, setEditingHa] = useState<number | null>(null);
-  const [status, setStatus] = useState(() => (lots.length > 0 ? SAVED_HINT : START_HINT));
+  const [status, setStatus] = useState(() => (adding ? ADD_HINT : lots.length > 0 ? SAVED_HINT : START_HINT));
 
   const drawing = mode === "sketch" || mode === "corners" || mode === "pin";
   /** The lot's points are showing (map "select" mode). */
   const adjusting = mode === "select";
   const typedArea = parseHectares(areaText);
 
-  // Only this lot is on the map: an outline, or a pin for a pin lot.
+  // Only this lot is on the map: an outline, or a pin for a pin lot. When adding a lot,
+  // the farm's other lots show as named dots, and the map starts near them.
+  const others = useMemo(() => (adding ? lots.filter((l) => l.id !== lot?.id) : []), [adding, lots, lot?.id]);
   const mapLots = useMemo<MapLot[]>(
     () => (saved && !isPinLot(saved) ? [{ id: saved.id, name: saved.name, geometry: saved.geometry }] : []),
     [saved],
   );
   const mapPlaces = useMemo<MapPlace[]>(
-    () => (saved && isPinLot(saved) ? [{ id: saved.id, name: saved.name, point: saved.centroid }] : []),
-    [saved],
+    () => [
+      ...(saved && isPinLot(saved) ? [{ id: saved.id, name: saved.name, point: saved.centroid }] : []),
+      ...others.map((l) => ({ id: l.id, name: l.name, point: l.centroid })),
+    ],
+    [saved, others],
   );
+  const nextHref: Href = adding && lot ? { pathname: "/crops", params: { lot: lot.id } } : "/crops";
 
   const start = (next: "sketch" | "corners" | "pin") => {
     setPanel(null);
@@ -104,7 +119,7 @@ export default function LotsScreen() {
 
   const cancel = () => {
     setMode("view");
-    setStatus(saved ? SAVED_HINT : START_HINT);
+    setStatus(saved ? SAVED_HINT : adding ? ADD_HINT : START_HINT);
   };
 
   const adjust = () => {
@@ -118,7 +133,7 @@ export default function LotsScreen() {
     setStatus(SAVED_HINT);
   };
 
-  const goBack = () => (router.canGoBack() ? router.back() : router.replace("/"));
+  const goBack = () => (router.canGoBack() ? router.back() : router.replace(adding ? "/dashboard" : "/"));
 
   // Android Back stops drawing or adjusting instead of leaving the screen.
   useEffect(() => {
@@ -218,7 +233,7 @@ export default function LotsScreen() {
       {status}
     </Text>
   );
-  const step = <Text style={styles.step}>STEP 1 OF 2</Text>;
+  const step = <Text style={styles.step}>{adding ? "NEW LOT" : "STEP 1 OF 2"}</Text>;
 
   return (
     <Screen scrollEnabled={false} edgeToEdge>
@@ -227,6 +242,8 @@ export default function LotsScreen() {
           ref={mapRef}
           lots={mapLots}
           places={mapPlaces}
+          center={others[0]?.centroid}
+          zoom={others.length > 0 ? MIN_DRAW_ZOOM : undefined}
           mode={mode}
           activeLotId={lot?.id}
           inset={inset}
@@ -370,7 +387,12 @@ export default function LotsScreen() {
                     )}
                     <Tool icon="draw" label="Redraw" onPress={() => start("sketch")} />
                   </View>
-                  <Button label="Next: your crops" iconAfter="chevron" href="/crops" size="lg" />
+                  <Button
+                    label={adding ? `Next: crops for ${name}` : "Next: your crops"}
+                    iconAfter="chevron"
+                    href={nextHref}
+                    size="lg"
+                  />
                 </>
               )}
             </>
@@ -378,7 +400,7 @@ export default function LotsScreen() {
             <>
               {step}
               <Text style={text.title} accessibilityRole="header">
-                Draw your lot
+                {adding ? `Draw ${name}` : "Draw your lot"}
               </Text>
               {hint}
               <Button label="Draw with your finger" icon="draw" size="lg" onPress={() => start("sketch")} />

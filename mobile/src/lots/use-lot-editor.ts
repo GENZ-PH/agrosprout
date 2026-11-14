@@ -13,7 +13,7 @@ const farmLots: FarmLotsApi = {
   setTravel: (lotId, travel) => useFarmStore.getState().setTravel(lotId, travel),
 };
 
-/** One editor for the app, so placeholders and Undo survive leaving S1 and coming back. */
+/** One editor for the app, so a lot not drawn yet survives leaving S1. S1 clears Undo when it opens. */
 export const lotEditor = createLotEditor(farmLots);
 
 /** S1: saved lots, placeholders, the rows for the list, and the editing actions. */
