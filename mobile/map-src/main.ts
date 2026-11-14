@@ -122,6 +122,8 @@ const WHITE = "#FFFFFF";
 const adapter = new TerraDrawLeafletAdapter({ lib: L, map });
 
 let mode: MapMode = "view";
+/** Set by `init`: the map sits inside a scrolling page (the dashboard), see bridge.ts. */
+let inPage = false;
 let activeLotId: string | undefined;
 
 // Dashboard farm map (#124): a lot with a style is filled with its color, and the lot the
@@ -375,13 +377,18 @@ function setMode(next: MapMode, lotId?: string) {
     map.dragging.disable();
     draw.setMode("freehand");
   } else {
-    map.dragging.enable();
+    // Dashboard overview ("view"): the page scrolls past the map, so the mouse wheel scrolls the
+    // page and, on a phone, one finger scrolls the page too. The + and - buttons still zoom.
+    if (next === "view" && inPage && L.Browser.mobile) map.dragging.disable();
+    else map.dragging.enable();
     if (next === "corners") draw.setMode("polygon");
     else if (next === "select") {
       draw.setMode("select");
       if (lotId && draw.hasFeature(lotId)) draw.selectFeature(lotId);
     } else draw.setMode("static"); // "view" and "pin": lots show without points, taps don't select
   }
+  if (next === "view" && inPage) map.scrollWheelZoom.disable();
+  else map.scrollWheelZoom.enable();
   document.body.dataset.mode = next;
 }
 
@@ -478,6 +485,7 @@ function receive(msg: AppToMap) {
     case "init": {
       setBasemap(msg.basemap ?? DEFAULT_BASEMAP);
       if (msg.inset) inset = msg.inset;
+      inPage = msg.inPage === true;
       setLots(msg.lots);
       setPlaces(msg.places);
       if (msg.lots.length) fitLots();

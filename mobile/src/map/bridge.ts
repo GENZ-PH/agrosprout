@@ -69,6 +69,11 @@ export type AppToMap =
       zoom?: number;
       basemap?: BasemapId;
       inset?: MapInset;
+      /**
+       * The map sits inside a scrolling page (the dashboard's farm map). In "view" mode the mouse
+       * wheel and, on a phone, one finger scroll the page instead of the map; + and - still zoom.
+       */
+      inPage?: boolean;
     }
   | { type: "setMode"; mode: MapMode; activeLotId?: string }
   /** Replace all lots (after add, rename, delete, undo). The map keeps unchanged shapes as they are. */

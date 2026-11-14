@@ -65,5 +65,5 @@ export const text = {
   body: { fontSize: 16, lineHeight: 23, color: colors.ink },
   bodyStrong: { fontSize: 16, lineHeight: 23, fontWeight: "600", color: colors.ink },
   small: { fontSize: 14, lineHeight: 20, color: colors.ink },
-  caption: { fontSize: 13, lineHeight: 18, color: colors.muted },
+  caption: { fontSize: 14, lineHeight: 20, color: colors.muted },
 } satisfies Record<string, TextStyle>;

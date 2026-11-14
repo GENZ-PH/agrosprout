@@ -18,10 +18,12 @@ type Props = {
    * Phones look the same either way: both are the full width minus the side padding.
    */
   width?: "narrow" | "wide";
+  /** Floats over the screen, e.g. the dashboard's "Adjust results" button (#165). */
+  overlay?: ReactNode;
 };
 
 /** Page frame for every screen: safe area, scrolling body, optional pinned footer. */
-export function Screen({ children, footer, scrollEnabled = true, edgeToEdge = false, width = "narrow" }: Props) {
+export function Screen({ children, footer, scrollEnabled = true, edgeToEdge = false, width = "narrow", overlay }: Props) {
   const max = width === "wide" ? styles.wide : null;
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom", "left", "right"]}>
@@ -34,6 +36,7 @@ export function Screen({ children, footer, scrollEnabled = true, edgeToEdge = fa
         {children}
       </ScrollView>
       {footer ? <View style={[styles.footer, max]}>{footer}</View> : null}
+      {overlay}
     </SafeAreaView>
   );
 }

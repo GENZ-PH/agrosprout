@@ -59,6 +59,7 @@ export function FarmMapCard({ lots, views, selectedId, onSelect, wide }: Props) 
         <MapView
           lots={mapLots}
           mode="view"
+          inPage
           activeLotId={selectedId}
           inset={wide ? MAP_INSET.wide : MAP_INSET.phone}
           onMessage={onMessage}
