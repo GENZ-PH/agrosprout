@@ -8,17 +8,32 @@ export { effectiveRain, waterBalance, waterBalanceRange } from "./waterBalance";
 export type { Scenario, WaterBalance, WaterBalanceOutcome, WaterMonth } from "./waterBalance";
 export { cropFit } from "./cropFit";
 export type { CropFit, FitLevel, FitReason, FitReasonCode, SeasonFit } from "./cropFit";
+/** A/B/C/D rotation options with component scores (07 §3-4, #26). */
+export { rotations, tooSimilar } from "./rotations";
+export type {
+  OptionKey,
+  OptionKind,
+  RotationGap,
+  RotationOption,
+  RotationsInput,
+  RotationsResult,
+} from "./rotations";
+export { priorityWeights, totalScore, COMPONENT_KEYS } from "./scores";
+export type {
+  ComponentKey,
+  ComponentScores,
+  ComponentWeights,
+  PriorityKey,
+  RotationMetrics,
+  RotationSlot,
+  SlotOrigin,
+} from "./scores";
 
 class NotImplementedYet extends Error {
   constructor(what: string, issue: string) {
     super(`${what} is not implemented yet (${issue})`);
     this.name = "NotImplementedYet";
   }
-}
-
-/** A/B/C/D rotation options with component scores (07 §3-4). */
-export function rotations(..._args: unknown[]): never {
-  throw new NotImplementedYet("rotations", "#26");
 }
 
 /** "Your months vs better months" planting-window scan (07 §3b). */
