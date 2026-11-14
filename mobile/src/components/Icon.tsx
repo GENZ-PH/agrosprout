@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { View } from "react-native";
 import Svg, { Circle, G, Path, Rect } from "react-native-svg";
 
 import { colors } from "./theme";
@@ -101,17 +102,15 @@ type Props = {
 
 /** Decorative icon. The control around it carries the accessible label. */
 export function Icon({ name, size = 24, color = colors.ink, strokeWidth = 2 }: Props) {
+  // Hidden from screen readers (#45): the View's aria-hidden works on web, Android and iOS.
+  // (react-native-svg would pass the native-only accessibility props to the DOM on web.)
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24">
-      <G
-        fill="none"
-        stroke={color}
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        {ICONS[name]}
-      </G>
-    </Svg>
+    <View aria-hidden style={{ width: size, height: size }}>
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        <G fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+          {ICONS[name]}
+        </G>
+      </Svg>
+    </View>
   );
 }

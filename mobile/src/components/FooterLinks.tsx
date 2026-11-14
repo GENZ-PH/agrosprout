@@ -22,6 +22,6 @@ export function FooterLinks() {
 
 const styles = StyleSheet.create({
   row: { flexDirection: "row", gap: space.lg },
-  link: { minHeight: MIN_TOUCH, justifyContent: "center" },
+  link: { minHeight: MIN_TOUCH, minWidth: MIN_TOUCH, justifyContent: "center", alignItems: "center" },
   text: { fontSize: 14, lineHeight: 20, color: colors.blue, textDecorationLine: "underline" },
 });
