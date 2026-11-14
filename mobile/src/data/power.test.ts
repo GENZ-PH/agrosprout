@@ -197,8 +197,13 @@ test('provenance and caveats are filled; daily-only metrics are null for live lo
     assert.ok(p.source.includes('NASA POWER'));
     assert.equal(p.retrieved, '2026-11-14');
     assert.equal(p.period, '2023-2024');
-    assert.ok(p.native_res.includes('0.5'));
+    assert.ok(p.native_res.includes('grid cell'));
   }
+  // Solar radiation is CERES SYN1deg (1 x 1 degree), not the 0.5 x 0.625 degree weather model (NASA POWER docs).
+  const res = (f: string) => d.provenance.find((p) => p.field === f)?.native_res;
+  assert.equal(res('monthly.solar_mj_m2_day'), '1° × 1° grid cell');
+  assert.equal(res('monthly.precip_mm'), '0.5° × 0.625° grid cell');
+  assert.ok(res('monthly.et0_mm')?.includes('solar radiation 1° × 1°'));
   assert.ok(d.caveats.some((c) => c.includes('same climate numbers')));
   assert.ok(d.caveats.some((c) => c.includes('742 m')));
   assert.equal(d.elevation_m, null); // SRTM elevation arrives with #9
