@@ -21,12 +21,13 @@ Not used yet (add a row only if it ships): SMAP and MODIS through AppEEARS (#5),
 
 ## Other data
 
-Fetched by the pipeline and bundled with the app. The app doesn't show either yet (the explainer text in `mobile/src/content/explainers.ts` already names both); drop them from this list and from the submission if no screen uses them by the freeze.
+Fetched by the pipeline and bundled with the app. The app doesn't show PSA or ONI yet (the explainer text in `mobile/src/content/explainers.ts` already names both); drop those two from this list and from the submission if no screen uses them by the freeze.
 
 | Data | Code | What ships | Terms |
 |---|---|---|---|
 | **PSA OpenSTAT**, palay and corn production and area harvested by province (tables 0012E4EVCP0 and 0022E4EAHC0), https://openstat.psa.gov.ph/ | `pipeline/fetch_psa.py` | `mobile/assets/data/psa/yields.json` | Not checked |
 | **NOAA Climate Prediction Center, Oceanic Niño Index (ONI)**, https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt | `pipeline/fetch_oni.py` | `mobile/assets/data/context.json` | Not checked |
+| **FAO Ecocrop database**, crop names only (EcoPortCode, scientific and common names), full copy in OpenCLIM/ecocrop `EcoCrop_DB.csv` at commit `f13577f4237604b15d85d8e43741714a2d1eb2d4`, https://github.com/OpenCLIM/ecocrop. Used by the S2 crop search (#152); no Ecocrop-only crop is scored | `pipeline/build_ecocrop_names.py` | `mobile/assets/data/ecocrop-names.json` | Data © FAO. FAO website terms (https://www.fao.org/contact-us/terms/en/, read 2026-11-14): non-commercial use allowed with acknowledgement of FAO as source and copyright holder, no FAO endorsement implied. Credit shown in the app: "Crop names: FAO Ecocrop © FAO, via OpenCLIM/ecocrop". Repository code: UK Open Government Licence v3 |
 
 ## Methods and references
 
