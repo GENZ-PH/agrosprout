@@ -10,6 +10,7 @@ import { FooterLinks } from "../src/components/FooterLinks";
 import { Header } from "../src/components/Header";
 import { HarvestCard } from "../src/components/HarvestCard";
 import { WhatIfCard } from "../src/components/WhatIfCard";
+import { YearCalendar } from "../src/components/YearCalendar";
 import type { Scenario } from "../src/engine/scenario";
 import { LotTabs } from "../src/components/LotTabs";
 import { Notice } from "../src/components/Notice";
@@ -167,6 +168,9 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
       const harvestCard = (
         <HarvestCard lot={lot} destinations={farm.destinations} harvest={analysis.harvest} cropName={cropName} period={period} />
       );
+      const yearCalendar = (
+        <YearCalendar options={analysis.rotations.options} lotName={lot.name} cropById={cropById} period={period} />
+      );
       const whatIf = (
         <WhatIfCard scenario={scenario} onChange={setScenario} notes={analysis.scenario?.notes ?? []} period={period} />
       );
@@ -193,6 +197,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
               </View>
               {priorities}
               {recommendations}
+              {yearCalendar}
               {monthsCompare}
               {harvestCard}
               {whatIf}
@@ -203,6 +208,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
               {fit}
               {priorities}
               {recommendations}
+              {yearCalendar}
               {monthsCompare}
               {harvestCard}
               {whatIf}
