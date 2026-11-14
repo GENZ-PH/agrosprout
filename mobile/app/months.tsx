@@ -232,7 +232,10 @@ const CELL_HINT: Record<CellState, string> = {
   none: "",
 };
 
-/** 12 month buttons, 6 per row. */
+/**
+ * 12 month buttons, 4 per row (Jan-Apr, May-Aug, Sep-Dec). Six per row was too narrow for
+ * "Harvest" on a 360 dp phone and broke into rows of 5, 5 and 2 (#45).
+ */
 function MonthStrip({
   cropName,
   season,
@@ -313,7 +316,7 @@ const styles = StyleSheet.create({
   pressed: { backgroundColor: colors.pressed },
   strip: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   cell: {
-    flexBasis: "15%",
+    flexBasis: "22%",
     flexGrow: 1,
     minHeight: 52,
     alignItems: "center",
@@ -325,7 +328,7 @@ const styles = StyleSheet.create({
   },
   cellLabel: { ...text.bodyStrong, fontSize: 15 },
   cellLabelOn: { color: colors.white },
-  cellSub: { fontSize: 11, lineHeight: 14, fontWeight: "600", color: colors.white },
+  cellSub: { fontSize: 12, lineHeight: 15, fontWeight: "600", color: colors.white },
 });
 
 const CELL_STYLE = StyleSheet.create({
