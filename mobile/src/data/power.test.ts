@@ -10,6 +10,7 @@ import {
   PowerParseError,
   daysInMonth,
   ensureLotData,
+  localDay,
   lotDataKey,
   parsePowerMonthly,
   percentile,
@@ -373,4 +374,10 @@ test('ensureLotData: unreadable stored data is ignored and refetched', async () 
   const r = await ensureLotData({ lotId: 'a', lat: 8.2, lon: 124.2, store, fetcher: async () => fixture });
   assert.equal(r.status, 'ready');
   assert.equal(r.fetched, true);
+});
+
+test('the download day is the phone\'s own calendar day, not the UTC day (#36)', () => {
+  // Built from local date parts, so the test reads the same in any time zone.
+  assert.equal(localDay(new Date(2026, 10, 15, 1, 40)), '2026-11-15');
+  assert.equal(localDay(new Date(2026, 0, 2, 23, 59)), '2026-01-02');
 });

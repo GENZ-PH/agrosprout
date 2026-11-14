@@ -179,6 +179,15 @@ function validate(json: unknown): PowerResponse {
 }
 
 /** Turn a NASA POWER monthly response into 12-month climatology for one lot. */
+/**
+ * The phone's own calendar day, YYYY-MM-DD, for `retrieved`. Not the UTC day: in the Philippines
+ * (UTC+8) a download between midnight and 08:00 would otherwise read as the day before (#36).
+ */
+export function localDay(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 export function parsePowerMonthly(json: unknown, retrieved: string, lotId = ''): LotData {
   const r = validate(json);
   const [lon, lat, elev] = r.geometry.coordinates;
@@ -358,7 +367,7 @@ export async function ensureLotData(args: {
 
   try {
     const json = await fetcher(want.lat, want.lon, signal);
-    const data = parsePowerMonthly(json, now().toISOString().slice(0, 10), lotId);
+    const data = parsePowerMonthly(json, localDay(now()), lotId);
     await store.set(key, JSON.stringify(data));
     return { status: 'ready', data, fetched: true };
   } catch (err) {
