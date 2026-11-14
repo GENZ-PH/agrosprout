@@ -79,6 +79,7 @@ export default function DashboardScreen() {
   const farm = useFarm();
   const { lot: lotParam } = useLocalSearchParams<{ lot?: string }>();
   const lot = farm.lots.find((l) => l.id === lotParam) ?? farm.lots[0];
+  const updateLotName = useFarmStore((s) => s.updateLot);
   const views = useFarmLotViews(farm);
   const { wide, width } = useLayout();
   // On a big window (mostly judges and technicians), the NASA data panel starts open once per
@@ -145,6 +146,7 @@ export default function DashboardScreen() {
             selectedId={lot.id}
             onSelect={selectLot}
             onAdd={() => router.push({ pathname: "/lots", params: { new: "1" } })}
+            onRename={(id, name) => updateLotName(id, { name })}
           />
           {onWater && views[lot.id]?.kind !== "no-soil" ? (
             <Narrow>

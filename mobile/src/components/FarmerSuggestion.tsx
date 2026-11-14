@@ -131,12 +131,9 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
       ) : null}
 
       {check ? (
-        <View style={styles.check}>
-          <Icon name="alert" size={20} color={colors.amber} />
-          <View style={styles.flex}>
-            <Text style={text.bodyStrong}>Check first with your technician</Text>
-            <Text style={text.body}>{check}</Text>
-          </View>
+        <View style={styles.reasons}>
+          <Text style={text.bodyStrong}>Ask your technician first</Text>
+          <Text style={text.body}>{check}</Text>
         </View>
       ) : null}
 
@@ -174,6 +171,5 @@ const styles = StyleSheet.create({
   swatch: { width: 14, height: 14, borderRadius: 3 },
   reasons: { gap: space.sm },
   reason: { flexDirection: "row", gap: space.sm, alignItems: "flex-start" },
-  check: { flexDirection: "row", gap: space.sm, padding: space.md, borderRadius: radius.md, backgroundColor: colors.amberTint },
   flex: { flex: 1, minWidth: 0 },
 });
