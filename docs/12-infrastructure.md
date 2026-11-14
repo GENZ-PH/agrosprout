@@ -163,6 +163,15 @@ const farm = useFarm();                             // whole Farm for the engine
 
 The logic is in `farm-core.ts` (no React Native imports) and is tested in `farm-core.test.ts`. A change to the saved shape needs `FARM_VERSION` bumped, `Farm.version` updated in types.ts, and a `migrate` in `farmPersistOptions`.
 
+### Backup file (#49)
+
+With no account, uninstalling the app erases the farm, so the farmer can keep a backup file. `src/state/backup.ts` builds and applies it; the screen does the file part.
+
+1. **Save:** `serializeBackup(await makeBackup())`, named `backupFileName(backup)`. The file holds the `Farm` and each lot's saved NASA POWER data. Web: download. Android: share sheet.
+2. **Restore:** read the picked file, `parseBackup(text)` (checks it against the `Farm` type and versions and gives a plain reason when it is not valid), show `describeBackup(backup)` (e.g. "2 lots, 2 crops, 1 place") and ask to confirm, then `applyBackup(backup)`.
+
+Nothing is uploaded. Lots whose climate data is not in the file come back as `pending` and are fetched again when online.
+
 `useHydrationReport()` (`src/state/hydration.ts`) tells a screen whether each store loaded normally (`ready`), was restored from a backup (`recovered`) or could not be read (`failed`), so the Frontend can show a message. No UI is included.
 
 ## Why it is set up this way
