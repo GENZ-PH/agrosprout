@@ -1,0 +1,12 @@
+{
+  "_note": "D1 (demo site coordinates) is still open. The one point below is the NASA POWER reference point already used in docs/03 and the test fixture (Iligan area, lowland). It is PROVISIONAL: the team replaces or adds the lowland paddy lot and the upland lot, then re-runs build_demo.py.",
+  "farms": [
+    {
+      "id": "lanao-norte-demo-1",
+      "name": "Lanao del Norte demo farm (provisional point)",
+      "lat": 8.23,
+      "lon": 124.24,
+      "elevation_m": null
+    }
+  ]
+}

@@ -1,6 +1,8 @@
 /// <reference types="node" />
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   DAYS_IN_MONTH,
   et0Day,
@@ -231,4 +233,40 @@ test('monthlyEt0 rejects series that are not 12 long', () => {
       }),
     RangeError,
   );
+});
+
+/**
+ * Same cases as pipeline/test_et0.py (pipeline/fixtures/et0_shared_cases.json, #57), so the
+ * Python and TypeScript ET0 code cannot drift apart. Run from `mobile/` (like engine.test.ts).
+ */
+test('monthlyEt0 matches the cases shared with the Python pipeline', () => {
+  type Series = (number | null)[];
+  const data = JSON.parse(
+    readFileSync(join(process.cwd(), '..', 'pipeline', 'fixtures', 'et0_shared_cases.json'), 'utf8'),
+  ) as {
+    tolerance_mm_day: number;
+    cases: {
+      name: string;
+      inputs: { tmax_c: Series; tmin_c: Series; rh_mean_pct: Series; wind_ms_2m: Series; rs_mj_m2_day: Series; lat_deg: number; elev_m: number | null };
+      expected: { et0_mm_day: Series; elevation_assumed: boolean };
+    }[];
+  };
+  assert.ok(data.cases.length > 0);
+  for (const c of data.cases) {
+    const r = monthlyEt0({
+      tmaxC: c.inputs.tmax_c,
+      tminC: c.inputs.tmin_c,
+      rhMeanPct: c.inputs.rh_mean_pct,
+      windMs2m: c.inputs.wind_ms_2m,
+      rsMjM2Day: c.inputs.rs_mj_m2_day,
+      latDeg: c.inputs.lat_deg,
+      elevM: c.inputs.elev_m,
+    });
+    assert.equal(r.elevationAssumed, c.expected.elevation_assumed, c.name);
+    c.expected.et0_mm_day.forEach((want, m) => {
+      const got = r.et0MmDay[m];
+      if (want === null) assert.equal(got, null, `${c.name} month ${m + 1}`);
+      else assert.ok(got !== null && Math.abs(got - want) <= data.tolerance_mm_day, `${c.name} month ${m + 1}: ${got} vs ${want}`);
+    });
+  }
 });

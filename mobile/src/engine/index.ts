@@ -16,6 +16,9 @@ export type { Scenario as ClimateScenario, ScenarioResult } from "./scenario";
 export { harvestMonthMinutes, tripHours, tripsPerHarvest, wetRoad } from "./harvestTrips";
 export type { HarvestTrips, TripsGap, WetRoad } from "./harvestTrips";
 export { explain, COMPONENT_LABELS } from "./explain";
+/** 3-year Soil Health Index line per option: a relative indicator from this model (07 §4, #43). */
+export { soilHealth, soilHealthTrajectory } from "./soilHealth";
+export type { OptionSoilHealth, SoilHealthPoint, SoilHealthResult, SoilHealthTrajectory } from "./soilHealth";
 export type { Confidence, ConfidenceLevel, ConfidenceReason, ExplainInput, ExplainLine, Explanation } from "./explain";
 export type {
   PlantingWindowInput,

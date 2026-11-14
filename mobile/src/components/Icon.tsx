@@ -68,6 +68,8 @@ const ICONS = {
     </>
   ),
   draw: <Path d="M3 17c3-3 5 1 8-2s3-7 6-7 3 3 4 4" />,
+  expand: <Path d="M14 4h6v6M10 20H4v-6M20 4l-6 6M4 20l6-6" />,
+  collapse: <Path d="M4 14h6v6M20 10h-6V4M14 10l6-6M10 14l-6 6" />,
   corners: <Path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4" />,
   pin: (
     <>
