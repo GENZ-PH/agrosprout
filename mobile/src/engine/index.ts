@@ -13,6 +13,8 @@ export { rotations, tooSimilar } from "./rotations";
 export { plantingWindow } from "./plantingWindow";
 export { applyScenario } from "./scenario";
 export type { Scenario as ClimateScenario, ScenarioResult } from "./scenario";
+export { harvestMonthMinutes, tripHours, tripsPerHarvest, wetRoad } from "./harvestTrips";
+export type { HarvestTrips, TripsGap, WetRoad } from "./harvestTrips";
 export { explain } from "./explain";
 export type { Confidence, ConfidenceLevel, ConfidenceReason, ExplainInput, ExplainLine, Explanation } from "./explain";
 export type {
