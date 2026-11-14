@@ -12,6 +12,12 @@ const ICONS = {
   check: <Path d="M5 12l5 5 9-10" />,
   chevron: <Path d="M9 6l6 6-6 6" />,
   plus: <Path d="M12 5v14M5 12h14" />,
+  search: (
+    <>
+      <Circle cx={11} cy={11} r={6.5} />
+      <Path d="M16 16l4.5 4.5" />
+    </>
+  ),
   info: (
     <>
       <Circle cx={12} cy={12} r={9} />
