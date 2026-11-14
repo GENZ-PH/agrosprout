@@ -78,6 +78,7 @@ export const CROP_LIBRARY_FIXTURE: CropLibrary = {
       "cover_value": null,
       "perishability": "low",
       "storable_if_dried": true,
+      "forage_residue": true,
       "yield_t_per_ha": 4.53,
       "typical_calendar": [
         {
@@ -194,6 +195,7 @@ export const CROP_LIBRARY_FIXTURE: CropLibrary = {
       "cover_value": null,
       "perishability": "low",
       "storable_if_dried": true,
+      "forage_residue": true,
       "yield_t_per_ha": 3.19,
       "typical_calendar": [
         {
@@ -310,6 +312,7 @@ export const CROP_LIBRARY_FIXTURE: CropLibrary = {
       "cover_value": null,
       "perishability": "low",
       "storable_if_dried": true,
+      "forage_residue": true,
       "yield_t_per_ha": 0.63,
       "typical_calendar": [
         {

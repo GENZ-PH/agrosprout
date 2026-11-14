@@ -22,7 +22,8 @@ export type ExplainerId =
   | "season-calendar"
   | "what-if"
   | "farm-map"
-  | "data-sources";
+  | "data-sources"
+  | "climate-extremes";
 
 export interface Explainer {
   id: ExplainerId;
@@ -123,10 +124,13 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   priorities: {
     id: "priorities",
     title: "What matters to you",
-    what: "Four choices: save water, build soil, extra income and less work. Tapping them re-ranks the options straight away, on your phone.",
+    what: "Five choices: save water, build soil, extra income, less work and feed animals. Tapping them re-ranks the options straight away, on your phone.",
     source: "Your own answers. The choices only change how much each score counts; they do not change the data.",
-    read: "All four start equal. Tap the ones that matter most to you: they count twice as much as the others. See which option moves to the top, and tap again to undo.",
-    limits: ["A priority can only count when the data behind it exists; for example income and market access need crop and destination information."],
+    read: "All five start equal. Tap the ones that matter most to you: they count twice as much as the others. See which option moves to the top, and tap again to undo.",
+    limits: [
+      "A priority can only count when the data behind it exists; for example income and market access need crop and destination information.",
+      "Feed animals only counts whether a crop's straw, stalks or vines are commonly fed to animals (Feedipedia), not how much feed or how good it is.",
+    ],
   },
   "months-compare": {
     id: "months-compare",
@@ -169,6 +173,20 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     limits: [
       "It is a what-if, not a forecast.",
       "Humidity, wind, sunshine and soil wetness are kept at today's values.",
+    ],
+  },
+  "climate-extremes": {
+    id: "climate-extremes",
+    title: "Heat, heavy rain, frost and long-term trends",
+    what: "How many days a month are usually very hot (above 35 °C), have very heavy rain (above 50 mm in one day) or frost (below 0 °C), and whether rain, the dry-season water shortage and the daytime heat have been going up or down over the years.",
+    source:
+      "NASA POWER daily data (community AG): daily maximum and minimum air temperature at 2 m (T2M_MAX, T2M_MIN) and corrected rain (PRECTOTCORR), from NASA's MERRA-2 weather model. Years used: {period}. The frost line, below 0 °C, is the frost-day index of the WMO climate-extremes indices (ETCCDI); 35 °C and 50 mm are the cut-offs this app uses for heat and heavy-rain days. Trends use Sen's slope with the Mann-Kendall test.",
+    read: "Each number is the average count of days in that month across the years used, so 0.2 means about one such day every five years. A trend is called clear only when the Mann-Kendall p-value is below 0.05; otherwise the change could be chance, and the card says there is no clear trend.",
+    limits: [
+      "The numbers describe a NASA grid cell, roughly 50 km across (0.5° × 0.625°), not your exact field.",
+      "It is weather-model data, not a rain gauge or weather station on your farm, and a single storm can be missed or spread out.",
+      "Temperatures are for the air 2 m above the ground at the cell's average height; a field higher or lower than that is cooler or warmer.",
+      "A trend over these years describes the past; it is not a forecast.",
     ],
   },
 };
@@ -348,7 +366,7 @@ export const CHALLENGE_DATASETS: readonly DatasetStatus[] = [
   {
     name: "SRTM (elevation and slope)",
     status: "Used",
-    note: "Every lot gets its field elevation and slope from SRTM (lots you draw: the lot centre rounded to about 110 m is sent once, with a signal). The elevation sets the air pressure in the evaporation sum. The slope is shown next to your land type; the erosion score still uses the land type you give.",
+    note: "Every lot gets its field elevation and slope from SRTM (lots you draw: the lot centre rounded to about 110 m is sent once, with a signal). The elevation sets the air pressure in the evaporation sum. The erosion score uses the slope with the RUSLE slope-steepness factor (USDA). On land you mark as lowland paddy, and when the slope could not be loaded, it uses the land type you give.",
   },
   { name: "SMAP (soil moisture)", status: "Not used", note: "Soil wetness comes from NASA POWER, a model estimate, not from the SMAP satellite." },
   { name: "GPM (rainfall)", status: "Not used", note: "Rainfall comes from NASA POWER." },
@@ -371,7 +389,7 @@ export const LIMITATIONS: readonly string[] = [
   "Results are for comparing options, not for predicting yield or income.",
   "The results come from statistics and rules (a water balance and scores worked out on your phone), not from a trained SI model. SI tools helped to build the app.",
   "Frost is not modelled. The app checks each crop's lower temperature limit instead.",
-  "Forage value and the equipment you have are not part of the scores, and water soaking into the soil is not modelled separately: ground cover and erosion stand in for it.",
+  "Feeds your animals only says whether a crop's straw, stalks or vines are commonly fed to animals, not how much feed you get or how good it is. The equipment you name in Lot details only adds a question for your technician per crop; it does not change the scores, because we found no source for which crops need which equipment. How much of a heavy storm soaks in is a rough indicator from US curve-number tables (USDA NRCS TR-55) for bare and cropped months, not measured in your field, and it leaves out months with paddy rice.",
   "Soil comes only from what you tell us (soil feel and land type). The app does not use a soil map.",
 ];
 

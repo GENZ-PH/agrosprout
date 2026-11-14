@@ -3,7 +3,7 @@
     "version": "0.2.0",
     "generated": "2026-11-14",
     "status": "Draft crop list: the D24 candidates in docs/decision-log.md. D24 (final list), D26 (Lanao del Norte planting calendars) and D28 (local check) are still open, so the team confirms or trims this list with a local technician. A value with no source is null and listed in that crop's 'unverified'.",
-    "history": "0.1.0 drafted 2026-11-14 on the app-mvp branch (app/public/data/crops.json). 0.2.0 moved here for #11 with every value unchanged; the only addition is a source entry for n_fixing on crops outside the legume family, labelled as a team rule (see method).",
+    "history": "0.1.0 drafted 2026-11-14 on the app-mvp branch (app/public/data/crops.json). 0.2.0 moved here for #11 with every value unchanged; the only addition is a source entry for n_fixing on crops outside the legume family, labelled as a team rule (see method). 2026-11-14: added forage_residue (crop residue commonly fed to livestock, yes/no) per crop from Feedipedia datasheets, each quoted in sources; null where no source was read.",
     "method": "Every number was read in this session from the source named in that crop's 'sources' list. Values that could not be checked are null and listed in 'unverified'. stages_days, kc, root_depth_m and p_depletion come from FAO-56 Tables 11, 12 and 22 as printed; stages_days are FAO example rows (none is for the Philippines), so the engine should rescale them to season_days as FAO-56 advises. Kc values are for FAO's standard sub-humid climate (RHmin about 45%, wind about 2 m/s) and should be adjusted for humid Philippine conditions with FAO-56 Eq. 62 and 65. temp_c = FAO Ecocrop TMIN, TOPMN, TOPMX, TMAX. Where a single number was needed from a cited range (season_days), the rounded midpoint was used and this is said in the source text. Waterlogging tolerance uses the crop guide's own words where one exists; otherwise Ecocrop drainage: optimal drainage includes 'poorly drained' = high, range includes it = medium, neither = low (a team-chosen mapping). Drought tolerance uses the crop guide's words, or the FAO-56 Table 24 yield response factor Ky (Ky above 1 = low; below 1 = medium unless a source calls the crop drought tolerant). Yields are PSA OpenSTAT production divided by area for 2022-2024 (sums), Lanao del Norte unless noted. Calendars are national unless noted (no Lanao del Norte calendar was found). labor, market and most cover_value fields are left null for the team to fill from local sources. n_fixing on a crop outside the legume family (Fabaceae) is false by a team rule (an assumption, no source cited): only legumes are taken as nitrogen-fixing, and each crop's family is cited from Ecocrop. The team should confirm this rule or replace it with a citation.",
     "general_sources": [
       {
@@ -109,6 +109,7 @@
       "cover_value": null,
       "perishability": "low",
       "storable_if_dried": true,
+      "forage_residue": true,
       "yield_t_per_ha": 4.53,
       "typical_calendar": [
         {
@@ -184,6 +185,11 @@
         {
           "field_or_fields": "n_fixing",
           "citation": "Team rule (assumption, no source cited; see meta.method): family Poaceae is not a legume (Fabaceae), so n_fixing is false. The family is cited above."
+        },
+        {
+          "field_or_fields": "forage_residue",
+          "citation": "Heuzé V., Tran G., 2015. Rice straw. Feedipedia, a programme by INRAE, CIRAD, AFZ and FAO (read 2026-11-14): 'Rice straw is a major forage in rice-producing areas'",
+          "url": "https://www.feedipedia.org/node/557"
         }
       ],
       "unverified": [
@@ -229,6 +235,7 @@
       "cover_value": null,
       "perishability": "low",
       "storable_if_dried": true,
+      "forage_residue": true,
       "yield_t_per_ha": 3.19,
       "typical_calendar": [
         {
@@ -304,6 +311,11 @@
         {
           "field_or_fields": "n_fixing",
           "citation": "Team rule (assumption, no source cited; see meta.method): family Poaceae is not a legume (Fabaceae), so n_fixing is false. The family is cited above."
+        },
+        {
+          "field_or_fields": "forage_residue",
+          "citation": "Heuzé V., Tran G., Lebas F., 2019. Maize stover. Feedipedia, a programme by INRAE, CIRAD, AFZ and FAO (read 2026-11-14): 'In tropical and dry climate countries, maize stover is widely used for all types of livestock'",
+          "url": "https://www.feedipedia.org/node/16072"
         }
       ],
       "unverified": [
@@ -349,6 +361,7 @@
       "cover_value": null,
       "perishability": "low",
       "storable_if_dried": true,
+      "forage_residue": true,
       "yield_t_per_ha": 0.63,
       "typical_calendar": [
         {
@@ -404,6 +417,11 @@
           "field_or_fields": "yield_t_per_ha",
           "citation": "PSA OpenSTAT 'Vegetables and Root Crops' production and area, Mongo [Mungbean], Lanao del Norte, 2022-2024: production 563.30 t, area 896 ha, yield 0.63 t/ha (computed)",
           "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0082E4EVCP3.px"
+        },
+        {
+          "field_or_fields": "forage_residue",
+          "citation": "Heuzé V., Tran G., Bastianelli D., Lebas F., 2015. Mung bean (Vigna radiata). Feedipedia, a programme by INRAE, CIRAD, AFZ and FAO (read 2026-11-14): 'Mung bean straw (haulms) can be used in the same way as other cereal and legume straws'",
+          "url": "https://www.feedipedia.org/node/235"
         }
       ],
       "unverified": [
@@ -449,6 +467,7 @@
       "cover_value": null,
       "perishability": "low",
       "storable_if_dried": true,
+      "forage_residue": true,
       "yield_t_per_ha": 0.84,
       "typical_calendar": [
         {
@@ -520,6 +539,11 @@
           "field_or_fields": "yield_t_per_ha",
           "citation": "PSA OpenSTAT 'Vegetables and Root Crops', Peanut, with shell, dry, Lanao del Norte, 2022-2024: production 5,854.75 t, area 6,932 ha, yield 0.84 t/ha (computed). Caution: yearly yields fell 1.52, 1.09, 0.51 t/ha as recorded area tripled while production stayed flat",
           "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0082E4EVCP3.px"
+        },
+        {
+          "field_or_fields": "forage_residue",
+          "citation": "Heuzé V., Thiollet H., Tran G., Lebas F., 2017. Peanut forage. Feedipedia, a programme by INRAE, CIRAD, AFZ and FAO (read 2026-11-14): 'Peanut crop residues are a common ruminant feed in peanut producing countries'",
+          "url": "https://www.feedipedia.org/node/695"
         }
       ],
       "unverified": [
@@ -565,6 +589,7 @@
       "cover_value": null,
       "perishability": "low",
       "storable_if_dried": true,
+      "forage_residue": true,
       "yield_t_per_ha": 0.91,
       "typical_calendar": [
         {
@@ -622,6 +647,11 @@
           "field_or_fields": "yield_t_per_ha",
           "citation": "PSA OpenSTAT 'Vegetables and Root Crops', Soybeans, Region X (Northern Mindanao), 2022-2024: production 142.80 t, area 157.63 ha, yield 0.91 t/ha (computed). Lanao del Norte reports 0 ha, so the regional value is used",
           "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0082E4EVCP3.px"
+        },
+        {
+          "field_or_fields": "forage_residue",
+          "citation": "Heuzé V., Tran G., Hassoun P., Lebas F., 2016. Soybean forage. Feedipedia, a programme by INRAE, CIRAD, AFZ and FAO (read 2026-11-14): 'Soybean straw, which is the residue of threshing of the beans, can be used as a source of roughage for cattle'",
+          "url": "https://www.feedipedia.org/node/294"
         }
       ],
       "unverified": [
@@ -667,6 +697,7 @@
       "cover_value": null,
       "perishability": "high",
       "storable_if_dried": false,
+      "forage_residue": null,
       "yield_t_per_ha": 8.22,
       "typical_calendar": [],
       "sources": [
@@ -733,7 +764,7 @@
         "market",
         "cover_value"
       ],
-      "notes": "Sitaw is a legume that adds nitrogen, but fresh pods spoil in days, so it needs a nearby buyer."
+      "notes": "Sitaw is a legume that adds nitrogen, but fresh pods spoil in days, so it needs a nearby buyer. forage_residue left null: Feedipedia's cowpea forage datasheet (feedipedia.org/node/233) says cowpea haulms are a useful feed and lists 'yard-long bean' only as a common name; it does not describe yardlong bean vines after pod picking, so no value was taken. Not listed in 'unverified' yet because src/data/crops.test.ts does not know the field."
     },
     {
       "id": "sweet-potato",
@@ -771,6 +802,7 @@
       "cover_value": null,
       "perishability": "medium",
       "storable_if_dried": false,
+      "forage_residue": true,
       "yield_t_per_ha": 10.14,
       "typical_calendar": [],
       "sources": [
@@ -822,6 +854,11 @@
         {
           "field_or_fields": "n_fixing",
           "citation": "Team rule (assumption, no source cited; see meta.method): family Convolvulaceae is not a legume (Fabaceae), so n_fixing is false. The family is cited above."
+        },
+        {
+          "field_or_fields": "forage_residue",
+          "citation": "Heuzé V., Tran G., Hassoun P., 2017. Sweet potato (Ipomoea batatas) forage. Feedipedia, a programme by INRAE, CIRAD, AFZ and FAO (read 2026-11-14): 'The vines are separated from the roots after harvest and provide a nutritive and relished green feed for ruminants'",
+          "url": "https://www.feedipedia.org/node/551"
         }
       ],
       "unverified": [
@@ -869,6 +906,7 @@
       "cover_value": null,
       "perishability": "low",
       "storable_if_dried": true,
+      "forage_residue": true,
       "yield_t_per_ha": null,
       "typical_calendar": [
         {
@@ -935,6 +973,11 @@
         {
           "field_or_fields": "n_fixing",
           "citation": "Team rule (assumption, no source cited; see meta.method): family Poaceae is not a legume (Fabaceae), so n_fixing is false. The family is cited above."
+        },
+        {
+          "field_or_fields": "forage_residue",
+          "citation": "Feedipedia (no author listed). Straws. Feedipedia, a programme by INRAE, CIRAD, AFZ and FAO (read 2026-11-14): 'Maize, sorghum and millet stovers are major forages in developing countries'",
+          "url": "https://www.feedipedia.org/node/60"
         }
       ],
       "unverified": [
@@ -982,6 +1025,7 @@
       "cover_value": null,
       "perishability": "high",
       "storable_if_dried": false,
+      "forage_residue": null,
       "yield_t_per_ha": 6.9,
       "typical_calendar": [],
       "sources": [
@@ -1048,7 +1092,7 @@
         "market",
         "cover_value"
       ],
-      "notes": "Eggplant gives many pickings over several months, but the fruit spoils within days of harvest."
+      "notes": "Eggplant gives many pickings over several months, but the fruit spoils within days of harvest. forage_residue left null: no Feedipedia, FAO or PCAARRD source on feeding eggplant residue was found (read 2026-11-14). Not listed in 'unverified' yet because src/data/crops.test.ts does not know the field."
     },
     {
       "id": "sesbania-rostrata",
@@ -1074,6 +1118,7 @@
       "cover_value": "high",
       "perishability": null,
       "storable_if_dried": null,
+      "forage_residue": null,
       "yield_t_per_ha": null,
       "typical_calendar": [
         {
@@ -1121,7 +1166,7 @@
         "storable_if_dried",
         "yield_t_per_ha"
       ],
-      "notes": "Sesbania is grown in a wet field for about two months and then plowed in, so it feeds the next rice crop with nitrogen. It is not sold."
+      "notes": "Sesbania is grown in a wet field for about two months and then plowed in, so it feeds the next rice crop with nitrogen. It is not sold. forage_residue left null: Feedipedia has a datasheet for Sesbania sesban, not S. rostrata, and values are not carried across species; the crop is grown here as a green manure. Not listed in 'unverified' yet because src/data/crops.test.ts does not know the field."
     }
   ]
 }

@@ -52,6 +52,7 @@ def build(farm: dict, raw: dict, retrieved: str, srtm: Optional[dict] = None) ->
     wet_m = monthly_stat(d["GWETROOT"], "mean")
     heat_m = monthly_stat(d["T2M_MAX"], "gt35")
     heavy_m = monthly_stat(d["PRECTOTCORR"], "gt50")
+    frost_m = monthly_stat(d["T2M_MIN"], "lt0")
 
     clim = lambda m: per_calendar_month(m, mean)  # noqa: E731
     tmax, tmin = clim(tmax_m), clim(tmin_m)
@@ -131,6 +132,7 @@ def build(farm: dict, raw: dict, retrieved: str, srtm: Optional[dict] = None) ->
             "rh2m_pct": r(rh, 1), "ws2m_ms": r(ws, 2), "solar_mj_m2_day": r(rs, 2),
             "heat_days_gt35": r(clim(heat_m), 2),
             "heavy_rain_days_gt50mm": r(clim(heavy_m), 2),
+            "frost_days_lt0": r(clim(frost_m), 2),
             "smap_rootzone_m3m3": None,
         },
         "trends": {
@@ -154,6 +156,8 @@ def build(farm: dict, raw: dict, retrieved: str, srtm: Optional[dict] = None) ->
             prov("monthly.solar_mj_m2_day", "NASA POWER daily ALLSKY_SFC_SW_DWN", "converted to MJ m-2 day-1", NATIVE_RES_SOLAR),
             prov("monthly.heat_days_gt35", "NASA POWER daily T2M_MAX", "mean days per month above 35 °C"),
             prov("monthly.heavy_rain_days_gt50mm", "NASA POWER daily PRECTOTCORR", "mean days per month above 50 mm"),
+            prov("monthly.frost_days_lt0", "NASA POWER daily T2M_MIN",
+                 "mean days per month with a daily minimum air temperature (2 m) below 0 °C; ETCCDI frost-day index FD"),
             *([prov("elevation_m", fetch_srtm.CITATION, "height at the point") | {"native_res": "1 arc-second (~30 m)", "period": fetch_srtm.ACQUIRED}]
               if farm.get("elevation_m") is None and elev is not None else []),
             *([prov("slope_pct", fetch_srtm.CITATION, "Horn slope from a 3 x 3 grid with 30 m spacing, heights returned in whole metres, rounded to whole percent: a rough terrain class") | {"native_res": "1 arc-second (~30 m)", "period": fetch_srtm.ACQUIRED}]

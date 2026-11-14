@@ -75,11 +75,12 @@ export type RotationGap =
   | { code: "no-season-length"; crop_id: string }
   /** crops.json has no `season_days`: the FAO-56 example stage lengths were summed instead. */
   | { code: "season-from-fao-stages"; crop_id: string }
-  | { code: "crop-field-missing"; crop_id: string; field: "n_fixing" | "cover_value" | "market" | "labor" };
+  | { code: "crop-field-missing"; crop_id: string; field: "n_fixing" | "cover_value" | "market" | "labor" | "forage_residue" };
 
 export interface RotationsInput {
   lot: Pick<Lot, "crops" | "details">;
-  data: Pick<LotData, "monthly">;
+  /** `slope_pct` (NASA SRTM) is optional: when given, erosion uses the RUSLE slope factor (scores.ts erosionSlope). */
+  data: Pick<LotData, "monthly"> & Partial<Pick<LotData, "slope_pct">>;
   library: Pick<CropLibrary, "crops" | "rice_extra_detail">;
   priorities: Priorities;
   /**
@@ -112,7 +113,7 @@ interface Candidate extends ScoredRotation {
   id: string;
 }
 
-const ONLY = (p: PriorityKey): Priorities => ({ water: 0, soil: 0, income: 0, labor: 0, [p]: 100 });
+const ONLY = (p: PriorityKey): Priorities => ({ water: 0, soil: 0, income: 0, labor: 0, forage: 0, [p]: 100 });
 
 /** Crops the engine can place and filter: known season length, Kc, FAO-56 stages and temperature range. */
 function isComplete(c: Crop): boolean {
@@ -238,6 +239,8 @@ export function rotations(input: RotationsInput): RotationsResult {
     details: input.lot.details,
     riceDetail: input.library.rice_extra_detail,
     marketAccess: input.marketAccess ?? null,
+    slopePct: input.data.slope_pct ?? null,
+    forageKnown: input.library.crops.some((c) => c.forage_residue != null),
   };
   const byId = new Map(input.library.crops.map((c) => [c.id, c]));
   const yourIds = new Set(input.lot.crops.map((c) => c.crop_id));
@@ -333,6 +336,8 @@ export function rotations(input: RotationsInput): RotationsResult {
       for (const field of ["n_fixing", "cover_value", "market", "labor"] as const) {
         if (crop[field] === null) gaps.push({ code: "crop-field-missing", crop_id: id, field });
       }
+      // Only reported when the library has forage values at all (otherwise F is simply left out).
+      if (ctx.forageKnown && crop.forage_residue == null) gaps.push({ code: "crop-field-missing", crop_id: id, field: "forage_residue" });
     }
   }
 

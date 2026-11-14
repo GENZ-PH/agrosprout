@@ -15,6 +15,9 @@ Daily = dict[str, Optional[float]]  # "YYYYMMDD" -> value
 MAX_MISSING_SHARE = 0.10
 HEAT_DAY_TMAX_C = 35.0       # heat-stress day, issue #8 (heat_days_gt35)
 HEAVY_RAIN_DAY_MM = 50.0     # heavy-rain day, issue #8 (heavy_rain_days_gt50mm)
+# Frost day: daily minimum below 0 °C, ETCCDI index FD ("Annual count of days when TN (daily minimum
+# temperature) < 0oC"), https://etccdi.pacificclimate.org/list_27_indices.shtml (read 2026-11-14).
+FROST_DAY_TMIN_C = 0.0
 
 
 def _by_year_month(daily: Daily) -> dict[tuple[int, int], list[Optional[float]]]:
@@ -36,7 +39,8 @@ def _valid(values: list[Optional[float]], year: int, month: int) -> Optional[lis
 def monthly_stat(daily: Daily, how: str) -> dict[tuple[int, int], Optional[float]]:
     """(year, month) -> mean, sum (scaled to the full month), or count of days above a limit.
 
-    how: "mean" | "sum" | "gt35" (days with value > HEAT_DAY_TMAX_C) | "gt50" (> HEAVY_RAIN_DAY_MM).
+    how: "mean" | "sum" | "gt35" (days with value > HEAT_DAY_TMAX_C) | "gt50" (> HEAVY_RAIN_DAY_MM)
+         | "lt0" (days with value < FROST_DAY_TMIN_C).
     """
     out: dict[tuple[int, int], Optional[float]] = {}
     for (y, m), values in _by_year_month(daily).items():
@@ -50,6 +54,8 @@ def monthly_stat(daily: Daily, how: str) -> dict[tuple[int, int], Optional[float
         elif how in ("gt35", "gt50"):
             limit = HEAT_DAY_TMAX_C if how == "gt35" else HEAVY_RAIN_DAY_MM
             out[(y, m)] = sum(1 for v in ok if v > limit) * calendar.monthrange(y, m)[1] / len(ok)
+        elif how == "lt0":
+            out[(y, m)] = sum(1 for v in ok if v < FROST_DAY_TMIN_C) * calendar.monthrange(y, m)[1] / len(ok)
         else:
             raise ValueError(how)
     return out

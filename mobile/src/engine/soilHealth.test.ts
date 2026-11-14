@@ -73,14 +73,14 @@ test("a missing S or E gives no line (never guessed), and no comparison with A",
   assert.equal(soilHealthTrajectory({ S: null, E: 80 }), null);
   assert.equal(soilHealthTrajectory({ S: 60, E: null }), null);
   const r = soilHealth([
-    { key: "A", scores: { W: 50, H: 50, S: 20, E: 90, B: 0, I: null, M: null, L: null } },
-    { key: "B", scores: { W: 50, H: 50, S: null, E: 90, B: 0, I: null, M: null, L: null } },
+    { key: "A", scores: { W: 50, H: 50, S: 20, E: 90, B: 0, I: null, M: null, L: null, F: null } },
+    { key: "B", scores: { W: 50, H: 50, S: null, E: 90, B: 0, I: null, M: null, L: null, F: null } },
   ]);
   assert.equal(r.options[1].trajectory, null);
   assert.equal(r.options[1].vs_yours, null);
   const noA = soilHealth([
-    { key: "A", scores: { W: 50, H: 50, S: null, E: 90, B: 0, I: null, M: null, L: null } },
-    { key: "B", scores: { W: 50, H: 50, S: 30, E: 90, B: 0, I: null, M: null, L: null } },
+    { key: "A", scores: { W: 50, H: 50, S: null, E: 90, B: 0, I: null, M: null, L: null, F: null } },
+    { key: "B", scores: { W: 50, H: 50, S: 30, E: 90, B: 0, I: null, M: null, L: null, F: null } },
   ]);
   assert.notEqual(noA.options[1].trajectory, null);
   assert.equal(noA.options[1].vs_yours, null);

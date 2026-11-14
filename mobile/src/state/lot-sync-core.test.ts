@@ -123,3 +123,25 @@ test("demo lots are never fetched", async () => {
   await syncPendingLots(deps(async () => (calls++, powerJson)));
   assert.equal(calls, 0);
 });
+
+test("daily POWER: a lot that becomes ready gets the daily data after its status is set, once", async () => {
+  const { raw, farm, deps } = await setup();
+  const dailyJson: unknown = JSON.parse(
+    readFileSync(new URL("../data/__fixtures__/power-daily-8.2N-124.2E-2016-2025.json", import.meta.url), "utf8"),
+  );
+  const id = farm.getState().addLot(lot(124.2, 8.2));
+  const seen: string[] = [];
+  let dailyCalls = 0;
+  const changed: string[] = [];
+  const dailyFetcher = async () => {
+    dailyCalls++;
+    seen.push(farm.getState().lots[0].data_status);
+    return dailyJson;
+  };
+  await syncPendingLots({ ...deps(async () => powerJson), dailyFetcher, onDataChanged: (x: string) => changed.push(x) });
+  assert.deepEqual(seen, ["ready"]); // monthly data was not held back by the daily download
+  assert.deepEqual(changed, [id]);
+  assert.ok(JSON.parse(raw.data.get(`lotdata:${id}`)!).trends);
+  await syncPendingLots({ ...deps(async () => powerJson), dailyFetcher });
+  assert.equal(dailyCalls, 1);
+});

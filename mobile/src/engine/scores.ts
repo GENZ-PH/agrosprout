@@ -5,11 +5,13 @@
 //   W Water fit           100 x (1 - mean WSI of the rotation's crops), P50
 //   H Climate risk        100 x (1 - risky crop days / crop days)
 //   S Soil building       legume, cover, not-bare and family-diversity shares
-//   E Erosion protection  100 x (1 - slope factor x share of rain on bare soil)
+//   E Erosion protection  100 x (1 - slope factor x share of rain on bare soil);
+//                         slope factor = RUSLE S from the NASA SRTM slope, else by land type
 //   B Pest break          100 x (1 - same-family crop changes / crop changes)
 //   I Income              field-day-weighted market level (null until crops.json has it)
 //   M Market access       mean of the per-crop scores from #27 (null with no destination)
 //   L Labor               field-day-weighted inverse labor level (null until crops.json has it)
+//   F Feeds your animals  share of crop days on crops whose residue is commonly fed to livestock
 //
 // A score is `null` when its data is missing; it is then left out of the
 // total and the weights renormalize (never a guess).
@@ -17,22 +19,27 @@ import { DAYS_IN_MONTH } from "../data/et0";
 import type { Crop, LotDetails, LotMonthly, Priorities, RiceExtraDetail } from "../types";
 import {
   COVER_CREDIT,
+  DEFAULT_PRIORITY_VALUE,
   EROSION_SLOPE_FACTOR,
   FAMILIES_FOR_FULL_CREDIT,
+  FORAGE_RESIDUE_SCORE,
   HARD_FILTER_WATERLOG_WETNESS_MIN,
   HARD_FILTER_WSI_MAX,
   INCOME_LEVEL_SCORE,
   LABOR_LEVEL_SCORE,
   PLANTING_DAY_OF_MONTH,
+  PONDED_CROP_IDS,
   PRIORITY_COMPONENTS,
+  RUSLE_S,
   SOIL_WEIGHTS,
   WATERLOG_WETNESS_MIN,
 } from "./params";
+import { stormInfiltration, type StormInfiltration } from "./infiltration";
 import { monthStartDay, seasonMonths } from "./season";
 import { waterBalanceRange, type Scenario } from "./waterBalance";
 
-export type ComponentKey = "W" | "H" | "S" | "E" | "B" | "I" | "M" | "L";
-export const COMPONENT_KEYS: readonly ComponentKey[] = ["W", "H", "S", "E", "B", "I", "M", "L"];
+export type ComponentKey = "W" | "H" | "S" | "E" | "B" | "I" | "M" | "L" | "F";
+export const COMPONENT_KEYS: readonly ComponentKey[] = ["W", "H", "S", "E", "B", "I", "M", "L", "F"];
 export type PriorityKey = keyof Priorities;
 export type ComponentScores = Record<ComponentKey, number | null>;
 /** Share of the total per component; sums to 1 (or all 0 when nothing can be scored). */
@@ -82,6 +89,43 @@ export interface ScoreContext {
   riceDetail: RiceExtraDetail | null;
   /** Per-crop market access score, 0-100 (#27). `null` = no destination yet: M is left out. */
   marketAccess: Readonly<Record<string, number | null>> | null;
+  /** NASA SRTM slope of the lot, whole percent (LotData.slope_pct). Omitted or `null` = unknown. */
+  slopePct?: number | null;
+  /**
+   * True when at least one crop in the library has a `forage_residue` value. False or omitted:
+   * Feeds your animals (F) is left out (no data at all, never a guess).
+   */
+  forageKnown?: boolean;
+}
+
+/**
+ * RUSLE slope-steepness factor S for a slope in percent (params.ts RUSLE_S,
+ * McCool et al. 1987). S = 1 at the 9 % unit-plot slope.
+ */
+export function rusleS(slopePct: number): number {
+  const sin = Math.sin(Math.atan(Math.max(0, slopePct) / 100));
+  const k = slopePct < RUSLE_S.break_pct ? RUSLE_S.below : RUSLE_S.at_or_above;
+  return k.sin_coef * sin + k.offset;
+}
+
+/** Where the erosion slope factor came from. */
+export interface ErosionSlope {
+  /** srtm = RUSLE S from the NASA SRTM slope · land-type = the farmer's land type (assumed factor). */
+  source: "srtm" | "land-type";
+  slope_pct: number | null;
+  factor: number;
+}
+
+/**
+ * Slope factor for erosion protection (E). The SRTM slope is used when it is
+ * known and the lot is not a lowland paddy (params.ts RUSLE_S says why);
+ * otherwise the land-type factor (assumption: validate locally).
+ */
+export function erosionSlope(details: LotDetails, slopePct: number | null | undefined): ErosionSlope {
+  if (slopePct != null && Number.isFinite(slopePct) && details.land_type !== "lowland") {
+    return { source: "srtm", slope_pct: slopePct, factor: rusleS(slopePct) };
+  }
+  return { source: "land-type", slope_pct: slopePct ?? null, factor: EROSION_SLOPE_FACTOR[details.land_type] };
 }
 
 /** Monthly mean temperature, same rounding as crop fit. `null` when either value is missing. */
@@ -180,6 +224,14 @@ export interface RotationMetrics {
   /** Share (0-1) of the year's rain weight falling while the lot is bare; `null` when rain data is missing. */
   bare_rain_share: number | null;
   rain_weight: "heavy-rain-days" | "p50-rain";
+  /** The slope factor used in erosion protection (E) and where it came from. */
+  erosion_slope: ErosionSlope;
+  /** Crop days of crops whose residue is commonly fed to livestock (crops.json `forage_residue`). */
+  forage_days: number;
+  /** All crop days of the rotation (overlapping crops counted per crop). */
+  crop_days: number;
+  /** Share of a heavy reference storm that soaks in, month by month (TR-55 curve numbers). Not a weighted score. */
+  infiltration: StormInfiltration;
 }
 
 export interface ScoredRotation {
@@ -288,8 +340,19 @@ export function scoreRotation(slots: SlotEval[], ctx: ScoreContext, mayOverlap: 
     const total = rw.reduce((a, b) => a + b, 0);
     bare_rain_share = total > 0 ? rw.reduce((a, r, i) => a + r * (bareByMonth[i] / DAYS_IN_MONTH[i]), 0) / total : 0;
   }
-  const E =
-    bare_rain_share === null ? null : clamp(100 * (1 - EROSION_SLOPE_FACTOR[details.land_type] * bare_rain_share), 0, 100);
+  const erosion_slope = erosionSlope(details, ctx.slopePct);
+  const E = bare_rain_share === null ? null : clamp(100 * (1 - erosion_slope.factor * bare_rain_share), 0, 100);
+
+  // Storm infiltration indicator (TR-55), same rain weight as erosion; paddy months left out.
+  const paddyMonths = sortedUnique(
+    slots.filter((s) => PONDED_CROP_IDS.includes(s.slot.crop_id)).flatMap((s) => s.days_by_month.flatMap((d, i) => (d > 0 ? [i + 1] : []))),
+  );
+  const infiltration = stormInfiltration(
+    details.soil,
+    bareByMonth.map((b, i) => b / DAYS_IN_MONTH[i]),
+    rainWeight,
+    paddyMonths,
+  );
 
   // Pest break: crop changes in planting order, cyclic.
   const order = [...slots].sort((a, b) => a.start_day - b.start_day);
@@ -300,6 +363,12 @@ export function scoreRotation(slots: SlotEval[], ctx: ScoreContext, mayOverlap: 
   // Income, labor, market access.
   const I = dayWeighted(slots, (c) => (c.market ? INCOME_LEVEL_SCORE[c.market] : null));
   const L = dayWeighted(slots, (c) => (c.labor ? LABOR_LEVEL_SCORE[c.labor] : null));
+  // Feeds your animals: crops with no forage value get no credit (like COVER_CREDIT) and show as a gap.
+  const forage_days = slots.reduce((a, s) => a + (s.crop.forage_residue === true ? fieldDays(s) : 0), 0);
+  const F =
+    ctx.forageKnown && cropDays > 0
+      ? (FORAGE_RESIDUE_SCORE.yes * forage_days + FORAGE_RESIDUE_SCORE.no * (cropDays - forage_days)) / cropDays
+      : null;
   let M: number | null = null;
   if (ctx.marketAccess && n > 0) {
     const vals = slots.map((s) => ctx.marketAccess?.[s.slot.crop_id] ?? null);
@@ -308,7 +377,7 @@ export function scoreRotation(slots: SlotEval[], ctx: ScoreContext, mayOverlap: 
 
   return {
     slots,
-    scores: { W: water_fit_range.p50, H, S, E, B, I, M, L },
+    scores: { W: water_fit_range.p50, H, S, E, B, I, M, L, F },
     water_fit_range,
     metrics: {
       wsi_mean,
@@ -324,6 +393,10 @@ export function scoreRotation(slots: SlotEval[], ctx: ScoreContext, mayOverlap: 
       same_family_changes: same,
       bare_rain_share,
       rain_weight: useHeavy ? "heavy-rain-days" : "p50-rain",
+      erosion_slope,
+      forage_days,
+      crop_days: cropDays,
+      infiltration,
     },
   };
 }
@@ -341,7 +414,11 @@ export function priorityWeights(
   available: ReadonlySet<ComponentKey>,
 ): { weights: ComponentWeights; not_scored: PriorityKey[] } {
   const keys = Object.keys(PRIORITY_COMPONENTS) as PriorityKey[];
-  const raw = keys.map((k) => Math.max(0, Number.isFinite(priorities[k]) ? priorities[k] : 0));
+  // A priority missing from an older saved farm counts as the default (equal) value.
+  const raw = keys.map((k) => {
+    const v = priorities[k] ?? DEFAULT_PRIORITY_VALUE;
+    return Math.max(0, Number.isFinite(v) ? v : 0);
+  });
   const values = raw.every((v) => v === 0) ? raw.map(() => 1) : raw;
   const weights = Object.fromEntries(COMPONENT_KEYS.map((k) => [k, 0])) as ComponentWeights;
   const not_scored: PriorityKey[] = [];

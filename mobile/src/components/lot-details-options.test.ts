@@ -15,15 +15,16 @@ import {
   setDetail,
 } from "./lot-details-options";
 
-test("three questions: land type, water and soil, in the order of #41", () => {
-  assert.deepEqual(LOT_DETAIL_QUESTIONS.map((q) => q.key), ["land_type", "water", "soil"]);
+test("four questions: land type, water and soil (#41), then equipment", () => {
+  assert.deepEqual(LOT_DETAIL_QUESTIONS.map((q) => q.key), ["land_type", "water", "soil", "equipment"]);
 });
 
-test("every question offers its three real answers and \"I don't know\" last", () => {
+test("every question offers its real answers and \"I don't know\" last", () => {
   const expected: Record<string, string[]> = {
     land_type: ["lowland", "upland", "sloping", "unknown"],
     water: ["rain", "some", "full", "unknown"],
     soil: ["sandy", "loamy", "clayey", "unknown"],
+    equipment: ["hand", "carabao", "hand-tractor", "tractor", "unknown"],
   };
   for (const q of LOT_DETAIL_QUESTIONS) {
     assert.deepEqual(q.options.map((o) => o.value), expected[q.key], q.key);
@@ -33,19 +34,21 @@ test("every question offers its three real answers and \"I don't know\" last", (
 });
 
 test("a new lot starts with every answer unknown, and that counts as zero answered", () => {
-  assert.deepEqual(NO_DETAILS, { land_type: "unknown", water: "unknown", soil: "unknown" });
+  assert.deepEqual(NO_DETAILS, { land_type: "unknown", water: "unknown", soil: "unknown", equipment: "unknown" });
   assert.equal(answeredCount(NO_DETAILS), 0);
-  assert.equal(answeredSummary(NO_DETAILS), "0 of 3 answered");
+  assert.equal(answeredSummary(NO_DETAILS), "0 of 4 answered");
+  // A lot saved before the equipment question existed counts it as "I don't know".
+  assert.equal(answeredCount({ land_type: "unknown", water: "unknown", soil: "unknown" }), 0);
 });
 
 test("setDetail changes one answer, returns a new object and leaves the input alone", () => {
   const before: LotDetails = { ...NO_DETAILS };
   const next = setDetail(before, "water", "some");
-  assert.deepEqual(next, { land_type: "unknown", water: "some", soil: "unknown" });
+  assert.deepEqual(next, { land_type: "unknown", water: "some", soil: "unknown", equipment: "unknown" });
   assert.deepEqual(before, NO_DETAILS);
   assert.notEqual(next, before);
   assert.equal(answeredCount(next), 1);
-  assert.equal(answeredSummary(setDetail(setDetail(next, "soil", "loamy"), "land_type", "sloping")), "3 of 3 answered");
+  assert.equal(answeredSummary(setDetail(setDetail(next, "soil", "loamy"), "land_type", "sloping")), "3 of 4 answered");
   // Choosing "I don't know" again takes the answer back.
   assert.equal(answeredCount(setDetail(next, "water", "unknown")), 0);
 });

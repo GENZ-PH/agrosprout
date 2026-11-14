@@ -11,14 +11,14 @@ import { FooterLinks } from "../src/components/FooterLinks";
 import { HarvestCard } from "../src/components/HarvestCard";
 import { Header } from "../src/components/Header";
 import { LanguageSwitch } from "../src/components/LanguageSwitch";
-import { LotDataCard } from "../src/components/LotDataCard";
+import { ensoLine, LotDataCard } from "../src/components/LotDataCard";
+import { SeasonGuide } from "../src/components/SeasonGuide";
+import { ClimateExtremesCard } from "../src/components/ClimateExtremesCard";
 import { LotTabs } from "../src/components/LotTabs";
 import { Notice } from "../src/components/Notice";
 import { PlanDetail } from "../src/components/PlanDetail";
-import { PlanOptions } from "../src/components/PlanOptions";
 import { PlanTable } from "../src/components/PlanTable";
 import { formatHa, unavailablePriorities } from "../src/components/plan-text";
-import { PlantCard } from "../src/components/PlantCard";
 import { PriorityChips } from "../src/components/PriorityChips";
 import { Screen } from "../src/components/Screen";
 import { SoilHealthChart } from "../src/components/SoilHealthChart";
@@ -188,26 +188,31 @@ function Results({
     setPriorities(next);
   };
 
-  const plantCard = <PlantCard option={selected} baseline={baseline} lotName={lot.name} cropById={cropById} info={{ id: "recommendations", period }} />;
-  const optionsList = <PlanOptions options={options} selected={selected.key} onSelect={setPicked} cropById={cropById} info={{ id: "priorities", period }} />;
   const fit = <CropFitList fits={analysis.crop_fits} cropById={cropById} info={{ id: "your-crops", period }} />;
   const harvest = <HarvestCard lot={lot} destinations={farm.destinations} harvest={analysis.harvest} cropName={cropName} period={period} />;
 
-  const plantView = wide ? (
-    <View style={styles.row}>
-      <View style={[styles.col, styles.colMain]}>{plantCard}</View>
-      <View style={styles.col}>
-        {optionsList}
-        {fit}
-        {harvest}
-      </View>
-    </View>
-  ) : (
+  // The farmer's view: a season guide (what to do now, the year month by month, why, a checklist
+  // and the other ways), with the harvest and planting-month prompts as actions below it.
+  const plantView = (
     <>
-      {plantCard}
-      {optionsList}
-      {fit}
-      {harvest}
+      <SeasonGuide
+        options={options}
+        selected={selected}
+        onSelect={setPicked}
+        lotName={lot.name}
+        cropById={cropById}
+        onEvidence={() => setTab("evidence")}
+        elNino={ensoLine() !== null}
+        wide={wide}
+      />
+      {wide ? (
+        <View style={styles.row}>
+          <View style={styles.col}>{harvest}</View>
+          <View style={styles.col} />
+        </View>
+      ) : (
+        harvest
+      )}
     </>
   );
 
@@ -229,6 +234,8 @@ function Results({
       <FieldYear options={options} selected={selected.key} onSelect={setPicked} monthly={analysis.monthly} cropById={cropById} info={{ id: "lot-snapshot", period }} />
       <Text style={text.caption}>{t("year.source")}</Text>
       {data ? <LotDataCard data={data} info={{ id: "data-sources", period }} /> : null}
+      {data ? <ClimateExtremesCard data={data} info={{ id: "climate-extremes", period }} /> : null}
+      {fit}
       {wide ? (
         <View style={styles.row}>
           <View style={styles.col}>

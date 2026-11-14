@@ -54,11 +54,22 @@ export type LandType = "lowland" | "upland" | "sloping" | "unknown";
 export type WaterSource = "rain" | "some" | "full" | "unknown";
 export type SoilFeel = "sandy" | "loamy" | "clayey" | "unknown";
 
+/**
+ * What the farmer can use for land preparation and harvest (added 2026-11-14 for the challenge's
+ * "equipment" constraint). Categories follow the power sources in Philippine mechanization surveys:
+ * manual, man-animal (carabao) and man-machine, where the machines are mostly hand tractors
+ * (incl. floating tillers) and few four-wheel tractors (Amongo & Larona 2015, CSAM Policy Brief 5,
+ * Tables 1-2, from Amongo et al. 2013). It adds "check locally" lines only; no score uses it.
+ */
+export type Equipment = "hand" | "carabao" | "hand-tractor" | "tractor" | "unknown";
+
 /** Optional lot details from the farmer (#41). "unknown" lowers confidence. */
 export interface LotDetails {
   land_type: LandType;
   water: WaterSource;
   soil: SoilFeel;
+  /** Optional so lots saved before it still load; missing = "unknown". Never lowers confidence. */
+  equipment?: Equipment;
 }
 
 /** One growing season of a crop on a lot. Months are 1-12; may wrap the year (11 → 2). */
@@ -144,6 +155,11 @@ export interface Priorities {
   soil: number;
   income: number;
   labor: number;
+  /**
+   * "Feed animals" (challenge "forage value", added 2026-11-14). Optional so farms saved before it
+   * still load: missing = the default (engine params DEFAULT_PRIORITY_VALUE, 50).
+   */
+  forage?: number;
 }
 
 export interface Farm {
@@ -192,15 +208,20 @@ export interface LotMonthly {
   ws2m_ms: MonthlySeries | null;
   /** Mean incoming solar radiation (POWER ALLSKY_SFC_SW_DWN), MJ m-2 day-1. */
   solar_mj_m2_day: MonthlySeries | null;
-  /** Demo farms only (daily POWER): mean days per month with Tmax > 35 °C. `null` for live lots. */
+  /** Daily POWER: mean days per month with Tmax > 35 °C. Live lots: `null` until the daily data loads (power-daily.ts). */
   heat_days_gt35: MonthlySeries | null;
-  /** Demo farms only (daily POWER): mean days per month with rain > 50 mm. `null` for live lots. */
+  /** Daily POWER: mean days per month with rain > 50 mm. Live lots: `null` until the daily data loads. */
   heavy_rain_days_gt50mm: MonthlySeries | null;
+  /**
+   * Daily POWER: mean days per month with Tmin < 0 °C (ETCCDI frost-day index FD).
+   * Missing or `null` = not loaded yet.
+   */
+  frost_days_lt0?: MonthlySeries | null;
   /** Demo farms only (AppEEARS SMAP L4, #5): root-zone soil moisture, m3/m3. */
   smap_rootzone_m3m3: MonthlySeries | null;
 }
 
-/** Long-term trends, demo farms only (pipeline). */
+/** Long-term trends from daily POWER (demo farms: pipeline; live lots: power-daily.ts). */
 export interface LotTrends {
   annual_precip_mm_per_decade: number | null;
   dry_season_deficit_mm_per_decade: number | null;
@@ -227,12 +248,14 @@ export interface LotData {
   slope_pct: number | null;
   /** Live lots: the point sent to SRTM, the lot centre rounded to 0.001° (~110 m, rule 8). */
   srtm_point?: [number, number] | null;
+  /** Live lots: the rounded point the daily POWER data was requested for (fetched once per point). */
+  daily_point?: [number, number] | null;
   /** Live lots: the NASA POWER grid cell's average elevation, m, from the POWER answer. */
   cell_elevation_m?: number | null;
   /** Years summarized, e.g. "2001-2024". */
   period: string;
   monthly: LotMonthly;
-  /** `null` for live lots. */
+  /** Live lots: `null` until the daily data loads. */
   trends: LotTrends | null;
   provenance: Provenance[];
   /** Plain-language caveats shown with the data, e.g. the POWER grid-cell note. */
@@ -286,6 +309,11 @@ export interface Crop {
   /** high = days · medium = 1-3 weeks · low = months (07 §3c). */
   perishability: Level | null;
   storable_if_dried: boolean | null;
+  /**
+   * Crop residue (straw, stover, haulms or vines) commonly fed to livestock, cited per crop
+   * (Feedipedia). Optional for older copies of the library; missing = `null` (not known).
+   */
+  forage_residue?: boolean | null;
   /** Typical regional yield, t/ha (PSA OpenSTAT where cited). */
   yield_t_per_ha: number | null;
   /** Typical local planting calendar; empty = unknown. */

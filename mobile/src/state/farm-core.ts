@@ -63,7 +63,7 @@ export const FARM_VERSION = 1 as const;
 export const FARM_STORAGE_KEY = "farm";
 
 /** types.ts: "Priority sliders, each 0-100. Defaults are all equal (50)." */
-export const DEFAULT_PRIORITIES: Priorities = { water: 50, soil: 50, income: 50, labor: 50 };
+export const DEFAULT_PRIORITIES: Priorities = { water: 50, soil: 50, income: 50, labor: 50, forage: 50 };
 const UNKNOWN_DETAILS: LotDetails = { land_type: "unknown", water: "unknown", soil: "unknown" };
 
 export const emptyFarm = (): FarmData => ({
@@ -190,7 +190,7 @@ export function farmStateCreator(deps: FarmDeps): StateCreator<FarmState, [["zus
       setPriorities: (patch) =>
         set((s) => {
           const next = { ...s.priorities };
-          for (const k of ["water", "soil", "income", "labor"] as const) {
+          for (const k of ["water", "soil", "income", "labor", "forage"] as const) {
             const v = patch[k];
             if (v !== undefined) next[k] = clamp(v);
           }

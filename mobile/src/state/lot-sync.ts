@@ -1,5 +1,6 @@
 import { Platform } from "react-native";
 import { asyncStorageLotDataStore } from "../data/lotdata-store";
+import { fetchPowerDaily } from "../data/power-daily";
 import { makeSrtmFetcher } from "../data/srtm";
 import { onlineManager } from "@tanstack/react-query";
 import { onReconnect } from "../net/reconnect";
@@ -40,6 +41,9 @@ export function runLotSync(): Promise<unknown> {
     store: asyncStorageLotDataStore,
     // NASA SRTM field elevation and slope; the web build goes through our same-origin proxy.
     srtmFetcher: makeSrtmFetcher(Platform.OS === "web"),
+    // NASA POWER daily (heat, heavy-rain and frost days, trends): same 0.1° point as the monthly
+    // call, called directly on every platform (the API sends CORS *, checked 2026-11-14).
+    dailyFetcher: fetchPowerDaily,
     onDataChanged: () => useLotDataRev.getState().bump(),
   })
     .catch((e: unknown) => console.warn(`[lot-sync] ${String(e)}`))

@@ -2,11 +2,11 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { LotDetails } from "../types";
 import { Icon } from "./Icon";
-import { LOT_DETAILS_INTRO, LOT_DETAIL_QUESTIONS, setDetail } from "./lot-details-options";
+import { detailValue, LOT_DETAILS_INTRO, LOT_DETAIL_QUESTIONS, setDetail } from "./lot-details-options";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
 type Props = {
-  /** The lot's current answers. A new lot has "unknown" for all three. */
+  /** The lot's current answers. A new lot has "unknown" for all of them. */
   value: LotDetails;
   /** Called with the full new details each time one answer changes. */
   onChange: (next: LotDetails) => void;
@@ -16,7 +16,7 @@ type Props = {
 };
 
 /**
- * The optional "Lot details" questions (#41): land type, water source and soil feel. Each is a
+ * The optional "Lot details" questions (#41): land type, water source, soil feel and equipment. Each is a
  * group of single-choice rows with "I don't know" last and selected by default. It keeps no state
  * of its own: the screen passes `value` and saves what `onChange` returns (`updateLot(id, { details })`).
  */
@@ -32,7 +32,7 @@ export function LotDetailsForm({ value, onChange, hideIntro = false, disabled = 
           <Text style={text.caption}>{q.hint}</Text>
           <View style={styles.options}>
             {q.options.map((o) => {
-              const selected = value[q.key] === o.value;
+              const selected = detailValue(value, q.key) === o.value;
               return (
                 <Pressable
                   key={o.value}

@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { cropListText, formatHa, chosenPriorities, fitReasonText, mergeCropLines, togglePriority, unavailablePriorities, verdictText } from "./plan-text";
 
-const EQUAL = { water: 50, soil: 50, income: 50, labor: 50 };
+const EQUAL = { water: 50, soil: 50, income: 50, labor: 50, forage: 50 };
 
 test("nothing is chosen at the default priorities", () => {
   assert.deepEqual(chosenPriorities(EQUAL), []);
@@ -12,15 +12,15 @@ test("nothing is chosen at the default priorities", () => {
 
 test("tapping a chip chooses it and keeps the others counting a little", () => {
   const p = togglePriority(EQUAL, "water");
-  assert.deepEqual(p, { water: 100, soil: 20, income: 20, labor: 20 });
+  assert.deepEqual(p, { water: 100, soil: 20, income: 20, labor: 20, forage: 20 });
   assert.deepEqual(chosenPriorities(p), ["water"]);
 });
 
 test("several chips can be chosen, and tapping the last one off returns to equal", () => {
   const two = togglePriority(togglePriority(EQUAL, "water"), "soil");
-  assert.deepEqual(two, { water: 100, soil: 100, income: 20, labor: 20 });
+  assert.deepEqual(two, { water: 100, soil: 100, income: 20, labor: 20, forage: 20 });
   const one = togglePriority(two, "water");
-  assert.deepEqual(one, { water: 20, soil: 100, income: 20, labor: 20 });
+  assert.deepEqual(one, { water: 20, soil: 100, income: 20, labor: 20, forage: 20 });
   assert.deepEqual(togglePriority(one, "soil"), EQUAL);
 });
 

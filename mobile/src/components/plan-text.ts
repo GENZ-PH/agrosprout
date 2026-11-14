@@ -13,14 +13,15 @@ export function fitReasonText(r: Pick<FitReason, "code" | "months">, t: T = tEn,
   return t(`fit.${r.code}`, { when });
 }
 
-export const PRIORITY_KEYS: readonly PriorityKey[] = ["water", "soil", "income", "labor"];
+export const PRIORITY_KEYS: readonly PriorityKey[] = ["water", "soil", "income", "labor", "forage"];
 
 const ON = 100;
 const OFF = 20;
 const EQUAL = 50;
 
 /** A priority counts as chosen when it is above the neutral value. */
-export const chosenPriorities = (p: Priorities): PriorityKey[] => PRIORITY_KEYS.filter((k) => p[k] > EQUAL);
+// A priority missing from an older saved farm ("forage") counts as the neutral value.
+export const chosenPriorities = (p: Priorities): PriorityKey[] => PRIORITY_KEYS.filter((k) => (p[k] ?? EQUAL) > EQUAL);
 
 /**
  * Priorities after tapping one chip. Chosen ones weigh 100 and the rest 20, so the rest still
@@ -31,7 +32,7 @@ export function togglePriority(p: Priorities, key: PriorityKey): Priorities {
   if (chosen.has(key)) chosen.delete(key);
   else chosen.add(key);
   const value = (k: PriorityKey) => (chosen.size === 0 ? EQUAL : chosen.has(k) ? ON : OFF);
-  return { water: value("water"), soil: value("soil"), income: value("income"), labor: value("labor") };
+  return { water: value("water"), soil: value("soil"), income: value("income"), labor: value("labor"), forage: value("forage") };
 }
 
 /**

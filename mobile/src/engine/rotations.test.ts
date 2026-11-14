@@ -5,13 +5,13 @@ import assert from "node:assert/strict";
 import type { CropLibrary, LotCrop, LotData, LotDetails, Priorities } from "../types";
 import { CROP_LIBRARY_FIXTURE } from "./__fixtures__/crops.fixture";
 import { ILIGAN_LOT_FIXTURE } from "./__fixtures__/iligan-lot.fixture";
-import { MAX_CROPS_PER_ROTATION, MAX_NEW_CROPS, TURNAROUND_DAYS } from "./params";
+import { EROSION_SLOPE_FACTOR, MAX_CROPS_PER_ROTATION, MAX_NEW_CROPS, TURNAROUND_DAYS } from "./params";
 import { rotations, tooSimilar, type RotationsInput } from "./rotations";
-import { COMPONENT_KEYS, priorityWeights, totalScore, type ComponentScores, type RotationSlot } from "./scores";
+import { COMPONENT_KEYS, priorityWeights, rusleS, totalScore, type ComponentScores, type RotationSlot } from "./scores";
 import { monthStartDay } from "./season";
 
 const lib = CROP_LIBRARY_FIXTURE;
-const EQUAL: Priorities = { water: 50, soil: 50, income: 50, labor: 50 };
+const EQUAL: Priorities = { water: 50, soil: 50, income: 50, labor: 50, forage: 50 };
 const lowland: LotDetails = { land_type: "lowland", water: "rain", soil: "loamy" };
 const flat = (v: number) => Array.from({ length: 12 }, () => v);
 
@@ -155,8 +155,8 @@ test("A always shows, even when no alternative passes the filters (no rain)", ()
 // --- Priorities (docs/07 §7: ranking moves in the expected direction) ------
 
 test("changing priorities changes the ranking in the expected direction", () => {
-  const water: ComponentScores = { W: 90, H: 90, S: 20, E: 40, B: 0, I: null, M: null, L: null };
-  const soil: ComponentScores = { W: 50, H: 80, S: 60, E: 90, B: 100, I: null, M: null, L: null };
+  const water: ComponentScores = { W: 90, H: 90, S: 20, E: 40, B: 0, I: null, M: null, L: null, F: null };
+  const soil: ComponentScores = { W: 50, H: 80, S: 60, E: 90, B: 100, I: null, M: null, L: null, F: null };
   const avail = new Set(COMPONENT_KEYS.filter((k) => water[k] !== null));
   const w = (p: Priorities) => priorityWeights(p, avail).weights;
   const waterFirst = w({ water: 100, soil: 20, income: 50, labor: 50 });
@@ -171,15 +171,15 @@ test("on the demo lot, B tops the alternatives on water, and C beats D on soil",
   // from both) but not necessarily B: on this lot B is also the best for soil.
   const { options } = run();
   const [b, c, d] = ["B", "C", "D"].map((k) => options.find((o) => o.key === k)!);
-  const waterOnly = priorityWeights({ water: 100, soil: 0, income: 0, labor: 0 }, new Set(COMPONENT_KEYS)).weights;
-  const soilOnly = priorityWeights({ water: 0, soil: 100, income: 0, labor: 0 }, new Set(COMPONENT_KEYS)).weights;
+  const waterOnly = priorityWeights({ water: 100, soil: 0, income: 0, labor: 0, forage: 0 }, new Set(COMPONENT_KEYS)).weights;
+  const soilOnly = priorityWeights({ water: 0, soil: 100, income: 0, labor: 0, forage: 0 }, new Set(COMPONENT_KEYS)).weights;
   for (const o of [c, d]) assert.ok(totalScore(b.scores, waterOnly)! >= totalScore(o.scores, waterOnly)!, o.key);
   assert.ok(totalScore(c.scores, soilOnly)! >= totalScore(d.scores, soilOnly)!);
 });
 
 test("weights: all sliders at 0 counts as equal; weights sum to 1", () => {
   const avail = new Set(COMPONENT_KEYS);
-  const zero = priorityWeights({ water: 0, soil: 0, income: 0, labor: 0 }, avail).weights;
+  const zero = priorityWeights({ water: 0, soil: 0, income: 0, labor: 0, forage: 0 }, avail).weights;
   const equal = priorityWeights(EQUAL, avail).weights;
   for (const k of COMPONENT_KEYS) assert.ok(Math.abs(zero[k] - equal[k]) < 1e-12, k);
   const sum = COMPONENT_KEYS.reduce((a, k) => a + equal[k], 0);
@@ -238,7 +238,7 @@ test("unknown crop id: reported as a gap and left out of A", () => {
 // --- Component scores ---------------------------------------------------------
 
 /** Score the farmer's own months as option A (no filters). */
-const yours = (seasons: [string, number, number][], data = iligan, details = lowland) =>
+const yours = (seasons: [string, number, number][], data: RotationsInput["data"] = iligan, details = lowland) =>
   run({
     lot: {
       crops: seasons.map(([crop_id, plant_month, harvest_month]) => ({
@@ -305,4 +305,75 @@ test("tooSimilar: same crops within one month are duplicates; a crop or a 2-mont
   assert.equal(tooSimilar([s("rice", 12)], [s("rice", 1)]), true); // wraps the year
   // Matches slots of the same crop in the best order.
   assert.equal(tooSimilar([s("rice", 1), s("rice", 6)], [s("rice", 6), s("rice", 12)]), true);
+});
+
+// --- NASA SRTM slope in erosion protection (RUSLE S) ---------------------------
+
+test("RUSLE S (McCool et al. 1987): about 1 at the 9 % unit plot, steeper slopes higher, flat near 0.03", () => {
+  assert.ok(Math.abs(rusleS(9) - 1) < 0.01, `S(9) = ${rusleS(9)}`);
+  assert.ok(Math.abs(rusleS(0) - 0.03) < 1e-9);
+  // Hand check: 20 % slope, sin(atan(0.2)) = 0.19612, 16.8 x 0.19612 - 0.5 = 2.795
+  assert.ok(Math.abs(rusleS(20) - 2.795) < 0.001, `S(20) = ${rusleS(20)}`);
+  // Hand check: 5 % slope, sin(atan(0.05)) = 0.04994, 10.8 x 0.04994 + 0.03 = 0.569
+  assert.ok(Math.abs(rusleS(5) - 0.569) < 0.001, `S(5) = ${rusleS(5)}`);
+  assert.ok(rusleS(3) < rusleS(8) && rusleS(8) < rusleS(12));
+});
+
+test("erosion uses the SRTM slope when known; land type stays the fallback and is kept for lowland paddies", () => {
+  const upland: LotDetails = { ...lowland, land_type: "unknown" };
+  const withSlope = (pct: number | null, details: LotDetails) => yours([["corn", 6, 9]], { ...iligan, slope_pct: pct }, details);
+  const steep = withSlope(20, upland);
+  const gentle = withSlope(2, upland);
+  const none = withSlope(null, upland);
+  assert.equal(steep.metrics.erosion_slope.source, "srtm");
+  assert.equal(steep.metrics.erosion_slope.slope_pct, 20);
+  assert.ok(steep.scores.E! < none.scores.E! && none.scores.E! < gentle.scores.E!);
+  assert.equal(none.metrics.erosion_slope.source, "land-type");
+  assert.equal(none.metrics.erosion_slope.factor, EROSION_SLOPE_FACTOR.unknown);
+  // A bunded lowland paddy keeps the land-type factor even with a steep SRTM cell.
+  const paddy = withSlope(20, lowland);
+  assert.equal(paddy.metrics.erosion_slope.source, "land-type");
+  assert.equal(paddy.metrics.erosion_slope.factor, EROSION_SLOPE_FACTOR.lowland);
+  // E = 100 x (1 - S x bare-rain share), clamped to 0-100.
+  const share = steep.metrics.bare_rain_share!;
+  assert.ok(Math.abs(steep.scores.E! - Math.max(0, 100 * (1 - rusleS(20) * share))) < 1e-9);
+});
+
+// --- Feeds your animals (F, crops.json forage_residue) --------------------------
+
+test("F = share of crop days on crops whose residue is commonly fed to livestock", () => {
+  // Rice and mungbean residue are both cited as fed in the library: F = 100.
+  assert.equal(yours([["lowland-rice", 6, 10], ["mungbean", 11, 1]]).scores.F, 100);
+  // With mungbean marked "no" (test data, not a claim), F = rice days / all crop days.
+  const noMung: CropLibrary = { ...lib, crops: lib.crops.map((c) => (c.id === "mungbean" ? { ...c, forage_residue: false } : c)) };
+  const r = run({
+    library: noMung,
+    lot: { crops: [{ crop_id: "lowland-rice", seasons: [{ plant_month: 6, harvest_month: 10 }] }, { crop_id: "mungbean", seasons: [{ plant_month: 11, harvest_month: 1 }] }], details: lowland },
+  }).options[0];
+  const share = r.metrics.forage_days / r.metrics.crop_days;
+  assert.ok(share > 0 && share < 1);
+  assert.ok(Math.abs(r.scores.F! - 100 * share) < 1e-9);
+});
+
+test("F: a crop with no forage value gets no credit and is reported; no forage data at all leaves F out", () => {
+  const unknownMung: CropLibrary = { ...lib, crops: lib.crops.map((c) => (c.id === "mungbean" ? { ...c, forage_residue: null } : c)) };
+  const r = run({ library: unknownMung, lot: { crops: crops("lowland-rice", "mungbean"), details: lowland } });
+  assert.ok(r.gaps.some((g) => g.code === "crop-field-missing" && g.crop_id === "mungbean" && g.field === "forage_residue"));
+  const none: CropLibrary = { ...lib, crops: lib.crops.map((c) => ({ ...c, forage_residue: null })) };
+  const n = run({ library: none });
+  assert.ok(n.components_left_out.includes("F"));
+  assert.ok(n.priorities_not_scored.includes("forage"));
+  assert.ok(!n.gaps.some((g) => g.code === "crop-field-missing" && g.field === "forage_residue"), "no per-crop gap when the library has no forage data at all");
+  for (const o of n.options) assert.equal(o.scores.F, null);
+});
+
+test("a saved farm without the forage priority counts it as the default (50)", () => {
+  const avail = new Set(COMPONENT_KEYS);
+  const old = priorityWeights({ water: 50, soil: 50, income: 50, labor: 50 }, avail).weights;
+  const now = priorityWeights(EQUAL, avail).weights;
+  for (const k of COMPONENT_KEYS) assert.ok(Math.abs(old[k] - now[k]) < 1e-12, k);
+  assert.ok(now.F > 0);
+  // "Feed animals" alone weighs only F.
+  const only = priorityWeights({ water: 0, soil: 0, income: 0, labor: 0, forage: 100 }, avail).weights;
+  assert.equal(only.F, 1);
 });

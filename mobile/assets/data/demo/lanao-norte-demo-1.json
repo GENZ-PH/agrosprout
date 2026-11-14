@@ -178,6 +178,20 @@
    0.16,
    0.36
   ],
+  "frost_days_lt0": [
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
   "smap_rootzone_m3m3": null
  },
  "trends": {
@@ -269,6 +283,14 @@
    "period": "2001-2025",
    "retrieved": "2026-11-14",
    "note": "mean days per month above 50 mm"
+  },
+  {
+   "field": "monthly.frost_days_lt0",
+   "source": "NASA POWER daily T2M_MIN",
+   "native_res": "0.5° × 0.625° grid cell",
+   "period": "2001-2025",
+   "retrieved": "2026-11-14",
+   "note": "mean days per month with a daily minimum air temperature (2 m) below 0 °C; ETCCDI frost-day index FD"
   },
   {
    "field": "elevation_m",

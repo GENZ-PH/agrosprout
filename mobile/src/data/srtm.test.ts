@@ -73,6 +73,7 @@ test('applySrtm: ET0 uses the field elevation, and a caveat compares field and c
   assert.ok(sum(high.monthly.et0_mm) > sum(live.monthly.et0_mm));
   assert.ok(!high.caveats.some((c) => /sea level/.test(c)));
   assert.ok(high.caveats.some((c) => c.startsWith('Field elevation from NASA SRTM: about 1500 m')));
+  assert.ok(!high.caveats.some((c) => c.startsWith("NASA reports this cell's average elevation")));
   assert.ok(high.provenance.some((p) => p.field === 'elevation_m' && /SRTM/.test(p.source)));
   // Temperatures are not changed (no local lapse-rate source, #112 A1).
   assert.deepEqual(high.monthly.tmax_c, live.monthly.tmax_c);

@@ -35,6 +35,8 @@ class Monthly(unittest.TestCase):
     def test_exactly_the_limit_is_not_counted(self):
         d = {k: 35.0 for k in days(2023, 4)}
         self.assertEqual(ag.monthly_stat(d, "gt35")[(2023, 4)], 0)
+        cold = {k: (-0.1 if i < 2 else 0.0) for i, k in enumerate(days(2023, 4))}
+        self.assertEqual(ag.monthly_stat(cold, "lt0")[(2023, 4)], 2)  # 0.0 itself is not a frost day
 
     def test_many_missing_days_make_the_month_missing(self):
         d = {k: 1.0 for k in days(2023, 4)}

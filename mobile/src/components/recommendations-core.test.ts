@@ -106,11 +106,11 @@ test("deltaText: gains, losses and no change", () => {
   assert.equal(deltaText(0), "same");
 });
 
-test("scoreRows: eight scores in the fixed order, with the change vs your crops", () => {
-  const a = { key: "A" as const, scores: { W: 60.4, H: 90, S: 40, E: 50, B: 30, I: 55, M: null, L: 70 } };
-  const b = { key: "B" as const, scores: { W: 72.6, H: 90, S: 47.5, E: 50, B: 60, I: 50, M: null, L: 60 } };
+test("scoreRows: nine scores in the fixed order, with the change vs your crops", () => {
+  const a = { key: "A" as const, scores: { W: 60.4, H: 90, S: 40, E: 50, B: 30, I: 55, M: null, L: 70, F: null } };
+  const b = { key: "B" as const, scores: { W: 72.6, H: 90, S: 47.5, E: 50, B: 60, I: 50, M: null, L: 60, F: null } };
   const rowsA = scoreRows(a, a, ["M"]);
-  assert.deepEqual(rowsA.map((r) => r.key), ["W", "H", "S", "E", "B", "I", "M", "L"]);
+  assert.deepEqual(rowsA.map((r) => r.key), ["W", "H", "S", "E", "B", "I", "M", "L", "F"]);
   assert.ok(rowsA.every((r) => r.delta === null), "option A is the baseline, so no change is shown");
   const rowsB = scoreRows(b, a, ["M"]);
   assert.deepEqual(rowsB.find((r) => r.key === "W"), { key: "W", label: "Fits your rain", value: 73, delta: 12, left_out: false });
@@ -148,7 +148,7 @@ test("Iligan lot with crops.json: every crop fit and option turns into clean tex
     assertClean(crops, `option ${o.key} crops`);
     assert.doesNotMatch(crops, /\(/, "short crop names only");
     const rows = scoreRows(o, a, components_left_out);
-    assert.equal(rows.length, 8);
+    assert.equal(rows.length, 9);
     assert.ok(rows.every((r) => r.value === null || (r.value >= 0 && r.value <= 100)));
     const ex = analysis.explanations[i];
     assert.equal(ex.option_key, o.key, "explanations come in the same order as the options");

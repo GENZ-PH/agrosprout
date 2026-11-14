@@ -6,10 +6,11 @@
 // the farmer and the agricultural technician (CLAUDE.md rule 6).
 //
 // Each line has a stable `code` so the texts can be translated later (#37).
-import type { Crop, CropLibrary, Destination, DestinationType, Lot, LotData, Provenance } from "../types";
+import type { Crop, CropLibrary, Destination, DestinationType, Equipment, Lot, LotData, Provenance } from "../types";
 import type { MarketAccessResult } from "./access";
 import { CONFIDENCE_LOW_UNKNOWN_INPUTS, EXPLAIN_MIN_DELTA_POINTS, PONDED_CROP_IDS } from "./params";
 import type { RotationOption, RotationsResult } from "./rotations";
+import { soakShareOver } from "./infiltration";
 import { COMPONENT_KEYS, totalScore, type ComponentKey } from "./scores";
 
 export interface ExplainLine {
@@ -71,6 +72,7 @@ export const COMPONENT_LABELS: Readonly<Record<ComponentKey, string>> = {
   I: "Income potential",
   M: "Easy to get to market",
   L: "Easy to manage",
+  F: "Feeds your animals",
 };
 const COMPONENT_NAME = COMPONENT_LABELS;
 
@@ -131,8 +133,33 @@ function driver(k: ComponentKey, opt: RotationOption, a: RotationOption, access:
       return "The crops have a higher market level in the crop library.";
     case "L":
       return "The crops need less work in the crop library.";
+    case "F": {
+      const share = (r: RotationOption) => (r.metrics.crop_days > 0 ? r.metrics.forage_days / r.metrics.crop_days : 0);
+      return `Crop days on crops whose straw, stalks or vines are commonly fed to animals go from ${pct(share(a))} to ${pct(share(opt))}.`;
+    }
   }
 }
+
+/** The NASA SRTM slope when erosion used it (RUSLE S), else `null`. */
+const srtmSlope = (o: RotationOption): number | null =>
+  o.metrics.erosion_slope.source === "srtm" ? o.metrics.erosion_slope.slope_pct : null;
+/**
+ * A lot counts as sloping for the bare-soil question when the farmer said so, or when the
+ * SRTM slope gives RUSLE S >= 1, i.e. at least as steep as the 9 % RUSLE unit plot (params.ts RUSLE_S).
+ */
+const isSloping = (o: RotationOption, landType: Lot["details"]["land_type"]) =>
+  landType === "sloping" || (srtmSlope(o) !== null && o.metrics.erosion_slope.factor >= 1);
+
+/**
+ * The farmer's equipment in a sentence. No source says which crops need which equipment, so it
+ * only becomes a question for the technician (lot-details-options.ts cites the categories).
+ */
+const EQUIPMENT_WORDS: Readonly<Record<Exclude<Equipment, "unknown">, string>> = {
+  hand: "hand tools only",
+  carabao: "a carabao",
+  "hand-tractor": "a hand tractor",
+  tractor: "a four-wheel tractor",
+};
 
 /** Crop-specific questions for the agricultural technician. */
 function checkLocally(
@@ -141,6 +168,7 @@ function checkLocally(
   access: MarketAccessResult | null,
   sloping: boolean,
   destinations: readonly Destination[],
+  equipment: Equipment = "unknown",
 ): ExplainLine[] {
   const out: ExplainLine[] = [];
   const crops = uniq(opt.slots.map((s) => s.crop_id)).map((id) => byId.get(id)).filter((c): c is Crop => !!c);
@@ -157,9 +185,19 @@ function checkLocally(
     if (opt.new_crop_ids.includes(c.id)) {
       out.push(line(`check.new-crop.${c.id}`, `${shortName(c)} is new on your lot. Is seed available, and do you know the local pests and where to sell it?`));
     }
+    if (equipment !== "unknown") {
+      out.push(
+        line(
+          `check.equipment.${c.id}`,
+          `Check with your technician whether land preparation and harvest of ${shortName(c)} can be done with ${EQUIPMENT_WORDS[equipment]}.`,
+        ),
+      );
+    }
   }
   if (sloping && opt.metrics.bare_months.length > 0) {
-    out.push(line("check.slope-bare", `On a slope, bare soil in ${monthList(opt.metrics.bare_months)} can wash away. Can the soil be kept covered?`));
+    const sl = srtmSlope(opt);
+    const where = sl !== null ? `On a slope (NASA SRTM slope about ${Math.round(sl)}%)` : "On a slope";
+    out.push(line("check.slope-bare", `${where}, bare soil in ${monthList(opt.metrics.bare_months)} can wash away. Can the soil be kept covered?`));
   }
   if (access?.on && crops.some((c) => access.by_crop[c.id]?.ask_to_confirm)) {
     out.push(line("check.travel-confirm", "Travel time to your harvest place is a rough estimate. Please confirm it."));
@@ -195,7 +233,17 @@ function unknownsFor(opt: RotationOption, a: RotationOption, input: ExplainInput
   if (data.elevation_m === null) {
     out.push(line("unknown.elevation", "Your field's elevation is not known, so evapotranspiration is calculated at sea level."));
   }
-  if (details.land_type === "unknown") out.push(line("unknown.land-type", "Land type is not given, so a middle value for erosion is used."));
+  const slope = srtmSlope(opt);
+  if (slope !== null) {
+    out.push(
+      line(
+        "unknown.slope-srtm",
+        `Erosion uses the NASA SRTM slope about ${Math.round(slope)}%, a terrain value for about 30 m around your lot's centre, not a measurement of your field.`,
+      ),
+    );
+  } else if (details.land_type === "unknown") {
+    out.push(line("unknown.land-type", "Land type is not given, so a middle value for erosion is used."));
+  }
   if (details.water === "unknown") out.push(line("unknown.water", "Water source is not given, so rain only is assumed."));
   if (details.soil === "unknown" && hasPonded(opt, a)) {
     out.push(line("unknown.soil", "Soil feel is not given, so average water loss in rice paddies is assumed."));
@@ -209,6 +257,21 @@ function unknownsFor(opt: RotationOption, a: RotationOption, input: ExplainInput
     if (access.pending_destination_ids.length > 0) {
       out.push(line("unknown.travel-pending", "Travel time to some harvest places is not known yet."));
     }
+  }
+  const inf = opt.metrics.infiltration;
+  if (inf.share !== null) {
+    out.push(
+      line(
+        "unknown.infiltration",
+        `How much rain soaks in is a rough indicator from US curve-number tables, not measured in your field${inf.hsg_source === "assumed" ? "; soil feel is not given, so a medium soil (loam) is assumed" : ""}.`,
+      ),
+    );
+  }
+  if (inf.paddy_months.length > 0) {
+    out.push(line("unknown.infiltration-paddy", `Paddy rice months (${monthList(inf.paddy_months)}) are left out of the soak-in figure: the tables are for upland fields, not bunded paddies.`));
+  }
+  if (!result.components_left_out.includes("F") && opt.scores.F !== null) {
+    out.push(line("unknown.forage", "Feeds your animals only counts crops whose straw, stalks or vines are commonly fed to animals; it does not say how much feed or how good it is."));
   }
   if (!result.components_left_out.includes("I")) {
     out.push(line("unknown.prices", "No local price data: income uses a crop market level, not prices."));
@@ -260,8 +323,11 @@ function confidenceFor(opt: RotationOption, a: RotationOption, input: ExplainInp
   if (checks.some((f) => f === true)) reasons.push("ranking-flips-dry-wet");
   else if (checks.some((f) => f === null)) reasons.push("dry-wet-not-checked");
   // Soil feel only counts when paddy rice is in the comparison: it only sets rice water loss.
+  // Land type only sets the erosion slope factor; with the NASA SRTM slope it is not a guess.
+  const landGuessed = details.land_type === "unknown" && srtmSlope(opt) === null;
   const unknownInputs =
-    [details.land_type, details.water].filter((v) => v === "unknown").length +
+    (landGuessed ? 1 : 0) +
+    (details.water === "unknown" ? 1 : 0) +
     (details.soil === "unknown" && hasPonded(opt, a) ? 1 : 0) +
     (opt.assumed_calendar ? 1 : 0);
   if (unknownInputs >= CONFIDENCE_LOW_UNKNOWN_INPUTS) reasons.push("unknown-inputs");
@@ -289,6 +355,7 @@ const CROP_EVIDENCE: readonly CropEvidence[] = [
   { field: "waterlogging_tolerance", topic: "Waterlogging tolerance", applies: (c) => c.waterlogging_tolerance === "low" },
   { field: "drought_tolerance", topic: "Drought tolerance", applies: (c) => c.drought_tolerance === "low" },
   { field: "n_fixing", topic: "Adds nitrogen", applies: (c) => c.n_fixing === true },
+  { field: "forage_residue", topic: "Residue fed to animals", applies: (c, o) => c.forage_residue === true && o.scores.F !== null },
   { field: "family", topic: "Plant family", applies: (_c, o) => o.scores.B !== null },
   { field: "perishability", topic: "How long it keeps", applies: (_c, _o, _a, i) => i.access?.on === true },
   {
@@ -327,6 +394,27 @@ function evidenceFor(opt: RotationOption, a: RotationOption, input: ExplainInput
     );
   }
 
+  const slope = srtmSlope(opt);
+  if (slope !== null) {
+    out.push(
+      line(
+        "evidence.data.slope",
+        `Slope: NASA SRTM about ${Math.round(slope)}%, used with the RUSLE slope-steepness factor (McCool et al. 1987, USDA Agriculture Handbook 703).`,
+      ),
+    );
+  }
+
+  const inf = opt.metrics.infiltration;
+  if (inf.share !== null) {
+    const group = inf.hsg_source === "assumed" ? `soil group ${inf.hsg} (assumed)` : `soil group ${inf.hsg} from your soil feel`;
+    out.push(
+      line(
+        "evidence.infiltration",
+        `Storm soak-in: about ${pct(inf.share)} of a ${inf.storm_mm} mm storm${inf.paddy_months.length > 0 ? " in the months without paddy rice" : ""}, from USDA NRCS TR-55 runoff curve numbers (1986, Table 2-2b; ${group}).`,
+      ),
+    );
+  }
+
   const cited = new Set<keyof Crop>();
   for (const { field, topic, applies } of CROP_EVIDENCE) {
     const groups = new Map<string, string[]>();
@@ -355,7 +443,6 @@ export function explain(input: ExplainInput): Explanation[] {
   const access = input.access ?? null;
   const byId = new Map(library.crops.map((c) => [c.id, c]));
   const a = result.options.find((o) => o.key === "A") ?? result.options[0];
-  const sloping = input.lot.details.land_type === "sloping";
 
   return result.options.map((opt) => {
     const isA = opt.key === a.key;
@@ -404,6 +491,22 @@ export function explain(input: ExplainInput): Explanation[] {
             ),
           );
     const tradeoffs: ExplainLine[] = worse.map(({ k, d }) => line(`tradeoff.${k}`, `${COMPONENT_NAME[k]} ${pts(d)} points`));
+    // Storm infiltration indicator (TR-55): not a score, so it is written up here on its own.
+    // Compared on the months with no paddy rice in either option, so both figures cover the same months.
+    const common = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].filter(
+      (m) => !a.metrics.infiltration.paddy_months.includes(m) && !opt.metrics.infiltration.paddy_months.includes(m),
+    );
+    const soakA = soakShareOver(a.metrics.infiltration, common);
+    const soakO = soakShareOver(opt.metrics.infiltration, common);
+    if (!isA && soakA !== null && soakO !== null) {
+      const d = 100 * (soakO - soakA);
+      const when = common.length < 12 ? ` (${monthList(common)})` : "";
+      const text = `of a ${opt.metrics.infiltration.storm_mm} mm storm soaks in${when}: ${pct(soakA)} to ${pct(soakO)}.`;
+      if (d >= EXPLAIN_MIN_DELTA_POINTS) {
+        if (benefits.length === 1 && benefits[0].code === "benefit.none") benefits.length = 0;
+        benefits.push(line("benefit.infiltration", `More ${text}`));
+      } else if (d <= -EXPLAIN_MIN_DELTA_POINTS) tradeoffs.push(line("tradeoff.infiltration", `Less ${text}`));
+    }
     // More bare months is a cost even when the soil-building score still rises.
     if (!isA && opt.metrics.bare_months.length > a.metrics.bare_months.length) {
       tradeoffs.push(line("tradeoff.bare-months", `Bare-soil months go from ${a.metrics.bare_months.length} to ${opt.metrics.bare_months.length}.`));
@@ -416,7 +519,7 @@ export function explain(input: ExplainInput): Explanation[] {
       benefits,
       tradeoffs,
       unknowns: unknownsFor(opt, a, input, byId),
-      check_locally: checkLocally(opt, byId, access, sloping, input.destinations ?? []),
+      check_locally: checkLocally(opt, byId, access, isSloping(opt, input.lot.details.land_type), input.destinations ?? [], input.lot.details.equipment),
       confidence: confidenceFor(opt, a, input),
     };
   });

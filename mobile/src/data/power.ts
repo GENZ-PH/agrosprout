@@ -24,6 +24,7 @@ import { lotDataKey } from '../types';
 import { fetchWithTimeout } from '../net/fetch';
 import { DAYS_IN_MONTH, monthlyEt0, solarToMJ } from './et0';
 import { fetchSrtm, roundForSrtm, SRTM_ACQUIRED, SRTM_CITATION, type SrtmFetcher, type SrtmResult } from './srtm';
+import { applyDaily, isDailyRetryable, markDailyTried, needsDaily, type DailyFetcher } from './power-daily';
 
 export { lotDataKey };
 
@@ -302,7 +303,10 @@ const SEA_LEVEL_NOTE = 'sea-level pressure assumed until the SRTM elevation is a
 export function applySrtm(data: LotData, srtm: SrtmResult): LotData {
   const m = data.monthly;
   let et0 = m.et0_mm;
-  const caveats = data.caveats.filter((c) => !c.startsWith('Evapotranspiration:') && !c.startsWith('Field elevation'));
+  // The field-vs-cell line below replaces POWER's general cell-height note.
+  const caveats = data.caveats.filter(
+    (c) => !c.startsWith('Evapotranspiration:') && !c.startsWith('Field elevation') && !(srtm.elevation_m !== null && c.startsWith("NASA reports this cell's average elevation")),
+  );
   if (srtm.elevation_m !== null && m.rh2m_pct && m.ws2m_ms && m.solar_mj_m2_day) {
     try {
       const e = monthlyEt0({
@@ -367,6 +371,20 @@ async function withSrtm(data: LotData, lat: number, lon: number, fetcher: SrtmFe
   }
 }
 
+/**
+ * Best effort: NASA POWER daily data (heat, heavy-rain and frost days, trends), once per rounded
+ * point. Offline or server trouble leaves the data as is (tried again later); a bad answer or a
+ * client error is marked as tried so it is not downloaded again for this point.
+ */
+async function withDaily(data: LotData, fetcher: DailyFetcher | undefined, retrieved: string, signal?: AbortSignal): Promise<LotData> {
+  if (!fetcher || !needsDaily(data)) return data;
+  try {
+    return applyDaily(data, await fetcher(data.lat, data.lon, signal), retrieved);
+  } catch (err) {
+    return isDailyRetryable(err) ? data : markDailyTried(data);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Orchestration: store, refetch rule, pending/error states
 // ---------------------------------------------------------------------------
@@ -426,6 +444,11 @@ export async function ensureLotData(args: {
   fetcher?: PowerFetcher;
   /** NASA SRTM elevation fetcher; omitted = no elevation request (tests, or no network). */
   srtmFetcher?: SrtmFetcher;
+  /**
+   * NASA POWER daily fetcher (`fetchPowerDaily`); omitted = no daily request. Runs after the
+   * monthly data (and SRTM) is saved, so it never holds back or loses the monthly data.
+   */
+  dailyFetcher?: DailyFetcher;
   now?: () => Date;
   force?: boolean;
   signal?: AbortSignal;
@@ -433,22 +456,27 @@ export async function ensureLotData(args: {
   const { lotId, lat, lon, store, force = false, signal } = args;
   const fetcher = args.fetcher ?? fetchPowerMonthly;
   const now = args.now ?? (() => new Date());
+  const today = () => now().toISOString().slice(0, 10);
   const key = lotDataKey(lotId);
   const want = { lat: roundForPower(lat), lon: roundForPower(lon) };
 
   const stored = await readStored(store, key);
   if (stored && !force && stored.lat === want.lat && stored.lon === want.lon) {
-    // Climate is current; fill in the field elevation if this lot centre has none yet.
-    const data = await withSrtm(stored, lat, lon, args.srtmFetcher, signal);
-    if (data !== stored) await store.set(key, JSON.stringify(data));
+    // Climate is current; fill in the field elevation and the daily extremes if missing.
+    const withElev = await withSrtm(stored, lat, lon, args.srtmFetcher, signal);
+    if (withElev !== stored) await store.set(key, JSON.stringify(withElev));
+    const data = await withDaily(withElev, args.dailyFetcher, today(), signal);
+    if (data !== withElev) await store.set(key, JSON.stringify(data));
     return { status: 'ready', data, fetched: data !== stored };
   }
 
   try {
     const json = await fetcher(want.lat, want.lon, signal);
-    const parsed = parsePowerMonthly(json, now().toISOString().slice(0, 10), lotId);
-    const data = await withSrtm(parsed, lat, lon, args.srtmFetcher, signal);
-    await store.set(key, JSON.stringify(data));
+    const parsed = parsePowerMonthly(json, today(), lotId);
+    const monthly = await withSrtm(parsed, lat, lon, args.srtmFetcher, signal);
+    await store.set(key, JSON.stringify(monthly));
+    const data = await withDaily(monthly, args.dailyFetcher, today(), signal);
+    if (data !== monthly) await store.set(key, JSON.stringify(data));
     return { status: 'ready', data, fetched: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

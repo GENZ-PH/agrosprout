@@ -7,6 +7,7 @@ import { CROP_LIBRARY_FIXTURE } from "./__fixtures__/crops.fixture";
 import { ILIGAN_LOT_FIXTURE } from "./__fixtures__/iligan-lot.fixture";
 import { marketAccess } from "./access";
 import { explain, type Explanation } from "./explain";
+import { soakShareOver } from "./infiltration";
 import { rotations } from "./rotations";
 
 const lib = CROP_LIBRARY_FIXTURE;
@@ -266,4 +267,80 @@ test("more bare months is listed as a trade-off and never inside a benefit line"
     if (more) checked++;
   }
   assert.ok(checked > 0, "the fixture lot has an option with more bare months");
+});
+
+test("with a NASA SRTM slope the farmer sees it, land type is no longer a guess, and steep slopes get the bare-soil question", () => {
+  const details: LotDetails = { land_type: "unknown", water: "rain", soil: "loamy" };
+  const lot = { crops: crops("corn"), details };
+  const go = (slope_pct: number | null) => {
+    const data = { ...ILIGAN_LOT_FIXTURE, slope_pct };
+    const result = rotations({ lot, data, library: lib, priorities: EQUAL });
+    return explain({ result, lot, data, library: lib });
+  };
+  const steep = go(15)[0];
+  const t = text(steep);
+  assert.match(t, /NASA SRTM slope about 15%/);
+  assert.ok(steep.evidence.some((l) => l.code === "evidence.data.slope"));
+  assert.ok(!steep.unknowns.some((l) => l.code === "unknown.land-type"));
+  const noSlope = go(null)[0];
+  assert.ok(noSlope.unknowns.some((l) => l.code === "unknown.land-type"));
+  assert.ok(!text(noSlope).includes("SRTM"));
+  // Land type unknown counts as an unknown input only without the SRTM slope.
+  assert.ok(noSlope.confidence.reasons.includes("one-unknown-input"));
+  assert.ok(!steep.confidence.reasons.includes("one-unknown-input") && !steep.confidence.reasons.includes("unknown-inputs"));
+  // The bare-soil question names the slope, and appears from the RUSLE unit-plot steepness (S >= 1).
+  for (const e of go(15)) {
+    const q = e.check_locally.find((l) => l.code === "check.slope-bare");
+    if (q) assert.match(q.text, /NASA SRTM slope about 15%/);
+  }
+  assert.ok(go(15).some((e) => e.check_locally.some((l) => l.code === "check.slope-bare")), "corn alone leaves bare months");
+  assert.ok(!go(3).some((e) => e.check_locally.some((l) => l.code === "check.slope-bare")), "3 % is gentler than the unit plot");
+});
+
+test("Feeds your animals: label, a driver line with crop-day shares, and the forage caveat", () => {
+  const { result, ex } = run(known, crops("lowland-rice"));
+  assert.ok(!result.components_left_out.includes("F"));
+  for (const e of ex) assert.ok(e.unknowns.some((l) => l.code === "unknown.forage"));
+  for (const e of ex) {
+    const w = e.why.find((l) => l.code === "why.F");
+    if (w) assert.match(w.text, /^.*Feeds your animals: Crop days on crops whose straw, stalks or vines are commonly fed to animals go from \d+% to \d+%\./);
+  }
+});
+
+test("equipment adds one check-with-your-technician line per crop and changes no score", () => {
+  const base = run(known, crops("lowland-rice"));
+  const withCarabao = run({ ...known, equipment: "carabao" }, crops("lowland-rice"));
+  assert.deepEqual(withCarabao.result.options.map((o) => o.scores), base.result.options.map((o) => o.scores));
+  assert.deepEqual(withCarabao.ex.map((e) => e.confidence), base.ex.map((e) => e.confidence));
+  for (const e of base.ex) assert.ok(!e.check_locally.some((l) => l.code.startsWith("check.equipment.")));
+  const opt = withCarabao.result.options[0];
+  const lines = withCarabao.ex[0].check_locally.filter((l) => l.code.startsWith("check.equipment."));
+  assert.equal(lines.length, new Set(opt.slots.map((s) => s.crop_id)).size);
+  assert.match(lines[0].text, /^Check with your technician whether land preparation and harvest of Lowland rice can be done with a carabao\.$/);
+  // "I don't know" adds nothing.
+  const dunno = run({ ...known, equipment: "unknown" }, crops("lowland-rice"));
+  for (const e of dunno.ex) assert.ok(!e.check_locally.some((l) => l.code.startsWith("check.equipment.")));
+});
+
+test("storm soak-in: evidence names TR-55, assumed soil group is an unknown, paddy months are left out", () => {
+  const corn = run({ land_type: "upland", water: "rain", soil: "unknown" }, crops("corn"));
+  for (const e of corn.ex) {
+    assert.ok(e.evidence.some((l) => l.code === "evidence.infiltration" && /TR-55/.test(l.text) && /assumed/.test(l.text)));
+    assert.ok(e.unknowns.some((l) => l.code === "unknown.infiltration" && /assumed/.test(l.text)));
+  }
+  const a = corn.result.options[0];
+  for (const [i, o] of corn.result.options.entries()) {
+    if (o.key === "A") continue;
+    // Compared on the months with no paddy rice in either option.
+    const common = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].filter(
+      (m) => !a.metrics.infiltration.paddy_months.includes(m) && !o.metrics.infiltration.paddy_months.includes(m),
+    );
+    const d = 100 * (soakShareOver(o.metrics.infiltration, common)! - soakShareOver(a.metrics.infiltration, common)!);
+    const b = corn.ex[i].benefits.some((l) => l.code === "benefit.infiltration");
+    const t = corn.ex[i].tradeoffs.some((l) => l.code === "tradeoff.infiltration");
+    assert.equal(b, d >= 1, `${o.key} benefit, delta ${d}`);
+    assert.equal(t, d <= -1, `${o.key} trade-off, delta ${d}`);
+  }
+  const rice = run(known, crops("lowland-rice"));
+  assert.ok(rice.ex[0].unknowns.some((l) => l.code === "unknown.infiltration-paddy"));
 });

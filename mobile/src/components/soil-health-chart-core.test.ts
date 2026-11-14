@@ -130,8 +130,8 @@ test("every word the chart shows avoids %, nitrogen and carbon claims (gap F1)",
 
 test("an option with no line says why, and the summary and moves text say so too", () => {
   const shi = soilHealth([
-    { key: "A", scores: { W: 50, H: 50, S: 20, E: 60, B: 0, I: null, M: null, L: null } },
-    { key: "C", scores: { W: 50, H: 50, S: null, E: 90, B: 0, I: null, M: null, L: null } },
+    { key: "A", scores: { W: 50, H: 50, S: 20, E: 60, B: 0, I: null, M: null, L: null, F: null } },
+    { key: "C", scores: { W: 50, H: 50, S: null, E: 90, B: 0, I: null, M: null, L: null, F: null } },
   ]);
   const rows = soilHealthRows(shi, []);
   assert.equal(rows[1].end, null);
@@ -147,8 +147,8 @@ test("an option with no line says why, and the summary and moves text say so too
 test("the gap to your crops is worked out from the rounded ends shown on screen", () => {
   // A ends at 52.3 (shown 52); C ends at 54.6 (shown 55). The engine gap is 2.3, the screen says 3.
   const shi = soilHealth([
-    { key: "A", scores: { W: 50, H: 50, S: 30, E: 77.67, B: 0, I: null, M: null, L: null } },
-    { key: "C", scores: { W: 50, H: 50, S: 30, E: 85.33, B: 0, I: null, M: null, L: null } },
+    { key: "A", scores: { W: 50, H: 50, S: 30, E: 77.67, B: 0, I: null, M: null, L: null, F: null } },
+    { key: "C", scores: { W: 50, H: 50, S: 30, E: 85.33, B: 0, I: null, M: null, L: null, F: null } },
   ]);
   const [a, c] = soilHealthRows(shi, []);
   assert.equal(a.end, 52);
@@ -165,10 +165,10 @@ test("cropList: each crop once in planting order, with a count when repeated", (
 
 test("vs text: above, below and the same", () => {
   const shi = soilHealth([
-    { key: "A", scores: { W: 50, H: 50, S: 50, E: 50, B: 0, I: null, M: null, L: null } },
-    { key: "B", scores: { W: 50, H: 50, S: 20, E: 50, B: 0, I: null, M: null, L: null } },
-    { key: "C", scores: { W: 50, H: 50, S: 90, E: 50, B: 0, I: null, M: null, L: null } },
-    { key: "D", scores: { W: 50, H: 50, S: 50, E: 50, B: 0, I: null, M: null, L: null } },
+    { key: "A", scores: { W: 50, H: 50, S: 50, E: 50, B: 0, I: null, M: null, L: null, F: null } },
+    { key: "B", scores: { W: 50, H: 50, S: 20, E: 50, B: 0, I: null, M: null, L: null, F: null } },
+    { key: "C", scores: { W: 50, H: 50, S: 90, E: 50, B: 0, I: null, M: null, L: null, F: null } },
+    { key: "D", scores: { W: 50, H: 50, S: 50, E: 50, B: 0, I: null, M: null, L: null, F: null } },
   ]);
   const rows = soilHealthRows(shi, []);
   assert.equal(rows[0].summary, "Year 3: 50 (no change)");

@@ -146,6 +146,7 @@ const isMonth = (v: unknown) => isNum(v) && Number.isInteger(v) && v >= 1 && v <
 const LAND = ["lowland", "upland", "sloping", "unknown"] as const;
 const WATER = ["rain", "some", "full", "unknown"] as const;
 const SOIL = ["sandy", "loamy", "clayey", "unknown"] as const;
+const EQUIPMENT = ["hand", "carabao", "hand-tractor", "tractor", "unknown"] as const;
 const STATUS = ["ready", "pending", "error"] as const;
 const TRAVEL_SOURCE = ["farmer", "route", "estimate"] as const;
 const ROUTE = ["car", "bike", "foot"] as const;
@@ -168,6 +169,8 @@ function checkLot(l: unknown, i: number): string | null {
   if (!isObj(d) || !oneOf(d.land_type, LAND) || !oneOf(d.water, WATER) || !oneOf(d.soil, SOIL)) {
     return `${at} has invalid details`;
   }
+  // Equipment is newer and optional: a backup without it restores.
+  if (d.equipment !== undefined && !oneOf(d.equipment, EQUIPMENT)) return `${at} has invalid details`;
   if (!Array.isArray(l.crops) || !l.crops.every((c) =>
     isObj(c) && isStr(c.crop_id) && Array.isArray(c.seasons) &&
     c.seasons.every((s) => isObj(s) && isMonth(s.plant_month) && isMonth(s.harvest_month)))) {
@@ -218,6 +221,8 @@ export function checkFarm(v: unknown): string | null {
   if (!isObj(pr) || !["water", "soil", "income", "labor"].every((k) => isNum(pr[k]) && pr[k] >= 0 && pr[k] <= 100)) {
     return "priorities are invalid";
   }
+  // "forage" (Feed animals) is newer: a backup without it is fine (the default is used).
+  if (pr.forage !== undefined && !(isNum(pr.forage) && pr.forage >= 0 && pr.forage <= 100)) return "priorities are invalid";
   return null;
 }
 

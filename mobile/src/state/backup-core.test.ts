@@ -126,6 +126,18 @@ test("parseBackup rejects files that are not a valid farm backup, with a reason"
   assert.match(bad((b) => (b.format = 2)), /format 2/);
   assert.match(bad((b) => (b.farm.version = 2)), /version 2/);
   assert.match(bad((b) => (b.farm.priorities.water = 150)), /priorities/);
+  // "Feed animals" is newer: a backup without it restores; a bad value is rejected.
+  assert.ok(parseBackup(JSON.stringify({ ...good, farm: { ...good.farm, priorities: { ...good.farm.priorities, forage: 100 } } })).ok);
+  assert.match(bad((b) => ((b.farm.priorities as Record<string, number>).forage = 101)), /priorities/);
+  const withLot = (equipment: unknown) =>
+    parseBackup(JSON.stringify({ ...good, farm: { ...good.farm, lots: [{ id: "lot-1", name: "Lot 1",
+      geometry: { type: "Polygon", coordinates: [[[124.24, 8.23], [124.241, 8.23], [124.241, 8.231], [124.24, 8.23]]] },
+      area_ha: 1, centroid: [124.2405, 8.2303], details: { land_type: "unknown", water: "unknown", soil: "unknown", equipment },
+      crops: [], data_status: "ready", data_ref: "lotdata:lot-1", travel: [] }] } }));
+  // Equipment is optional: a lot without it, or with a known answer, restores; anything else is rejected.
+  assert.ok(withLot(undefined).ok, JSON.stringify(withLot(undefined)));
+  assert.ok(withLot("hand-tractor").ok);
+  assert.equal(withLot("jetpack").ok, false);
   assert.match(bad((b) => b.farm.lots.push({ id: "lot-1", name: "A" })), /lot 1 has no valid outline/);
   assert.match(
     bad((b) => b.farm.destinations.push({ id: "d", name: "M", type: "mall", mode: "jeepney", point: [1, 2], load_kg_per_trip: null, fare_one_way: null })),

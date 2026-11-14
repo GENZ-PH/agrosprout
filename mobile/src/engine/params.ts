@@ -196,6 +196,19 @@ export const INCOME_LEVEL_SCORE = { low: 30, medium: 60, high: 90 } as const;
 export const LABOR_LEVEL_SCORE = { low: 90, medium: 60, high: 30 } as const;
 
 /**
+ * Feeds your animals (F) = 100 x share of the rotation's crop days on crops
+ * whose crop residue (straw, stover, haulms or vines) is commonly fed to
+ * livestock (crops.json `forage_residue`, cited per crop: Feedipedia, the
+ * INRAE-CIRAD-AFZ-FAO feed encyclopedia). Source: definition (a share); the
+ * yes/no per crop is from the cited datasheets. It says nothing about how
+ * much or how good the feed is: Feedipedia gives no yield-independent level.
+ * A crop with no value (null) gets no credit, the same rule as COVER_CREDIT,
+ * and is reported as a data gap. F is left out when no crop in the library
+ * has a value.
+ */
+export const FORAGE_RESIDUE_SCORE = { yes: 100, no: 0 } as const;
+
+/**
  * Soil building (S) = 100 x (legume x legume share of the year
  *                          + cover   x cover-credit share of the year
  *                          + covered x share of the year not bare
@@ -230,12 +243,45 @@ export const FAMILIES_FOR_FULL_CREDIT = MAX_CROPS_PER_ROTATION;
  * Slope factor by the farmer's land type. assumption: validate locally (no
  * source; flat paddies lose less soil than slopes). "unknown" uses the
  * moderate upland value (docs/07 §1) and lowers confidence.
+ * Used only as the FALLBACK: when the lot has a NASA SRTM slope and is not
+ * a lowland paddy, the RUSLE slope-steepness factor S below replaces it.
  */
 export const EROSION_SLOPE_FACTOR = {
   lowland: 0.3,
   upland: 0.6,
   sloping: 1,
   unknown: 0.6,
+} as const;
+
+/**
+ * RUSLE slope-steepness factor S (McCool et al. 1987, as used in RUSLE,
+ * USDA Agriculture Handbook 703, Renard et al. 1997), with θ the slope angle:
+ *   S = 10.8 sin θ + 0.03   slope < 9 %
+ *   S = 16.8 sin θ - 0.50   slope >= 9 %
+ * S is relative to the RUSLE unit plot, 22.1 m long on a 9 % slope (S = 1
+ * there), so S replaces the land-type factor on the same scale as the old
+ * "sloping" value of 1.
+ * Source: (read 2026-11-14) Renard, K.G., Yoder, D.C., Lightle, D.T., Dabney,
+ * S.M. 2011. Universal Soil Loss Equation and Revised Universal Soil Loss
+ * Equation. Ch. 8 in Morgan & Nearing (eds.), Handbook of Erosion Modelling,
+ * Blackwell, Eq. 8.4 and 8.5 (citing McCool et al. 1987) and §8.1.2 (unit plot
+ * 72.6 ft / 22.1 m at 9 %). USDA-ARS copy:
+ * https://www.tucson.ars.ag.gov/unit/Publications/PDFfiles/2127.pdf
+ * Limits stated there and kept in mind: the slope is one uniform plane (the
+ * chapter warns real hillslopes vary); for slopes shorter than 4.6 m another
+ * equation applies (not used: lots are longer). The SRTM slope is a ~30 m
+ * terrain class in whole percent, not a field survey.
+ *
+ * Not used on "lowland" lots: a bunded, ponded paddy does not shed runoff
+ * down a free slope the way the RUSLE plot does (bunds and terraces are the
+ * RUSLE support-practice factor P, which v0 does not model), and the ~30 m
+ * SRTM cell can include the slope around a terraced paddy. There the land-type
+ * factor stays.
+ */
+export const RUSLE_S = {
+  break_pct: 9,
+  below: { sin_coef: 10.8, offset: 0.03 },
+  at_or_above: { sin_coef: 16.8, offset: -0.5 },
 } as const;
 
 /**
@@ -254,14 +300,78 @@ export const CLIMATE_RISK_METHOD = "share-of-crop-days" as const;
  * A priority's slider value is split equally among its components that
  * have data; components with no data are left out and the weights
  * renormalize (e.g. M when the farmer has no destination yet).
- * Source: team spec.
+ * Source: team spec. "forage" (Feed animals) added 2026-11-14 for the
+ * challenge's "forage value" priority; it weighs only F.
  */
 export const PRIORITY_COMPONENTS = {
   water: ["W", "H"],
   soil: ["S", "E", "B"],
   income: ["I", "M"],
   labor: ["L", "M"],
+  forage: ["F"],
 } as const;
+
+/**
+ * Value of a priority that a saved farm does not have yet (farms saved before
+ * "Feed animals" existed). Source: definition in types.ts ("Defaults are all
+ * equal (50)"), the same value as the farm store's DEFAULT_PRIORITIES.
+ */
+export const DEFAULT_PRIORITY_VALUE = 50;
+
+// ---------------------------------------------------------------------------
+// Storm infiltration indicator (docs/07-rotation-engine.md §4, added 2026-11-14)
+// Not a weighted score: ground cover already counts in S and E. Shown as a
+// metric and in the explanations.
+// ---------------------------------------------------------------------------
+
+/**
+ * USDA NRCS runoff curve number method. Source: (read 2026-11-14) USDA NRCS
+ * 1986, Urban Hydrology for Small Watersheds, Technical Release 55 (TR-55),
+ * 2nd ed., Chapter 2: Q = (P - Ia)^2 / (P - Ia + S) (eq. 2-1), Ia = 0.2 S
+ * (eq. 2-2), S = 1000 / CN - 10 in inches (eq. 2-4). Copy read:
+ * https://www.lmnoeng.com/Hydrology/TR55-Manual.pdf
+ * "Soaks in" = 1 - Q / P: the share of the storm that does not run off. It
+ * includes water held by plants and surface hollows, not only infiltration
+ * (TR-55: Ia "includes water retained in surface depressions, water
+ * intercepted by vegetation, evaporation, and infiltration").
+ */
+export const CN_INITIAL_ABSTRACTION_RATIO = 0.2;
+export const MM_PER_INCH = 25.4; // definition
+
+/**
+ * Reference storm, mm in one day: the engine's heavy-rain day threshold
+ * (LotMonthly.heavy_rain_days_gt50mm, "rain > 50 mm"). A choice of storm to
+ * compare options on, not a design storm. assumption: validate locally.
+ */
+export const REFERENCE_STORM_MM = 50;
+
+/**
+ * Runoff curve numbers by hydrologic soil group, TR-55 Table 2-2b
+ * (cultivated agricultural lands, average runoff condition, Ia = 0.2 S):
+ * - bare: "Fallow, bare soil" 77 / 86 / 91 / 94.
+ * - crop: "Row crops, straight row (SR), poor" 72 / 81 / 88 / 91. The
+ *   choice of the row-crop, straight-row, POOR line for every crop is an
+ *   assumption: validate locally. Poor because nothing tells us the residue
+ *   cover or contouring (TR-55: "good" needs >= 20% residue cover and other
+ *   factors), so no extra benefit is credited; the table's close-seeded
+ *   legume and small-grain lines would need the planting method per crop.
+ */
+export const CURVE_NUMBER = {
+  bare: { A: 77, B: 86, C: 91, D: 94 },
+  crop: { A: 72, B: 81, C: 88, D: 91 },
+} as const;
+
+/**
+ * Farmer's soil feel -> hydrologic soil group. Source: TR-55 Appendix A,
+ * texture list for disturbed soils: A "Sand, loamy sand, or sandy loam";
+ * B "Silt loam or loam"; C "Sandy clay loam"; D "Clay loam, silty clay loam,
+ * sandy clay, silty clay, or clay". sandy -> A, loamy -> B, clayey -> D (most
+ * clay textures in the list are D; sandy clay loam would be C). TR-55 gives
+ * this for disturbed soils; a soil survey group is better when known.
+ * "unknown" -> B: assumption: validate locally (the same "average" choice
+ * as RICE_PERCOLATION_CLASS, where unknown uses the loamy value).
+ */
+export const SOIL_FEEL_HSG = { sandy: "A", loamy: "B", clayey: "D", unknown: "B" } as const;
 
 /**
  * Planting-window scan (docs/07 §3b, #33).

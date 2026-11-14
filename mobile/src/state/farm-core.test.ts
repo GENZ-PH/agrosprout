@@ -157,7 +157,7 @@ test("a new transport mode or a moved pin clears the times for that place, other
 test("setPriorities clamps to 0-100 and keeps unchanged values", async () => {
   const s = await openFarm(raw);
   s.getState().setPriorities({ water: 140, soil: -5 });
-  assert.deepEqual(s.getState().priorities, { water: 100, soil: 0, income: 50, labor: 50 });
+  assert.deepEqual(s.getState().priorities, { water: 100, soil: 0, income: 50, labor: 50, forage: 50 });
 });
 
 test("deleteLot and clearAll also remove the lots' saved climate data", async () => {

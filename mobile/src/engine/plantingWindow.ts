@@ -23,7 +23,7 @@ const YEAR_DAYS = 365;
 
 export interface PlantingWindowInput {
   lot: Pick<Lot, "crops" | "details">;
-  data: Pick<LotData, "monthly">;
+  data: Pick<LotData, "monthly"> & Partial<Pick<LotData, "slope_pct">>;
   library: Pick<CropLibrary, "crops" | "rice_extra_detail">;
 }
 
@@ -154,6 +154,7 @@ export function plantingWindow(input: PlantingWindowInput): PlantingWindowResult
     monthly: input.data.monthly,
     details: input.lot.details,
     riceDetail: input.library.rice_extra_detail,
+    slopePct: input.data.slope_pct ?? null,
   };
   const scoreCtx: ScoreContext = { ...ctx, marketAccess: null };
   const byId = new Map(input.library.crops.map((c) => [c.id, c]));
