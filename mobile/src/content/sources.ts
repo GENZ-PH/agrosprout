@@ -18,7 +18,10 @@ export type SourceKey =
   | "oni"
   | "pagasa"
   | "farmer"
-  | "shi";
+  | "shi"
+  | "imerg"
+  | "smap"
+  | "modis";
 
 export interface SourceTag {
   /** Short name, the same everywhere in the app. */
@@ -138,6 +141,30 @@ export const SOURCES: Readonly<Record<SourceKey, SourceTag>> = {
     scale: "Country",
     years: "Latest advisory",
     nasa: false,
+  },
+  imerg: {
+    name: "NASA GPM IMERG",
+    by: "NASA GES DISC (GPM IMERG Final, V07)",
+    gives: "Satellite rain, monthly, to check the NASA POWER rain",
+    scale: "0.1° cell, about 11 km",
+    years: "2001 to 2025-09",
+    nasa: true,
+  },
+  smap: {
+    name: "NASA SMAP L4",
+    by: "NASA NSIDC DAAC (SPL4SMGP, Version 8)",
+    gives: "Soil moisture at the surface and in the root zone",
+    scale: "9 km cell",
+    years: "2015-04 to 2025-12",
+    nasa: true,
+  },
+  modis: {
+    name: "NASA MODIS NDVI",
+    by: "NASA LP DAAC (MOD13Q1 v061), via ORNL DAAC",
+    gives: "How green the ground is, every 16 days",
+    scale: "About 250 m pixel",
+    years: "2001-2025",
+    nasa: true,
   },
   shi: {
     name: "Soil health index",

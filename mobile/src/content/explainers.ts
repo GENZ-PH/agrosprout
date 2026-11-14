@@ -26,7 +26,8 @@ export type ExplainerId =
   | "data-sources"
   | "climate-extremes"
   | "season-guide"
-  | "soil-health";
+  | "soil-health"
+  | "satellite-checks";
 
 export interface Explainer {
   id: ExplainerId;
@@ -218,6 +219,21 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
       "Months come from a typical year, not a forecast for this season.",
       "Planting months are the usual local ones unless you give your own.",
       "Please check the plan with your agricultural technician before changing crops.",
+    ],
+  },
+  "satellite-checks": {
+    id: "satellite-checks",
+    title: "Satellite checks",
+    what: "NASA satellite data for the sample farm next to the NASA POWER numbers the results use: rain from GPM IMERG, soil moisture from SMAP, and how green the ground is from MODIS.",
+    source:
+      "GPM IMERG Final V07 monthly rain (0.1°, GES DISC), SMAP L4 soil moisture (SPL4SMGP v8, 9 km, NSIDC) and MODIS Terra NDVI (MOD13Q1 v061, about 250 m, LP DAAC). Fetched once by the team's pipeline and bundled with the app; NASA POWER for {period}.",
+    sources: ["imerg", "smap", "modis", "power-daily"],
+    read: "Look at the shape over the year: do the wet and dry months line up? The sizes differ because each product covers a different area and measures a different thing. Tap a source name to see how each number is worked out.",
+    limits: [
+      "These are checks, not inputs: the scores use NASA POWER only.",
+      "Only the sample farm has them, because they are fetched ahead of time, not on the phone.",
+      "SMAP covers 2015 onward, and IMERG monthly files end at 2025-09.",
+      "A MODIS pixel is larger than the lot, and the sample farm's location is provisional.",
     ],
   },
   "soil-health": {

@@ -150,6 +150,51 @@ export const SOURCE_DETAILS: Readonly<Partial<Record<SourceKey, SourceDetail>>> 
     ], note: "Curve numbers, bare field: soil group A 77, B 86, C 91, D 94. Cropped: A 72, B 81, C 88, D 91." }],
     cite: "USDA NRCS (1986). Urban Hydrology for Small Watersheds, Technical Release 55.",
   },
+  imerg: {
+    variables: [{ code: "precipitation", meaning: "Merged satellite and gauge rain, average rate over the month, mm/hr" }],
+    how: [
+      "A check, not an input: the results still use NASA POWER rain. IMERG is shown beside it so you can see how far two NASA rain estimates agree here.",
+      "Fetched once by the team's pipeline and bundled for the sample farm. The farm point sits on the corner of four IMERG cells, so each month is the mean of those four.",
+      "Monthly files end at 2025-09, so October to December have one year fewer.",
+    ],
+    formulas: [
+      { name: "Rain per month", lines: ["P = rate (mm/hr) × 24 × days in that month"], note: "The file gives an average rate over the calendar month (IMERG Technical Documentation, 2023, Table 2)." },
+      { name: "Dry, typical and wet year", lines: ["P20, P50, P80 = percentiles of P across years for each calendar month"] },
+    ],
+    cite: "Huffman, G.J., Stocker, E.F., Bolvin, D.T., Nelkin, E.J., Tan, J. (2023), GPM IMERG Final Precipitation L3 1 month 0.1 degree x 0.1 degree V07, GES DISC, doi:10.5067/GPM/IMERG/3B-MONTH/07.",
+    url: "https://disc.gsfc.nasa.gov/datasets/GPM_3IMERGM_07/summary",
+  },
+  smap: {
+    variables: [
+      { code: "sm_surface", meaning: "Soil water in the top 0-5 cm, m³/m³" },
+      { code: "sm_rootzone", meaning: "Soil water in the top 0-100 cm, m³/m³" },
+    ],
+    how: [
+      "A check, not an input: the results use NASA POWER root-zone wetness. SMAP shows the same season from a satellite-assisted model.",
+      "Sampled by the team's pipeline: the 11:00-14:00 Philippine time average on 6 days of every month, 2015 to 2025, all 774 samples valid.",
+      "SMAP gives water per volume of soil; NASA POWER GWETROOT is a share of saturation. They are different numbers and are not plotted together.",
+    ],
+    formulas: [{ name: "Per calendar month", lines: ["month value = mean of the samples in that year-month", "shown = mean, P20 and P80 of those values across years"] }],
+    cite: "Reichle, R. et al. (2025). SMAP L4 Global 3-hourly 9 km EASE-Grid Surface and Root Zone Soil Moisture Geophysical Data (SPL4SMGP, Version 8). NASA NSIDC DAAC, doi:10.5067/T5RUATAQREF8.",
+    url: "https://nsidc.org/data/spl4smgp/versions/8",
+  },
+  modis: {
+    variables: [
+      { code: "250m_16_days_NDVI", meaning: "Vegetation index, scale factor 0.0001" },
+      { code: "250m_16_days_pixel_reliability", meaning: "0 good, 1 marginal, 2 snow or ice, 3 cloudy" },
+    ],
+    how: [
+      "A check on the season: when the ground around the lot greens up and dries out, seen from space.",
+      "Composites with good or marginal reliability are kept; cloudy, snow and fill values are dropped.",
+      "One pixel is about 230 m across (about 5 ha), larger than the lot, so it mixes the lot with what is around it.",
+    ],
+    formulas: [
+      { name: "NDVI", lines: ["NDVI = (NIR − Red) ÷ (NIR + Red)"], note: "From −1 to +1. Green leaves absorb red light and scatter near-infrared, so more green canopy gives a higher value (MOD13 User Guide V6.1, section 1.2)." },
+      { name: "Per calendar month", lines: ["median, P20 and P80 of the kept composites whose 16-day period starts in that month, across all years"] },
+    ],
+    cite: "Didan, K. (2021). MODIS/Terra Vegetation Indices 16-Day L3 Global 250m SIN Grid V061. NASA LP DAAC. Accessed through the ORNL DAAC MODIS Land Product Subsets service.",
+    url: "https://lpdaac.usgs.gov/products/mod13q1v061/",
+  },
   shi: {
     variables: [{ code: "Scores", meaning: "Builds soil (S) and Protects from washout (E), 0-100" }],
     how: ["Every plan starts at 50. Its year is assumed to repeat, so the line moves the same amount each year until it hits 0 or 100.", "A relative indicator for comparing plans on one lot, not a soil test."],

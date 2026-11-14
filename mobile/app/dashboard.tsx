@@ -13,6 +13,7 @@ import { HarvestCard } from "../src/components/HarvestCard";
 import { Header } from "../src/components/Header";
 import { LanguageSwitch } from "../src/components/LanguageSwitch";
 import { ensoLine, LotDataCard } from "../src/components/LotDataCard";
+import { SatelliteCard } from "../src/components/SatelliteCard";
 import { SeasonGuide } from "../src/components/SeasonGuide";
 import { ClimateExtremesCard } from "../src/components/ClimateExtremesCard";
 import { LotTabs } from "../src/components/LotTabs";
@@ -249,6 +250,7 @@ function Results({
           <ClimateExtremesCard data={data} info={{ id: "climate-extremes", period }} />
         </>
       ) : null}
+      {data?.kind === "demo" ? <SatelliteCard farmId={data.id} lotName={lot.name} info={{ id: "satellite-checks", period }} /> : null}
       {fit}
       {wide ? (
         <View style={styles.row}>
