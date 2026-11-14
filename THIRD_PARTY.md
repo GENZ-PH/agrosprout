@@ -77,6 +77,8 @@ Runtime dependencies in `mobile/package.json`, all open source.
 | react-native-webview | 14.0.1 | MIT | https://github.com/react-native-webview/react-native-webview |
 | react-native-svg | 15.16.0 | MIT | https://github.com/software-mansion/react-native-svg |
 | lucide-react-native | 1.73.0 | ISC | https://lucide.dev |
+| react-native-chart-kit | 7.0.4 | MIT | https://chartkit.io |
+| paths-js (used by react-native-chart-kit) | 0.4.11 | Apache-2.0 | https://github.com/andreaferretti/paths-js |
 | react-native-screens | 4.30.1 | MIT | https://github.com/software-mansion/react-native-screens |
 | react-native-safe-area-context | 5.11.1 | MIT | https://github.com/AppAndFlow/react-native-safe-area-context |
 | AsyncStorage (`@react-native-async-storage/async-storage`) | 2.2.0 | MIT | https://github.com/react-native-async-storage/async-storage |
