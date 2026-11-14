@@ -12,6 +12,7 @@ import { LotTabs } from "../src/components/LotTabs";
 import { Notice } from "../src/components/Notice";
 import { planName } from "../src/components/field-year-core";
 import { PlanDetail } from "../src/components/PlanDetail";
+import { PlanTable } from "../src/components/PlanTable";
 import { chosenPriorities, unavailablePriorities, verdictText } from "../src/components/plan-text";
 import { PriorityChips } from "../src/components/PriorityChips";
 import { Screen } from "../src/components/Screen";
@@ -46,9 +47,6 @@ export default function DashboardScreen() {
       {wide ? null : <LanguageSwitch />}
       {lot ? (
         <>
-          {isDemoFarm(farm.lots) ? (
-            <Notice icon="info">{t("dash.demo")}</Notice>
-          ) : null}
           <View style={styles.lotRow}>
             <LotTabs lots={farm.lots} selectedId={lot.id} onSelect={(id) => router.setParams({ lot: id })} />
             <Text style={text.small}>
@@ -56,6 +54,7 @@ export default function DashboardScreen() {
               {`  ${t(`land.${lot.details.land_type}`)}, ${t(`water.${lot.details.water}`)}`}
             </Text>
           </View>
+          {isDemoFarm(farm.lots) ? <Text style={text.caption}>{t("dash.demo")}</Text> : null}
           <LotResults key={lot.id} farm={farm} lot={lot} />
         </>
       ) : (
@@ -143,7 +142,7 @@ function Results({ farm, analysis }: { farm: Farm; analysis: LotAnalysis }) {
           {t("year.hint")}
         </Text>
       </View>
-      <FieldYear options={options} selected={selected.key} onSelect={setPicked} precip={analysis.monthly.precip_mm} cropById={cropById} />
+      <FieldYear options={options} selected={selected.key} onSelect={setPicked} monthly={analysis.monthly} cropById={cropById} />
       <Text style={text.caption}>{t("year.source")}</Text>
     </>
   );
@@ -158,6 +157,7 @@ function Results({ farm, analysis }: { farm: Farm; analysis: LotAnalysis }) {
       defaultOpen={twoColumns}
     />
   );
+  const table = <PlanTable options={options} selected={selected.key} onSelect={setPicked} />;
   const rest = (
     <>
       <CropFitList fits={analysis.crop_fits} cropById={cropById} />
@@ -172,17 +172,18 @@ function Results({ farm, analysis }: { farm: Farm; analysis: LotAnalysis }) {
         <Text style={styles.verdictText}>{verdict}</Text>
         <Text style={text.body}>{t("verdict.plant", { sequence })}</Text>
       </View>
+      {compare}
       {twoColumns ? (
         <View style={styles.columns}>
           <View style={styles.column}>
-            {compare}
+            {table}
             {rest}
           </View>
           <View style={styles.column}>{detail}</View>
         </View>
       ) : (
         <>
-          {compare}
+          {table}
           {detail}
           {rest}
         </>

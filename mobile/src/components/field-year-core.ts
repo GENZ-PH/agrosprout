@@ -58,6 +58,8 @@ export const PLAN_NAME: Readonly<Record<OptionKind, string>> = {
   soil: "Best for soil",
   balanced: "Balanced",
 };
+/** One color per plan, the same as the Soil Health card, so a plan looks the same everywhere. */
+export const PLAN_COLOR: Readonly<Record<string, string>> = { A: "#1B1F1A", B: "#1D5FA8", C: "#1E6B3B", D: "#A04A06" };
 export const planName = (kind: OptionKind, t: T = tEn) => t(`plan.${kind}`);
 
 /** Crop name without the clarifying part in brackets. */
@@ -123,4 +125,13 @@ export function bareText(
   if (metrics.bare_days <= 0) return t("bare.never");
   const when = metrics.bare_months.length > 0 ? t("bare.when", { months: monthsText(metrics.bare_months, t, names) }) : "";
   return `${t("bare.days", { days: metrics.bare_days })}${when}`;
+}
+
+/** Round axis steps for a rain chart: 0, step, 2 x step... up to the first value at or above `max`. */
+export function axisTicks(max: number): number[] {
+  const step = max > 400 ? 200 : max > 200 ? 100 : max > 80 ? 50 : 20;
+  const top = Math.max(step, Math.ceil(max / step) * step);
+  const out: number[] = [];
+  for (let v = 0; v <= top; v += step) out.push(v);
+  return out;
 }

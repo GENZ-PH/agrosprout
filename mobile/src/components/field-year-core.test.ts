@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { RotationSlot } from "../engine/scores";
-import { bandPieces, bareText, familiesIn, familyStyle, monthsText, monthX, shortCropName } from "./field-year-core";
+import { axisTicks, bandPieces, bareText, familiesIn, familyStyle, monthsText, monthX, shortCropName } from "./field-year-core";
 
 const slot = (crop_id: string, plant_month: number, season_days: number): RotationSlot => ({
   crop_id,
@@ -86,4 +86,10 @@ test("families color the bands and list once each in the legend", () => {
     (id) => fam[id],
   );
   assert.deepEqual(legend.map((f) => f.label), ["Grains", "Legumes"]);
+});
+
+test("axis ticks are round and cover the largest value", () => {
+  assert.deepEqual(axisTicks(307), [0, 100, 200, 300, 400]);
+  assert.deepEqual(axisTicks(150), [0, 50, 100, 150]);
+  assert.deepEqual(axisTicks(0), [0, 20]);
 });

@@ -7,14 +7,14 @@ import { COMPONENT_KEYS, type ComponentKey } from "../engine/scores";
 import { useT } from "../i18n/lang-store";
 import { cropLabel } from "../i18n/strings";
 import type { Crop } from "../types";
-import { bareText, monthsText, planName } from "./field-year-core";
+import { monthsText, PLAN_COLOR, planName } from "./field-year-core";
 import { Icon } from "./Icon";
 import { mergeCropLines } from "./plan-text";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
 // One plan, in two layers. First the short farmer view in the chosen language: the crops and
-// months, what gets better and worse against the farmer's own crops, when the field is empty
-// or short of water, and what to ask the technician. Then, on request, the engine's full
+// months, when they run short of water, what to ask the technician and what is not known
+// (the facts table next to it carries the comparison). Then, on request, the engine's full
 // explanation (engine/explain.ts, in English): why, benefits, trade-offs, gaps, local checks
 // and every source.
 
@@ -33,8 +33,6 @@ export function PlanDetail({ option, baseline, explanation, leftOut, cropById, d
   const { t, lang, months } = useT();
   const [open, setOpen] = useState(defaultOpen);
   const isBaseline = option.key === baseline.key;
-  const dry = option.water_fit_range.p20;
-  const wet = option.water_fit_range.p80;
   const crop = (id: string) => cropLabel(lang, cropById(id), id);
 
   const rows = COMPONENT_KEYS.filter((k) => !leftOut.includes(k)).map((k) => {
@@ -42,10 +40,6 @@ export function PlanDetail({ option, baseline, explanation, leftOut, cropById, d
     const base = baseline.scores[k];
     return { k, v, base, delta: !isBaseline && v !== null && base !== null ? Math.round(v - base) : 0 };
   });
-  const better = rows.filter((r) => r.delta > 0);
-  const worse = rows.filter((r) => r.delta < 0);
-  const same = rows.filter((r) => r.delta === 0);
-
   const bar = (r: (typeof rows)[number]) => (
     <View key={r.k} style={styles.barRow} accessible accessibilityLabel={`${t(`comp.${r.k}`)}: ${r.v === null ? "?" : Math.round(r.v)} ${t("detail.outOf")}`}>
       <Text style={styles.barLabel}>{t(`comp.${r.k}`)}</Text>
@@ -64,8 +58,10 @@ export function PlanDetail({ option, baseline, explanation, leftOut, cropById, d
     <View style={styles.card}>
       <View style={styles.head}>
         <View style={styles.headText}>
-          <Text style={text.caption}>{t("plan.label", { key: option.key })}</Text>
-          <Text style={text.title} accessibilityRole="header">
+          <View style={[styles.key, { backgroundColor: PLAN_COLOR[option.key] ?? colors.ink }]}>
+            <Text style={styles.keyText}>{option.key}</Text>
+          </View>
+          <Text style={[text.title, styles.headName]} accessibilityRole="header">
             {planName(option.kind, t)}
           </Text>
         </View>
@@ -87,33 +83,9 @@ export function PlanDetail({ option, baseline, explanation, leftOut, cropById, d
 
       {isBaseline ? <Text style={text.small}>{t("detail.yours")}</Text> : null}
 
-      {better.length > 0 ? (
-        <View style={styles.bars}>
-          <Text style={[text.bodyStrong, styles.up]}>{t("detail.gain")}</Text>
-          {better.map(bar)}
-        </View>
+      {option.metrics.stress_months.length > 0 ? (
+        <Text style={text.small}>{t("detail.stress", { months: monthsText(option.metrics.stress_months, t, months) })}</Text>
       ) : null}
-      {worse.length > 0 ? (
-        <View style={styles.bars}>
-          <Text style={[text.bodyStrong, styles.down]}>{t("detail.lose")}</Text>
-          {worse.map(bar)}
-        </View>
-      ) : null}
-      {same.length > 0 ? <View style={styles.bars}>{same.map(bar)}</View> : null}
-
-      {!isBaseline ? <Text style={text.caption}>{t("detail.marker")}</Text> : null}
-
-      <View style={styles.facts}>
-        <Text style={text.small}>
-          {isBaseline
-            ? `${bareText(option.metrics, t, months)}.`
-            : t("detail.empty", { days: option.metrics.bare_days, base: baseline.metrics.bare_days })}
-        </Text>
-        {dry !== null && wet !== null ? <Text style={text.small}>{t("detail.waterRange", { dry: Math.round(dry), wet: Math.round(wet) })}</Text> : null}
-        {option.metrics.stress_months.length > 0 ? (
-          <Text style={text.small}>{t("detail.stress", { months: monthsText(option.metrics.stress_months, t, months) })}</Text>
-        ) : null}
-      </View>
 
       <View style={styles.ask}>
         <Text style={text.bodyStrong}>{t("detail.ask")}</Text>
@@ -157,6 +129,11 @@ export function PlanDetail({ option, baseline, explanation, leftOut, cropById, d
           </Pressable>
           {open ? (
             <View style={styles.more}>
+              <View style={styles.bars}>
+                <Text style={text.bodyStrong}>{t("detail.scoreBuilt")}</Text>
+                {rows.map(bar)}
+                {!isBaseline ? <Text style={text.caption}>{t("detail.marker")}</Text> : null}
+              </View>
               <Section title={isBaseline ? "About this plan" : "Why this plan"} lines={explanation.why} />
               <Section title="What you gain" lines={explanation.benefits} tone="up" />
               <Section title="What you give up" lines={explanation.tradeoffs} tone="down" />
@@ -189,7 +166,10 @@ function Section({ title, lines, tone }: { title: string; lines: readonly { code
 const styles = StyleSheet.create({
   card: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: space.lg, gap: space.lg },
   head: { flexDirection: "row", alignItems: "flex-start", gap: space.md },
-  headText: { flex: 1, gap: 2 },
+  headText: { flex: 1, flexDirection: "row", alignItems: "center", gap: space.sm },
+  headName: { flexShrink: 1 },
+  key: { width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center" },
+  keyText: { fontSize: 15, fontWeight: "700", color: colors.white },
   total: { alignItems: "flex-end" },
   totalNumber: { fontSize: 40, lineHeight: 42, fontWeight: "700", color: colors.ink, fontVariant: ["tabular-nums"] },
   sequence: { gap: 4, paddingLeft: space.md, borderLeftWidth: 3, borderLeftColor: colors.green },
@@ -204,7 +184,6 @@ const styles = StyleSheet.create({
   up: { color: colors.green, fontWeight: "700" },
   down: { color: colors.danger, fontWeight: "700" },
   unknown: { gap: 4 },
-  facts: { gap: 4 },
   ask: { gap: 6, padding: space.md, borderRadius: radius.sm, backgroundColor: colors.amberTint },
   section: { gap: 6 },
   line: { flexDirection: "row", gap: space.sm, alignItems: "flex-start" },
