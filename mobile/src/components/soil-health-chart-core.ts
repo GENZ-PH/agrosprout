@@ -205,3 +205,51 @@ export function movesText(row: SoilHealthRow): string | null {
   if (row.gain_per_year === null || row.loss_per_year === null) return null;
   return `+${row.gain_per_year} from building soil, −${row.loss_per_year} from rain on bare soil`;
 }
+
+export interface SoilHealthSummary {
+  /** Where every option starts (SHI_START). */
+  start: number;
+  /** Highest rounded last-year value among options with a line; `null` when none has one. */
+  best: number | null;
+  /** Every option that reaches `best` (more than one on a tie), in the engine's order. */
+  best_keys: OptionKey[];
+  /** `best - start`; `null` when there is no best. */
+  change: number | null;
+}
+
+/**
+ * The card's summary row, from the same rounded numbers the rows show.
+ * Ties are kept as ties: every option on the top value is named.
+ */
+export function soilHealthSummary(result: Pick<SoilHealthResult, "start">, rows: readonly Pick<SoilHealthRow, "key" | "end">[]): SoilHealthSummary {
+  const ends = rows.filter((r): r is typeof r & { end: number } => r.end !== null);
+  if (!ends.length) return { start: result.start, best: null, best_keys: [], change: null };
+  const best = Math.max(...ends.map((r) => r.end));
+  return {
+    start: result.start,
+    best,
+    best_keys: ends.filter((r) => r.end === best).map((r) => r.key),
+    change: best - result.start,
+  };
+}
+
+/** "+13", "−2", "0": change from the start, with a real minus sign. */
+export function signed(n: number): string {
+  if (n === 0) return "0";
+  return n > 0 ? `+${n}` : `−${-n}`;
+}
+
+/** "Your crops and Best for soil" for a list of option keys. */
+export function optionNames(keys: readonly OptionKey[]): string {
+  const names = keys.map((k) => OPTION_LABELS[k]);
+  if (names.length <= 1) return names.join("");
+  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
+
+/**
+ * Label for step `y` on the x-axis: "Start", then "Year 1".."Year N". The model
+ * repeats the lot's 12-month plan every year, so the card says so next to the chart.
+ */
+export function stepLabel(y: number): string {
+  return y === 0 ? "Start" : `Year ${y}`;
+}
