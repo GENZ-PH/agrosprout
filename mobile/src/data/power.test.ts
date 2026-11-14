@@ -35,13 +35,15 @@ const EXPECTED = {
   p20: [71.176, 47.224, 36.828, 49.56, 136.09, 236.46, 229.772, 177.568, 204.3, 190.774, 124.86, 111.104],
   p50: [136.4, 103.04, 90.83, 78.6, 199.33, 266.1, 275.9, 220.41, 276.9, 263.81, 186.9, 190.96],
   p80: [256.184, 174.776, 136.524, 136.5, 274.97, 330.3, 339.822, 260.462, 317.46, 338.024, 235.56, 260.772],
-  mean: [154.7768, 108.5952, 95.0212, 105.384, 205.6044, 290.208, 282.4844, 227.1804, 257.748, 272.0188, 186.816, 185.9256],
   tmax: [25.6054, 26.4212, 27.6096, 28.7516, 27.6972, 26.2458, 25.583, 25.6544, 25.6232, 25.8254, 26.161, 26.0442],
   tmin: [18.7234, 18.058, 18.6112, 19.6788, 20.7692, 20.4686, 20.0538, 19.9912, 19.9968, 20.0834, 19.851, 19.3358],
-  hot: [27.8612, 28.7036, 30.1892, 31.454, 31.1008, 29.1492, 28.332, 28.2864, 28.2136, 28.412, 28.2296, 28.184],
   wet: [0.9056, 0.8524, 0.7908, 0.7452, 0.7692, 0.8528, 0.924, 0.9404, 0.9556, 0.9656, 0.9544, 0.9276],
-  et0: [87.024841, 91.371653, 119.436812, 128.182515, 121.441936, 106.025706, 104.901841, 108.302247, 103.519563, 104.289938, 94.962219, 90.487529],
-  et0Annual: 1259.9468,
+  // Sea-level ET0 (SRTM elevation not wired yet, #9), via pipeline/et0.py.
+  et0: [84.675016, 89.063888, 116.642424, 125.402616, 118.506769, 103.209947, 101.998979, 105.299228, 100.60643, 101.364242, 92.367528, 88.053175],
+  et0Annual: 1227.190244,
+  rh: [88.7036, 85.9576, 82.4188, 79.0956, 83.3096, 86.6984, 88.2836, 88.15, 88.594, 88.5832, 87.7888, 88.0808],
+  ws: [1.9888, 2.064, 1.8144, 1.5304, 1.336, 1.4312, 1.7516, 1.8084, 1.704, 1.6204, 1.494, 1.6832],
+  rs: [15.0852, 17.3904, 19.9692, 21.342, 19.6912, 18.2908, 18.0108, 18.6916, 18.494, 18.0932, 16.94, 15.6032],
 };
 
 function near(actual: number | null, expected: number, tol: number, label: string) {
@@ -132,18 +134,17 @@ test('daysInMonth: February has 29 days in leap years only', () => {
 test('rainfall is mm/day times days in that month of that year (leap February)', () => {
   const d = parsePowerMonthly(synth({ years: [2023, 2024] }), '2026-11-14');
   const p = d.monthly.precip_mm;
-  assert.equal(p.mean[0], 31); // 1 mm/day x 31
+  assert.equal(p.p50[0], 31); // 1 mm/day x 31
   assert.equal(p.p50[1], 28.5); // Feb: [28 (2023), 29 (2024)]
-  assert.equal(p.mean[1], 28.5);
   near(p.p20[1], 28.2, 1e-9, 'Feb p20');
 });
 
 test('annual key YYYY13 is skipped', () => {
   const d = parsePowerMonthly(synth(), '2026-11-14');
-  for (const arr of [d.monthly.precip_mm.mean, d.monthly.tmax_c, d.monthly.rootzone_wetness]) {
+  for (const arr of [d.monthly.precip_mm.p50, d.monthly.tmax_c, d.monthly.rootzone_wetness]) {
     arr.forEach((v) => assert.ok((v as number) < 1000, 'a 99999 annual value leaked in'));
   }
-  assert.equal(d.years_used, 2);
+  assert.equal(d.period, '2023-2024');
 });
 
 test('-999 is treated as missing: that year is ignored, an all-missing month is null', () => {
@@ -156,8 +157,8 @@ test('-999 is treated as missing: that year is ignored, an all-missing month is 
     }),
     '2026-11-14',
   );
-  assert.equal(d.monthly.precip_mm.mean[6], 31); // July: only 2024 left, 1 mm/day x 31
-  assert.equal(d.monthly.precip_mm.mean[4], null); // May: both years missing
+  assert.equal(d.monthly.precip_mm.p50[6], 31); // July: only 2024 left, 1 mm/day x 31
+  assert.equal(d.monthly.precip_mm.p50[4], null); // May: both years missing
   assert.equal(d.monthly.precip_mm.p50[4], null);
   assert.equal(d.monthly.tmax_c[5], null); // June T2M missing in every year
   assert.equal(d.monthly.et0_mm[5], null); // so ET0 cannot be computed for June
@@ -174,11 +175,11 @@ test('solar radiation unit is read from the response and converted to MJ m-2 day
   assert.throws(() => parsePowerMonthly(synth({ solarUnit: 'cal/cm^2/day' }), 'x'), RangeError);
 });
 
-test('tmax/tmin are T2M +/- T2M_RANGE/2; hottest day is kept separately', () => {
+test('tmax/tmin are T2M +/- T2M_RANGE/2, not the hottest-day T2M_MAX', () => {
   const d = parsePowerMonthly(synth(), 'x');
   assert.equal(d.monthly.tmax_c[0], 31); // 27 + 8/2
   assert.equal(d.monthly.tmin_c[0], 23); // 27 - 8/2
-  assert.equal(d.monthly.hottest_day_c[0], 33); // the T2M_MAX value, labelled as hottest day
+  assert.notEqual(d.monthly.tmax_c[0], 33); // the monthly T2M_MAX (hottest day) is not used
 });
 
 test('a response missing a parameter or with the wrong shape throws PowerParseError', () => {
@@ -190,8 +191,8 @@ test('a response missing a parameter or with the wrong shape throws PowerParseEr
 test('provenance and caveats are filled; daily-only metrics are null for live lots', () => {
   const d = parsePowerMonthly(synth({ elev: 742 }), '2026-11-14');
   const fields = d.provenance.map((p) => p.field);
-  for (const f of ['precip_mm', 'et0_mm', 'tmax_c', 'tmin_c', 'hottest_day_c', 'rootzone_wetness']) {
-    assert.ok(fields.includes(f), `provenance for ${f}`);
+  for (const f of ['precip_mm', 'et0_mm', 'tmax_c', 'tmin_c', 'rootzone_wetness', 'rh2m_pct', 'ws2m_ms', 'solar_mj_m2_day']) {
+    assert.ok(fields.includes(`monthly.${f}`), `provenance for ${f}`);
   }
   for (const p of d.provenance) {
     assert.ok(p.source.includes('NASA POWER'));
@@ -201,6 +202,10 @@ test('provenance and caveats are filled; daily-only metrics are null for live lo
   }
   assert.ok(d.caveats.some((c) => c.includes('same climate numbers')));
   assert.ok(d.caveats.some((c) => c.includes('742 m')));
+  assert.equal(d.elevation_m, null); // SRTM elevation arrives with #9
+  assert.ok(d.caveats.some((c) => c.includes('sea level')));
+  assert.equal(d.kind, 'live');
+  assert.equal(d.trends, null);
   assert.equal(d.monthly.heat_days_gt35, null);
   assert.equal(d.monthly.heavy_rain_days_gt50mm, null);
 });
@@ -212,24 +217,22 @@ test('provenance and caveats are filled; daily-only metrics are null for live lo
 test('real NASA POWER response (Iligan point, 2001 to 2025) matches independently computed values', () => {
   const d = parsePowerMonthly(fixture, '2026-11-14');
   assert.equal(d.period, '2001-2025');
-  assert.equal(d.years_used, 25);
-  assert.deepEqual(d.source_point, { lat: 8.2, lon: 124.2 });
-  near(d.cell_elevation_m, 741.88, 1e-9, 'cell elevation');
+  assert.deepEqual([d.lat, d.lon], [8.2, 124.2]);
   nearAll(d.monthly.precip_mm.p20, EXPECTED.p20, 1e-4, 'p20');
   nearAll(d.monthly.precip_mm.p50, EXPECTED.p50, 1e-4, 'p50');
   nearAll(d.monthly.precip_mm.p80, EXPECTED.p80, 1e-4, 'p80');
-  nearAll(d.monthly.precip_mm.mean, EXPECTED.mean, 1e-4, 'mean');
   nearAll(d.monthly.tmax_c, EXPECTED.tmax, 1e-4, 'tmax');
   nearAll(d.monthly.tmin_c, EXPECTED.tmin, 1e-4, 'tmin');
-  nearAll(d.monthly.hottest_day_c, EXPECTED.hot, 1e-4, 'hottest day');
   nearAll(d.monthly.rootzone_wetness, EXPECTED.wet, 1e-4, 'wetness');
+  nearAll(d.monthly.rh2m_pct as number[], EXPECTED.rh, 1e-4, 'rh');
+  nearAll(d.monthly.ws2m_ms as number[], EXPECTED.ws, 1e-4, 'wind');
+  nearAll(d.monthly.solar_mj_m2_day as number[], EXPECTED.rs, 1e-4, 'solar');
   nearAll(d.monthly.et0_mm, EXPECTED.et0, 1e-3, 'ET0');
   near((d.monthly.et0_mm as number[]).reduce((a, b) => a + b, 0), EXPECTED.et0Annual, 1e-2, 'annual ET0');
-  // P20 <= P50 <= P80 in every month, and mean Tmax is below the hottest day
+  // P20 <= P50 <= P80 in every month
   for (let i = 0; i < 12; i++) {
     assert.ok((d.monthly.precip_mm.p20[i] as number) <= (d.monthly.precip_mm.p50[i] as number));
     assert.ok((d.monthly.precip_mm.p50[i] as number) <= (d.monthly.precip_mm.p80[i] as number));
-    assert.ok((d.monthly.tmax_c[i] as number) < (d.monthly.hottest_day_c[i] as number));
   }
 });
 

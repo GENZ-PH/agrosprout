@@ -12,14 +12,20 @@
  *  - monthly `T2M`, `T2M_RANGE`, `RH2M` are means of the daily values;
  *  - monthly `T2M_MAX` is the HOTTEST day of the month (and `T2M_MIN` the
  *    coldest), not the mean daily max/min. So mean Tmax/Tmin are taken as
- *    `T2M +/- T2M_RANGE / 2` (about 0.5 C off the true daily means there) and
- *    `T2M_MAX` is kept only as a labelled hottest-day indicator;
+ *    `T2M +/- T2M_RANGE / 2` (about 0.5 C off the true daily means there).
+ *    `T2M_MAX` is not requested as a field of its own anymore;
  *  - monthly `PRECTOTCORR` is mm/day, so it is multiplied by the days in that
  *    month of that year (29 for February in a leap year);
  *  - the key `YYYY13` is the annual value and is skipped; `-999` is missing.
  */
 
+import type { DataStatus, LotData, MonthlySeries, Provenance } from '../types';
+import { lotDataKey } from '../types';
 import { DAYS_IN_MONTH, monthlyEt0, solarToMJ } from './et0';
+
+export { lotDataKey };
+
+type Months12 = MonthlySeries;
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -32,7 +38,6 @@ export const POWER_END = 2025;
 export const POWER_PARAMS = [
   'T2M',
   'T2M_RANGE',
-  'T2M_MAX',
   'PRECTOTCORR',
   'GWETROOT',
   'RH2M',
@@ -45,49 +50,8 @@ const NATIVE_RES = '0.5° × 0.625° grid cell';
 const FETCH_TIMEOUT_MS = 15_000;
 
 // ---------------------------------------------------------------------------
-// Types (local until the shared contract in `types.ts` is frozen, issue #4)
+// Types: the shared contract lives in `../types` (issue #4, frozen)
 // ---------------------------------------------------------------------------
-
-/** 12 values, January first. `null` = not available. */
-export type Months12 = (number | null)[];
-
-export interface Provenance {
-  field: string;
-  source: string;
-  native_res: string;
-  period: string;
-  retrieved: string;
-  note?: string;
-}
-
-export interface LotData {
-  /** The point POWER was queried at (the lot centroid rounded to 0.1 degrees). */
-  source_point: { lat: number; lon: number };
-  /** Average elevation of the POWER grid cell in metres (from the response), NOT the field's elevation. */
-  cell_elevation_m: number;
-  /** e.g. "2001-2025". */
-  period: string;
-  years_used: number;
-  monthly: {
-    /** Monthly rainfall totals in mm across the years. */
-    precip_mm: { p20: Months12; p50: Months12; p80: Months12; mean: Months12 };
-    /** FAO-56 ET0 in mm per month (see `et0.ts`). */
-    et0_mm: Months12;
-    /** Mean daily maximum, approximated as T2M + T2M_RANGE/2, degrees C. */
-    tmax_c: Months12;
-    /** Mean daily minimum, approximated as T2M - T2M_RANGE/2, degrees C. */
-    tmin_c: Months12;
-    /** Hottest day of the month (NASA monthly T2M_MAX), averaged over years, degrees C. */
-    hottest_day_c: Months12;
-    /** Root-zone soil wetness, 0 (dry) to 1 (saturated). */
-    rootzone_wetness: Months12;
-    /** Daily-only metrics: not available for live lots. */
-    heat_days_gt35: null;
-    heavy_rain_days_gt50mm: null;
-  };
-  provenance: Provenance[];
-  caveats: string[];
-}
 
 export class PowerParseError extends Error {
   constructor(message: string) {
@@ -218,7 +182,7 @@ function validate(json: unknown): PowerResponse {
 }
 
 /** Turn a NASA POWER monthly response into 12-month climatology for one lot. */
-export function parsePowerMonthly(json: unknown, retrieved: string): LotData {
+export function parsePowerMonthly(json: unknown, retrieved: string, lotId = ''): LotData {
   const r = validate(json);
   const [lon, lat, elev] = r.geometry.coordinates;
   const p = r.properties.parameter;
@@ -229,14 +193,12 @@ export function parsePowerMonthly(json: unknown, retrieved: string): LotData {
     p20: perMonth(precipRows, (v) => percentile(v, 0.2)),
     p50: perMonth(precipRows, (v) => percentile(v, 0.5)),
     p80: perMonth(precipRows, (v) => percentile(v, 0.8)),
-    mean: perMonth(precipRows, mean),
   };
 
   const t2m = perMonth(rows(p.T2M), mean);
   const range = perMonth(rows(p.T2M_RANGE), mean);
   const tmax = t2m.map((t, i) => (t === null || range[i] === null ? null : t + (range[i] as number) / 2));
   const tmin = t2m.map((t, i) => (t === null || range[i] === null ? null : t - (range[i] as number) / 2));
-  const hottest = perMonth(rows(p.T2M_MAX), mean);
   const rh = perMonth(rows(p.RH2M), mean);
   const wind = perMonth(rows(p.WS2M), mean);
   const wetness = perMonth(rows(p.GWETROOT), mean);
@@ -261,7 +223,7 @@ export function parsePowerMonthly(json: unknown, retrieved: string): LotData {
       windMs2m: wind,
       rsMjM2Day: rs,
       latDeg: lat,
-      elevM: elev,
+      elevM: null,
     });
     et0 = e.et0MmMonth;
     for (const w of e.warnings) caveats.push(`Evapotranspiration: ${w}`);
@@ -279,35 +241,46 @@ export function parsePowerMonthly(json: unknown, retrieved: string): LotData {
     native_res: NATIVE_RES,
     period,
     retrieved,
-    note,
+    ...(note ? { note } : {}),
   });
 
   return {
-    source_point: { lat: roundForPower(lat), lon: roundForPower(lon) },
-    cell_elevation_m: elev,
+    id: lotId,
+    name: null,
+    kind: 'live',
+    lat: roundForPower(lat),
+    lon: roundForPower(lon),
+    // SRTM elevation arrives with #9. Until then ET0 uses sea level (contract) and says so.
+    elevation_m: null,
+    slope_pct: null,
     period,
-    years_used: years.length,
     monthly: {
       precip_mm: precip,
       et0_mm: et0,
       tmax_c: tmax,
       tmin_c: tmin,
-      hottest_day_c: hottest,
       rootzone_wetness: wetness,
+      rh2m_pct: rh,
+      ws2m_ms: wind,
+      solar_mj_m2_day: rs,
       heat_days_gt35: null,
       heavy_rain_days_gt50mm: null,
+      smap_rootzone_m3m3: null,
     },
+    trends: null,
     provenance: [
-      src('precip_mm', 'NASA POWER PRECTOTCORR', 'mm/day times days in the month, percentiles across years (linear interpolation)'),
+      src('monthly.precip_mm', 'NASA POWER PRECTOTCORR', 'mm/day times days in the month, percentiles across years (linear interpolation)'),
       src(
-        'et0_mm',
+        'monthly.et0_mm',
         'FAO-56 Penman-Monteith from NASA POWER T2M, T2M_RANGE, RH2M, WS2M, ALLSKY_SFC_SW_DWN',
-        `monthly means, Eq. 6; elevation is the grid cell's average (${Math.round(elev)} m)`,
+        'monthly means, Eq. 6; sea-level pressure assumed until the SRTM elevation is available',
       ),
-      src('tmax_c', 'NASA POWER T2M + T2M_RANGE/2', 'approximation of the mean daily maximum'),
-      src('tmin_c', 'NASA POWER T2M - T2M_RANGE/2', 'approximation of the mean daily minimum'),
-      src('hottest_day_c', 'NASA POWER monthly T2M_MAX', 'hottest day of the month, averaged over years'),
-      src('rootzone_wetness', 'NASA POWER GWETROOT', '0 = dry, 1 = saturated'),
+      src('monthly.tmax_c', 'NASA POWER T2M + T2M_RANGE/2', 'approximation of the mean daily maximum'),
+      src('monthly.tmin_c', 'NASA POWER T2M - T2M_RANGE/2', 'approximation of the mean daily minimum'),
+      src('monthly.rootzone_wetness', 'NASA POWER GWETROOT', '0 = dry, 1 = saturated'),
+      src('monthly.rh2m_pct', 'NASA POWER RH2M'),
+      src('monthly.ws2m_ms', 'NASA POWER WS2M'),
+      src('monthly.solar_mj_m2_day', 'NASA POWER ALLSKY_SFC_SW_DWN', 'converted to MJ m-2 day-1'),
     ],
     caveats,
   };
@@ -325,7 +298,7 @@ export interface LotDataStore {
 
 export type PowerFetcher = (lat: number, lon: number, signal?: AbortSignal) => Promise<unknown>;
 
-export type LotDataStatus = 'ready' | 'pending' | 'error';
+export type LotDataStatus = DataStatus;
 
 export interface EnsureResult {
   status: LotDataStatus;
@@ -336,15 +309,12 @@ export interface EnsureResult {
   error?: string;
 }
 
-/** Storage key for a lot's climate data (docs/06-architecture.md). */
-export const lotDataKey = (lotId: string): string => `lotdata:${lotId}`;
-
 async function readStored(store: LotDataStore, key: string): Promise<LotData | null> {
   try {
     const raw = await store.get(key);
     if (!raw) return null;
     const d = JSON.parse(raw) as LotData;
-    return d && d.source_point && d.monthly ? d : null;
+    return d && d.kind === 'live' && typeof d.lat === 'number' && d.monthly ? d : null;
   } catch {
     return null;
   }
@@ -383,13 +353,13 @@ export async function ensureLotData(args: {
   const want = { lat: roundForPower(lat), lon: roundForPower(lon) };
 
   const stored = await readStored(store, key);
-  if (stored && !force && stored.source_point.lat === want.lat && stored.source_point.lon === want.lon) {
+  if (stored && !force && stored.lat === want.lat && stored.lon === want.lon) {
     return { status: 'ready', data: stored, fetched: false };
   }
 
   try {
     const json = await fetcher(want.lat, want.lon, signal);
-    const data = parsePowerMonthly(json, now().toISOString().slice(0, 10));
+    const data = parsePowerMonthly(json, now().toISOString().slice(0, 10), lotId);
     await store.set(key, JSON.stringify(data));
     return { status: 'ready', data, fetched: true };
   } catch (err) {
