@@ -49,7 +49,7 @@ const LINE: Record<OptionKey, { color: string; width: number; dash?: readonly nu
 };
 
 /** The legend sits inside the chart's height: on a phone it wraps to more lines, so the plot gets more room. */
-const plotHeight = (width: number) => (width < 500 ? 280 : 240);
+const plotHeight = (width: number) => (width < 500 ? 220 : 240);
 /** Calendar strip (one year, repeated by the model): option letter column, month initials, one row per option. */
 const STRIP_LEFT = 24;
 const STRIP_RIGHT = 4;
@@ -112,7 +112,8 @@ export function SoilHealthChart({ result, options, cropName, onInfoPress }: Prop
       </Text>
 
       {/* B. Summary row */}
-      {summary.best !== null ? (
+      {/* Wide only: on a phone the list under the chart already gives each option's end value and change. */}
+      {summary.best !== null && width >= 500 ? (
         <View style={styles.stats}>
           <View style={styles.stat}>
             <Text style={styles.statLabel}>Start</Text>
@@ -165,8 +166,9 @@ export function SoilHealthChart({ result, options, cropName, onInfoPress }: Prop
         ) : null}
       </View>
       <Text style={text.caption}>
-        {`The index runs from 0 to 100; this view shows ${axis.min} to ${axis.max}, and the dashed line is the start (${result.start}). `}
-        It assumes this lot&apos;s 12-month plan repeats every year. Tap a year to see exact values.
+        {width >= 500
+          ? `The index runs from 0 to 100; this view shows ${axis.min} to ${axis.max}, and the dashed line is the start (${result.start}). It assumes this lot's 12-month plan repeats every year. Tap a year to see exact values.`
+          : `Index 0 to 100; dashed line = start (${result.start}). Assumes the 12-month plan repeats each year.`}
       </Text>
 
       {/* D. Option comparison */}

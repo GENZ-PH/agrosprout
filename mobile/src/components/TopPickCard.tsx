@@ -36,7 +36,8 @@ function gap(o: RotationOption, a: RotationOption | undefined): string {
 export function TopPickCard({ lotName, pick, a, explanation, cropName, monthsHref, wide = false }: Props) {
   const isA = pick.key === "A";
   const score = (o: RotationOption | undefined) => (o?.total == null ? "–" : String(Math.round(o.total)));
-  const why = (explanation?.why ?? []).slice(0, 2).map((l) => l.text);
+  // Phones get the main reason only (concise); a wide window has room for two.
+  const why = (explanation?.why ?? []).slice(0, wide ? 2 : 1).map((l) => l.text);
   const color = optionColors[pick.key];
   return (
     <View style={[styles.card, wide && styles.cardWide, { borderLeftColor: color }]} accessibilityRole="summary">
@@ -93,7 +94,9 @@ export function TopPickCard({ lotName, pick, a, explanation, cropName, monthsHre
           </View>
         ) : null}
         <Text style={[text.small, styles.muted]}>
-          Talk it over with your agricultural technician before you change anything. All options are below.
+          {wide
+            ? "Talk it over with your agricultural technician before you change anything. All options are below."
+            : "Talk it over with your agricultural technician first."}
         </Text>
         {monthsHref ? (
           <View style={styles.months}>
