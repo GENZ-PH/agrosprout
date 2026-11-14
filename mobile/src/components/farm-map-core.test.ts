@@ -18,6 +18,7 @@ import {
   lotFitLevel,
   NO_RESULT_COLOR,
   type MapLotView,
+  ramp,
 } from "./farm-map-core";
 import { lotView } from "./lot-analysis-core";
 import { FIT_LABELS } from "./recommendations-core";
@@ -116,4 +117,10 @@ test("end to end: a real engine run colors the lot by its worst crop", () => {
   const expected = lotFitLevel(view.analysis.crop_fits);
   assert.equal(farmMapLotStatus(view).level, expected);
   assert.equal(farmMapLotStatus(view).color, FIT_COLORS[expected]);
+});
+
+test("ramp: green at 0, red at 1, clamped", () => {
+  assert.equal(ramp(0), "#2f7d4b");
+  assert.equal(ramp(1), "#b3261e");
+  assert.equal(ramp(2), "#b3261e");
 });

@@ -15,9 +15,12 @@ function square(sw: LonLat, sideM: number): Pick<Lot, "geometry" | "centroid" | 
   const dLat = sideM / 110_574; // metres per degree of latitude
   const dLon = sideM / (111_320 * Math.cos((sw[1] * Math.PI) / 180));
   const [x, y] = sw;
+  // 7 decimals (about 1 cm): the map page (Terra Draw) rejects coordinates with more decimals
+  // than its precision, and then the sample lots were neither drawn nor zoomed to.
+  const r = (v: number) => Math.round(v * 1e7) / 1e7;
   return {
-    geometry: { type: "Polygon", coordinates: [[[x, y], [x + dLon, y], [x + dLon, y + dLat], [x, y + dLat], [x, y]]] },
-    centroid: [x + dLon / 2, y + dLat / 2],
+    geometry: { type: "Polygon", coordinates: [[[r(x), r(y)], [r(x + dLon), r(y)], [r(x + dLon), r(y + dLat)], [r(x), r(y + dLat)], [r(x), r(y)]]] },
+    centroid: [r(x + dLon / 2), r(y + dLat / 2)],
     area_ha: Math.round((sideM * sideM) / 100) / 100,
   };
 }

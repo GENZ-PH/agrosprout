@@ -9,6 +9,7 @@ import type { Lot } from "../types";
 import type { LotView } from "./lot-analysis-core";
 import { FIT_LABELS } from "./recommendations-core";
 import { colors } from "./theme";
+import { inFieldMonths, occupiedMonths } from "./field-year-core";
 
 /** A lot's state on the dashboard: `LotView`, or `loading` while its saved data is read. */
 export type MapLotView = LotView | { kind: "loading" };
@@ -41,11 +42,40 @@ export interface FarmMapLotStatus {
   status: string;
 }
 
+/**
+ * What the map colors show (audit #112, C11/C12): crop fit, or a vulnerability of the lot's
+ * current crops (plan A): months short of water while a crop is in the field, or protection
+ * from washout (score E). Vulnerabilities use a continuous color ramp, not new thresholds.
+ */
+export type MapLayer = "fit" | "water" | "washout";
+
+const hex = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+/** Color between `from` (t = 0) and `to` (t = 1). */
+export function ramp(t: number, from = RAMP_LOW, to = RAMP_HIGH): string {
+  const k = Math.min(1, Math.max(0, t));
+  const a = hex(from);
+  const b = hex(to);
+  return `#${a.map((v, i) => Math.round(v + (b[i] - v) * k).toString(16).padStart(2, "0")).join("")}`;
+}
+/** Ramp ends: calm green to danger red (the app's own colors). */
+export const RAMP_LOW = "#2F7D4B";
+export const RAMP_HIGH = "#B3261E";
+
 /** What one lot shows on the farm map. */
-export function farmMapLotStatus(view: MapLotView): FarmMapLotStatus {
+export function farmMapLotStatus(view: MapLotView, layer: MapLayer = "fit"): FarmMapLotStatus {
   switch (view.kind) {
     case "ready": {
       const level = lotFitLevel(view.analysis.crop_fits);
+      const yours = layer === "fit" ? undefined : view.analysis.rotations?.options[0];
+      if (layer === "water" && yours) {
+        const n = inFieldMonths(yours.metrics.stress_months, occupiedMonths(yours.slots)).length;
+        return { level, color: ramp(n / 12), status: `${n} month${n === 1 ? "" : "s"} short of water` };
+      }
+      if (layer === "washout" && yours) {
+        const e = yours.scores.E;
+        if (e === null) return { level, color: NO_RESULT_COLOR, status: "Washout: not known" };
+        return { level, color: ramp(1 - e / 100), status: `Washout protection ${Math.round(e)}/100` };
+      }
       return { level, color: FIT_COLORS[level], status: FIT_LABELS[level] };
     }
     case "no-crops":
@@ -67,9 +97,10 @@ export function farmMapLotStatus(view: MapLotView): FarmMapLotStatus {
 export function farmMapLots(
   lots: readonly Pick<Lot, "id" | "name" | "geometry">[],
   views: Readonly<Record<string, MapLotView>>,
+  layer: MapLayer = "fit",
 ): MapLot[] {
   return lots.map((l) => {
-    const s = farmMapLotStatus(views[l.id] ?? { kind: "loading" });
+    const s = farmMapLotStatus(views[l.id] ?? { kind: "loading" }, layer);
     return { id: l.id, name: l.name, geometry: l.geometry, style: { color: s.color, status: s.status } };
   });
 }
@@ -78,8 +109,9 @@ export function farmMapLots(
 export function farmMapSummary(
   lots: readonly Pick<Lot, "id" | "name">[],
   views: Readonly<Record<string, MapLotView>>,
+  layer: MapLayer = "fit",
 ): string {
-  const parts = lots.map((l) => `${l.name}: ${farmMapLotStatus(views[l.id] ?? { kind: "loading" }).status}.`);
+  const parts = lots.map((l) => `${l.name}: ${farmMapLotStatus(views[l.id] ?? { kind: "loading" }, layer).status}.`);
   return `Map of your lots. ${parts.join(" ")}`.trim();
 }
 
