@@ -30,6 +30,12 @@
     "scheme": "agrosprout",
     "experiments": {
       "typedRoutes": true
+    },
+    "owner": "inovsea-solutions",
+    "extra": {
+      "eas": {
+        "projectId": "56bc16e8-0dcd-407a-bb90-de0ab33a9aec"
+      }
     }
   }
 }
