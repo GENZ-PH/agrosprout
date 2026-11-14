@@ -1,0 +1,11 @@
+{
+  "oni": {
+    "season": "ASO",
+    "year": 2026,
+    "anomaly_c": 2.46,
+    "source": "NOAA CPC Oceanic Nino Index",
+    "url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
+    "retrieved": "2026-11-14"
+  },
+  "advisory": null
+}
