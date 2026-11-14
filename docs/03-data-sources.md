@@ -132,6 +132,63 @@ Found by a research pass over PSA, DA-BSWM, PhilRice, PAGASA, NOAA and community
 | ISRIC SoilGrids / HWSD v2 (global soil) | Soil texture, organic carbon, pH at the farm point | **Verify the API is up.** Fallback: the farmer picks the soil texture (sand/loam/clay) by hand. |
 | Philippine sources: PhilRice, PAGASA, DA/BSWM, PSA OpenSTAT | Local crop calendars, rotation practice, local prices | For "evidence" and "market" inputs. Team to check which are reachable. |
 
+## Proposed data-contract additions (for the Data lead; team to accept before the Sat 13:00 freeze)
+
+Proposals only. They extend the v0 contracts in `06-architecture.md` without changing existing fields, so they can be adopted or dropped independently. Everything is optional (`null` = not available) so the engine must not depend on it.
+
+**1. Local yield from PSA, a new file `mobile/assets/data/psa/yields.json` (pre-baked by `pipeline/`)**
+```jsonc
+{
+  "source": "PSA OpenSTAT, tables 0012E4EVCP0 (production) and 0022E4EAHC0 (area harvested)",
+  "retrieved": "2026-11-14",
+  "provinces": {
+    "80": {                                   // PSA Geolocation code (example: Lanao del Norte)
+      "name": "Lanao del Norte",
+      "palay": { "year": 2024, "production_t": 200017.97, "area_ha": null, "yield_t_per_ha": null },
+      "corn":  { "year": 2024, "production_t": null,      "area_ha": null, "yield_t_per_ha": null }
+    }
+  }
+}
+```
+- `yield_t_per_ha` = annual production ÷ annual area harvested, computed in the pipeline. Fill the `null`s from the API. Only the palay production figure above was seen in our test.
+- Only **palay and corn** were verified. PSA has other tables (fruits, vegetables, root and industrial crops) that were listed but not queried.
+- Map a crop to a PSA table through a `psa_group` field on the `crops.json` entry (`"palay"`, `"corn"`, or `null`). Crops with `null` keep the team-estimate yield, labeled as such.
+- Feeds the optional `yield_t_per_ha` for the trip-burden calculation (07 §3c). Cite as "PSA OpenSTAT, [province], [year]".
+
+**2. Lot to province: one new optional field on each farm lot**
+```jsonc
+"province_code": "80"     // PSA Geolocation code, or null. Picked by the farmer from a list (works offline).
+```
+No verified boundary source exists to detect the province automatically, so the farmer picks it. If the PSA value for that province is missing or `0.00`, fall back to the region value or hide the local-yield line.
+
+**3. Terrain on demo farms and live lots (existing fields `elevation_m` and `slope_pct`)**
+- Source: **NASA SRTM v3 (1 arc-second, about 30 m), served via Open Topo Data**. Add a `provenance` entry for each, as for the other fields.
+- Handle `null` (point outside any tile) and a **0 m result near the shoreline** (ocean areas inside a tile read 0 m). Flag both in `caveats`.
+- Pipeline can call it freely. The **Android app can too** (native `fetch` has no CORS limit), but the **web build can't**: OpenTopoData sent no CORS header in our test. Open-Meteo's elevation endpoint is a possible alternative, but its CORS is **untested** (it timed out twice when we checked; it worked once without a CORS check) and it is a different dataset, so label it separately. Mind the public instance's rate limits.
+
+**4. Climate context, a small new file `mobile/assets/data/context.json`**
+```jsonc
+{
+  "oni": { "season": "ASO", "year": 2026, "anomaly_c": null, "source": "NOAA CPC ONI", "url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt", "retrieved": "" },
+  "advisory": { "issuer": "PAGASA", "title": "", "issued": "", "summary_by_hand": "", "url": "" }
+}
+```
+Read the ONI value from the file when baking and **copy it, don't type it from memory**. The PAGASA advisory is PDF only, so summarize it by hand and cite the link. This gives a cited "why now" line. It isn't an engine input.
+
+**5. Which sources work where (for the dev team)**
+
+| Source | Pipeline (Python) | Android (native fetch) | Web build (CORS) |
+|---|---|---|---|
+| NASA POWER | ✅ | ✅ | ✅ `*` |
+| PSA OpenSTAT | ✅ (set a browser `User-Agent`; use `csv` or `json`, not `json-stat2`) | ✅ | ✅ `*` (tested with curl) |
+| NASA GIBS tiles | ✅ | ✅ | ✅ `*` |
+| Open-Meteo ERA5 archive | ✅ | ✅ | ✅ `*` |
+| Open-Meteo elevation | ⚠️ one call timed out, one worked | ⚠️ same | ❓ CORS untested (timed out twice) |
+| OpenTopoData SRTM | ✅ | ✅ | ❌ no CORS header |
+| NOAA ONI | ✅ | ✅ | ❓ no CORS header seen, so **bake it in** |
+
+"✅ native" is expected from how native `fetch` works, but nobody has run these calls from the Expo app yet. Test one in Expo Go before relying on it.
+
 ## Harmonization approach (answers the "common grid" consideration)
 
 The farm is a **single point**. For the MVP we harmonize to **point × month**:

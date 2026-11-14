@@ -20,6 +20,7 @@
 | 2026-11-14 | (same) | Claude Code | Compared the challenge Resources tab with `03-data-sources.md` (no changes needed) and tested GIBS, Open-Meteo, OpenTopoData, and SoilGrids reachability and CORS; recorded results | `docs/03-data-sources.md` | Team decides which sources to adopt |
 | 2026-11-14 | (same) | Claude Code (with the `data-researcher` subagent) | Researched Philippine data sources (PSA, BSWM, PhilRice, PAGASA, NOAA, hazard archives); verified PSA OpenSTAT, NOAA ONI and a hazard-layer file by `curl`; recorded results | `docs/03-data-sources.md` | Team decides which sources to adopt |
 | 2026-11-14 | (same) | Claude Code | Listed the gaps to decide before building (tiered decision list D21–D30); recorded the **team's** choices (Expo React Native for Android + web, Leaflet + Terra Draw in a WebView, folder ownership + short PRs); rewrote the architecture doc and updated schedule, scope, risks, and CLAUDE.md to match | `docs/06`, `docs/08`, `decision-log.md`, other docs, `.claude/CLAUDE.md` | Choices made by the team; open items pending |
+| 2026-11-14 | (same) | Claude Code | Read the new decision log and architecture; drafted proposed data-contract additions (PSA yields, province field, SRTM terrain handling, climate context, source-by-platform table) for the Data lead | `docs/03-data-sources.md` | Proposals only; team and Data lead decide |
 
 ## How we'll mark SI use in the project
 
