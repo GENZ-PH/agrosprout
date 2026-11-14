@@ -133,7 +133,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   },
   recommendations: {
     id: "recommendations",
-    sources: ["power", "fao56", "brouwer", "ecocrop", "crop-library", "feedipedia", "rusle", "tr55"],
+    sources: ["power", "fao56", "brouwer", "ecocrop", "crop-library"],
     title: "Recommendations",
     what: "Several ways to use your lot over the year: your own crops, and options that add or swap crops. Each option says why it was suggested, what evidence it rests on, what it improves, what is not known and what to check locally.",
     source:
@@ -148,7 +148,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   },
   priorities: {
     id: "priorities",
-    sources: ["farmer", "feedipedia"],
+    sources: ["farmer"],
     title: "What matters to you",
     what: "Four choices: save water, build soil, extra income and less work. Tapping them re-ranks the options straight away, on your phone.",
     source: "Your own answers. The choices only change how much each score counts; they do not change the data.",
@@ -212,7 +212,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     sources: ["imerg", "smap", "power-daily"],
     read: "Look at the shape over the year: do the wet and dry months line up? The sizes differ because each product covers a different area and measures a different thing. Tap a source name to see how each number is worked out.",
     limits: [
-      "These are checks, not inputs: the scores use NASA POWER only.",
+      "These are checks, not inputs: the scores do not use them.",
       "Only the sample farm has them, because they are fetched ahead of time, not on the phone.",
       "SMAP covers 2015 onward, and IMERG monthly files end at 2025-09.",
       "A satellite grid cell is larger than the lot, and the sample farm's location is provisional.",

@@ -37,7 +37,7 @@ const RULES: Rule[] = [
   {
     test: (u) => u.hostname === "power.larc.nasa.gov" && u.pathname.includes("/temporal/daily/"),
     source: "power-daily",
-    purpose: "Daily highs, lows and rain, for heat, heavy-rain and frost days and the long-term trends.",
+    purpose: "Daily NASA POWER values (not requested by the phone on this branch; the sample farm's daily data is bundled).",
     keep: ["parameters", "latitude", "longitude", "start", "end", "community"],
   },
   {

@@ -11,12 +11,7 @@ export type SourceKey =
   | "brouwer"
   | "ecocrop"
   | "crop-library"
-  | "feedipedia"
-  | "rusle"
-  | "tr55"
   | "osm"
-  | "oni"
-  | "pagasa"
   | "farmer"
   | "shi"
   | "imerg"
@@ -48,16 +43,16 @@ export const SOURCES: Readonly<Record<SourceKey, SourceTag>> = {
   },
   "power-daily": {
     name: "NASA POWER, daily",
-    by: "NASA Langley (MERRA-2 weather model)",
-    gives: "Daily highs and lows, daily rain",
-    scale: "0.5° × 0.625° cell, about 50 km",
+    by: "NASA Langley (MERRA-2 weather model, CERES sunshine)",
+    gives: "The sample farm's climate, built from daily values, and its heavy-rain days",
+    scale: "0.5° × 0.625° cell, about 50 km (sunshine 1° × 1°)",
     years: "{period}",
     nasa: true,
   },
   srtm: {
     name: "NASA SRTM v3",
     by: "NASA JPL, Shuttle Radar Topography Mission",
-    gives: "Field elevation and slope",
+    gives: "Sample farm elevation and slope",
     scale: "About 30 m",
     years: "February 2000",
     nasa: true,
@@ -94,52 +89,12 @@ export const SOURCES: Readonly<Record<SourceKey, SourceTag>> = {
     years: "See each citation",
     nasa: false,
   },
-  feedipedia: {
-    name: "Feedipedia",
-    by: "INRAE, CIRAD, AFZ and FAO",
-    gives: "Whether a crop's residue is fed to animals",
-    scale: "Per crop",
-    years: "Database values",
-    nasa: false,
-  },
-  rusle: {
-    name: "RUSLE slope factor",
-    by: "USDA, Renard and others, 1997",
-    gives: "How slope raises washout",
-    scale: "Method",
-    years: "1997",
-    nasa: false,
-  },
-  tr55: {
-    name: "USDA TR-55 curve numbers",
-    by: "USDA NRCS, 1986",
-    gives: "How much of a heavy storm soaks in",
-    scale: "Method",
-    years: "1986",
-    nasa: false,
-  },
   osm: {
     name: "OpenStreetMap routing",
     by: "© OpenStreetMap contributors, FOSSGIS server",
     gives: "Road distance to a harvest place",
     scale: "Points rounded to about 100 m",
     years: "Current road map",
-    nasa: false,
-  },
-  oni: {
-    name: "NOAA Oceanic Niño Index",
-    by: "NOAA Climate Prediction Center",
-    gives: "El Niño or La Niña now",
-    scale: "Ocean-wide",
-    years: "Latest season",
-    nasa: false,
-  },
-  pagasa: {
-    name: "PAGASA advisory",
-    by: "DOST-PAGASA",
-    gives: "Season outlook for the Philippines",
-    scale: "Country",
-    years: "Latest advisory",
     nasa: false,
   },
   imerg: {
@@ -163,7 +118,7 @@ export const SOURCES: Readonly<Record<SourceKey, SourceTag>> = {
     by: "NASA LP DAAC (MOD13Q1 v061), via ORNL DAAC",
     gives: "How green the ground is, every 16 days",
     scale: "About 250 m pixel",
-    years: "2001-2025",
+    years: "No data file bundled yet",
     nasa: true,
   },
   shi: {

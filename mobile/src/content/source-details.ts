@@ -1,16 +1,17 @@
 // The detail behind each source for the inspector panel: variables, how the app uses them, and
 // the formulas exactly as the code computes them. Every line points at code that exists:
-// data/power.ts, data/power-daily.ts, data/srtm.ts, data/et0.ts, engine/waterBalance.ts,
-// engine/params.ts, engine/scores.ts, engine/infiltration.ts, engine/soilHealth.ts.
+// data/power.ts, data/et0.ts, engine/waterBalance.ts, engine/params.ts, engine/scores.ts,
+// engine/cropFit.ts, engine/soilHealth.ts, and for the sample farm pipeline/build_demo.py,
+// pipeline/aggregate.py, pipeline/fetch_srtm.py, pipeline/fetch_imerg.py, pipeline/fetch_smap.py.
 // If a formula changes in the code, change it here too.
 
 import type { SourceKey } from "./sources";
 
 /** Methods that work on each NASA dataset: their formulas show in that dataset's panel. */
 export const METHODS_ON: Readonly<Partial<Record<SourceKey, readonly SourceKey[]>>> = {
-  power: ["fao56", "brouwer", "ecocrop", "tr55"],
+  power: ["fao56", "brouwer", "ecocrop"],
   "power-daily": ["fao56", "brouwer", "ecocrop"],
-  srtm: ["fao56", "rusle"],
+  srtm: ["fao56"],
 };
 
 export interface SourceDetail {
@@ -33,7 +34,7 @@ export const SOURCE_DETAILS: Readonly<Partial<Record<SourceKey, SourceDetail>>> 
       { code: "GWETROOT", meaning: "Root-zone soil wetness, 0 dry to 1 saturated" },
     ],
     how: [
-      "One request per lot you draw, for the lot centre rounded to 0.1° (community AG, 2001-2025). Lots in the same cell share it. The sample farm's numbers come from the daily data instead (see NASA POWER, daily).",
+      "One request per lot you draw, for the lot centre rounded to 0.1° (community AG, 2001-2025). Lots in the same grid cell get the same numbers. The sample farm's numbers come from the daily data instead (see NASA POWER, daily).",
       "Rain becomes millimetres per month for every year, then a dry, typical and wet year: the 20th, 50th and 80th percentile across the years.",
       "Temperature, humidity, wind and sunshine go into the FAO-56 evaporation sum; the crop's need follows from it.",
       "The monthly mean temperature is checked against each crop's FAO Ecocrop range.",
@@ -53,30 +54,27 @@ export const SOURCE_DETAILS: Readonly<Partial<Record<SourceKey, SourceDetail>>> 
       { code: "T2M_MAX", meaning: "Daily highest air temperature at 2 m, °C" },
       { code: "T2M_MIN", meaning: "Daily lowest air temperature at 2 m, °C" },
       { code: "PRECTOTCORR", meaning: "Daily rain, mm" },
+      { code: "RH2M, WS2M, ALLSKY_SFC_SW_DWN, GWETROOT", meaning: "Daily humidity, wind, sunshine and root-zone wetness, as for the monthly data" },
     ],
     how: [
-      "One request per lot point for every day of 2001-2025 (about 450 KB), rounded to 0.1°. The sample farm's monthly numbers are built from these daily values by the team's pipeline.",
+      "Sample farm only. The team's pipeline fetched every day of 2001-2025 for the farm point once, and the results are bundled with the app. The phone never asks for daily data.",
+      "Monthly rain is the sum of the daily rain. Highs, lows, humidity, wind, sunshine and root-zone wetness are the mean of the daily values.",
       "A month with more than 10% of its days missing counts as missing.",
-      "Days are counted per month and averaged over the years: very hot, very heavy rain and frost.",
-      "Trends in yearly rain, the dry-season shortage and the average daytime high use Sen's slope and the Mann-Kendall test.",
+      "Very heavy rain days are counted per month and averaged over the years. They weigh each month in the washout score.",
     ],
     formulas: [
-      { name: "Very hot day", lines: ["T2M_MAX > 35 °C"] },
       { name: "Very heavy rain day", lines: ["PRECTOTCORR > 50 mm"] },
-      { name: "Frost day (ETCCDI FD)", lines: ["T2M_MIN < 0 °C"] },
       { name: "Days per month", lines: ["mean over the years of the count of such days in that month"] },
-      { name: "Sen's slope", lines: ["slope = median of (xⱼ − xᵢ) ÷ (j − i) over every pair of years i < j", "per decade = slope × 10"] },
-      { name: "Clear trend", lines: ["Mann-Kendall p < 0.05; otherwise the card says no clear trend"] },
     ],
-    cite: "NASA POWER daily point API (MERRA-2). Frost-day index: ETCCDI (Karl et al. 1999; Peterson et al. 2001, WMO).",
+    cite: "NASA POWER daily point API, community AG. Weather from MERRA-2, sunshine from CERES SYN1deg.",
     url: "https://power.larc.nasa.gov/docs/services/api/temporal/daily/",
   },
   srtm: {
     variables: [{ code: "srtm30m", meaning: "Ground height, 1 arc-second (about 30 m), whole metres" }],
     how: [
-      "Nine heights on a 3 × 3 grid, 30 m apart, around the lot centre rounded to 0.001° (about 110 m). On the web the request goes through this site's pass-through, which stores nothing.",
-      "The middle height is the field elevation. It sets the air pressure in the evaporation sum.",
-      "The slope comes from the nine heights. It sets the RUSLE slope factor in the washout score, except on lowland paddy.",
+      "Sample farm only. The team's pipeline asked once for nine heights on a 3 × 3 grid, 30 m apart, around the farm point, and the results are bundled with the app. Lots you draw have no SRTM data yet.",
+      "The middle height is the field elevation. It sets the air pressure in the evaporation sum. Without it, sea level is used.",
+      "The slope comes from the nine heights and is kept with the sample farm, but no score uses it yet. The washout score uses the land type you give.",
     ],
     formulas: [
       { name: "Slope (Horn 1981)", lines: [
@@ -91,11 +89,12 @@ export const SOURCE_DETAILS: Readonly<Partial<Record<SourceKey, SourceDetail>>> 
   },
   fao56: {
     variables: [
-      { code: "NASA POWER", meaning: "T2M, T2M_RANGE, RH2M, WS2M, ALLSKY_SFC_SW_DWN" },
-      { code: "NASA SRTM", meaning: "Field elevation, for the air pressure" },
+      { code: "NASA POWER", meaning: "T2M, T2M_RANGE, RH2M, WS2M, ALLSKY_SFC_SW_DWN (sample farm: daily T2M_MAX and T2M_MIN instead of T2M and T2M_RANGE)" },
+      { code: "NASA SRTM", meaning: "Field elevation, for the air pressure (sample farm only)" },
     ],
     how: [
-      "Reference evaporation ET₀ is worked out on the phone for every month from the NASA POWER values, at the field's SRTM elevation (sea level if unknown).",
+      "Reference evaporation ET₀ is worked out for every month from the NASA POWER values: on the phone for lots you draw, by the team's pipeline with the same method for the sample farm.",
+      "Lots you draw use sea level for the air pressure. The sample farm uses its SRTM elevation.",
       "Each crop's water use is ET₀ times its crop coefficient Kc for the growth stage, over the crop's days in that month.",
       "The Kc climate adjustment is not applied (crop height is not in the library), so water need is slightly overestimated.",
     ],
@@ -128,34 +127,10 @@ export const SOURCE_DETAILS: Readonly<Partial<Record<SourceKey, SourceDetail>>> 
     url: "https://www.fao.org/4/s2022e/s2022e08.htm",
   },
   ecocrop: {
-    variables: [{ code: "NASA POWER", meaning: "Monthly mean temperature (T2M)" }],
+    variables: [{ code: "NASA POWER", meaning: "Monthly mean temperature, from the monthly highs and lows" }],
     how: ["Each month of a crop's season is checked against the crop's temperature range from FAO Ecocrop."],
     formulas: [{ name: "Temperature check", lines: ["T = (Tmax + Tmin) ÷ 2", "outside [min, max] → Poor fit", "outside [optimal low, optimal high] → Watch out"] }],
     cite: "FAO Ecocrop database, cited per crop in crops.json.",
-  },
-  rusle: {
-    variables: [{ code: "NASA SRTM", meaning: "Slope in percent" }],
-    how: [
-      "The washout score weighs the months a field is bare by how heavy the rain is, times a slope factor.",
-      "With an SRTM slope and land that is not lowland paddy, the slope factor is the RUSLE S. Otherwise it is set by the land type you gave (lowland 0.3, upland 0.6, sloping 1; assumptions).",
-    ],
-    formulas: [{ name: "Slope steepness (McCool et al. 1987)", lines: ["θ = arctan(slope % ÷ 100)", "S = 10.8 sin θ + 0.03 if slope < 9 %", "S = 16.8 sin θ − 0.50 if slope ≥ 9 %"] }],
-    cite: "Renard, K.G. et al. (2011), USLE and RUSLE, ch. 8 in Handbook of Erosion Modelling, Eq. 8.4-8.5; USDA Agriculture Handbook 703.",
-    url: "https://www.tucson.ars.ag.gov/unit/Publications/PDFfiles/2127.pdf",
-  },
-  tr55: {
-    variables: [{ code: "NASA POWER", meaning: "Monthly rain, as the weight for each month" }],
-    how: [
-      "For a 50 mm storm, how much soaks in when the field is bare or cropped, by soil group (from your soil answer; unknown counts as B).",
-      "Months with paddy rice in the field are left out. The year's figure is weighted by each month's rain.",
-    ],
-    formulas: [{ name: "Curve number runoff (TR-55 eq. 2-1, 2-2, 2-4)", lines: [
-      "P = 50 mm ÷ 25.4 (inches)",
-      "S = 1000 ÷ CN − 10,  Ia = 0.2 S",
-      "Q = (P − Ia)² ÷ (P − Ia + S) if P > Ia, else 0",
-      "soaks in = 1 − Q ÷ P",
-    ], note: "Curve numbers, bare field: soil group A 77, B 86, C 91, D 94. Cropped: A 72, B 81, C 88, D 91." }],
-    cite: "USDA NRCS (1986). Urban Hydrology for Small Watersheds, Technical Release 55.",
   },
   imerg: {
     variables: [{ code: "precipitation", meaning: "Merged satellite and gauge rain, average rate over the month, mm/hr" }],
@@ -185,31 +160,10 @@ export const SOURCE_DETAILS: Readonly<Partial<Record<SourceKey, SourceDetail>>> 
     cite: "Reichle, R. et al. (2025). SMAP L4 Global 3-hourly 9 km EASE-Grid Surface and Root Zone Soil Moisture Geophysical Data (SPL4SMGP, Version 8). NASA NSIDC DAAC, doi:10.5067/T5RUATAQREF8.",
     url: "https://nsidc.org/data/spl4smgp/versions/8",
   },
-  modis: {
-    variables: [
-      { code: "250m_16_days_NDVI", meaning: "Vegetation index, scale factor 0.0001" },
-      { code: "250m_16_days_pixel_reliability", meaning: "0 good, 1 marginal, 2 snow or ice, 3 cloudy" },
-    ],
-    how: [
-      "A check on the season: when the ground around the lot greens up and dries out, seen from space.",
-      "Composites with good or marginal reliability are kept; cloudy, snow and fill values are dropped.",
-      "One pixel is about 230 m across (about 5 ha), larger than the lot, so it mixes the lot with what is around it.",
-    ],
-    formulas: [
-      { name: "NDVI", lines: ["NDVI = (NIR − Red) ÷ (NIR + Red)"], note: "From −1 to +1. Green leaves absorb red light and scatter near-infrared, so more green canopy gives a higher value (MOD13 User Guide V6.1, section 1.2)." },
-      { name: "Per calendar month", lines: ["median, P20 and P80 of the kept composites whose 16-day period starts in that month, across all years"] },
-    ],
-    cite: "Didan, K. (2021). MODIS/Terra Vegetation Indices 16-Day L3 Global 250m SIN Grid V061. NASA LP DAAC. Accessed through the ORNL DAAC MODIS Land Product Subsets service.",
-    url: "https://lpdaac.usgs.gov/products/mod13q1v061/",
-  },
   shi: {
     variables: [{ code: "Scores", meaning: "Builds soil (S) and Protects from washout (E), 0-100" }],
     how: ["Every plan starts at 50. Its year is assumed to repeat, so the line moves the same amount each year until it hits 0 or 100.", "A relative indicator for comparing plans on one lot, not a soil test."],
     formulas: [{ name: "Each year", lines: ["SHI = clamp(SHI before + 10 × S ÷ 100 − 10 × (1 − E ÷ 100), 0, 100)"], note: "The start of 50 is the team spec; the two 10s are assumptions to check locally." }],
-  },
-  oni: {
-    how: ["Shown as context for this season only. The results use 25 years of records, not a forecast."],
-    url: "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
   },
   osm: {
     how: ["Road distance from the lot to a harvest place, divided by a speed for the way you travel. Your own travel time always wins. Offline, a straight-line estimate is used."],
