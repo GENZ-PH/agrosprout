@@ -38,7 +38,8 @@
     "web": "expo start --web",
     "typecheck": "npm --prefix ../api run -s build:types && tsc --noEmit",
     "lint": "expo lint",
-    "check": "npm run typecheck && npm run lint",
+    "test": "node --import ./scripts/node-test-resolve.mjs --test \"src/**/*.test.ts\"",
+    "check": "npm run typecheck && npm run lint && npm test",
     "build:web": "expo export --platform web"
   },
   "private": true

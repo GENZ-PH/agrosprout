@@ -35,4 +35,4 @@ An offline-first mobile app (Expo React Native: Android app for farmers + web bu
 - Network note: on the team's network, `spaceappschallenge.org` fails TLS verification in curl/WebFetch (untrusted root). Use the browser for that site. NASA POWER and GitHub work.
 
 ## Project subagents (`.claude/agents/`)
-Planning phase: `project-manager`, `product-manager`, `ux-researcher`, `assumption-mapping`, `technical-writer`, `data-researcher`, `research-analyst`, `architect-reviewer`. See `docs/claude-setup.md` for when to use each and which build-phase agents to add.
+Planning phase: `project-manager`, `product-manager`, `ux-researcher`, `assumption-mapping`, `technical-writer`, `data-researcher`, `research-analyst`, `architect-reviewer`. Build phase: `mobile-developer`, `ui-designer`, `typescript-pro`, `python-pro`, `test-automator`, `accessibility-tester`, `code-reviewer`. See `docs/claude-setup.md` for when to use each.

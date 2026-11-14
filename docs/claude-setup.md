@@ -8,7 +8,7 @@ Everything Claude-related lives in `.claude/` at the repo root:
 └── agents/            Project-scoped subagents (committed, so every teammate gets them)
 ```
 
-## Subagents installed (planning phase only)
+## Subagents installed
 
 Source: [VoltAgent/awesome-claude-code-subagents](https://github.com/VoltAgent/awesome-claude-code-subagents), commit `ed74d11` (2026-11-02), MIT License © 2025 VoltAgent (license text in `.claude/agents/LICENSE.voltagent`). The files are copied **unmodified**.
 
@@ -23,23 +23,28 @@ Source: [VoltAgent/awesome-claude-code-subagents](https://github.com/VoltAgent/a
 | `research-analyst` | 10-research-analysis | sonnet | Agronomy evidence: crop coefficients, rotation benefits, Philippine crop calendars, with citations |
 | `architect-reviewer` | 04-quality-security | inherit | Review the architecture and data contracts before code freezes ([06](06-architecture.md)) |
 
-**Vetting done before install:** six of the eight files match copies already installed at the user level (`~/.claude/agents/`). The only differences are line endings and, in `assumption-mapping`, YAML quoting of the description. Scanned all eight for URLs, shell commands, or credential handling: none found. Project-level copies take precedence over user-level ones with the same name.
+**Build phase (added 2026-11-14, same catalog commit `ed74d11`, copied unmodified):**
 
-**Considered and skipped:** `scientific-literature-researcher`, because it's biomedical-focused and needs a third-party MCP server (`bgpt.pro`). `research-analyst` covers our literature needs.
+| Agent | Category | Model | Use it for (in this project) |
+|---|---|---|---|
+| `mobile-developer` | 01-core-development | sonnet | Expo React Native screens, Android (EAS) build, offline behavior, WebView map bridge |
+| `ui-designer` | 01-core-development | sonnet | Visual polish of the dashboard cards and charts |
+| `typescript-pro` | 02-language-specialists | sonnet | Pure-TypeScript engine (`mobile/src/engine/`) and the `types.ts` contract |
+| `python-pro` | 02-language-specialists | sonnet | `pipeline/` scripts (demo farm, ET₀ mirror, SRTM, PSA) |
+| `test-automator` | 04-quality-security | sonnet | Engine and data unit tests (`npm test` in `mobile/`, `node:test`) |
+| `accessibility-tester` | 04-quality-security | haiku | Contrast, font size, tap targets, plain language (#45) |
+| `code-reviewer` | 04-quality-security | inherit | Review PRs before merging to `main` and before the freeze |
+
+**Vetting done before install (planning phase):** six of the eight files match copies already installed at the user level (`~/.claude/agents/`). The only differences are line endings and, in `assumption-mapping`, YAML quoting of the description. Scanned all eight for URLs, shell commands, or credential handling: none found. Project-level copies take precedence over user-level ones with the same name.
+
+**Vetting done before install (build phase):** six of the seven files are identical (ignoring line endings) to copies already installed at the user level. `mobile-developer` is new and was read in full: it has no URLs, shell commands, or credential handling. Its generic checklist mentions push notifications, analytics, and app-store work that are out of scope here; `.claude/CLAUDE.md` (no login, no backend storage, MoSCoW scope) still applies when it runs.
+
+**Considered and skipped:** `data-engineer` (`python-pro` covers our small scripts), `react-specialist` (overlaps `mobile-developer`), `qa-expert` (`test-automator` writes the tests; the bug bash in #46 follows `docs/08`). `scientific-literature-researcher`, because it's biomedical-focused and needs a third-party MCP server (`bgpt.pro`). `research-analyst` covers our literature needs.
 
 ### How to invoke
 
 In Claude Code: *"Use the research-analyst agent to find FAO-56 Kc values for mungbean, peanut and maize, with citations."* Claude can also pick an agent automatically from its description.
 
-## Agents to add when we start building (not installed yet)
+## Adding more agents
 
-| Agent (catalog path) | Why |
-|---|---|
-| `python-pro` (02) or `data-engineer` (05) | `pipeline/` scripts |
-| `mobile-developer` (01) / `typescript-pro` (02) / `react-specialist` (02) | Expo React Native app (Android + web), pure-TS engine, WebView map bridge |
-| `ui-designer` (01) | Visual polish |
-| `accessibility-tester` (04) | Contrast, tap targets, readability on low-end phones |
-| `qa-expert` / `test-automator` (04) | Engine unit tests, offline test plan |
-| `code-reviewer` (04) | Pre-freeze review |
-
-Install the same way: copy the `.md` file from the catalog into `.claude/agents/` **after reading it**.
+Copy the `.md` file from the [catalog](https://github.com/VoltAgent/awesome-claude-code-subagents) into `.claude/agents/` **after reading it**, then add a row above.
