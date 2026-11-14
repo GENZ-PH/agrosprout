@@ -4,7 +4,7 @@ import { Disclaimer } from "../src/components/Disclaimer";
 import { Header } from "../src/components/Header";
 import { Screen } from "../src/components/Screen";
 import { colors, radius, space, text } from "../src/components/theme";
-import { DATA_SOURCES, fill, LIMITATIONS } from "../src/content/explainers";
+import { CHALLENGE_DATASETS, DATA_SOURCES, fill, LIMITATIONS } from "../src/content/explainers";
 
 // Data & limits (#31): every source with its period and resolution, then the known limits.
 const PERIOD = "the years your lot's own data covers (shown on each card's ⓘ)";
@@ -32,6 +32,19 @@ export default function DataScreen() {
                 <Text style={styles.link}>{d.url}</Text>
               </Pressable>
             ) : null}
+          </View>
+        ))}
+      </View>
+      <Text style={text.heading} accessibilityRole="header">
+        NASA datasets we use and do not use
+      </Text>
+      <View style={styles.list}>
+        {CHALLENGE_DATASETS.map((d) => (
+          <View key={d.name} style={styles.item}>
+            <Text style={text.bodyStrong}>
+              {d.name}: {d.status}
+            </Text>
+            <Text style={text.small}>{d.note}</Text>
           </View>
         ))}
       </View>
