@@ -17,15 +17,11 @@ const DEMO_FARMS: DemoFarms = { "lanao-norte-demo-1": demoLanaoNorte1 as LotData
 export type DashboardLotView = LotView | { kind: "loading" };
 
 /**
- * `scenario` is the what-if slider's value (#47). Keep the object stable between renders (state, or `useMemo`),
- * because a new object each render runs the engine again.
+ * The lot's climate data saved on the phone (live download or bundled demo farm). `undefined` while it
+ * is being read, `null` when there is none yet. Read again on a new download (status) or a moved lot.
+ * Used by the dashboard (below) and S2's top 3 for the lot (#152).
  */
-export function useLotAnalysis(
-  farm: Pick<Farm, "destinations" | "priorities">,
-  lot: Lot,
-  scenario: Scenario | null = null,
-): DashboardLotView {
-  // Read again when the data could have changed: a new download (status) or a moved lot.
+export function useLotData(lot: Pick<Lot, "data_ref" | "data_status" | "centroid">): LotData | null | undefined {
   const readKey = `${lot.data_ref}|${lot.data_status}|${lot.centroid.join(",")}`;
   const [read, setRead] = useState<{ key: string; data: LotData | null } | null>(null);
 
@@ -39,7 +35,19 @@ export function useLotAnalysis(
     };
   }, [readKey, lot.data_ref]);
 
-  const data = read?.key === readKey ? read.data : undefined;
+  return read?.key === readKey ? read.data : undefined;
+}
+
+/**
+ * `scenario` is the what-if slider's value (#47). Keep the object stable between renders (state, or `useMemo`),
+ * because a new object each render runs the engine again.
+ */
+export function useLotAnalysis(
+  farm: Pick<Farm, "destinations" | "priorities">,
+  lot: Lot,
+  scenario: Scenario | null = null,
+): DashboardLotView {
+  const data = useLotData(lot);
   const { destinations, priorities } = farm;
   return useMemo<DashboardLotView>(() => {
     if (data === undefined && lot.crops.length > 0) return { kind: "loading" };

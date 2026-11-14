@@ -1,6 +1,6 @@
 # 03 — Data Sources: Catalog, Selection & Access Plan
 
-> The full resource list comes from the challenge Resources tab (read 2026-11-14). The "Our use" column holds **proposals** for the team to confirm (see `decision-log.md`, D2).
+> The full resource list comes from the challenge Resources tab (read 2026-11-14; re-checked later the same day in the browser: same 24 resources, nothing added or removed). The "Our use" column holds **proposals** for the team to confirm (see `decision-log.md`, D2).
 > **The most important filter: our demo site is in the Philippines.** About half the listed resources are **U.S.-only** (USDA/USGS/PRISM/OpenET/LANDFIRE/CoCoRaHS) and won't cover an Iligan farm.
 
 ## Verified so far
@@ -31,6 +31,23 @@ Quick reachability and CORS tests of sources beyond POWER. "CORS" = browser can 
 | **OpenTopoData SRTM 30 m** (`api.opentopodata.org/v1/srtm30m`) | HTTP 200 in ~0.4 s, 6 m at the same point, but **no CORS header returned**. | ❌ Don't call from the browser. Use it in `pipeline/` only. See the SRTM notes below. |
 | **ISRIC SoilGrids REST** (`rest.isric.org`) | Timed out twice (20-25 s, 0 bytes). | ❌ Unreliable now. Keep the farmer-picks-soil-texture fallback. |
 | **AppEEARS** (SMAP, MODIS, ECOSTRESS) | Not tested. Needs an Earthdata login. | Pipeline only, as planned above. |
+| **ORNL DAAC MODIS/VIIRS Land Product Subsets REST** (`modis.ornl.gov/rst/api/v1/`) | **No login.** Catalog calls worked (HTTP 200, but about 52 s each). The 46 products include `MOD13Q1` NDVI 250 m, `MOD16A2GF` ET 500 m, `MOD11A2` LST 1 km, `VNP13A1` VIIRS NDVI, **`SPL3SMP_E` SMAP enhanced surface soil moisture 9 km**, `ECO4ESIPTJPL` ECOSTRESS ESI and `ECO4WUE`. `MOD13Q1` dates at 8.0°N, 123.8°E run from 2000-02-18. **Data calls failed**: `subset` returned 503 twice and `SPL3SMP_E/bands` returned 502. No CORS header seen (the CORS check itself got a 503). | ⚠️ A possible **no-login replacement for the AppEEARS request (#5)**, pipeline only, cached in `pipeline/raw/`. Unreliable on 2026-11-14, so retry later. Its SMAP product is **surface** soil moisture (top layer), not the L4 root zone. It pairs with POWER `GWETTOP`, not `GWETROOT`. |
+| **FAO GAEZ v4 ImageServer** (`gaez-services.fao.org/server/rest/services/res05/ImageServer`) | **No login.** HTTP 200 in about 0.5–4 s. `identify` returns 400. A 1×1 `exportImage` (`format=bsq`, `pixelType=S16`, lock one raster by `objectid`) returns the pixel value. Theme 4 (`res05`) holds the suitability index (0–10000), the suitability class, and the attainable yield per crop, input level (High/Low), water supply and period (`1981-2010` CRU TS 3.2 Historical, plus 2011–2100 RCP scenarios). Cell size is 5 arc-minutes (about 9 km). | ✅ Usable from `pipeline/` to pre-bake a **cited suitability line per crop** for the demo farm. Our crops in GAEZ: Wetland rice (lowland rice), Maize (corn), Groundnut (peanut), Soybean, Sweet potato, Sorghum. Not in GAEZ: mungbean, string bean, eggplant, sesbania. Cowpea is the nearest for string bean but is a grain crop, so leave it out. Values at the demo point are in the table below. |
+| **GES DISC Hydrology Data Rods** (GLDAS point time series) | HTTP 301 to a GES DISC alert saying the service "will be discontinued no earlier than October 31, 2025". | ❌ Gone. GLDAS now needs Earthdata login (Giovanni or OPeNDAP). Skip it. |
+| **NASA POWER precipitation source** (`/api/system/manager/parameters`) | `PRECTOTCORR` is defined as "The average MERRA-2 bias corrected total precipitation". | ℹ️ POWER rain is **not GPM IMERG**. IMERG would be a separate, independent source, and it needs Earthdata login. |
+
+**GAEZ v4 at the provisional demo point (8.0°N, 123.8°E), rainfed, 1981–2010 (CRU TS 3.2), "all land in grid cell"** (read 2026-11-14 via the ImageServer above)
+
+| GAEZ crop | Suitability index, low input (0–10000) | Class code, low | Attainable yield, low (kg DW/ha) | Suitability index, high input | Class code, high | Attainable yield, high (kg DW/ha) |
+|---|---|---|---|---|---|---|
+| Wetland rice | 3804 | 5 | 2041 | 3932 | 5 | 6672 |
+| Maize | 2800 | 5 | 1829 | 2715 | 5 | 4512 |
+| Sweet potato | 3089 | 5 | 1943 | 5565 | 3 | 6890 |
+| Soybean | 1625 | 6 | 414 | 5604 | 3 | 3425 |
+| Groundnut | 1015 | 6 | 245 | 4854 | 4 | 1822 |
+| Sorghum | 975 | 7 | 360 | 1606 | 6 | 1945 |
+
+At the old Iligan point (8.23°N, 124.24°E) most crops score lower, and sorghum reads 0 (class 8). Low-input soybean is the exception: 1658 there vs 1625 here. Across both points the class codes line up with index bands (class 3 ≈ 5565–5604, 4 ≈ 4854–4995, 5 ≈ 2715–3932, 6 ≈ 1015–2354, 7 ≈ 975, 8 = 0). **Check the official class names and the meaning of "low" vs "high" input in the GAEZ v4 documentation before showing labels.** Re-run the full extraction in the pipeline rather than copying this table. It is a probe, not the data file.
 
 Elevation caveat: both elevation APIs agree on 6 m, so the Iligan coastal point is low. The POWER cell-vs-lowland caveat above is still unresolved.
 

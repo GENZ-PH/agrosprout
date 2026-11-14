@@ -11,6 +11,7 @@ import { Header } from "../src/components/Header";
 import { HarvestCard } from "../src/components/HarvestCard";
 import { WhatIfCard } from "../src/components/WhatIfCard";
 import { DataTracePanel } from "../src/components/DataTracePanel";
+import { ElNinoNotice } from "../src/components/ElNinoNotice";
 import { SatelliteCard } from "../src/components/SatelliteCard";
 import { DemoDataContext } from "../src/components/SourceChip";
 import { YearCalendar } from "../src/components/YearCalendar";
@@ -94,6 +95,7 @@ export default function DashboardScreen() {
             onSelect={selectLot}
             onAdd={() => router.push({ pathname: "/lots", params: { new: "1" } })}
           />
+          <ElNinoNotice />
           <LotResults key={lot.id} farm={farm} lot={lot} />
         </>
       ) : (
