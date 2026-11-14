@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { startQuerySync } from "../src/net/sync";
 import { useStoresReady } from "../src/state/hydration";
 import { startLotSync } from "../src/state/lot-sync";
+import { startTravelSync } from "../src/state/travel-sync";
 import {
   QUERY_CACHE_BUSTER,
   QUERY_CACHE_MAX_AGE,
@@ -21,6 +22,8 @@ export default function RootLayout() {
   const storesReady = useStoresReady();
   // Fetch NASA data for lots saved while offline, once the farm has loaded (06-architecture).
   useEffect(() => (storesReady ? startLotSync() : undefined), [storesReady]);
+  // Fill each lot's travel time to each harvest place: a labelled estimate offline, a road route online (#12).
+  useEffect(() => (storesReady ? startTravelSync() : undefined), [storesReady]);
   return (
     <PersistQueryClientProvider
       client={queryClient}

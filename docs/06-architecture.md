@@ -254,6 +254,7 @@ Tap-corners = Terra Draw **polygon mode**, followed by the same step 6. Unit-tes
 - Coordinates sent for routing are rounded to **3 decimals (~100 m)**. That's more precise than the 0.1° used for POWER, because roads need it. Mention it in the privacy line.
 - If routing fails or the phone is offline: fall back to the rough estimate (07 §3c) and ask the farmer to confirm.
 - Implementation: `mobile/src/data/routing.ts` + `mobile/src/engine/access.ts`.
+- **Keeping `lot.travel` filled** (`mobile/src/state/travel-sync-core.ts`, started from the root layout by `travel-sync.ts`): one entry per lot and place. A place added offline gets the labelled estimate (`source: "estimate"`) and a road route once online. A lot or place that moved, or a place whose transport mode changed, is routed again; the same rounded points and mode are never fetched twice in a session. The farmer's own time (`source: "farmer"`) is never replaced. Requests go one at a time, at least 1.1 s apart (the server asks for at most one per second). After one network or server failure the rest of that pass uses the estimate without asking; "No route found" for one place does not stop the others. A route saved in an earlier session is trusted until the lot or place is edited. The S6 screen (#30) only has to call `addDestination`, `updateDestination` or `setTravel` (for "Looks right" and "Change"); the sync does the rest.
 
 ## Offline behavior checklist (Android app)
 
