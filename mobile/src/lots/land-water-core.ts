@@ -1,8 +1,8 @@
 // "This lot looks like it is on water" (sea or lake): the lot checked against Natural Earth 1:10m land and lakes for the
 // Philippines, bundled by pipeline/build_land_water.py (public domain, "Made with Natural Earth"). It catches what NASA
 // POWER's ~50 km cells read as land: inner seas such as Manila Bay or the Visayan Sea, and Laguna de Bay (POWER probe
-// 2026-11-15). A soft warning only: the map's shore is coarse (1:10,000,000 scale), so a real farm on the shore, a
-// fishpond say, can read as water. Not in the data: Lake Lanao. Outside the map's window (e.g. Pag-asa Island): no check.
+// 2026-11-15). A soft warning only, and only out past SHORE_BUFFER_KM from any land on the map: the map's shore is coarse
+// (1:10,000,000 scale), so a real farm on the shore, a fishpond say, can read as water. Not in the data: Lake Lanao. Outside the map's window (e.g. Pag-asa Island): no check.
 // No React Native imports, so it runs in Node tests.
 import type { Lot } from "../types";
 
@@ -72,10 +72,32 @@ export function placeAt(index: LandWaterIndex, lon: number, lat: number): "land"
 }
 
 /**
- * True when the lot's centre and every point of its outline read as water: the whole lot is on the sea or a lake.
- * A lot across the shore, or outside the map, gives false (no warning).
+ * How far around the lot must also read as water before we warn (km). The map is drawn at 1:10,000,000, where a
+ * 0.5 mm line is 5 km on the ground, so its shore can sit kilometres off the real one: a real farm in a shore town
+ * read as sea (team report 2026-11-15, #176). Assumption (cartographic rule of thumb, not a measured error): any
+ * land within 5 km means "can't tell", so no warning. Open water further out, like the middle of Manila Bay or
+ * Laguna de Bay, is still caught.
+ */
+export const SHORE_BUFFER_KM = 5;
+
+/** Points around the centre: 8 directions at half and the full buffer. */
+function aroundPoints([lon, lat]: readonly number[]): [number, number][] {
+  const out: [number, number][] = [];
+  const kmPerDegLon = 111.32 * Math.cos((lat * Math.PI) / 180);
+  for (const r of [SHORE_BUFFER_KM / 2, SHORE_BUFFER_KM]) {
+    for (let k = 0; k < 8; k++) {
+      const a = (k * Math.PI) / 4;
+      out.push([lon + (r * Math.cos(a)) / kmPerDegLon, lat + (r * Math.sin(a)) / 110.574]);
+    }
+  }
+  return out;
+}
+
+/**
+ * True when the lot's centre, every point of its outline, and the water around it out to SHORE_BUFFER_KM all read as
+ * water: the lot is out on the sea or a lake. A lot across or near the shore, or outside the map, gives false.
  */
 export function lotLooksLikeWater(index: LandWaterIndex, lot: Pick<Lot, "geometry" | "centroid">): boolean {
-  const points = [lot.centroid, ...(lot.geometry.coordinates[0] ?? [])];
+  const points = [lot.centroid, ...(lot.geometry.coordinates[0] ?? []), ...aroundPoints(lot.centroid)];
   return points.every(([lon, lat]) => placeAt(index, lon, lat) === "water");
 }
