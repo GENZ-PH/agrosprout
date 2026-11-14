@@ -1,5 +1,5 @@
 import * as Location from "expo-location";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { BackHandler, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Button } from "../src/components/Button";
@@ -10,10 +10,12 @@ import { Screen } from "../src/components/Screen";
 import { colors, radius, space, text } from "../src/components/theme";
 import type { MapLot, MapMode, MapPlace, MapToApp } from "../src/map/bridge";
 import { MapView, type MapViewHandle } from "../src/map/MapView";
-import { parseHectares, useDraftLots } from "../src/mock/draft-lots";
+import { isPinLot, parseHectares, pinShape } from "../src/lots/lot-editor";
+import { useLotEditor } from "../src/lots/use-lot-editor";
 
 // S1 Plot your lots (#21, docs/11-user-flow.md) with the real map (#19) and
-// sketch → clean plot (#20). Lots persist once the farm store (#18) is in.
+// sketch → clean plot (#20). A drawn lot is saved in the farm store (#18) at once,
+// and the lot sync starts fetching its NASA data in the background.
 // Drawing opens the map full screen; the icon at the map's lower right opens or
 // closes full screen any time. The map stays mounted, so it never reloads.
 
@@ -24,27 +26,35 @@ const MODE_HINT: Partial<Record<MapMode, (lot: string) => string>> = {
 };
 
 export default function LotsScreen() {
-  const { lots, addLot, renameLot, removeLot, setShape, placePin, undo } = useDraftLots();
+  const { lots, rows, ensureStarted, addPlaceholder, rename, remove, setShape, undo } = useLotEditor();
   const mapRef = useRef<MapViewHandle>(null);
   const [mode, setMode] = useState<MapMode>("select");
   const [full, setFull] = useState(false);
   const [activeLotId, setActiveLotId] = useState<string | undefined>();
   const [editing, setEditing] = useState<{ id: string; ha: number } | null>(null);
-  const [status, setStatus] = useState("Move the map to your farm, then tap Draw and trace around Lot 1.");
+  const [status, setStatus] = useState(() =>
+    lots.length > 0
+      ? "Tap a lot on the map to adjust its corners, or tap + Add lot for another one."
+      : "Move the map to your farm, then tap Draw and trace around Lot 1.",
+  );
   const [pinOpen, setPinOpen] = useState(false);
   const [areaText, setAreaText] = useState("");
 
-  const nameOf = (id?: string) => lots.find((l) => l.id === id)?.name ?? "the lot";
-  const nextUnplotted = lots.find((l) => !l.method);
-  const plottedCount = lots.filter((l) => l.method).length;
+  // A new farm starts with an empty "Lot 1" to draw.
+  useLayoutEffect(() => ensureStarted(), [ensureStarted]);
+
+  const nameOf = (id?: string) => rows.find((r) => r.id === id)?.name ?? "the lot";
+  const nextUnplotted = rows.find((r) => r.area_ha === null);
+  const plottedCount = lots.length;
   const typedArea = parseHectares(areaText);
 
+  // Drawn lots are outlines on the map; pin lots are pins.
   const mapLots = useMemo<MapLot[]>(
-    () => lots.flatMap((l) => (l.geometry ? [{ id: l.id, name: l.name, geometry: l.geometry }] : [])),
+    () => lots.flatMap((l) => (isPinLot(l) ? [] : [{ id: l.id, name: l.name, geometry: l.geometry }])),
     [lots],
   );
   const mapPlaces = useMemo<MapPlace[]>(
-    () => lots.flatMap((l) => (l.method === "pin" && l.centroid ? [{ id: l.id, name: l.name, point: l.centroid }] : [])),
+    () => lots.flatMap((l) => (isPinLot(l) ? [{ id: l.id, name: l.name, point: l.centroid }] : [])),
     [lots],
   );
 
@@ -53,7 +63,7 @@ export default function LotsScreen() {
    * yet, else a new lot (Add lot is hidden in full screen; Undo removes it).
    */
   const start = (next: "sketch" | "corners" | "pin", lotId?: string) => {
-    const lot = lots.find((l) => l.id === (lotId ?? nextUnplotted?.id)) ?? addLot();
+    const lot = rows.find((r) => r.id === (lotId ?? nextUnplotted?.id)) ?? addPlaceholder();
     setActiveLotId(lot.id);
     setMode(next);
     setEditing(null);
@@ -83,11 +93,12 @@ export default function LotsScreen() {
   const onMapMessage = (msg: MapToApp) => {
     switch (msg.type) {
       case "lotChanged": {
-        const lot = lots.find((l) => l.id === msg.id);
+        const lot = rows.find((r) => r.id === msg.id);
         if (!lot) return;
         const drawn = mode === "sketch" || mode === "corners";
-        const method = mode === "corners" ? "corners" : mode === "sketch" ? "sketch" : lot.method === "corners" ? "corners" : "sketch";
-        setShape(msg.id, method, { geometry: msg.geojson, area_ha: msg.area_ha, centroid: msg.centroid });
+        // A new lot is saved under the farm store's id; keep editing it under that id.
+        const savedId = setShape(msg.id, { geometry: msg.geojson, area_ha: msg.area_ha, centroid: msg.centroid });
+        if (savedId !== msg.id && activeLotId === msg.id) setActiveLotId(savedId);
         setEditing(null);
         const ha = `${msg.area_ha.toFixed(2)} ha`;
         if (!drawn) setStatus(`${lot.name}: ${ha}. Saved.`);
@@ -117,7 +128,7 @@ export default function LotsScreen() {
         break;
       case "pinPlaced": {
         if (mode !== "pin" || !activeLotId || typedArea === null) return;
-        placePin(activeLotId, msg.point, typedArea);
+        setShape(activeLotId, pinShape(msg.point, typedArea));
         setStatus(`${nameOf(activeLotId)}: pin placed, ${typedArea} ha (your number).`);
         setAreaText("");
         setPinOpen(false);
@@ -294,19 +305,19 @@ export default function LotsScreen() {
           ) : null}
 
           <View style={styles.list}>
-            {lots.length === 0 ? <Text style={[text.body, { color: colors.muted }]}>No lots yet.</Text> : null}
-            {lots.map((lot) => (
+            {rows.length === 0 ? <Text style={[text.body, { color: colors.muted }]}>No lots yet.</Text> : null}
+            {rows.map((lot) => (
               <LotRow
                 key={lot.id}
                 lot={lot}
                 editingAreaHa={editing?.id === lot.id ? editing.ha : undefined}
                 onPlot={() => start("sketch", lot.id)}
                 onRename={(name) => {
-                  renameLot(lot.id, name);
+                  rename(lot.id, name);
                   setStatus(`Renamed to ${name.trim()}.`);
                 }}
                 onDelete={() => {
-                  removeLot(lot.id);
+                  remove(lot.id);
                   if (activeLotId === lot.id) setMode("select");
                   setStatus(`${lot.name} deleted. Tap Undo to bring it back.`);
                 }}
@@ -317,7 +328,7 @@ export default function LotsScreen() {
               icon="plus"
               variant="dashed"
               onPress={() => {
-                const lot = addLot();
+                const lot = addPlaceholder();
                 setStatus(`${lot.name} added. Tap Draw to trace it.`);
               }}
             />
