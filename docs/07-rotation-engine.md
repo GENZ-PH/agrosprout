@@ -48,7 +48,7 @@ flowchart LR
 
 Following FAO-56 (Allen et al., 1998):
 
-- **ET₀** (mm/month): FAO-56 Penman-Monteith from POWER daily Tmax, Tmin, RH2M, WS2M, ALLSKY_SFC_SW_DWN, and site elevation, summed per month (done in the pipeline).
+- **ET₀** (mm/month): FAO-56 Penman-Monteith from **monthly mean** Tmax, Tmin, RH2M, WS2M, ALLSKY_SFC_SW_DWN, and site elevation. The same method runs on the device for live lots (`mobile/src/data/et0.ts`) and in the pipeline for the demo farm (`pipeline/et0.py`), and both pass the same FAO-56 Chapter 4 Example 17 test. *Why monthly in the pipeline too:* a check at the Iligan demo point (NASA POWER 2001–2024, 2026-11-14) found monthly-mean ET₀ within about 1.1% of summing daily ET₀ in every month, and 1,245 vs 1,243 mm over the year, so a daily sum adds code and a larger download for no meaningful gain. One point in a humid tropical area, so re-check if a much drier site is added. Daily POWER data is still used for the daily-only metrics (heat-stress days, heavy-rain days).
 - **ETc** = Kc(stage) × ET₀, with Kc interpolated across ini → dev → mid → late using the stage lengths.
 - **Effective rain** Peff: the FAO/AGLW monthly rule (Brouwer & Heibloem 1986): `Peff = 0.8P − 25` if P > 75 mm, else `max(0, 0.6P − 10)`. *(Cite it; it's simple, standard, and explainable.)*
 - **Rice adjustment**: ponded rice also loses water to seepage, percolation, and land preparation. Add a cited per-month allowance (parameter `rice_extra_mm`). Ask a local expert for typical values.
