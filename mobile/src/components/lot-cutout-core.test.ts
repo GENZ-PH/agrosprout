@@ -7,18 +7,22 @@ import { join } from "node:path";
 import { analyzeLot, type LotAnalysis } from "../engine/analyze";
 import { ILIGAN_LOT_FIXTURE } from "../engine/__fixtures__/iligan-lot.fixture";
 import type { SoilHealthResult } from "../engine";
+import type { CutoutModel, PanelValue } from "./lot-cutout-core";
 import type { CropLibrary, LonLat, Lot } from "../types";
 import { FIT_COLORS, lotFitLevel, NO_RESULT_COLOR } from "./farm-map-core";
+import { colors } from "./theme";
 import {
   bestOtherOption,
   cropMonths,
   CUTOUT_LAYERS,
+  cutoutComparison,
   cutoutLegend,
   cutoutModel,
   cutoutShade,
   cutoutShape,
   cutoutSummary,
   mixColor,
+  NO_DATA_COLOR,
   optionFitLevel,
   rainPanel,
   shade,
@@ -95,10 +99,11 @@ test("soilPanel: value is the rounded year-3 index; color only says up, level or
     value: "56",
     detail: "Year 3: 56 (up 6 from 50)",
     className: "Goes up",
+    num: 56,
   });
   assert.equal(soilPanel(result(50.2), "A").className, "Stays level");
   assert.equal(soilPanel(result(41), "A").className, "Goes down");
-  assert.equal(soilPanel(result(41), "B").color, NO_RESULT_COLOR, "an option with no line is No data");
+  assert.equal(soilPanel(result(41), "B").missing, true, "an option with no line is No data");
 });
 
 test("soil health copy never says carbon, SOC or a percent", () => {
@@ -122,7 +127,7 @@ test("wetnessPanel: mean over the crop months, driest month named; missing month
   assert.equal(p.value, "0.60");
   assert.equal(p.color, shade(0.6));
   assert.match(p.detail, /driest Jan 0\.50/);
-  assert.equal(wetnessPanel([1, 2], [null, ...wet.slice(1)]).color, NO_RESULT_COLOR);
+  assert.equal(wetnessPanel([1, 2], [null, ...wet.slice(1)]).missing, true);
 });
 
 test("rainPanel: dry-year rain in the crop months, shaded by its share of the year", () => {
@@ -131,7 +136,7 @@ test("rainPanel: dry-year rain in the crop months, shaded by its share of the ye
   assert.equal(p.value, "300 mm");
   assert.equal(p.color, shade(0.25));
   assert.match(p.detail, /25% of that year's rain/);
-  assert.equal(rainPanel([6], [null, ...p20.slice(1)]).color, NO_RESULT_COLOR);
+  assert.equal(rainPanel([6], [null, ...p20.slice(1)]).missing, true);
 });
 
 test("cropMonths: the months a crop is in the field, from the option's calendar", () => {
@@ -144,7 +149,8 @@ test("cutoutModel: Now (A) next to the best other option, for every layer, on th
   for (const { key } of CUTOUT_LAYERS) {
     const m = cutoutModel(key, analysis, { lot, library });
     assert.equal(m.panels[0].key, "A", key);
-    assert.equal(m.panels[0].title, "Now: Your crops");
+    assert.equal(m.panels[0].title, "Your current crops");
+    assert.equal(m.panels[0].option, "Option A: Your crops");
     if (best) assert.equal(m.panels[1].key, best.key, key);
     for (const p of m.panels) assert.ok(p.value.value && p.value.detail && p.value.color, `${key} ${p.key}`);
     assert.ok(cutoutSummary("Lot 1", key, m).startsWith("Lot 1, "));
@@ -166,10 +172,90 @@ test("cutoutModel: same flag when both panels show the same value", () => {
 });
 
 test("legend and shade: class layers list classes plus No data; wetness and rain get a shade", () => {
-  assert.deepEqual(cutoutLegend("fit").map((r) => r.color), [FIT_COLORS.good, FIT_COLORS.watch, FIT_COLORS.poor, FIT_COLORS.unknown, NO_RESULT_COLOR]);
+  assert.deepEqual(cutoutLegend("fit").map((r) => r.color), [FIT_COLORS.good, FIT_COLORS.watch, FIT_COLORS.poor, FIT_COLORS.unknown, NO_DATA_COLOR]);
   assert.equal(cutoutLegend("soil").length, 4);
   assert.equal(cutoutShade("soil"), null);
   assert.deepEqual(cutoutShade("wetness")?.lowLabel, "0 dry");
   assert.equal(mixColor("#000000", "#FFFFFF", 0.5), "#808080");
   assert.equal(mixColor("#000000", "#FFFFFF", 2), "#FFFFFF");
+});
+
+test("No data never looks like a neutral result (#171)", () => {
+  assert.notEqual(NO_DATA_COLOR, SOIL_CLASSES.level.color);
+  assert.notEqual(NO_DATA_COLOR, FIT_COLORS.unknown);
+  assert.notEqual(NO_DATA_COLOR, NO_RESULT_COLOR);
+  assert.equal(NO_DATA_COLOR, colors.surface);
+  assert.equal(cutoutLegend("soil").at(-1)?.missing, true);
+});
+
+// A two-panel model with the given panel values, for the comparison row (#171).
+const pair = (cur: Partial<PanelValue>, oth: Partial<PanelValue>): CutoutModel => {
+  const v = (x: Partial<PanelValue>): PanelValue => ({ color: "#000000", value: String(x.num), detail: "", className: "", num: null, ...x });
+  return {
+    panels: [
+      { key: "A", title: "Your current crops", option: "Option A: Your crops", crops: "", value: v(cur) },
+      { key: "C", title: "Best other option", option: "Option C: Best for soil", crops: "", value: v(oth) },
+    ],
+    same: false,
+  };
+};
+
+test("cutoutComparison: soil health, current better, other better, tie", () => {
+  const cur = cutoutComparison("soil", pair({ num: 63 }, { num: 62 }))!;
+  assert.deepEqual(cur, {
+    better: "current",
+    diff: "−1 point",
+    sign: -1,
+    sentence: "Your current crops do better on soil health, by 1 point.",
+  });
+  const oth = cutoutComparison("soil", pair({ num: 50 }, { num: 56 }))!;
+  assert.equal(oth.better, "other");
+  assert.equal(oth.diff, "+6 points");
+  assert.equal(oth.sentence, "Option C does better on soil health, by 6 points.");
+  const tie = cutoutComparison("soil", pair({ num: 63 }, { num: 63 }))!;
+  assert.equal(tie.better, "same");
+  assert.equal(tie.diff, "No difference");
+});
+
+test("cutoutComparison: crop fit compares levels, never numbers; Not sure yet is not compared", () => {
+  const up = cutoutComparison("fit", pair({ num: 0 }, { num: 2 }))!;
+  assert.equal(up.better, "other");
+  assert.equal(up.diff, "+2 levels");
+  assert.equal(up.sentence, "Option C fits better, by two levels.");
+  assert.equal(cutoutComparison("fit", pair({ num: 2 }, { num: 1 }))!.sentence, "Your current crops fit better, by one level.");
+  assert.equal(cutoutComparison("fit", pair({ num: 1 }, { num: 1 }))!.better, "same");
+  const unsure = cutoutComparison("fit", pair({ num: 2 }, { num: null }))!;
+  assert.equal(unsure.diff, null);
+  assert.match(unsure.sentence, /not sure yet/);
+});
+
+test("cutoutComparison: wetness and rain say more or less, never better", () => {
+  const wet = cutoutComparison("wetness", pair({ num: 0.81 }, { num: 0.84 }))!;
+  assert.equal(wet.better, null);
+  assert.equal(wet.diff, "+0.03");
+  assert.match(wet.sentence, /wetter, by 0\.03/);
+  const rain = cutoutComparison("rain", pair({ num: 1240 }, { num: 1000 }))!;
+  assert.equal(rain.better, null);
+  assert.equal(rain.diff, "−240 mm");
+  assert.match(rain.sentence, /240 mm less rain/);
+});
+
+test("cutoutComparison: missing data on either side can't be compared; one panel gives nothing", () => {
+  for (const m of [pair({ num: null, missing: true }, { num: 5 }), pair({ num: 5 }, { num: null, missing: true })]) {
+    const c = cutoutComparison("soil", m)!;
+    assert.deepEqual([c.better, c.diff, c.sign], [null, null, null]);
+    assert.equal(c.sentence, "Can't compare: data is missing for one of them.");
+  }
+  assert.equal(cutoutComparison("soil", { panels: pair({ num: 1 }, { num: 2 }).panels.slice(0, 1), same: false }), null);
+});
+
+test("cutoutComparison: on the Iligan data the row matches the values on the two shapes", () => {
+  for (const { key } of CUTOUT_LAYERS) {
+    const m = cutoutModel(key, analysis, { lot, library });
+    const c = cutoutComparison(key, m);
+    if (m.panels.length < 2) continue;
+    assert.ok(c, key);
+    const [a, b] = m.panels.map((p) => p.value.num);
+    if (a !== null && b !== null) assert.equal(c.sign, Math.sign(Math.round((b - a) * 100) / 100) || 0, key);
+  }
 });
