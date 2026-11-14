@@ -1,7 +1,9 @@
 import { type ReactNode, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { type LayoutChangeEvent, Pressable, StyleSheet, Text, View } from "react-native";
+import { BarChart } from "react-native-chart-kit/v2";
 
 import type { ComponentKey, ConfidenceLevel, Explanation, OptionKey, RotationOption } from "../engine";
+import { chartTheme } from "./chartTheme";
 import { Icon } from "./Icon";
 import { Bullets, InfoCard } from "./InfoCard";
 import {
@@ -158,11 +160,8 @@ function OptionDetails({ option: o, a, explanation: ex, componentsLeftOut }: Pic
   return (
     <View style={styles.details}>
       <Section title={isA ? "Scores" : "Scores (change vs your crops)"}>
-        <View style={styles.scores}>
-          {shown.map((r) => (
-            <ScoreBar key={r.key} row={r} color={optionColors[o.key]} />
-          ))}
-        </View>
+        <ScoreChart rows={shown} color={optionColors[o.key]} />
+
         {leftOut.length > 0 ? (
           <Text style={text.caption}>Not scored on this lot yet, because data is missing: {leftOut.join(", ")}.</Text>
         ) : null}
@@ -199,24 +198,88 @@ function OptionDetails({ option: o, a, explanation: ex, componentsLeftOut }: Pic
   );
 }
 
-function ScoreBar({ row, color }: { row: ScoreRow; color: string }) {
-  const value = row.value;
-  const change = row.delta === null ? "" : row.delta === 0 ? ", same as your crops" : `, ${Math.abs(row.delta)} ${row.delta > 0 ? "more" : "less"} than your crops`;
+/** Row height of the score chart: one bar per score, room for the label beside it. */
+const SCORE_ROW_H = 30;
+/** Narrower than this (a phone), each score gets its own bar under its label. */
+const SCORE_CHART_MIN_W = 480;
+/**
+ * One phone score bar. Chart Kit keeps 18 px of padding above the plot and 34 px under it (room for
+ * axis labels, hidden here), so the chart is drawn 70 px tall and cropped to its 18 px plot. Its side
+ * padding (10 px left, 14 px right) is pulled out too, so the bar lines up with its label.
+ */
+const SCORE_BAR = { chart: 70, top: 18, plot: 18, left: 10, right: 14 } as const;
+
+/** Spoken summary of one score, e.g. "Builds soil: 64 out of 100, 5 more than your crops". */
+function scoreSpoken(row: ScoreRow): string {
+  if (row.value === null) return `${row.label}: no data`;
+  const change =
+    row.delta === null ? "" : row.delta === 0 ? ", same as your crops" : `, ${Math.abs(row.delta)} ${row.delta > 0 ? "more" : "less"} than your crops`;
+  return `${row.label}: ${row.value} out of 100${change}`;
+}
+
+/**
+ * The option's scores, 0-100, as a Chart Kit horizontal bar chart (#114, D30). The score and the change vs your
+ * crops sit in each bar's label ("Builds soil: 64 (+5)"), so nothing is clipped on a 360 px phone.
+ */
+function ScoreChart({ rows, color }: { rows: readonly ScoreRow[]; color: string }) {
+  const [width, setWidth] = useState(0);
+  const data = rows.map((r) => ({
+    label: r.value === null ? `${r.label}: no data` : r.delta === null ? `${r.label}: ${r.value}` : `${r.label}: ${r.value} (${deltaText(r.delta)})`,
+    score: r.value ?? 0,
+  }));
   return (
     <View
-      style={styles.scoreRow}
+      onLayout={(e: LayoutChangeEvent) => setWidth(Math.round(e.nativeEvent.layout.width))}
+      style={{ minHeight: rows.length * SCORE_ROW_H }}
       accessible
-      accessibilityLabel={value === null ? `${row.label}: no data` : `${row.label}: ${value} out of 100${change}`}
+      accessibilityRole="image"
+      accessibilityLabel={rows.map(scoreSpoken).join(". ")}
     >
-      {/* Label and number on one line, the bar under them: fits a 360 px phone as well as a laptop. */}
-      <View style={styles.scoreTop}>
-        <Text style={[text.small, styles.flex]}>{row.label}</Text>
-        <Text style={[text.small, styles.scoreValue]}>{value === null ? "No data" : value}</Text>
-        <Text style={[text.caption, styles.scoreDelta]}>{row.delta === null ? "" : deltaText(row.delta)}</Text>
-      </View>
-      <View style={styles.track}>
-        {value !== null ? <View style={[styles.fill, { width: `${value}%`, backgroundColor: color }]} /> : null}
-      </View>
+      {width > 0 && width < SCORE_CHART_MIN_W ? (
+        // Phone: the labels would squeeze one chart's bars to a few pixels, so each score gets its
+        // label line and its own full-width bar under it (the layout the phone had before).
+        <View style={styles.scoreList}>
+          {rows.map((r, i) => (
+            <View key={r.key}>
+              <Text style={text.small}>{data[i].label}</Text>
+              <View style={styles.scoreBarCrop}>
+                <View style={styles.scoreBarShift}>
+                  <BarChart
+                    data={[{ label: "", score: data[i].score }]}
+                    xKey="label"
+                    series={[{ yKey: "score", label: "Score", color }]}
+                    orientation="horizontal"
+                    yDomain={[0, 100]}
+                    showXAxisLabels={false}
+                    showYAxisLabels={false}
+                    showHorizontalGridLines={false}
+                    legend={false}
+                    theme={chartTheme}
+                    width={width + SCORE_BAR.left + SCORE_BAR.right}
+                    height={SCORE_BAR.chart}
+                  />
+                </View>
+              </View>
+            </View>
+          ))}
+        </View>
+      ) : width > 0 ? (
+        <BarChart
+          data={data}
+          xKey="label"
+          series={[{ yKey: "score", label: "Score", color }]}
+          orientation="horizontal"
+          // The number and the change are in each bar's label, so the 0-100 axis numbers and the value
+          // labels past the bar end (clipped at 100 on a phone) are left out.
+          yDomain={[0, 100]}
+          showXAxisLabels={false}
+          showHorizontalGridLines={false}
+          legend={false}
+          theme={chartTheme}
+          width={width}
+          height={rows.length * SCORE_ROW_H + 30}
+        />
+      ) : null}
     </View>
   );
 }
@@ -283,6 +346,9 @@ const styles = StyleSheet.create({
   tags: { flexDirection: "row", flexWrap: "wrap", gap: space.xs },
   tag: { borderRadius: radius.pill, borderWidth: 1, paddingHorizontal: space.sm, paddingVertical: 2 },
   tagText: { fontSize: 13, lineHeight: 18, fontWeight: "600" },
+  scoreList: { gap: space.sm },
+  scoreBarCrop: { height: SCORE_BAR.plot, overflow: "hidden" },
+  scoreBarShift: { marginTop: -SCORE_BAR.top, marginLeft: -SCORE_BAR.left },
   section: { gap: space.xs },
   toggle: {
     marginTop: "auto",
@@ -301,11 +367,4 @@ const styles = StyleSheet.create({
   chevron: { transform: [{ rotate: "90deg" }] },
   chevronOpen: { transform: [{ rotate: "-90deg" }] },
   details: { gap: space.md, paddingTop: space.md },
-  scores: { gap: space.sm },
-  scoreRow: { gap: 2 },
-  scoreTop: { flexDirection: "row", alignItems: "baseline", gap: space.sm },
-  track: { height: 8, borderRadius: radius.pill, backgroundColor: colors.pressed, overflow: "hidden" },
-  fill: { height: 8, borderRadius: radius.pill },
-  scoreValue: { fontWeight: "600" },
-  scoreDelta: { minWidth: 36, textAlign: "right" },
 });

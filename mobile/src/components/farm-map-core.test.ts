@@ -32,6 +32,7 @@ const ready = (levels: FitLevel[], period = "2001-2025"): MapLotView => ({
   analysis: { crop_fits: fits(...levels) } as unknown as LotAnalysis,
   period,
   months: { planting: { seasons: [], gaps: [] }, crops: [], assumed: [] },
+  data: ILIGAN_LOT_FIXTURE,
 });
 
 const ring: Lot["geometry"] = {

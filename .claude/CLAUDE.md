@@ -3,7 +3,7 @@
 NASA Space Apps Challenge 2026 entry for **"Field Shift: Adapting Farms with NASA Data"**. Team Jeoleecation, Local Event Iligan City, Philippines.
 An offline-first mobile app (Expo React Native: Android app for farmers + web build for judges) that helps smallholder farmers compare crop-rotation strategies (current + ≥2 alternatives) and planting months using NASA Earth observations, crop characteristics, and farmer priorities.
 
-**User flow (team-defined, accepted, see `docs/11-user-flow.md`):** no login → sketch lots on a map with a finger, auto-converted to clean plots with draggable points (Lot 1..N) → crops per lot (many) → dashboard with results + explained data (ⓘ on every chart) → optional planting months → "your months vs better months" side by side. **Harvest destinations + transport (travel time per lot) are NOT in onboarding**; the farmer adds them anytime from the dashboard or Edit farm.
+**User flow (team-defined, accepted, see `docs/11-user-flow.md`):** no login → sketch lots on a map with a finger, auto-converted to clean plots with draggable points (Lot 1..N) → one crop per lot (top 3 or search; D13 changed 2026-11-14) → dashboard with results + explained data (ⓘ on every chart) → optional planting months → "your months vs better months" side by side. **Harvest destinations + transport (travel time per lot) are NOT in onboarding**; the farmer adds them anytime from the dashboard or Edit farm.
 
 **Hard deadline: Sun Nov 15, 2026, 11:59 PM PHT (UTC+8). Feature freeze Sun 12:00 PHT. Internal submit target Sun 21:00 PHT.**
 
