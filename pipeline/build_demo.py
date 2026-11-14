@@ -25,7 +25,11 @@ from fetch_power import cache_path, daily_series, fetch_daily, solar_unit
 HERE = Path(__file__).parent
 OUT_DIR = HERE.parent / "mobile" / "assets" / "data" / "demo"
 START, END = 2001, 2025
+# NASA POWER docs (power.larc.nasa.gov/docs/methodology/data/sources_meteorology and sources_fluxes, read
+# 2026-11-14): meteorology is MERRA-2 on a 1/2 x 5/8 degree grid; solar radiation is CERES SYN1deg, 1 x 1 degree.
 NATIVE_RES = "0.5° × 0.625° grid cell"
+NATIVE_RES_SOLAR = "1° × 1° grid cell"
+NATIVE_RES_ET0 = f"{NATIVE_RES}; solar radiation {NATIVE_RES_SOLAR}"
 TREND_METHOD = "Sen's slope / Mann-Kendall"
 
 
@@ -104,8 +108,8 @@ def build(farm: dict, raw: dict, retrieved: str, srtm: Optional[dict] = None) ->
 
     period = f"{START}-{END}"
 
-    def prov(field: str, source: str, note: Optional[str] = None) -> dict:
-        out = {"field": field, "source": source, "native_res": NATIVE_RES, "period": period, "retrieved": retrieved}
+    def prov(field: str, source: str, note: Optional[str] = None, native_res: str = NATIVE_RES) -> dict:
+        out = {"field": field, "source": source, "native_res": native_res, "period": period, "retrieved": retrieved}
         if note:
             out["note"] = note
         return out
@@ -140,13 +144,14 @@ def build(farm: dict, raw: dict, retrieved: str, srtm: Optional[dict] = None) ->
             prov("monthly.precip_mm", "NASA POWER daily PRECTOTCORR",
                  "monthly sum of daily mm, percentiles across years (linear interpolation)"),
             prov("monthly.et0_mm", "FAO-56 Penman-Monteith from NASA POWER daily T2M_MAX, T2M_MIN, RH2M, WS2M, ALLSKY_SFC_SW_DWN",
-                 "monthly means, Eq. 6" + ("" if elev is not None else "; sea-level pressure assumed until the SRTM elevation is available")),
+                 "monthly means, Eq. 6" + ("" if elev is not None else "; sea-level pressure assumed until the SRTM elevation is available"),
+                 NATIVE_RES_ET0),
             prov("monthly.tmax_c", "NASA POWER daily T2M_MAX", "mean of the daily values"),
             prov("monthly.tmin_c", "NASA POWER daily T2M_MIN", "mean of the daily values"),
             prov("monthly.rootzone_wetness", "NASA POWER daily GWETROOT", "0 = dry, 1 = saturated"),
             prov("monthly.rh2m_pct", "NASA POWER daily RH2M"),
             prov("monthly.ws2m_ms", "NASA POWER daily WS2M"),
-            prov("monthly.solar_mj_m2_day", "NASA POWER daily ALLSKY_SFC_SW_DWN", "converted to MJ m-2 day-1"),
+            prov("monthly.solar_mj_m2_day", "NASA POWER daily ALLSKY_SFC_SW_DWN", "converted to MJ m-2 day-1", NATIVE_RES_SOLAR),
             prov("monthly.heat_days_gt35", "NASA POWER daily T2M_MAX", "mean days per month above 35 °C"),
             prov("monthly.heavy_rain_days_gt50mm", "NASA POWER daily PRECTOTCORR", "mean days per month above 50 mm"),
             *([prov("elevation_m", fetch_srtm.CITATION, "height at the point") | {"native_res": "1 arc-second (~30 m)", "period": fetch_srtm.ACQUIRED}]

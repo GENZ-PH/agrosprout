@@ -9,6 +9,8 @@
 // This is a first draft of the wording. Data and Engine leads check the facts; the Story
 // lead edits the voice.
 
+import { COMPONENT_LABELS } from "../engine/explain";
+
 export type ExplainerId =
   | "lot-snapshot"
   | "soil-moisture"
@@ -43,10 +45,10 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     title: "Lot snapshot",
     what: "The average rain and the water that crops and the air would use up, month by month, for your lot. Bars show rain next to the crop water need. Dry and wet months are marked.",
     source:
-      "NASA POWER, which combines satellite measurements with the MERRA-2 weather model. Years used: {period}. Evaporation (ET₀) is worked out on your phone from NASA temperature, humidity, wind and sunshine with the FAO-56 Penman-Monteith method (Allen and others, 1998).",
+      "NASA POWER. Rain, temperature, humidity and wind come from NASA's MERRA-2 weather model, and sunshine from NASA's CERES satellite data. Years used: {period}. Evaporation (ET₀) is worked out on your phone from those NASA values with the FAO-56 Penman-Monteith method (Allen and others, 1998).",
     read: "Where the rain bar is shorter than the water-need bar, crops would need extra water that month. A dry year and a wet year are shown too: they are the 20th and the 80th percentile of the years used, so most years fall between them.",
     limits: [
-      "The numbers describe a NASA grid cell of 0.5° × 0.625°, roughly 50 km across, not your exact field.",
+      "The numbers describe a NASA grid cell, roughly 50 km across, not your exact field. The weather model's cell is 0.5° × 0.625°, and the sunshine data is coarser still (1° × 1°).",
       "Nearby lots in the same grid cell share the same climate numbers.",
       "Values are monthly, so a short dry spell inside a month is smoothed out.",
       "If your field's elevation is not known, evaporation is calculated at sea level.",
@@ -55,8 +57,8 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   "soil-moisture": {
     id: "soil-moisture",
     title: "Soil moisture",
-    what: "How wet the soil is around the roots, month by month, from 0 (dry) to 1 (saturated). Months that look dry for crops are marked.",
-    source: "NASA POWER root-zone soil wetness (GWETROOT), a model estimate from the same satellite and weather-model data as the rain. Years used: {period}.",
+    what: "How wet the soil is around the roots, month by month, from 0 (dry) to 1 (saturated). Months of dry stress for crops are marked.",
+    source: "NASA POWER root-zone soil wetness (GWETROOT), a model estimate. Years used: {period}.",
     read: "A low number means the root zone is usually dry in that month; a very high number means it is usually soaked, which some crops do not tolerate.",
     limits: [
       "It is a model estimate for a large grid cell, not a measurement in your field.",
@@ -66,14 +68,14 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   "your-crops": {
     id: "your-crops",
     title: "Your crops here",
-    what: "For each crop you chose, whether this lot suits it: Good fit, Watch out or Poor fit, with the one or two main reasons.",
+    what: "For each crop you chose, whether this lot suits it: Good fit, Watch out or Poor fit, with the one or two main reasons (water, heat, waterlogging and, once you add places, the distance to market).",
     source:
       "Crop water use from FAO-56 (Allen and others, 1998), temperature ranges from the FAO Ecocrop database, and rain and temperature from NASA POWER. Each crop value is cited in the crop library (crops.json).",
     read: "The fit is mainly about water: how much of the crop's water need the rain would not cover in a typical year, and in a dry year. Heat, cold and waterlogging can lower it too. When you have not given your months, a typical local planting calendar is used and labelled assumed.",
     limits: [
       "Crop values are general, not specific to a variety.",
       "The cut-offs between Good fit, Watch out and Poor fit are team assumptions that still need a local check.",
-      "Water from irrigation is only counted if you told us about it.",
+      "Irrigation counts only as far as you told us: with \"some\" irrigation we assume it covers half of the rain shortage (an assumption), with full irrigation all of it, and if the water source is unknown we assume rain only.",
     ],
   },
   "harvest-out": {
@@ -95,7 +97,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     what: "Several ways to use your lot over the year: your own crops, and options that add or swap crops. Each option says why it was suggested, what evidence it rests on, what it improves, what is not known and what to check locally.",
     source:
       "The scores combine the water balance (FAO-56 crop water use and effective rain, Brouwer and Heibloem, 1986), the crop's temperature range, and crop traits from the crop library. Your options are compared with your own crops.",
-    read: "Water fit, weather safety, soil building, erosion protection, pest break, income, market access and easy labor each go from 0 to 100. The badge shows how sure we are: it is lower when the order of the options changes between a dry and a wet year, or when you answered \"I don't know\" to several questions.",
+    read: `Each option gets a score from 0 to 100 on: ${Object.values(COMPONENT_LABELS).join("; ")}. The badge (High, Medium or Low) shows how sure we are: it drops when the order of the options changes between a dry and a wet year, and to Low when two or more of your answers are "I don't know".`,
     limits: [
       "It is a comparison tool, not a promise of yield or income.",
       "Prices and labor are rough, because no local price data is used.",
@@ -170,7 +172,7 @@ export const GLOSSARY: readonly GlossaryTerm[] = [
   },
   {
     term: "Effective rain",
-    meaning: "The part of the rain that stays in the soil where roots can use it. The rest runs off or drains away.",
+    meaning: "The part of the rain that stays in the soil where roots can use it. The rest runs off, evaporates or drains below the roots.",
     source: "Brouwer and Heibloem, 1986, FAO Irrigation Water Management Training Manual No. 3",
   },
   {
@@ -188,7 +190,7 @@ export const GLOSSARY: readonly GlossaryTerm[] = [
   },
   {
     term: "Grid cell",
-    meaning: "The patch of the Earth that one NASA number describes, here 0.5° × 0.625°, roughly 50 km across. Lots inside the same cell get the same climate numbers.",
+    meaning: "The patch of the Earth that one NASA number describes: 0.5° × 0.625° for rain, temperature, humidity, wind and soil wetness, and 1° × 1° for sunshine. Lots inside the same cell get the same climate numbers.",
     source: "NASA POWER",
   },
   {
@@ -221,7 +223,7 @@ export const GLOSSARY: readonly GlossaryTerm[] = [
   },
   {
     term: "Confidence",
-    meaning: "How sure we are about an option: High, Medium or Low. It is lower when the ranking changes between a dry and a wet year, or when several of your answers are \"I don't know\".",
+    meaning: "How sure we are about an option: High, Medium or Low. It drops when the ranking changes between a dry and a wet year, and to Low when two or more of your answers are \"I don't know\".",
   },
   {
     term: "SI",
@@ -245,7 +247,7 @@ export const DATA_SOURCES: readonly DataSource[] = [
     name: "NASA POWER (monthly point data)",
     used_for: "Rainfall, temperature, humidity, wind, sunshine and root-zone soil wetness for each lot.",
     period: "{period}",
-    resolution: "0.5° × 0.625° grid cell, monthly values",
+    resolution: "Monthly values. Rain, temperature, humidity, wind and soil wetness (MERRA-2): 0.5° × 0.625° grid. Sunshine (CERES SYN1deg): 1° × 1° grid.",
     url: "https://power.larc.nasa.gov/",
   },
   {

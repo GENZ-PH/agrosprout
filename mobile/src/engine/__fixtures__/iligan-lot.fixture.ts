@@ -174,7 +174,7 @@ export const ILIGAN_LOT_FIXTURE: LotData = {
     {
       "field": "monthly.et0_mm",
       "source": "FAO-56 Penman-Monteith from NASA POWER T2M, T2M_RANGE, RH2M, WS2M, ALLSKY_SFC_SW_DWN",
-      "native_res": "0.5° × 0.625° grid cell",
+      "native_res": "0.5° × 0.625° grid cell; solar radiation 1° × 1° grid cell",
       "period": "2001-2025",
       "retrieved": "2026-11-14",
       "note": "monthly means, Eq. 6; sea-level pressure assumed until the SRTM elevation is available"
@@ -220,7 +220,7 @@ export const ILIGAN_LOT_FIXTURE: LotData = {
     {
       "field": "monthly.solar_mj_m2_day",
       "source": "NASA POWER ALLSKY_SFC_SW_DWN",
-      "native_res": "0.5° × 0.625° grid cell",
+      "native_res": "1° × 1° grid cell",
       "period": "2001-2025",
       "retrieved": "2026-11-14",
       "note": "converted to MJ m-2 day-1"

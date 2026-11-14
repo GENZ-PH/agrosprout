@@ -112,6 +112,11 @@ class Build(unittest.TestCase):
         self.assertTrue({"monthly.precip_mm", "monthly.et0_mm", "monthly.heat_days_gt35"} <= fields)
         for p in out["provenance"]:
             self.assertTrue(p["source"] and p["period"] and p["native_res"] and p["retrieved"])
+        res = {p["field"]: p["native_res"] for p in out["provenance"]}
+        # NASA POWER docs: weather model 1/2 x 5/8 degree, solar radiation (CERES SYN1deg) 1 x 1 degree.
+        self.assertEqual(res["monthly.solar_mj_m2_day"], "1° × 1° grid cell")
+        self.assertEqual(res["monthly.precip_mm"], "0.5° × 0.625° grid cell")
+        self.assertIn("solar radiation 1° × 1°", res["monthly.et0_mm"])
 
     def test_known_elevation_drops_the_sea_level_note(self):
         out = build_demo.build({**self.farm, "elevation_m": 6}, synthetic_raw(), "2026-11-14")

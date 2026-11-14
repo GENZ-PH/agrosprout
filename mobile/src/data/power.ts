@@ -45,8 +45,15 @@ export const POWER_PARAMS = [
   'WS2M',
   'ALLSKY_SFC_SW_DWN',
 ] as const;
-/** Native resolution of the underlying (MERRA-2 based) grid, for provenance text. */
+/**
+ * Native resolutions, for provenance text (NASA POWER docs, read 2026-11-14:
+ * power.larc.nasa.gov/docs/methodology/data/sources_meteorology and sources_fluxes).
+ * Meteorology (rain, temperature, humidity, wind, soil wetness) is MERRA-2 on a 1/2 x 5/8 degree grid;
+ * solar radiation is CERES SYN1deg on a 1 x 1 degree grid.
+ */
 const NATIVE_RES = '0.5° × 0.625° grid cell';
+const NATIVE_RES_SOLAR = '1° × 1° grid cell';
+const NATIVE_RES_ET0 = `${NATIVE_RES}; solar radiation ${NATIVE_RES_SOLAR}`;
 
 // ---------------------------------------------------------------------------
 // Types: the shared contract lives in `../types` (issue #4, frozen)
@@ -225,10 +232,10 @@ export function parsePowerMonthly(json: unknown, retrieved: string, lotId = ''):
 
   const years = [...new Set(precipRows.map((x) => x.year))].sort((a, b) => a - b);
   const period = years.length ? `${years[0]}-${years[years.length - 1]}` : `${POWER_START}-${POWER_END}`;
-  const src = (field: string, source: string, note?: string): Provenance => ({
+  const src = (field: string, source: string, note?: string, nativeRes: string = NATIVE_RES): Provenance => ({
     field,
     source,
-    native_res: NATIVE_RES,
+    native_res: nativeRes,
     period,
     retrieved,
     ...(note ? { note } : {}),
@@ -264,13 +271,14 @@ export function parsePowerMonthly(json: unknown, retrieved: string, lotId = ''):
         'monthly.et0_mm',
         'FAO-56 Penman-Monteith from NASA POWER T2M, T2M_RANGE, RH2M, WS2M, ALLSKY_SFC_SW_DWN',
         'monthly means, Eq. 6; sea-level pressure assumed until the SRTM elevation is available',
+        NATIVE_RES_ET0,
       ),
       src('monthly.tmax_c', 'NASA POWER T2M + T2M_RANGE/2', 'approximation of the mean daily maximum'),
       src('monthly.tmin_c', 'NASA POWER T2M - T2M_RANGE/2', 'approximation of the mean daily minimum'),
       src('monthly.rootzone_wetness', 'NASA POWER GWETROOT', '0 = dry, 1 = saturated'),
       src('monthly.rh2m_pct', 'NASA POWER RH2M'),
       src('monthly.ws2m_ms', 'NASA POWER WS2M'),
-      src('monthly.solar_mj_m2_day', 'NASA POWER ALLSKY_SFC_SW_DWN', 'converted to MJ m-2 day-1'),
+      src('monthly.solar_mj_m2_day', 'NASA POWER ALLSKY_SFC_SW_DWN', 'converted to MJ m-2 day-1', NATIVE_RES_SOLAR),
     ],
     caveats,
   };
