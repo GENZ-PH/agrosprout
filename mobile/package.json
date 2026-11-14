@@ -30,7 +30,8 @@
     "@types/react": "~19.3.0",
     "eslint": "^9.39.5",
     "eslint-config-expo": "~58.0.4",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "workbox-cli": "^7.4.1"
   },
   "scripts": {
     "start": "expo start",
@@ -38,8 +39,9 @@
     "web": "expo start --web",
     "typecheck": "npm --prefix ../api run -s build:types && tsc --noEmit",
     "lint": "expo lint",
-    "check": "npm run typecheck && npm run lint",
-    "build:web": "expo export --platform web"
+    "test": "node --import ./scripts/node-test-resolve.mjs --test \"src/**/*.test.ts\"",
+    "check": "npm run typecheck && npm run lint && npm test",
+    "build:web": "expo export --platform web && workbox generateSW workbox-config.js"
   },
   "private": true
 }
