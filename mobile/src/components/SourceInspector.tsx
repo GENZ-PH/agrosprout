@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
 
 /** Weather patterns the app checks, where the farmer sees each one, and the NASA variables behind it. */
 const CHECKS: readonly { what: string; where: string; vars: string }[] = [
-  { what: "Rain and dry months", where: "Fits your rain, dry-stress months, the year calendar", vars: "NASA POWER PRECTOTCORR" },
+  { what: "Rain and dry months", where: "Fits your rain, dry months, the year calendar", vars: "NASA POWER PRECTOTCORR" },
   {
     what: "Crop water need (evaporation)",
     where: "FAO-56 Penman-Monteith, month by month for each crop",
