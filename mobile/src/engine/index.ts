@@ -11,9 +11,11 @@ export type { CropFit, FitLevel, FitReason, FitReasonCode, SeasonFit } from "./c
 /** A/B/C/D rotation options with component scores (07 §3-4, #26). */
 export { rotations, tooSimilar } from "./rotations";
 export { plantingWindow } from "./plantingWindow";
+export { applyScenario } from "./scenario";
+export type { Scenario as ClimateScenario, ScenarioResult } from "./scenario";
 export { harvestMonthMinutes, tripHours, tripsPerHarvest, wetRoad } from "./harvestTrips";
 export type { HarvestTrips, TripsGap, WetRoad } from "./harvestTrips";
-export { explain } from "./explain";
+export { explain, COMPONENT_LABELS } from "./explain";
 export type { Confidence, ConfidenceLevel, ConfidenceReason, ExplainInput, ExplainLine, Explanation } from "./explain";
 export type {
   PlantingWindowInput,
