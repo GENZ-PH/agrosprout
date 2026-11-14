@@ -165,6 +165,10 @@ A score with missing data is `null`, never guessed. A component that's `null` fo
 
 `SHI_year = clamp(SHI_{year−1} + α·S_norm − β·(1 − E_norm), 0, 100)`, starting from 50. **Label it a "relative indicator from this model", not a measured soil property, and never show it as a % improvement in nitrogen or carbon** (see gap F1).
 
+**v0 as implemented (`mobile/src/engine/soilHealth.ts`, #43).** `S_norm = S/100` and `E_norm = E/100` use the option's own component scores, and the option's 12-month rotation repeats every year. α = β = 10 index points per year (`SHI_GAIN_PER_YEAR`, `SHI_LOSS_PER_YEAR` in `params.ts`, **assumption**). That's a scale choice, so 3 years move the index at most 30 points from 50 and the 0–100 limits never flatten a line in the 3-year view. α = β because nothing says which matters more. An option with no S or no E gets no line, never a guess. Each option returns its yearly gain and loss so the ⓘ text can show what moves the line, plus `vs_yours`, its year-3 gap to option A. The result carries the chart label and three ⓘ lines with stable codes (`shi.label`, `shi.how`, `shi.compare`, `shi.not-a-test`).
+
+Read it **only relative to the other options**. With α = β, any option with S + E > 100 goes up. On the flat lowland test lot that includes rice–rice–bare (+0.8 a year), because the lot loses little soil. After 3 years the options there are 2–3 points apart. On a sloping lot, an option with more bare months can trend down faster than the farmer's own crops, so the view shows that trade-off.
+
 ## 5. Explanations (template-driven, deterministic)
 
 Generated for each strategy from the score deltas against **A (Current)** and from the site data:

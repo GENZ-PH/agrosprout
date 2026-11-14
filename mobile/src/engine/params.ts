@@ -286,6 +286,35 @@ export const WINDOW_MARGIN_POINTS = 10;
 export const WINDOW_GAIN_CAPTURE_SHARE = 0.8;
 
 // ---------------------------------------------------------------------------
+// Soil Health Index trajectory, 3-year view (docs/07-rotation-engine.md §4, #43)
+//   SHI_year = clamp(SHI_{year-1} + α x S/100 - β x (1 - E/100), 0, 100)
+// A RELATIVE INDICATOR FROM THIS MODEL for comparing options on one lot. It is
+// not a measured soil property, and the UI must never show it as a % change in
+// nitrogen or carbon (docs/04-gap-analysis.md, gap F1).
+// ---------------------------------------------------------------------------
+
+/**
+ * Every option starts at this index value (year 0), so the lines start level
+ * and only their slopes differ. Source: team spec, docs/07 §4 ("starting from 50").
+ */
+export const SHI_START = 50;
+
+/** Years shown in the trajectory. Source: team spec, docs/07 §4 ("3-year view"). */
+export const SHI_YEARS = 3;
+
+/**
+ * α: index points gained per year with a full soil-building score (S = 100).
+ * β: index points lost per year with no erosion protection (E = 0).
+ * assumption: validate locally. There is no source for how fast soil changes
+ * under a rotation. 10 is a scale choice: three years can move the index at
+ * most 30 points from SHI_START, so the 0-100 limits never flatten a line in
+ * the 3-year view. α = β because there is no source for their relative
+ * importance (the same reasoning as SOIL_WEIGHTS).
+ */
+export const SHI_GAIN_PER_YEAR = 10;
+export const SHI_LOSS_PER_YEAR = 10;
+
+// ---------------------------------------------------------------------------
 // Market access and travel time (docs/07-rotation-engine.md §3c, #27)
 // Every value in this section is a DEFAULT ASSUMPTION (CLAUDE.md rule 9):
 // the farmer's own travel time always wins, and the UI must never show these
