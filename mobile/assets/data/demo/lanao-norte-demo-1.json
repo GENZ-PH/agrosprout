@@ -4,8 +4,8 @@
  "kind": "demo",
  "lat": 8.23,
  "lon": 124.24,
- "elevation_m": null,
- "slope_pct": null,
+ "elevation_m": 6.0,
+ "slope_pct": 2,
  "period": "2001-2025",
  "monthly": {
   "precip_mm": {
@@ -63,7 +63,7 @@
    106.7,
    101.9,
    102.7,
-   93.4,
+   93.5,
    89.0
   ],
   "tmax_c": [
@@ -206,7 +206,7 @@
    "native_res": "0.5° × 0.625° grid cell",
    "period": "2001-2025",
    "retrieved": "2026-11-14",
-   "note": "monthly means, Eq. 6; sea-level pressure assumed until the SRTM elevation is available"
+   "note": "monthly means, Eq. 6"
   },
   {
    "field": "monthly.tmax_c",
@@ -271,6 +271,22 @@
    "note": "mean days per month above 50 mm"
   },
   {
+   "field": "elevation_m",
+   "source": "NASA JPL (2013), NASA Shuttle Radar Topography Mission Global 1 arc second v3, NASA LP DAAC, https://doi.org/10.5067/MEASURES/SRTM/SRTMGL1.003, served via Open Topo Data",
+   "native_res": "1 arc-second (~30 m)",
+   "period": "2000-02-11 to 2000-02-21",
+   "retrieved": "2026-11-14",
+   "note": "height at the point"
+  },
+  {
+   "field": "slope_pct",
+   "source": "NASA JPL (2013), NASA Shuttle Radar Topography Mission Global 1 arc second v3, NASA LP DAAC, https://doi.org/10.5067/MEASURES/SRTM/SRTMGL1.003, served via Open Topo Data",
+   "native_res": "1 arc-second (~30 m)",
+   "period": "2000-02-11 to 2000-02-21",
+   "retrieved": "2026-11-14",
+   "note": "Horn slope from a 3 x 3 grid with 30 m spacing, heights returned in whole metres, rounded to whole percent: a rough terrain class"
+  },
+  {
    "field": "trends",
    "source": "NASA POWER daily",
    "native_res": "0.5° × 0.625° grid cell",
@@ -282,6 +298,6 @@
  "caveats": [
   "Climate values describe a NASA POWER grid cell of roughly 50 km, not your exact field. Nearby lots in the same cell share the same climate numbers.",
   "NASA reports this cell's average elevation as about 742 m. The values describe that average height, so a field at a different elevation will differ, mainly in temperature.",
-  "Evapotranspiration: Elevation not supplied: sea level (0 m) assumed."
+  "This lot is at about 6 m but the NASA cell averages 742 m, so temperatures here may read cooler than at the field."
  ]
 }
