@@ -15,3 +15,9 @@ Free public services the app calls from the device. Light use only. None needs a
 - Only points rounded to about 100 m (3 decimals) are sent, one request per lot and destination, and only when the farmer adds or moves a destination.
 - Attribution shown wherever a road route is used: "Routing © OpenStreetMap contributors". The exact wording the OSM Foundation asks for is in https://osmfoundation.org/wiki/Licence/Attribution_Guidelines and was not checked.
 - OpenStreetMap data is under the ODbL: https://www.openstreetmap.org/copyright.
+
+## Pipeline-only data (not called by the app)
+
+- **NASA SRTM v3 elevation and slope for the demo farm**, through Open Topo Data (`https://api.opentopodata.org/v1/srtm30m`). Code: `pipeline/fetch_srtm.py`. The app never calls it: only the resulting numbers ship in `mobile/assets/data/demo/`.
+- Data: NASA says the dataset "is openly shared, without restriction" and asks for citation (read 2026-11-14 at https://www.earthdata.nasa.gov/data/catalog/lpcloud-srtmgl1-003): NASA JPL. (2013). NASA Shuttle Radar Topography Mission Global 1 arc second [Data set]. NASA Land Processes Distributed Active Archive Center. https://doi.org/10.5067/MEASURES/SRTM/SRTMGL1.003
+- Service: the public API is free, limited to 100 locations per request, 1 call per second and 1000 calls per day (https://www.opentopodata.org/). It publishes no terms of use for the public instance. We make one request per demo point, wait over a second between requests and cache the answer, so a re-run makes no call. Only the team's demo coordinates are sent, never a farmer's data (rule 8). Software: MIT (https://github.com/ajnisbet/opentopodata).

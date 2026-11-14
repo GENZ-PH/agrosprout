@@ -2,21 +2,34 @@
 
 Source: NASA SRTM v3 (1 arc-second, about 30 m), served via Open Topo Data (`srtm30m`),
 https://www.opentopodata.org/datasets/srtm/. The public API sends no CORS header, so this
-runs in `pipeline/` only (docs/03). It is rate-limited, so one request per point (9
-locations) and the answer is cached in pipeline/raw/ (gitignored). Standard library only.
+runs in `pipeline/` only (docs/03). Standard library only.
+
+Public API limits (https://www.opentopodata.org/, read 2026-11-14): at most 100 locations per
+request, 1 call per second and 1000 calls per day. No terms of use are published for the public
+instance. We make one request (9 locations) per point, wait at least a second between requests,
+and cache the answer in pipeline/raw/ (gitignored), so a re-run makes no call.
+`null` means either "outside the dataset" or "no data at that cell" (the API's default; its
+docs say the two cannot be told apart), and ocean inside a tile reads 0 m.
 
 Slope method (Horn 1981, the usual GIS slope): sample the point and its 8 neighbours on a
 3 x 3 grid with `spacing_m` between them (default 30 m, the SRTM cell size), then
     dz/dx = ((c + 2f + i) - (a + 2d + g)) / (8 x spacing)
     dz/dy = ((g + 2h + i) - (a + 2b + c)) / (8 x spacing)
     slope % = 100 x sqrt(dz/dx^2 + dz/dy^2)
-with the grid  a b c / d e f / g h i  (north row first). SRTM heights are whole metres, so a
-slope on one 30 m step is coarse: expect it to be good to a few percent, not to the decimal.
+with the grid  a b c / d e f / g h i  (north row first).
+
+How precise is the slope? The API returned whole metres at every point we asked for, with
+`interpolation` set to bilinear or to cubic alike, so a 1 m step over 30 m is already about 3%.
+Measured 2026-11-14 on two points, the slope over 30, 60 and 90 m spacing was 1.8, 2.6 and 2.3%
+(the demo-farm point) and 3.5, 2.8 and 1.9% (a hillside test point). So the result depends on
+the spacing by a few percent: it is reported in WHOLE percent, and is a rough terrain class, not a
+measurement. Nothing in the engine reads `slope_pct` yet (erosion uses the farmer's `land_type`).
 """
 from __future__ import annotations
 
 import json
 import math
+import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -25,7 +38,19 @@ from typing import Optional, Sequence
 URL = "https://api.opentopodata.org/v1/srtm30m"
 RAW_DIR = Path(__file__).parent / "raw"
 SPACING_M = 30.0
-CITATION = "NASA SRTM v3 (1 arc-second, ~30 m), served via Open Topo Data"
+# Recommended citation, verbatim from the NASA Earthdata catalogue page for SRTMGL1 v003
+# (https://www.earthdata.nasa.gov/data/catalog/lpcloud-srtmgl1-003, read 2026-11-14): "NASA JPL. (2013).
+# NASA Shuttle Radar Topography Mission Global 1 arc second [Data set]. NASA Land Processes Distributed
+# Active Archive Center. https://doi.org/10.5067/MEASURES/SRTM/SRTMGL1.003". The page says the dataset
+# "is openly shared, without restriction", with citation.
+CITATION = (
+    "NASA JPL (2013), NASA Shuttle Radar Topography Mission Global 1 arc second v3, NASA LP DAAC, "
+    "https://doi.org/10.5067/MEASURES/SRTM/SRTMGL1.003, served via Open Topo Data"
+)
+# Acquisition period on the same page: "2000-02-11 to 2000-02-21" (a single 11-day mission).
+ACQUIRED = "2000-02-11 to 2000-02-21"
+MIN_SECONDS_BETWEEN_CALLS = 1.1  # the public API allows 1 call per second
+_last_call = 0.0
 
 
 def meters_per_degree(lat_deg: float) -> tuple[float, float]:
@@ -67,6 +92,11 @@ def fetch_heights(lat: float, lon: float, spacing_m: float = SPACING_M) -> list[
         data = json.loads(path.read_text())
     else:
         locations = "|".join(f"{la},{lo}" for la, lo in grid_points(lat, lon, spacing_m))
+        global _last_call
+        wait = MIN_SECONDS_BETWEEN_CALLS - (time.monotonic() - _last_call)
+        if wait > 0:
+            time.sleep(wait)
+        _last_call = time.monotonic()
         req = urllib.request.Request(
             f"{URL}?{urllib.parse.urlencode({'locations': locations})}",
             headers={"User-Agent": "agrosprout-pipeline"},
@@ -86,7 +116,7 @@ def elevation_and_slope(lat: float, lon: float, spacing_m: float = SPACING_M) ->
     elev = z[4]
     caveats: list[str] = []
     if elev is None:
-        caveats.append("SRTM has no height at this point (outside any tile), so the elevation is unknown.")
+        caveats.append("SRTM gives no height at this point (outside the dataset, or no data there), so the elevation is unknown.")
     elif elev == 0:
         caveats.append(
             "SRTM reads 0 m here. That is also what the sea reads, so the point may be on the shoreline: check the coordinates."
@@ -96,6 +126,6 @@ def elevation_and_slope(lat: float, lon: float, spacing_m: float = SPACING_M) ->
         caveats.append("SRTM is missing around this point, so the slope is unknown.")
     return {
         "elevation_m": elev,
-        "slope_pct": None if slope is None else round(slope, 1),
+        "slope_pct": None if slope is None else round(slope),  # whole percent, see the module note
         "caveats": caveats,
     }

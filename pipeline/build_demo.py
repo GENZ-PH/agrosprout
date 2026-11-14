@@ -149,9 +149,9 @@ def build(farm: dict, raw: dict, retrieved: str, srtm: Optional[dict] = None) ->
             prov("monthly.solar_mj_m2_day", "NASA POWER daily ALLSKY_SFC_SW_DWN", "converted to MJ m-2 day-1"),
             prov("monthly.heat_days_gt35", "NASA POWER daily T2M_MAX", "mean days per month above 35 °C"),
             prov("monthly.heavy_rain_days_gt50mm", "NASA POWER daily PRECTOTCORR", "mean days per month above 50 mm"),
-            *([prov("elevation_m", fetch_srtm.CITATION, "height at the point") | {"native_res": "1 arc-second (~30 m)", "period": "static"}]
+            *([prov("elevation_m", fetch_srtm.CITATION, "height at the point") | {"native_res": "1 arc-second (~30 m)", "period": fetch_srtm.ACQUIRED}]
               if farm.get("elevation_m") is None and elev is not None else []),
-            *([prov("slope_pct", fetch_srtm.CITATION, "Horn slope from a 3 x 3 grid with 30 m spacing, whole-metre heights") | {"native_res": "1 arc-second (~30 m)", "period": "static"}]
+            *([prov("slope_pct", fetch_srtm.CITATION, "Horn slope from a 3 x 3 grid with 30 m spacing, heights returned in whole metres, rounded to whole percent: a rough terrain class") | {"native_res": "1 arc-second (~30 m)", "period": fetch_srtm.ACQUIRED}]
               if farm.get("slope_pct") is None and slope is not None else []),
             prov("trends", "NASA POWER daily", f"{TREND_METHOD}; per decade; dry-season deficit = ET0 minus rain in the months where the typical year is short of rain"),
         ],

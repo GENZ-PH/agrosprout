@@ -52,12 +52,16 @@ class Lookup(unittest.TestCase):
 
     def test_normal_point(self):
         r = self.with_heights([5, 5, 5, 5, 6, 6, 5, 6, 6])
-        self.assertEqual((r["elevation_m"], r["slope_pct"], r["caveats"]), (6, 1.8, []))
+        self.assertEqual((r["elevation_m"], r["slope_pct"], r["caveats"]), (6, 2, []))
 
     def test_zero_metres_is_flagged_as_possible_shoreline(self):
         r = self.with_heights([0.0] * 9)
         self.assertEqual(r["elevation_m"], 0)
         self.assertTrue(any("shoreline" in c for c in r["caveats"]))
+
+    def test_slope_is_whole_percent(self):
+        r = self.with_heights([5, 5, 5, 5, 6, 6, 5, 6, 8])
+        self.assertEqual(r["slope_pct"], round(r["slope_pct"]))
 
     def test_no_tile_gives_unknown_not_zero(self):
         r = self.with_heights([None] * 9)
@@ -76,11 +80,12 @@ class InDemoFarm(unittest.TestCase):
     farm = {"id": "t", "name": "Test", "lat": 8.23, "lon": 124.24, "elevation_m": None}
 
     def test_srtm_values_and_provenance_are_used(self):
-        srtm = {"elevation_m": 6.0, "slope_pct": 1.8, "caveats": []}
+        srtm = {"elevation_m": 6.0, "slope_pct": 2, "caveats": []}
         out = build_demo.build(self.farm, synthetic_raw(), "2026-11-14", srtm)
-        self.assertEqual((out["elevation_m"], out["slope_pct"]), (6.0, 1.8))
+        self.assertEqual((out["elevation_m"], out["slope_pct"]), (6.0, 2))
         prov = {p["field"]: p for p in out["provenance"]}
-        self.assertIn("NASA SRTM v3", prov["elevation_m"]["source"])
+        self.assertIn("10.5067/MEASURES/SRTM/SRTMGL1.003", prov["elevation_m"]["source"])
+        self.assertEqual(prov["elevation_m"]["period"], "2000-02-11 to 2000-02-21")
         self.assertIn("slope_pct", prov)
         self.assertFalse(any("sea level" in c for c in out["caveats"]))
         self.assertTrue(any("cooler than at the field" in c for c in out["caveats"]))
