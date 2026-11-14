@@ -36,7 +36,7 @@ flowchart LR
 - Returning user: goes straight to S3 Dashboard (data loaded from the phone).
 
 ### S1 — Plot your lot on the map
-- Satellite map. **"Find me"** (GPS, which also works offline) or search a place name.
+- Satellite map. **"Find me"** (GPS, which also works offline), or move the map with your fingers. No place-name search: it would send what the farmer types to a third-party geocoding service (#21).
 - **Draw the lot: three ways, one result (an editable plot):**
   1. **✏️ Sketch it (main way, team-defined):** tap **Draw**, then trace roughly around the lot with one finger. On release, the app **analyzes the sketch and converts it into a clean land plot**: it closes the loop, smooths the shaky line into a few corner points, and fixes crossed lines (details in 06, "Freehand sketch → plot").
   2. **📍 Tap the corners:** tap each corner, then tap the first point to close.
