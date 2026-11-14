@@ -83,7 +83,8 @@ Your crops: [Mungbean ✕] [Cassava · not scored ✕]
   list shows all library crops (so a farmer can browse without typing). Results: max 8 rows. Library crops first, labelled
   "Our crop list"; Ecocrop crops labelled "Not scored yet". **Whenever the typed text is not exactly the name of a shown
   result**, a last row **Add "<typed text>"** saves it as today's `other:<name>`, so local names Ecocrop lacks or matches
-  wrongly ("sili" → only carob; "kalabasa" → bottle gourd) can still be entered. *(Settled after the review.)*
+  wrongly ("ampalaya", "pechay" and "palay" are missing; "kalabasa" → bottle gourd) can still be entered. ("sili" is in
+  Ecocrop, as *Capsicum frutescens*.) *(Settled after the review.)*
 - **Your crops** row: every crop picked on the lot as a removable chip (✕), in pick order. The "Pick at least one crop" footer
   rule is unchanged.
 - ⓘ opens a new explainer `top5` (replaces `crop-suggestions`): what, source, how ranked, limits (see Ranking).
