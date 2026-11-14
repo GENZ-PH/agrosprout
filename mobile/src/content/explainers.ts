@@ -116,7 +116,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     title: "Your months vs better months",
     what: "For each crop and season, your planting months next to the best nearby months we found, with the same crop and season length.",
     source: "The same water balance and temperature checks as the recommendations, run for each of the 12 possible planting months, using NASA POWER data for {period}.",
-    read: "A better month is shown only when it clearly beats yours and does not clash with your other crops on the same lot. If nothing clearly beats it, the card says your timing is already good.",
+    read: "A better month is shown only when it clearly beats yours and does not clash with your other crops on the same lot. If a clearly better month would clash with another crop of yours, the card says so and names that crop: it is a trade-off to weigh with your technician, not a move to make. Only when nothing beats your month, even on a lot with nothing else on it, does the card say your timing is already good.",
     limits: [
       "It cannot see things we have no data for, such as when seed or labor are available.",
       "The confidence is lower if the best month changes between a dry and a typical year.",

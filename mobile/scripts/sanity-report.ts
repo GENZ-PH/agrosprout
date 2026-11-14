@@ -85,8 +85,12 @@ scan(seasons).forEach((w, i) => {
   row([
     `${MONTHS[w.yours.plant_month - 1]} (WSI P50 ${n(w.yours.wsi.p50, 2)})`,
     w.status,
-    w.better ? MONTHS[w.better.plant_month - 1] : "–",
-    n(w.delta, 1),
+    w.better
+      ? MONTHS[w.better.plant_month - 1]
+      : w.blocked
+        ? `${MONTHS[w.blocked.month.plant_month - 1]} (clashes with season ${w.blocked.clashes.map((c) => c.season_index + 1).join(", ")})`
+        : "–",
+    n(w.delta ?? w.blocked?.delta, 1),
     w.drivers.join(", ") || "–",
     alone.better ? `${alone.status}: ${MONTHS[alone.better.plant_month - 1]}, +${n(alone.delta, 1)}` : alone.status,
   ]);

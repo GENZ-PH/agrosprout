@@ -185,7 +185,7 @@ test("evidence names each data source with its period and the crops.json citatio
   const { ex } = run(known, crops("lowland-rice", "mungbean"));
   for (const e of ex) {
     const rain = e.evidence.find((l) => l.code === "evidence.data.rain");
-    assert.ok(rain && rain.text.includes("NASA POWER PRECTOTCORR") && rain.text.includes("2001-2024"), rain?.text ?? "no rain line");
+    assert.ok(rain && rain.text.includes("NASA POWER PRECTOTCORR") && rain.text.includes(ILIGAN_LOT_FIXTURE.period), rain?.text ?? "no rain line");
     assert.ok(e.evidence.some((l) => l.code.startsWith("evidence.crop.kc.") && l.text.includes("FAO-56")), e.option_key);
     assert.ok(!e.evidence.some((l) => l.code === "evidence.power"), "the general line is only a fallback");
   }
