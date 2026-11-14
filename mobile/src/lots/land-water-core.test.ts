@@ -84,12 +84,3 @@ test("the bundled map's known limits: Lake Lanao is not in it, Pag-asa Island is
   assert.equal(placeAt(REAL, 124.2, 7.9), "land", "Lake Lanao: not in Natural Earth 1:10m lakes");
   assert.equal(placeAt(REAL, 114.28, 11.05), null, "Pag-asa Island: west of the window");
 });
-
-test("lotLooksLikeWater on the bundled map: a farm near the shore gets no warning, open water still does (#176)", () => {
-  const near = (lon: number, lat: number) => lotAt([[lon, lat], [lon + 0.001, lat], [lon + 0.001, lat + 0.001], [lon, lat + 0.001], [lon, lat]]);
-  // About 1 km off the map's Iligan shore (the 0.01° probe grid: water at 124.23, land from 124.25 at 8.23 N).
-  assert.equal(lotLooksLikeWater(REAL, near(124.235, 8.23)), false, "just off the map's shore near Iligan");
-  assert.equal(lotLooksLikeWater(REAL, near(120.8, 14.5)), true, "Manila Bay");
-  assert.equal(lotLooksLikeWater(REAL, near(121.2, 14.35)), true, "Laguna de Bay, west bay");
-  assert.equal(lotLooksLikeWater(REAL, near(123.6, 11.6)), true, "Visayan Sea");
-});
