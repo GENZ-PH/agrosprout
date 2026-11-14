@@ -49,6 +49,13 @@ Free public services, light use only. None needs an account or a key.
 - Monthly point API, called once per lot with the centroid rounded to 0.1°.
 - Source and terms: https://power.larc.nasa.gov/docs/services/api/
 
+### Wikipedia and Wikimedia Commons (pictures of search-only crops)
+
+- For a crop saved from the search that has no bundled picture, the app asks the Wikipedia page-summary API (`https://en.wikipedia.org/api/rest_v1/page/summary/<scientific name>`) for the page's lead picture, then the Commons API (`https://commons.wikimedia.org/w/api.php`, `prop=imageinfo`) for its author and license. Code: `mobile/src/data/crop-photo-core.ts` and `crop-photo.ts`. Used only on S2, under the chosen crop, with "Photo: author, license (Wikimedia Commons)" linking to the file page.
+- Only the crop's scientific name is sent. Nothing about the farmer or lots, no location. Wikimedia sees the phone's IP address like any website would. The result is saved on the phone (a "none found" answer for 7 days), requests go one at a time with a 1 second pause, and offline or on any error the app shows the placeholder.
+- Only pictures on Commons under CC0, public domain, CC BY or CC BY-SA with an author are shown. The lead picture is chosen by Wikipedia editors, so it can be an illustration instead of a photo (cassava shows a 19th-century plate). A name that fits more than one Ecocrop species gets no lookup.
+- Policies: https://foundation.wikimedia.org/wiki/Policy:User-Agent_policy (read 2026-11-15; the app sends a descriptive User-Agent on Android, and none on web because browsers cannot set it). Wikimedia limits fast callers with HTTP 429. Not yet checked by a human: the Wikimedia API terms for an app with many users.
+
 ### Road routing (travel time to harvest destinations, optional)
 
 - **FOSSGIS routing server**, `https://routing.openstreetmap.de` (car, bike and foot profiles). Code: `mobile/src/data/routing.ts`.

@@ -67,7 +67,7 @@ export default function DataScreen() {
         Crop pictures
       </Text>
       <Text style={text.small}>
-        Photos from Wikimedia Commons, cropped square and made smaller. Each belongs to its photographer under the license shown.
+        Photos from Wikimedia Commons, cropped square and made smaller. Each belongs to its photographer under the license shown. A crop you find by search has no saved photo: when you are online the app asks Wikipedia and Wikimedia Commons for one (only the crop's scientific name is sent) and shows the photographer and license under it.
       </Text>
       <View style={styles.list}>
         {CROP_PICTURE_CREDITS.map((c) => (

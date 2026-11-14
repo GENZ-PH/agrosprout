@@ -4,7 +4,8 @@ import { useMemo, useRef, useSyncExternalStore } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "../src/components/Button";
-import { CropImage } from "../src/components/CropImage";
+import { CropImage, CropPhotoCredit } from "../src/components/CropImage";
+import { sciNameFor } from "../src/data/crop-photo-core";
 import { CropSearch } from "../src/components/CropSearch";
 import { Header } from "../src/components/Header";
 import { Icon } from "../src/components/Icon";
@@ -250,22 +251,27 @@ function YourCrops({
           const crop = other ? undefined : cropById(c.crop_id);
           const name = other ? otherCropName(c.crop_id) : crop ? cropShortName(crop) : c.crop_id;
           const sub = other ? "Not scored yet" : (crop?.local_name ?? null);
+          // A crop from the search has no bundled picture: its picture comes online (Wikipedia), with its credit below.
+          const sci = other ? sciNameFor(name, ECOCROP_NAMES) : null;
           return (
-            <View key={c.crop_id} style={styles.cropCard}>
-              <Icon name="check" size={24} color={colors.green} />
-              <CropImage cropId={c.crop_id} size={40} />
-              <View style={[styles.flex, styles.cropText]}>
-                <Text style={text.title}>{name}</Text>
-                {sub ? <Text style={[text.body, { color: colors.muted }]}>{sub}</Text> : null}
+            <View key={c.crop_id}>
+              <View style={styles.cropCard}>
+                <Icon name="check" size={24} color={colors.green} />
+                <CropImage cropId={c.crop_id} size={40} sci={sci} />
+                <View style={[styles.flex, styles.cropText]}>
+                  <Text style={text.title}>{name}</Text>
+                  {sub ? <Text style={[text.body, { color: colors.muted }]}>{sub}</Text> : null}
+                </View>
+                <Pressable
+                  onPress={() => onRemove(c.crop_id)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Remove ${name} from ${lotName}${other ? ". It is not scored" : ""}`}
+                  style={({ pressed }) => [styles.remove, pressed && styles.pressed]}
+                >
+                  <Icon name="close" size={22} color={colors.ink} />
+                </Pressable>
               </View>
-              <Pressable
-                onPress={() => onRemove(c.crop_id)}
-                accessibilityRole="button"
-                accessibilityLabel={`Remove ${name} from ${lotName}${other ? ". It is not scored" : ""}`}
-                style={({ pressed }) => [styles.remove, pressed && styles.pressed]}
-              >
-                <Icon name="close" size={22} color={colors.ink} />
-              </Pressable>
+              <CropPhotoCredit sci={sci} />
             </View>
           );
         })
