@@ -90,7 +90,7 @@ export interface Et0DayResult {
 }
 
 /** One value per month, January first. `null` = missing (POWER `-999`). */
-export type MonthlySeries = ReadonlyArray<number | null>;
+export type MonthlySeries = readonly (number | null)[];
 
 export interface MonthlyEt0Inputs {
   tmaxC: MonthlySeries;
@@ -106,9 +106,9 @@ export interface MonthlyEt0Inputs {
 
 export interface MonthlyEt0Result {
   /** ET0 per month in mm/day, `null` where an input was missing. */
-  et0MmDay: Array<number | null>;
+  et0MmDay: (number | null)[];
   /** ET0 per month in mm/month (mm/day times days in the month), `null` where missing. */
-  et0MmMonth: Array<number | null>;
+  et0MmMonth: (number | null)[];
   /** True when elevation was not supplied and sea level (0 m) was used. */
   elevationAssumed: boolean;
   /** Human-readable notes, e.g. months where G fell back to 0. */
@@ -294,13 +294,13 @@ export function monthlyEt0(inp: MonthlyEt0Inputs): MonthlyEt0Result {
     warnings.push('Elevation not supplied: sea level (0 m) assumed.');
   }
 
-  const tmean: Array<number | null> = inp.tmaxC.map((tx, m) => {
+  const tmean: (number | null)[] = inp.tmaxC.map((tx, m) => {
     const tn = inp.tminC[m];
     return tx === null || tn === null ? null : (tx + tn) / 2;
   });
 
-  const et0MmDay: Array<number | null> = [];
-  const et0MmMonth: Array<number | null> = [];
+  const et0MmDay: (number | null)[] = [];
+  const et0MmMonth: (number | null)[] = [];
 
   for (let m = 0; m < 12; m++) {
     const tx = inp.tmaxC[m];
