@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { Redirect, router } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 
 import { Button } from "../src/components/Button";
@@ -6,19 +6,22 @@ import { Disclaimer } from "../src/components/Disclaimer";
 import { Icon } from "../src/components/Icon";
 import { LanguageSwitch } from "../src/components/LanguageSwitch";
 import { Notice } from "../src/components/Notice";
-import { Screen, useWide } from "../src/components/Screen";
+import { Screen } from "../src/components/Screen";
 import { colors, radius, space, text } from "../src/components/theme";
+import { useLayout } from "../src/components/useLayout";
 import { useT } from "../src/i18n/lang-store";
 import { isDemoFarm, loadDemoFarm } from "../src/state/demo-farm";
 import { useFarmStore } from "../src/state/farm-store";
 
 // S0 Welcome (#21, docs/11-user-flow.md). No login, no account (D12).
+// A returning farmer (their own lot with crops) goes straight to the dashboard, as on main.
+// The sample farm does not count, so "Start" stays reachable after a look at it.
 // One column on a phone with the buttons pinned at the bottom; on a laptop the words sit on
 // the left and the actions on the right.
 export default function WelcomeScreen() {
   const lots = useFarmStore((s) => s.lots);
   const { t } = useT();
-  const wide = useWide();
+  const { wide } = useLayout();
   // The demo never replaces a farm the farmer has drawn: it is offered only on an empty
   // farm, or when the saved farm already is the demo.
   const demoAllowed = lots.length === 0 || isDemoFarm(lots);
@@ -28,6 +31,7 @@ export default function WelcomeScreen() {
     if (isDemoFarm(lots)) void useFarmStore.getState().clearAll();
     router.push("/lots");
   };
+  if (hasOwnFarm && lots.some((l) => l.crops.length > 0)) return <Redirect href="/dashboard" />;
   const openDemo = () => {
     loadDemoFarm();
     router.push("/dashboard");
@@ -62,7 +66,7 @@ export default function WelcomeScreen() {
 
   if (wide) {
     return (
-      <Screen wide footer={<Disclaimer />}>
+      <Screen width="wide" footer={<Disclaimer />}>
         <View style={styles.topRow}>
           {brand}
           <LanguageSwitch />

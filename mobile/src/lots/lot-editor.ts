@@ -43,6 +43,13 @@ export interface LotEditorState {
   /** Starts the list with a "Lot 1" placeholder when the farm has no lots yet. */
   ensureStarted: () => void;
   addPlaceholder: () => PlaceholderLot;
+  /**
+   * "+ Add lot" (D32): the lot to draw on S1. Reuses a lot not drawn yet (the farmer left
+   * S1 without drawing it), else starts the next "Lot N". Not an Undo step.
+   */
+  startNewLot: () => PlaceholderLot;
+  /** Forgets every Undo step, so Undo covers only what is changed on this visit to S1. */
+  clearHistory: () => void;
   rename: (id: string, name: string) => void;
   remove: (id: string) => void;
   /**
@@ -137,6 +144,18 @@ export function createLotEditor(api: FarmLotsApi): StoreApi<LotEditorState> {
         return p;
       },
 
+      startNewLot: () => {
+        const existing = get().placeholders[0];
+        if (existing) return existing;
+        const p = newPlaceholder();
+        set((s) => ({ placeholders: [...s.placeholders, p] }));
+        return p;
+      },
+
+      clearHistory: () => {
+        past.length = 0;
+      },
+
       rename: (id, name) => {
         const trimmed = name.trim();
         if (!trimmed) return;
@@ -196,6 +215,8 @@ export function createLotEditor(api: FarmLotsApi): StoreApi<LotEditorState> {
         }
         const lot = findLot(id);
         if (!lot) return id;
+        // The map also reports a lot that was only tapped; an unchanged outline is not an Undo step.
+        if (JSON.stringify(lot.geometry) === JSON.stringify(shape.geometry) && lot.area_ha === shape.area_ha) return id;
         const before: LotShape = { geometry: lot.geometry, area_ha: lot.area_ha, centroid: lot.centroid };
         api.updateLot(id, shape);
         remember(() => api.updateLot(resolve(id), before));

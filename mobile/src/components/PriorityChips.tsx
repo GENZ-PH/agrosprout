@@ -4,7 +4,7 @@ import type { PriorityKey } from "../engine/scores";
 import type { Priorities } from "../types";
 import { Icon } from "./Icon";
 import { useT } from "../i18n/lang-store";
-import { chosenPriorities, listText, PRIORITY_KEYS, togglePriority } from "./plan-text";
+import { chosenPriorities, PRIORITY_KEYS, togglePriority } from "./plan-text";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
 type Props = {
@@ -41,11 +41,6 @@ export function PriorityChips({ priorities, onChange, unavailable }: Props) {
           );
         })}
       </View>
-      {unavailable.length > 0 ? (
-        <Text style={text.caption}>
-          {t("chips.unavailable", { goals: listText(unavailable.map((k) => t(`prio.${k}`)), t) })}
-        </Text>
-      ) : null}
     </View>
   );
 }

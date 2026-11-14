@@ -6,7 +6,7 @@ import type { OptionKey, RotationOption } from "../engine/rotations";
 import { useT } from "../i18n/lang-store";
 import { cropLabel } from "../i18n/strings";
 import type { Crop, LotMonthly } from "../types";
-import { axisTicks, bandPieces, bareText, dayX, familiesIn, familyStyle, monthX, PLAN_COLOR, planName } from "./field-year-core";
+import { axisTicks, bandPieces, bareText, dayX, familiesIn, familyStyle, inFieldMonths, monthX, occupiedMonths, PLAN_COLOR, planName } from "./field-year-core";
 import { colors, radius, space, text } from "./theme";
 
 // The field year: one January to December axis shared by the climate and by every plan.
@@ -37,8 +37,9 @@ const RAIN = "#BFD4EA";
 
 type RiskKind = "stress" | "heat" | "wet";
 const RISK_COLOR: Record<RiskKind, string> = { stress: colors.amber, heat: colors.danger, wet: colors.blue };
+// Marks only under months with a crop in the field (field-year-core `occupiedMonths`).
 const riskMonths = (o: RotationOption, kind: RiskKind) =>
-  kind === "stress" ? o.metrics.stress_months : kind === "heat" ? o.metrics.heat_months : o.metrics.waterlog_months;
+  inFieldMonths(kind === "stress" ? o.metrics.stress_months : kind === "heat" ? o.metrics.heat_months : o.metrics.waterlog_months, occupiedMonths(o.slots));
 
 export function FieldYear({ options, selected, onSelect, monthly, cropById }: Props) {
   const { t, lang, months } = useT();

@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { RotationSlot } from "../engine/scores";
-import { axisTicks, bandPieces, bareText, familiesIn, familyStyle, monthsText, monthX, shortCropName } from "./field-year-core";
+import { axisTicks, bandPieces, inFieldMonths, occupiedMonths, bareText, familiesIn, familyStyle, monthsText, monthX, shortCropName } from "./field-year-core";
 
 const slot = (crop_id: string, plant_month: number, season_days: number): RotationSlot => ({
   crop_id,
@@ -92,4 +92,16 @@ test("axis ticks are round and cover the largest value", () => {
   assert.deepEqual(axisTicks(307), [0, 100, 200, 300, 400]);
   assert.deepEqual(axisTicks(150), [0, 50, 100, 150]);
   assert.deepEqual(axisTicks(0), [0, 20]);
+});
+
+test("occupied months are the months a crop is in the field, across the year end", () => {
+  // Planted Jun 15 for 30 days: in the field in Jun and Jul only.
+  assert.deepEqual([...occupiedMonths([slot("mungbean", 6, 30)])].sort((a, b) => a - b), [6, 7]);
+  // Planted Nov 15 for 100 days: Nov, Dec, Jan, Feb.
+  assert.deepEqual([...occupiedMonths([slot("eggplant", 11, 100)])].sort((a, b) => a - b), [1, 2, 11, 12]);
+});
+
+test("risk months outside the crop's time in the field are dropped", () => {
+  const occ = occupiedMonths([slot("rice", 7, 112)]);
+  assert.deepEqual(inFieldMonths([6, 7, 8, 12], occ), [7, 8]);
 });

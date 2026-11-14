@@ -20,14 +20,16 @@ import {
   type BasemapId,
   BRIDGE_SOURCE_APP,
   BRIDGE_SOURCE_MAP,
+  type MapInset,
   type MapLot,
+  type MapLotStyle,
   type MapMode,
   type MapPlace,
   type MapToApp,
   type ShapeFix,
 } from "../src/map/bridge";
 import type { LonLat } from "../src/types";
-import { cleanSketch, closeRing, corners, CLEANUP, isSimpleRing, ringAreaM2 } from "./cleanup";
+import { cleanSketch, closeRing, corners, CLEANUP, isSimpleRing, pointInRing, ringAreaM2 } from "./cleanup";
 
 // ---------------------------------------------------------------------------
 // Messages
@@ -78,8 +80,11 @@ const map = L.map("map", {
   maxZoom: 20,
   doubleClickZoom: false,
   attributionControl: true,
+  zoomControl: false,
 });
 map.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
+// Top right, under the app's Find me button (S1 puts its title bar top left).
+L.control.zoom({ position: "topright" }).addTo(map);
 
 let tiles: L.TileLayer | null = null;
 function setBasemap(id: BasemapId) {
@@ -100,8 +105,19 @@ const WHITE = "#FFFFFF";
 
 const adapter = new TerraDrawLeafletAdapter({ lib: L, map });
 
-let mode: MapMode = "select";
+let mode: MapMode = "view";
 let activeLotId: string | undefined;
+
+// Dashboard farm map (#124): a lot with a style is filled with its color, and the lot the
+// dashboard shows gets a thicker white outline. Lots without a style keep the S1 look.
+type HexColor = `#${string}`;
+const HEX = /^#[0-9a-fA-F]{6}$/;
+const lotStyles = new Map<string, MapLotStyle>();
+const colorOf = (id: unknown): HexColor | undefined => {
+  const c = lotStyles.get(String(id))?.color;
+  return c && HEX.test(c) ? (c as HexColor) : undefined;
+};
+const isHighlighted = (id: unknown) => mode === "view" && lotStyles.has(String(id)) && String(id) === activeLotId;
 
 // While sketching, one finger must draw, never pan. Terra Draw turns map dragging
 // back on after each stroke, so keep it off until the mode changes.
@@ -123,11 +139,14 @@ const draw = new TerraDraw({
     }),
     new TerraDrawPolygonMode({
       pointerDistance: 30,
+      // Saved lots are stored as polygon features, so this is also how a lot looks
+      // outside adjust mode: a white outline, like the selected lot. A styled lot
+      // (dashboard) is filled with its own color instead.
       styles: {
-        fillColor: LOT,
-        fillOpacity: 0.25,
-        outlineColor: LOT,
-        outlineWidth: 3,
+        fillColor: (f) => colorOf(f.id) ?? LOT,
+        fillOpacity: (f) => (colorOf(f.id) ? 0.55 : 0.25),
+        outlineColor: (f) => (colorOf(f.id) && !isHighlighted(f.id) ? colorOf(f.id) : WHITE),
+        outlineWidth: (f) => (isHighlighted(f.id) ? 5 : 3),
         closingPointWidth: 10,
         closingPointColor: WHITE,
         closingPointOutlineColor: INK,
@@ -186,12 +205,56 @@ function updateLabel(id: string, ring: LonLat[] | null) {
   labels.delete(id);
   if (!ring) return;
   const [lon, lat] = centroidOf(ring);
-  const text = `${lotNames.get(id) ?? id} · ${hectares(ring).toFixed(2)} ha`;
+  const style = lotStyles.get(id);
+  const color = colorOf(id);
+  const name = escapeHtml(lotNames.get(id) ?? id);
+  const ha = `${hectares(ring).toFixed(2)} ha`;
+  // Dashboard (#124): the colored dot and name, then the area and status in words on a second
+  // line, which `declutterLabels` hides while it would cover a neighbouring lot's label.
+  const html = style
+    ? `${color ? `<span class="lot-dot" style="background:${color}"></span>` : ""}<b>${name}</b>` +
+      `<span class="lot-detail"><br>${escapeHtml(`${ha} · ${style.status}`)}</span>`
+    : `${name} · ${ha}`;
   const tip = L.tooltip({ permanent: true, direction: "center", className: "lot-label", interactive: false })
     .setLatLng([lat, lon])
-    .setContent(escapeHtml(text))
+    .setContent(html)
     .addTo(map);
   labels.set(id, tip);
+  if (style) queueDeclutter();
+}
+
+/**
+ * Neighbouring lots' labels overlap when the whole farm fits on a small map. Each styled label
+ * that would cover one already shown drops to its dot and name, or hides if that still covers
+ * one. Zooming in brings them back.
+ */
+function declutterLabels() {
+  const shown: DOMRect[] = [];
+  // The lot the dashboard shows keeps its full label.
+  const order = [...labels].sort(([a], [b]) => Number(b === activeLotId) - Number(a === activeLotId));
+  for (const [id, tip] of order) {
+    const el = tip.getElement();
+    if (!el || !lotStyles.has(id)) continue;
+    el.classList.remove("compact", "hidden");
+    const overlaps = () => {
+      const r = el.getBoundingClientRect();
+      return shown.some((s) => r.left < s.right && r.right > s.left && r.top < s.bottom && r.bottom > s.top);
+    };
+    // First drop the second line; if the name alone still covers a label, hide it (the lot
+    // keeps its color, and the dashboard's tabs and legend still name it).
+    if (overlaps()) el.classList.add("compact");
+    if (overlaps()) el.classList.add("hidden");
+    else shown.push(el.getBoundingClientRect());
+  }
+}
+let declutterQueued = false;
+function queueDeclutter() {
+  if (declutterQueued) return;
+  declutterQueued = true;
+  requestAnimationFrame(() => {
+    declutterQueued = false;
+    declutterLabels();
+  });
 }
 
 function escapeHtml(s: string) {
@@ -235,13 +298,18 @@ function setLots(lots: MapLot[]) {
       updateLabel(id, null);
       lotNames.delete(id);
       lastRing.delete(id);
+      lotStyles.delete(id);
     }
   }
   for (const lot of lots) {
     lotNames.set(lot.id, lot.name);
+    const restyled = JSON.stringify(lotStyles.get(lot.id)) !== JSON.stringify(lot.style);
+    if (lot.style) lotStyles.set(lot.id, lot.style);
+    else lotStyles.delete(lot.id);
     const ring = lot.geometry.coordinates[0];
     const current = ringOf(lot.id);
-    if (!current || JSON.stringify(current) !== JSON.stringify(ring)) {
+    // Re-adding the shape is what makes Terra Draw run the style functions again.
+    if (!current || restyled || JSON.stringify(current) !== JSON.stringify(ring)) {
       putLot(lot.id, ring);
       // Keep the corners of the lot being edited draggable after it is re-added.
       if (mode === "select" && lot.id === activeLotId) draw.selectFeature(lot.id);
@@ -258,11 +326,18 @@ function setPlaces(places: MapPlace[]) {
   }
 }
 
+// The part of the map covered by the app's buttons and panels (see MapInset).
+let inset: MapInset = { top: 0, right: 0, bottom: 0, left: 0 };
+
 function fitLots() {
   const rings = [...lotNames.keys()].map(ringOf).filter((r): r is LonLat[] => !!r);
   if (!rings.length) return;
   const bounds = L.latLngBounds(rings.flat().map(([lon, lat]) => [lat, lon] as [number, number]));
-  map.fitBounds(bounds, { padding: [40, 40], maxZoom: 18 });
+  map.fitBounds(bounds, {
+    paddingTopLeft: [inset.left + 40, inset.top + 40],
+    paddingBottomRight: [inset.right + 40, inset.bottom + 40],
+    maxZoom: 18,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -270,8 +345,16 @@ function fitLots() {
 // ---------------------------------------------------------------------------
 
 function setMode(next: MapMode, lotId?: string) {
+  const before = { mode, activeLotId };
   mode = next;
   activeLotId = lotId;
+  // The dashboard switched lots: redraw the old and the new one so the highlight moves.
+  if (before.mode !== mode || before.activeLotId !== lotId) {
+    for (const id of new Set([before.activeLotId, lotId])) {
+      const ring = id && lotStyles.has(id) ? ringOf(id) : null;
+      if (id && ring) putLot(id, ring);
+    }
+  }
   if (next === "sketch") {
     map.dragging.disable();
     draw.setMode("freehand");
@@ -281,7 +364,7 @@ function setMode(next: MapMode, lotId?: string) {
     else if (next === "select") {
       draw.setMode("select");
       if (lotId && draw.hasFeature(lotId)) draw.selectFeature(lotId);
-    } else draw.setMode("static");
+    } else draw.setMode("static"); // "view" and "pin": lots show without points, taps don't select
   }
   document.body.dataset.mode = next;
 }
@@ -299,7 +382,16 @@ document.getElementById("map")?.addEventListener(
 );
 
 map.on("click", (e: L.LeafletMouseEvent) => {
-  if (mode === "pin") post({ type: "pinPlaced", point: [round6(e.latlng.lng), round6(e.latlng.lat)] });
+  const point: LonLat = [round6(e.latlng.lng), round6(e.latlng.lat)];
+  if (mode === "pin") post({ type: "pinPlaced", point });
+  else if (mode === "view") {
+    // Lot shapes and labels don't take taps (interactive: false), so every tap lands here.
+    const hit = [...lotNames.keys()].find((id) => {
+      const ring = ringOf(id);
+      return !!ring && pointInRing(point, ring);
+    });
+    if (hit) post({ type: "lotTapped", id: hit });
+  }
 });
 const round6 = (v: number) => Number(v.toFixed(6));
 
@@ -329,8 +421,9 @@ function adoptDrawnShape(tempFeatureId: string, kind: "sketch" | "corners") {
   }
   putLot(lotId, ring);
   sendLot(lotId, fix);
-  setMode("select", lotId);
-  post({ type: "modeChanged", mode: "select" });
+  // A clean outline without points; the farmer taps Adjust in the app to show them.
+  setMode("view", lotId);
+  post({ type: "modeChanged", mode: "view" });
 }
 
 draw.on("finish", (id, context) => {
@@ -368,11 +461,13 @@ function receive(msg: AppToMap) {
   switch (msg.type) {
     case "init": {
       setBasemap(msg.basemap ?? DEFAULT_BASEMAP);
+      if (msg.inset) inset = msg.inset;
       setLots(msg.lots);
       setPlaces(msg.places);
       if (msg.lots.length) fitLots();
       else if (msg.center) map.setView([msg.center[1], msg.center[0]], msg.zoom ?? DEFAULT_ZOOM);
       setMode(msg.mode, msg.activeLotId);
+      post({ type: "zoomChanged", zoom: map.getZoom() });
       break;
     }
     case "setMode":
@@ -386,6 +481,12 @@ function receive(msg: AppToMap) {
       break;
     case "fitLots":
       fitLots();
+      break;
+    case "setInset":
+      inset = msg.inset;
+      break;
+    case "zoomIn":
+      if (map.getZoom() < msg.zoom) map.setZoom(msg.zoom);
       break;
     case "gps": {
       gpsLayer?.remove();
@@ -406,5 +507,22 @@ window.addEventListener("message", (e: MessageEvent) => {
   if (data && data.source === BRIDGE_SOURCE_APP && data.msg) receive(data.msg);
 });
 
+// While adjusting, a tap beside the lot would hide its points; keep them showing until Done.
+draw.on("deselect", () => {
+  if (mode !== "select" || !activeLotId) return;
+  const id = activeLotId;
+  setTimeout(() => {
+    if (mode === "select" && activeLotId === id && draw.hasFeature(id)) draw.selectFeature(id);
+  }, 0);
+});
+
+map.on("zoomend", () => {
+  post({ type: "zoomChanged", zoom: map.getZoom() });
+  if (lotStyles.size) queueDeclutter();
+});
+// The iframe / WebView can get its size after the lots are drawn.
+map.on("resize", () => {
+  if (lotStyles.size) queueDeclutter();
+});
 draw.on("ready", () => post({ type: "ready" }));
 draw.start();

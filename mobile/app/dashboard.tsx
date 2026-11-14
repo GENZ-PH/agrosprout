@@ -1,74 +1,120 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
-import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { type ReactNode, useCallback, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
 
 import { Button } from "../src/components/Button";
 import { CropFitList } from "../src/components/CropFitList";
 import { Disclaimer } from "../src/components/Disclaimer";
+import { FarmMapCard } from "../src/components/FarmMapCard";
 import { FieldYear } from "../src/components/FieldYear";
+import { FooterLinks } from "../src/components/FooterLinks";
+import { HarvestCard } from "../src/components/HarvestCard";
 import { Header } from "../src/components/Header";
 import { LanguageSwitch } from "../src/components/LanguageSwitch";
 import { LotTabs } from "../src/components/LotTabs";
 import { Notice } from "../src/components/Notice";
-import { planName } from "../src/components/field-year-core";
 import { PlanDetail } from "../src/components/PlanDetail";
+import { PlanOptions } from "../src/components/PlanOptions";
 import { PlanTable } from "../src/components/PlanTable";
-import { chosenPriorities, unavailablePriorities, verdictText } from "../src/components/plan-text";
+import { formatHa, unavailablePriorities } from "../src/components/plan-text";
+import { PlantCard } from "../src/components/PlantCard";
 import { PriorityChips } from "../src/components/PriorityChips";
 import { Screen } from "../src/components/Screen";
 import { SoilHealthChart } from "../src/components/SoilHealthChart";
-import { colors, radius, space, text, TWO_COLUMN_MIN } from "../src/components/theme";
-import { useLotAnalysis } from "../src/components/useLotAnalysis";
+import { colors, MAX_CONTENT_WIDTH, radius, space, text } from "../src/components/theme";
+import { useLayout } from "../src/components/useLayout";
+import { useFarmLotViews, useLotAnalysis } from "../src/components/useLotAnalysis";
+import { ViewSwitch } from "../src/components/ViewSwitch";
+import { WhatIfCard } from "../src/components/WhatIfCard";
 import { cropById } from "../src/data/crops";
 import type { LotAnalysis, OptionKey } from "../src/engine";
+import type { Scenario } from "../src/engine/scenario";
 import { useT } from "../src/i18n/lang-store";
-import { cropLabel } from "../src/i18n/strings";
+import { isOtherCrop } from "../src/lots/crop-picks";
+import { seasonsText } from "../src/lots/months-core";
+import { shortCropName } from "../src/components/recommendations-core";
 import { isDemoFarm } from "../src/state/demo-farm";
 import { useFarm, useFarmStore } from "../src/state/farm-store";
 import type { Farm, Lot, Priorities } from "../src/types";
 
-// S3 Dashboard (#29, docs/11-user-flow.md): results per lot, worked out on the phone from the
-// lot's NASA data. What matters to you, the field-year comparison of the plans (the farmer's
-// own crops plus the alternatives), one plan in detail (why, gains, losses, unknowns, what to
-// check locally, sources), how the farmer's crops fit, and the 3-year Soil Health card (#43).
+// S3 Dashboard, PREVIEW presentation (branch preview/dashboard-ui, not for merge). Same app
+// and same engine output as main; only the results are presented differently, in two views:
+//   What to plant: the farmer's answer first. Goals, the crops to plant in order with their
+//     months, plain reasons against the crops grown now, what to ask the technician, every
+//     option named by its crops, how the farmer's crops fit, and getting the harvest out.
+//   Why, the NASA data: the evidence for judges and technicians. The year chart (rain against
+//     water demand, every plan on one axis), the plans side by side as field facts, the full
+//     explanation with sources, the what-if card and the 3-year Soil Health card.
+// The team's farm map, lot tabs and months prompt are main's; the farm map moves below the
+// results so the answer is the first thing on the screen.
 
 const cropName = (id: string) => cropById(id)?.name ?? id;
+type ViewKey = "plant" | "evidence";
+
 export default function DashboardScreen() {
   const farm = useFarm();
   const { t } = useT();
-  // On a phone the switch gets its own row, so the title is never cut short.
-  const wide = useWindowDimensions().width >= TWO_COLUMN_MIN;
   const { lot: lotParam } = useLocalSearchParams<{ lot?: string }>();
   const lot = farm.lots.find((l) => l.id === lotParam) ?? farm.lots[0];
+  const views = useFarmLotViews(farm);
+  const { wide } = useLayout();
+  const selectLot = useCallback((id: string) => router.setParams({ lot: id }), []);
 
   return (
-    <Screen wide footer={<Disclaimer />}>
+    <Screen
+      width="wide"
+      footer={
+        <>
+          <FooterLinks />
+          <Disclaimer />
+        </>
+      }
+    >
       <Header title={t("dash.title")} right={wide ? <LanguageSwitch /> : undefined} />
       {wide ? null : <LanguageSwitch />}
       {lot ? (
         <>
-          <View style={styles.lotRow}>
-            <LotTabs lots={farm.lots} selectedId={lot.id} onSelect={(id) => router.setParams({ lot: id })} />
-            <Text style={text.small}>
-              <Text style={styles.strong}>{lot.area_ha} ha</Text>
-              {`  ${t(`land.${lot.details.land_type}`)}, ${t(`water.${lot.details.water}`)}`}
-            </Text>
-          </View>
-          {isDemoFarm(farm.lots) ? <Text style={text.caption}>{t("dash.demo")}</Text> : null}
+          <LotTabs
+            lots={farm.lots}
+            selectedId={lot.id}
+            onSelect={selectLot}
+            onAdd={() => router.push({ pathname: "/lots", params: { new: "1" } })}
+          />
+          <LotLine lot={lot} demo={isDemoFarm(farm.lots)} />
           <LotResults key={lot.id} farm={farm} lot={lot} />
+          {/* The answer comes first; the whole-farm map (#124) follows as the overview. */}
+          <FarmMapCard lots={farm.lots} views={views} selectedId={lot.id} onSelect={selectLot} wide={wide} />
         </>
       ) : (
-        <>
+        <Narrow>
           <Notice tone="warn">{t("dash.drawFirst")}</Notice>
           <Button label={t("dash.draw")} href="/lots" />
-        </>
+        </Narrow>
       )}
     </Screen>
   );
 }
 
+/** Area, land and water in one line. Missing details become a link to fill them in. */
+function LotLine({ lot, demo }: { lot: Lot; demo: boolean }) {
+  const { t } = useT();
+  const known = lot.details.land_type !== "unknown" || lot.details.water !== "unknown";
+  return (
+    <View style={styles.lotLine}>
+      <Text style={text.small}>
+        <Text style={styles.strong}>{formatHa(lot.area_ha)}</Text>
+        {known ? `  ${t(`land.${lot.details.land_type}`)}, ${t(`water.${lot.details.water}`)}` : ""}
+      </Text>
+      {known ? null : <Button label={t("lot.tell")} variant="link" href="/edit-farm" />}
+      {demo ? <Text style={text.caption}>{t("dash.demo")}</Text> : null}
+    </View>
+  );
+}
+
 function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
-  const view = useLotAnalysis(farm, lot);
+  // The what-if scenario (#47) belongs to the lot being looked at; null = today's climate.
+  const [scenario, setScenario] = useState<Scenario | null>(null);
+  const view = useLotAnalysis(farm, lot, scenario);
   const updateLot = useFarmStore((s) => s.updateLot);
   const { t } = useT();
   const lotName = { lot: lot.name };
@@ -78,74 +124,90 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
       return <Text style={text.caption}>{t("dash.loading", lotName)}</Text>;
     case "no-crops":
       return (
-        <>
+        <Narrow>
           <Notice tone="warn">{t("dash.noCrops", lotName)}</Notice>
-          <Button label={t("dash.pickCrops")} href="/crops" />
-        </>
+          <Button label={t("dash.pickCrops")} href={{ pathname: "/crops", params: { lot: lot.id } }} />
+        </Narrow>
       );
     case "no-data":
       // The lot sync downloads pending lots by itself when the phone has signal.
-      return view.status === "pending" ? (
-        <Notice icon="clock">{t("dash.getting", lotName)}</Notice>
-      ) : (
-        <>
-          <Notice tone="warn">{t("dash.noData", lotName)}</Notice>
-          <Button label={t("dash.retry")} variant="secondary" onPress={() => updateLot(lot.id, { data_status: "pending" })} />
-        </>
+      return (
+        <Narrow>
+          {view.status === "pending" ? (
+            <Notice icon="clock">{t("dash.getting", lotName)}</Notice>
+          ) : (
+            <>
+              <Notice tone="warn">{t("dash.noData", lotName)}</Notice>
+              <Button label={t("dash.retry")} variant="secondary" onPress={() => updateLot(lot.id, { data_status: "pending" })} />
+            </>
+          )}
+        </Narrow>
       );
     case "failed":
-      return <Notice tone="warn">{t("dash.failed", lotName)}</Notice>;
+      return (
+        <Narrow>
+          <Notice tone="warn">{t("dash.failed", lotName)}</Notice>
+        </Narrow>
+      );
     case "ready":
-      return <Results farm={farm} analysis={view.analysis} />;
+      return <Results farm={farm} lot={lot} analysis={view.analysis} period={view.period} scenario={scenario} setScenario={setScenario} />;
   }
 }
 
-function Results({ farm, analysis }: { farm: Farm; analysis: LotAnalysis }) {
+function Results({
+  farm,
+  lot,
+  analysis,
+  period,
+  scenario,
+  setScenario,
+}: {
+  farm: Farm;
+  lot: Lot;
+  analysis: LotAnalysis;
+  period: string;
+  scenario: Scenario | null;
+  setScenario: (s: Scenario | null) => void;
+}) {
   const setPriorities = useFarmStore((s) => s.setPriorities);
-  const { t, lang, months } = useT();
-  const { width } = useWindowDimensions();
-  const twoColumns = width >= TWO_COLUMN_MIN;
+  const { t } = useT();
+  const { wide } = useLayout();
+  const [tab, setTab] = useState<ViewKey>("plant");
   const { options } = analysis.rotations;
   const best = options.find((o) => o.top_total) ?? options[0];
   const [picked, setPicked] = useState<OptionKey | null>(null);
   const selected = options.find((o) => o.key === picked) ?? best;
   const baseline = options[0];
   const unavailable = unavailablePriorities(analysis.rotations.components_left_out);
-  // A new choice of goals brings the detail back to the plan that now fits best.
+  // A new choice of goals brings the answer back to the plan that now fits best.
   const choose = (next: Priorities) => {
     setPicked(null);
     setPriorities(next);
   };
-  // What to plant under the best plan, in order: "Mungbean (Apr to Jun) › Lowland rice (Jul to Nov)".
-  const sequence = best.slots
-    .map((s) => `${cropLabel(lang, cropById(s.crop_id), s.crop_id)} (${months[s.plant_month - 1]} ${t("list.to")} ${months[s.harvest_month - 1]})`)
-    .join("  \u203A  ");
-  const verdict = verdictText(
-    {
-      chosen: chosenPriorities(farm.priorities).filter((k) => !unavailable.includes(k)),
-      bestKey: best.key,
-      bestName: planName(best.kind, t),
-      bestTotal: best.total,
-      baselineTotal: baseline.total,
-      bestIsBaseline: best.key === baseline.key,
-    },
-    t,
-  );
 
-  const compare = (
-    <>
-      <View style={styles.intro}>
-        <Text style={text.heading} accessibilityRole="header">
-          {t("year.title")}
-        </Text>
-        <Text style={[text.small, styles.muted]}>
-          {t("year.hint")}
-        </Text>
+  const plantCard = <PlantCard option={selected} baseline={baseline} lotName={lot.name} cropById={cropById} />;
+  const optionsList = <PlanOptions options={options} selected={selected.key} onSelect={setPicked} cropById={cropById} />;
+  const fit = <CropFitList fits={analysis.crop_fits} cropById={cropById} />;
+  const harvest = <HarvestCard lot={lot} destinations={farm.destinations} harvest={analysis.harvest} cropName={cropName} period={period} />;
+
+  const plantView = wide ? (
+    <View style={styles.row}>
+      <View style={[styles.col, styles.colMain]}>{plantCard}</View>
+      <View style={styles.col}>
+        {optionsList}
+        {fit}
+        {harvest}
       </View>
-      <FieldYear options={options} selected={selected.key} onSelect={setPicked} monthly={analysis.monthly} cropById={cropById} />
-      <Text style={text.caption}>{t("year.source")}</Text>
+    </View>
+  ) : (
+    <>
+      {plantCard}
+      {optionsList}
+      {fit}
+      {harvest}
     </>
   );
+
   const detail = (
     <PlanDetail
       key={selected.key}
@@ -154,51 +216,117 @@ function Results({ farm, analysis }: { farm: Farm; analysis: LotAnalysis }) {
       explanation={analysis.explanations.find((e) => e.option_key === selected.key)}
       leftOut={analysis.rotations.components_left_out}
       cropById={cropById}
-      defaultOpen={twoColumns}
+      defaultOpen={wide}
     />
   );
-  const table = <PlanTable options={options} selected={selected.key} onSelect={setPicked} />;
-  const rest = (
+  const evidenceView = (
     <>
-      <CropFitList fits={analysis.crop_fits} cropById={cropById} />
-      <SoilHealthChart result={analysis.soil_health} options={options} cropName={cropName} />
+      <Text style={[text.small, styles.muted]}>{t("evidence.intro")}</Text>
+      <FieldYear options={options} selected={selected.key} onSelect={setPicked} monthly={analysis.monthly} cropById={cropById} />
+      <Text style={text.caption}>{t("year.source")}</Text>
+      {wide ? (
+        <View style={styles.row}>
+          <View style={styles.col}>
+            <PlanTable options={options} selected={selected.key} onSelect={setPicked} />
+            <WhatIfCard scenario={scenario} onChange={setScenario} notes={analysis.scenario?.notes ?? []} period={period} />
+            <SoilHealthChart result={analysis.soil_health} options={options} cropName={cropName} />
+          </View>
+          <View style={styles.col}>{detail}</View>
+        </View>
+      ) : (
+        <>
+          <PlanTable options={options} selected={selected.key} onSelect={setPicked} />
+          {detail}
+          <WhatIfCard scenario={scenario} onChange={setScenario} notes={analysis.scenario?.notes ?? []} period={period} />
+          <SoilHealthChart result={analysis.soil_health} options={options} cropName={cropName} />
+        </>
+      )}
     </>
   );
 
   return (
     <>
       <PriorityChips priorities={farm.priorities} onChange={choose} unavailable={unavailable} />
-      <View style={styles.verdict} accessibilityLiveRegion="polite">
-        <Text style={styles.verdictText}>{verdict}</Text>
-        <Text style={text.body}>{t("verdict.plant", { sequence })}</Text>
-      </View>
-      {compare}
-      {twoColumns ? (
-        <View style={styles.columns}>
-          <View style={styles.column}>
-            {table}
-            {rest}
-          </View>
-          <View style={styles.column}>{detail}</View>
-        </View>
-      ) : (
-        <>
-          {table}
-          {detail}
-          {rest}
-        </>
-      )}
+      <ViewSwitch
+        items={[
+          { key: "plant", label: t("view.plant") },
+          { key: "evidence", label: t("view.evidence") },
+        ]}
+        value={tab}
+        onChange={setTab}
+      />
+      {tab === "plant" ? plantView : evidenceView}
+      <MonthsPrompt lot={lot} stage={analysis.stage} />
     </>
   );
+}
+
+/**
+ * The Continue prompt at the end of the dashboard (docs/11-user-flow.md S3 → S4): give your
+ * planting months for a sharper comparison, or Later. Once months are given, a way to change them.
+ * Kept from main as is.
+ */
+function MonthsPrompt({ lot, stage }: { lot: Lot; stage: 1 | 2 }) {
+  const [later, setLater] = useState(false);
+  if (stage === 1 && later) return null;
+  const listed = lot.crops.filter((c) => !isOtherCrop(c.crop_id));
+  const given = listed.filter((c) => c.seasons.length > 0);
+  const usual = listed.filter((c) => c.seasons.length === 0);
+  const short = (id: string) => shortCropName(cropName(id));
+  return (
+    <Narrow>
+      <View style={styles.prompt}>
+        <Text style={text.heading} accessibilityRole="header">
+          {stage === 1 ? "Want a sharper comparison?" : "Your planting months"}
+        </Text>
+        <Text style={text.body}>
+          {stage === 1
+            ? `Tell us which months you plant on ${lot.name}. Your crops (plan A) then use your months instead of the usual ones.`
+            : `Plan A uses your months: ${given.map((c) => `${short(c.crop_id)} ${seasonsText(c.seasons)}`).join("; ")}.` +
+              (usual.length > 0
+                ? ` ${usual.map((c) => short(c.crop_id)).join(", ")} ${usual.length === 1 ? "keeps" : "keep"} the usual months (assumed).`
+                : "")}
+        </Text>
+        <View style={stage === 1 ? styles.promptRow : styles.promptCol}>
+          {stage === 1 ? (
+            <>
+              <Button label="Continue" iconAfter="chevron" href={{ pathname: "/months", params: { lot: lot.id } }} style={styles.col} />
+              <Button label="Later" variant="quiet" onPress={() => setLater(true)} style={styles.col} />
+            </>
+          ) : (
+            <>
+              <Button label="Compare your months" iconAfter="chevron" href={{ pathname: "/compare", params: { lot: lot.id } }} />
+              <Button label="Change your months" variant="secondary" href={{ pathname: "/months", params: { lot: lot.id } }} />
+            </>
+          )}
+        </View>
+      </View>
+    </Narrow>
+  );
+}
+
+/** Keeps messages and buttons at reading width on a wide screen. */
+function Narrow({ children }: { children: ReactNode }) {
+  return <View style={styles.narrow}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
   strong: { fontWeight: "700" },
   muted: { color: colors.muted },
-  intro: { gap: 4 },
-  lotRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: space.lg, rowGap: space.sm },
-  verdict: { borderLeftWidth: 4, borderLeftColor: colors.green, backgroundColor: colors.greenTint, borderRadius: radius.md, paddingVertical: space.md, paddingHorizontal: space.lg, gap: 4 },
-  verdictText: { ...text.heading, fontWeight: "600" },
-  columns: { flexDirection: "row", alignItems: "flex-start", gap: space.xl },
-  column: { flex: 1, gap: space.lg, minWidth: 0 },
+  lotLine: { gap: 2 },
+  // Each card keeps its own height, so a short card doesn't get an empty stretched bottom.
+  row: { flexDirection: "row", alignItems: "flex-start", gap: space.lg },
+  col: { flex: 1, minWidth: 0, gap: space.lg },
+  colMain: { flex: 1.15 },
+  narrow: { width: "100%", maxWidth: MAX_CONTENT_WIDTH, gap: space.lg },
+  prompt: {
+    gap: space.md,
+    padding: space.lg,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.green,
+    backgroundColor: colors.greenTint,
+  },
+  promptRow: { flexDirection: "row", gap: space.sm },
+  promptCol: { gap: space.sm },
 });

@@ -7,7 +7,7 @@ import { COMPONENT_KEYS, type ComponentKey } from "../engine/scores";
 import { useT } from "../i18n/lang-store";
 import { cropLabel } from "../i18n/strings";
 import type { Crop } from "../types";
-import { monthsText, PLAN_COLOR, planName } from "./field-year-core";
+import { inFieldMonths, monthsText, occupiedMonths, PLAN_COLOR, planName } from "./field-year-core";
 import { Icon } from "./Icon";
 import { mergeCropLines } from "./plan-text";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
@@ -34,6 +34,7 @@ export function PlanDetail({ option, baseline, explanation, leftOut, cropById, d
   const [open, setOpen] = useState(defaultOpen);
   const isBaseline = option.key === baseline.key;
   const crop = (id: string) => cropLabel(lang, cropById(id), id);
+  const dryMonths = inFieldMonths(option.metrics.stress_months, occupiedMonths(option.slots));
 
   const rows = COMPONENT_KEYS.filter((k) => !leftOut.includes(k)).map((k) => {
     const v = option.scores[k];
@@ -83,9 +84,7 @@ export function PlanDetail({ option, baseline, explanation, leftOut, cropById, d
 
       {isBaseline ? <Text style={text.small}>{t("detail.yours")}</Text> : null}
 
-      {option.metrics.stress_months.length > 0 ? (
-        <Text style={text.small}>{t("detail.stress", { months: monthsText(option.metrics.stress_months, t, months) })}</Text>
-      ) : null}
+      {dryMonths.length > 0 ? <Text style={text.small}>{t("detail.stress", { months: monthsText(dryMonths, t, months) })}</Text> : null}
 
       <View style={styles.ask}>
         <Text style={text.bodyStrong}>{t("detail.ask")}</Text>

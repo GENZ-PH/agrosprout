@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { View } from "react-native";
 import Svg, { Circle, G, Path, Rect } from "react-native-svg";
 
 import { colors } from "./theme";
@@ -77,6 +78,17 @@ const ICONS = {
       <Circle cx={12} cy={9} r={2.5} />
     </>
   ),
+  /** A lot outline with corner points: "Adjust the corners". */
+  shape: (
+    <>
+      <Path d="M6 7l9-2.5 4.5 8-6 7L4.5 16z" />
+      <Circle cx={6} cy={7} r={1.8} />
+      <Circle cx={15} cy={4.5} r={1.8} />
+      <Circle cx={19.5} cy={12.5} r={1.8} />
+      <Circle cx={13.5} cy={19.5} r={1.8} />
+      <Circle cx={4.5} cy={16} r={1.8} />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof ICONS;
@@ -90,17 +102,15 @@ type Props = {
 
 /** Decorative icon. The control around it carries the accessible label. */
 export function Icon({ name, size = 24, color = colors.ink, strokeWidth = 2 }: Props) {
+  // Hidden from screen readers (#45): the View's aria-hidden works on web, Android and iOS.
+  // (react-native-svg would pass the native-only accessibility props to the DOM on web.)
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24">
-      <G
-        fill="none"
-        stroke={color}
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        {ICONS[name]}
-      </G>
-    </Svg>
+    <View aria-hidden style={{ width: size, height: size }}>
+      <Svg width={size} height={size} viewBox="0 0 24 24">
+        <G fill="none" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+          {ICONS[name]}
+        </G>
+      </Svg>
+    </View>
   );
 }

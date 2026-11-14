@@ -86,3 +86,20 @@ export function verdictText(
   const versus = gap === null ? "" : gap > 0 ? t("verdict.above", { n: gap }) : gap < 0 ? t("verdict.below", { n: -gap }) : t("verdict.level");
   return t("verdict.best", { goals, key: input.bestKey, name: input.bestName, score, versus });
 }
+
+/** Lot area for people: "72.6 ha", "1 ha", "0.49 ha". Drawn areas carry many decimals. */
+export function formatHa(ha: number): string {
+  const fixed = ha >= 10 ? ha.toFixed(1) : ha.toFixed(2);
+  return `${fixed.replace(/\.?0+$/, "")} ha`;
+}
+
+/** Crop names in planting order with repeats folded: ["Rice", "Rice"] -> "Rice ×2". */
+export function cropListText(names: readonly string[]): string {
+  const out: { name: string; n: number }[] = [];
+  for (const name of names) {
+    const last = out[out.length - 1];
+    if (last && last.name === name) last.n += 1;
+    else out.push({ name, n: 1 });
+  }
+  return out.map((x) => (x.n > 1 ? `${x.name} \u00D7${x.n}` : x.name)).join(", ");
+}

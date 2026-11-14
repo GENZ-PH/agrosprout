@@ -2,7 +2,7 @@
 // Wording and priority-chip logic for the dashboard.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { chosenPriorities, fitReasonText, mergeCropLines, togglePriority, unavailablePriorities, verdictText } from "./plan-text";
+import { cropListText, formatHa, chosenPriorities, fitReasonText, mergeCropLines, togglePriority, unavailablePriorities, verdictText } from "./plan-text";
 
 const EQUAL = { water: 50, soil: 50, income: 50, labor: 50 };
 
@@ -86,4 +86,18 @@ test("the verdict says so when the farmer's own crops fit best, or nothing can b
     verdictText({ chosen: [], bestKey: "A", bestName: "Your crops", bestTotal: null, baselineTotal: null, bestIsBaseline: true }),
     "With every goal counted the same, the plans cannot be scored on this lot yet.",
   );
+});
+
+test("lot areas are rounded for people", () => {
+  assert.equal(formatHa(72.56156326821265), "72.6 ha");
+  assert.equal(formatHa(1), "1 ha");
+  assert.equal(formatHa(0.49), "0.49 ha");
+  assert.equal(formatHa(0.5), "0.5 ha");
+  assert.equal(formatHa(10), "10 ha");
+});
+
+test("repeated crops in a plan are folded", () => {
+  assert.equal(cropListText(["Rice", "Rice"]), "Rice \u00D72");
+  assert.equal(cropListText(["Mungbean", "Rice", "Eggplant"]), "Mungbean, Rice, Eggplant");
+  assert.equal(cropListText(["Corn", "Peanut", "Peanut", "Corn"]), "Corn, Peanut \u00D72, Corn");
 });

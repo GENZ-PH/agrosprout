@@ -135,3 +135,24 @@ export function axisTicks(max: number): number[] {
   for (let v = 0; v <= top; v += step) out.push(v);
   return out;
 }
+
+/**
+ * Calendar months (1-12) with a crop in the field for at least one day. Risk marks are drawn
+ * only on these months: a month of empty field is shown as empty, not as a crop short of water
+ * (the engine's water window can include the rice land-preparation month).
+ */
+export function occupiedMonths(slots: readonly RotationSlot[]): Set<number> {
+  const { pieces } = bandPieces(slots);
+  const out = new Set<number>();
+  for (let m = 1; m <= 12; m++) {
+    const from = monthStartDay(m);
+    const to = m === 12 ? YEAR : monthStartDay(m + 1);
+    if (pieces.some((p) => p.start < to && from < p.end)) out.add(m);
+  }
+  return out;
+}
+
+/** Risk months of one kind, kept to months with a crop in the field. */
+export function inFieldMonths(months: readonly number[], occupied: ReadonlySet<number>): number[] {
+  return months.filter((m) => occupied.has(m));
+}

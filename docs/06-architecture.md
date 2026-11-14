@@ -113,17 +113,24 @@ flowchart LR
 sequenceDiagram
   participant App as App screen (S1 / S6)
   participant Map as Map page (Leaflet + Terra Draw)
-  App->>Map: init {lots, places, mode: "sketch" | "corners" | "select" | "pin", center}
+  App->>Map: init {lots, places, mode: "view" | "sketch" | "corners" | "select" | "pin", center, inset}
   Map-->>App: ready
+  Map-->>App: zoomChanged {zoom} (after init and every zoom)
+  App->>Map: zoomIn {zoom} (zoom check before drawing)
   Note over Map: Farmer sketches → cleanup (Turf) → editable plot
   Map-->>App: lotChanged {id, geojson, area_ha, centroid}
   App->>App: save to AsyncStorage, fetch NASA POWER if the centroid moved
-  App->>Map: setMode "select" (drag · add · remove points)
+  Map-->>App: modeChanged "view" (clean outline, no points)
+  App->>Map: setMode "select" (Adjust: drag · add · remove points)
   Map-->>App: pinPlaced {point} (S6 places)
   App->>Map: gps {lat, lon} (from expo-location)
+  Note over App,Map: Dashboard farm map (#124), read-only "view" mode
+  App->>Map: setLots {lots with style {color, status}}
+  Map-->>App: lotTapped {id} (the dashboard selects that lot)
 ```
 
 - Message types live in **`mobile/src/map/bridge.ts`** and are shared by both sides. Treat them as part of the data contract.
+- `MapLot.style` (optional, #124) fills a lot with a theme color and adds its status in words to the label. The color comes from the engine's crop-fit level (`mobile/src/components/farm-map-core.ts`), never a new threshold. Lots without a style keep the S1 look.
 - Android: `MapView.native.tsx` → `react-native-webview` with `source={{ html }}`; messages via `postMessage` / `onMessage`.
 - Web: `MapView.web.tsx` → `<iframe srcDoc={html}>`; messages via `window.postMessage`.
 
