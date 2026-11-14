@@ -6,6 +6,7 @@ import { seasonCompare, type SeasonCompare, type Tone } from "../lots/compare-co
 import { cropShortName } from "../lots/crop-picks";
 import { seasonLabel } from "../lots/months-core";
 import { Bullets, InfoCard } from "./InfoCard";
+import { rowsOf } from "./layout-core";
 import type { MonthsCompare } from "./lot-analysis-core";
 import { Notice } from "./Notice";
 import { colors, radius, space, text } from "./theme";
@@ -20,10 +21,24 @@ const shortName = (id: string) => {
   return c ? cropShortName(c) : id;
 };
 
-export function MonthsCompareList({ months, period }: { months: MonthsCompare; period: string }) {
+/**
+ * `columns` = 2 on a wide window (#114): the season cards go two per row, in the same order as on
+ * a phone (left to right, then down). Each card already sets your months and the better months side
+ * by side in its table, at every width.
+ */
+export function MonthsCompareList({ months, period, columns = 1 }: { months: MonthsCompare; period: string; columns?: 1 | 2 }) {
   const seasonsOf = (id: string) => months.crops.find((c) => c.crop_id === id)?.seasons ?? [];
   const ctx = { cropName: shortName, seasonsOf, period };
   const assumed = months.assumed.map(shortName);
+  const cards = months.planting.seasons.map((w) => (
+    <SeasonCard
+      key={`${w.crop_id}-${w.season_index}`}
+      w={w}
+      c={seasonCompare(w, ctx)}
+      period={period}
+      count={seasonsOf(w.crop_id).length}
+    />
+  ));
   return (
     <>
       {assumed.length > 0 ? (
@@ -31,15 +46,19 @@ export function MonthsCompareList({ months, period }: { months: MonthsCompare; p
           {`${assumed.join(", ")}: compared on the usual months (assumed), because you haven't given your own yet. Give your planting months for a sharper comparison.`}
         </Notice>
       ) : null}
-      {months.planting.seasons.map((w) => (
-        <SeasonCard
-          key={`${w.crop_id}-${w.season_index}`}
-          w={w}
-          c={seasonCompare(w, ctx)}
-          period={period}
-          count={seasonsOf(w.crop_id).length}
-        />
-      ))}
+      {columns > 1
+        ? rowsOf(cards, columns).map((row) => (
+            <View key={row.map((c) => c.key).join("|")} style={styles.gridRow}>
+              {row.map((card) => (
+                <View key={card.key} style={styles.gridCell}>
+                  {card}
+                </View>
+              ))}
+              {/* A lone last card keeps its half width, so the cards above and below line up. */}
+              {row.length < columns ? <View style={styles.gridCell} /> : null}
+            </View>
+          ))
+        : cards}
     </>
   );
 }
@@ -97,6 +116,8 @@ function Section({ title, lines }: { title: string; lines: readonly string[] }) 
 }
 
 const styles = StyleSheet.create({
+  gridRow: { flexDirection: "row", alignItems: "flex-start", gap: space.lg },
+  gridCell: { flex: 1, minWidth: 0 },
   headline: { gap: space.xs, padding: space.md, borderRadius: radius.sm },
   table: { borderTopWidth: 1, borderTopColor: colors.border },
   tr: {
