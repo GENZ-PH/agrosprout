@@ -2,23 +2,31 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { SOURCES, type SourceKey } from "../content/sources";
 import { openInspector } from "./inspector-store";
-import { useLayout } from "./useLayout";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
-// A dataset name you can hover (on a wide screen) or tap to open the inspector panel: which NASA
+// A dataset name. A NASA one can be clicked to open the inspector panel: which NASA
 // source it is, what the app takes from it, how it is used and the formulas.
 
 export function SourceChip({ k, period = "" }: { k: SourceKey; period?: string }) {
-  const { wide } = useLayout();
   const s = SOURCES[k];
+  // Only NASA data opens the inspector; other sources are plain labels (their formulas are
+  // listed under the NASA data they work on).
+  if (!s.nasa) {
+    return (
+      <View style={styles.chip}>
+        <Text style={styles.label} numberOfLines={1}>
+          {s.name}
+        </Text>
+      </View>
+    );
+  }
   return (
     <Pressable
       onPress={() => openInspector(k, period)}
-      onHoverIn={wide ? () => openInspector(k, period) : undefined}
       accessibilityRole="button"
-      accessibilityLabel={`${s.name}: how this data is used`}
+      accessibilityLabel={`${s.name}: how this NASA data is used`}
       hitSlop={6}
-      style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [styles.chip, s.nasa && styles.nasa, (pressed || hovered) && styles.active]}
+      style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [styles.chip, styles.nasa, (pressed || hovered) && styles.active]}
     >
       <Text style={[styles.label, s.nasa && styles.nasaLabel]} numberOfLines={1}>
         {s.name}

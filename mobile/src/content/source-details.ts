@@ -6,6 +6,13 @@
 
 import type { SourceKey } from "./sources";
 
+/** Methods that work on each NASA dataset: their formulas show in that dataset's panel. */
+export const METHODS_ON: Readonly<Partial<Record<SourceKey, readonly SourceKey[]>>> = {
+  power: ["fao56", "brouwer", "ecocrop", "tr55"],
+  "power-daily": ["fao56", "brouwer", "ecocrop"],
+  srtm: ["fao56", "rusle"],
+};
+
 export interface SourceDetail {
   variables?: readonly { code: string; meaning: string }[];
   how: readonly string[];
