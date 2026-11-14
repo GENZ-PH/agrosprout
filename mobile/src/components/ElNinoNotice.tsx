@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
 import context from "../../assets/data/context.json";
@@ -8,11 +9,13 @@ import { colors, MIN_TOUCH, space, text } from "./theme";
 // both bundled in assets/data/context.json by the pipeline (#10). Context only: no score uses it.
 // The wording follows the advisory's own summary in context.json; nothing here is computed.
 
-export function ensoText(): { line: string; source: string; url: string; oniUrl: string } | null {
+export function ensoText(): { short: string; line: string; source: string; url: string; oniUrl: string } | null {
   const { oni, advisory } = context;
   if (!oni || !advisory) return null;
   const sign = oni.anomaly_c > 0 ? "+" : "";
   return {
+    // Plain-language first line (#165); the full advisory wording stays one tap away.
+    short: "El Niño year. PAGASA says a very strong El Niño will last into early 2027, with less rain than normal. Plan for dry months: these results come from past years, not a forecast.",
     line: `El Niño year: ${advisory.issuer} (${advisory.issued}) says "${advisory.title}", expected to last into the first half of 2027. For November 2026 it expected below normal to way below normal rain over most of the country. Plan for the dry months: the results here come from past records, not a forecast.`,
     source: `Sources: ${advisory.issuer} press release; ${oni.source}, ${oni.season} ${oni.year}: ${sign}${oni.anomaly_c} °C.`,
     url: advisory.url,
@@ -21,22 +24,36 @@ export function ensoText(): { line: string; source: string; url: string; oniUrl:
 }
 
 export function ElNinoNotice() {
+  const [open, setOpen] = useState(false);
   const e = ensoText();
   if (!e) return null;
   return (
     <View style={styles.wrap}>
       <Notice tone="warn" icon="alert">
-        {e.line}
+        {e.short}
       </Notice>
-      <Text style={[text.caption, styles.muted]}>{e.source}</Text>
-      <View style={styles.links}>
-        <Pressable onPress={() => void Linking.openURL(e.url)} accessibilityRole="link" style={styles.link}>
-          <Text style={[text.caption, styles.linkText]}>PAGASA press release</Text>
-        </Pressable>
-        <Pressable onPress={() => void Linking.openURL(e.oniUrl)} accessibilityRole="link" style={styles.link}>
-          <Text style={[text.caption, styles.linkText]}>NOAA ONI table</Text>
-        </Pressable>
-      </View>
+      <Pressable
+        onPress={() => setOpen((o) => !o)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+        style={styles.link}
+      >
+        <Text style={[text.caption, styles.linkText]}>{open ? "Hide the advisory" : "Read the PAGASA advisory and sources"}</Text>
+      </Pressable>
+      {open ? (
+        <>
+          <Text style={text.small}>{e.line}</Text>
+          <Text style={[text.caption, styles.muted]}>{e.source}</Text>
+          <View style={styles.links}>
+            <Pressable onPress={() => void Linking.openURL(e.url)} accessibilityRole="link" style={styles.link}>
+              <Text style={[text.caption, styles.linkText]}>PAGASA press release</Text>
+            </Pressable>
+            <Pressable onPress={() => void Linking.openURL(e.oniUrl)} accessibilityRole="link" style={styles.link}>
+              <Text style={[text.caption, styles.linkText]}>NOAA ONI table</Text>
+            </Pressable>
+          </View>
+        </>
+      ) : null}
     </View>
   );
 }
@@ -44,7 +61,7 @@ export function ElNinoNotice() {
 const styles = StyleSheet.create({
   wrap: { gap: space.xs },
   links: { flexDirection: "row", flexWrap: "wrap", columnGap: space.md },
-  link: { minHeight: MIN_TOUCH, justifyContent: "center" },
+  link: { minHeight: MIN_TOUCH, justifyContent: "center", alignSelf: "flex-start" },
   linkText: { color: colors.green, textDecorationLine: "underline" },
   muted: { color: colors.muted },
 });

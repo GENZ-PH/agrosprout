@@ -231,16 +231,15 @@ function LotResults({ farm, lot, overview }: { farm: Farm; lot: Lot; overview: R
       const a = analysis.rotations.options.find((o) => o.key === "A");
       const pick = topPick(analysis.rotations.options);
       const topCard = pick ? (
-        <Narrow>
-          <TopPickCard
+        <TopPickCard
             lotName={lot.name}
             pick={pick}
             a={a}
             explanation={analysis.explanations.find((e) => e.option_key === pick.key)}
             cropName={cropName}
-            monthsHref={analysis.stage === 1 ? { pathname: "/months", params: { lot: lot.id } } : undefined}
-          />
-        </Narrow>
+          monthsHref={analysis.stage === 1 ? { pathname: "/months", params: { lot: lot.id } } : undefined}
+          wide={wide}
+        />
       ) : null;
       return (
         <>

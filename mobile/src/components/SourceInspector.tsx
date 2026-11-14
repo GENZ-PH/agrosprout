@@ -17,8 +17,9 @@ import {
   type PanelContext,
   subscribeInspector,
 } from "./inspector-store";
+import { canDock, DOCK_WIDTH } from "./layout-core";
 import { useLayout } from "./useLayout";
-import { BREAKPOINTS, colors, MIN_TOUCH, radius, space, text } from "./theme";
+import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
 // The inspector: one panel for the whole app, opened by clicking a NASA SourceChip. On a wide
 // screen it docks on the right and pushes the page narrower; on a phone it is a sheet from the
@@ -50,12 +51,7 @@ function PanelBody({ state, context }: { state: NonNullable<ReturnType<typeof ge
   ) : null;
 }
 
-const DOCK_WIDTH = 420;
-/**
- * Dock only when the page keeps its two-column width beside the panel; pages pick their layout
- * from the whole window, so a narrower window gets the sheet instead.
- */
-export const canDock = (width: number) => width >= BREAKPOINTS.expanded + DOCK_WIDTH;
+export { canDock };
 
 /**
  * Wide screens: the panel docks beside the page and pushes it narrower (the root layout puts

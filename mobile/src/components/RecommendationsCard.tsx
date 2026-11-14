@@ -136,7 +136,8 @@ function OptionItem({ option: o, a, explanation: ex, sameAs, componentsLeftOut, 
       <Text style={text.small}>{crops}</Text>
 
       <Section title="Why this option">
-        <Bullets lines={ex.why.map((l) => l.text)} />
+        {/* Progressive disclosure (#165): the main reason; the rest opens with the details. */}
+        <Bullets lines={(open ? ex.why : ex.why.slice(0, 1)).map((l) => l.text)} />
       </Section>
 
       <Pressable
@@ -146,7 +147,7 @@ function OptionItem({ option: o, a, explanation: ex, sameAs, componentsLeftOut, 
         accessibilityState={{ expanded: open }}
         style={({ pressed }) => [styles.toggle, pressed && styles.pressed]}
       >
-        <Text style={[text.bodyStrong, styles.toggleText]}>{open ? "Hide details" : "Scores, evidence and checks"}</Text>
+        <Text style={[text.bodyStrong, styles.toggleText]}>{open ? "Hide details" : "More reasons, scores and checks"}</Text>
         <View style={open ? styles.chevronOpen : styles.chevron}>
           <Icon name="chevron" size={20} color={colors.green} />
         </View>
