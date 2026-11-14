@@ -13,7 +13,7 @@ export function ensoText(): { line: string; source: string; url: string } | null
   if (!oni || !advisory) return null;
   const sign = oni.anomaly_c > 0 ? "+" : "";
   return {
-    line: `El Niño year: ${advisory.issuer} (${advisory.issued}) says "${advisory.title}" and expects below normal to way below normal rain over most of the country in November 2026. Plan for the dry months; the results use 25 years of records, not a forecast.`,
+    line: `El Niño year: ${advisory.issuer} (${advisory.issued}) says "${advisory.title}", expected to last into the first half of 2027. For November 2026 it expected below normal to way below normal rain over most of the country. Plan for the dry months: the results here come from past records, not a forecast.`,
     source: `Sources: ${advisory.issuer} press release; ${oni.source}, ${oni.season} ${oni.year}: ${sign}${oni.anomaly_c} °C.`,
     url: advisory.url,
   };
