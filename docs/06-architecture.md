@@ -52,9 +52,10 @@ flowchart TB
 
 ### Live per-lot data fetch (verified 2026-11-14)
 
-- `GET https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=T2M_MAX,T2M_MIN,PRECTOTCORR,GWETROOT,RH2M,WS2M,ALLSKY_SFC_SW_DWN&community=AG&longitude=<lon>&latitude=<lat>&start=2001&end=2024&format=JSON`
+- `GET https://power.larc.nasa.gov/api/temporal/monthly/point?parameters=T2M,T2M_RANGE,T2M_MAX,PRECTOTCORR,GWETROOT,RH2M,WS2M,ALLSKY_SFC_SW_DWN&community=AG&longitude=<lon>&latitude=<lat>&start=2001&end=2024&format=JSON`
 - HTTP 200, ~33 KB, ~1.5 s. **Android app:** native `fetch`, so CORS doesn't apply. **Web build:** works too, because POWER sends `access-control-allow-origin: *` (verified).
 - ⚠️ **Gotchas:** monthly `PRECTOTCORR` is **mm/day** (multiply by days in month); month key `YYYY13` is the **annual** value (skip it); missing values are `-999`.
+- ⚠️ **Monthly temperature gotcha (checked 2026-11-14, Iligan point, 2001–2024, against the daily endpoint):** monthly `T2M_MAX` is the **hottest day of the month** and monthly `T2M_MIN` is the **coldest day**, not the mean daily maximum and minimum. They differed from the mean of the daily values by about 2 °C on average. Monthly `T2M`, `T2M_RANGE` and `RH2M` *are* means of the daily values (differences ≤ 0.01). For ET₀ use **`T2M ± T2M_RANGE/2`** as mean Tmax/Tmin (about 0.5 °C off the true mean daily values here; annual ET₀ within about 2% of using the daily means). Keep monthly `T2M_MAX` only as a *hottest-day* heat-risk indicator and label it that way.
 - Query point = **lot polygon centroid, rounded to 0.1°** (POWER cells are ~0.5°, so no accuracy is lost and the farmer's exact location is never sent).
 - Lots in the **same POWER cell share identical climate data**. Differences between nearby lots come from land type, slope, soil, water source, and crops. Say this in the ⓘ explainer.
 - ET₀ is computed **monthly** with FAO-56 Penman-Monteith from monthly means (an accepted FAO-56 use). Daily-based metrics (e.g. count of days > 35 °C) exist only for precomputed demo farms. Live lots use monthly mean Tmax as a proxy.
