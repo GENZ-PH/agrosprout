@@ -1,0 +1,1127 @@
+{
+  "meta": {
+    "version": "0.2.0",
+    "generated": "2026-11-14",
+    "status": "Draft crop list: the D24 candidates in docs/decision-log.md. D24 (final list), D26 (Lanao del Norte planting calendars) and D28 (local check) are still open, so the team confirms or trims this list with a local technician. A value with no source is null and listed in that crop's 'unverified'.",
+    "history": "0.1.0 drafted 2026-11-14 on the app-mvp branch (app/public/data/crops.json). 0.2.0 moved here for #11 with every value unchanged; the only addition is a source entry for n_fixing on crops outside the legume family, labelled as a team rule (see method).",
+    "method": "Every number was read in this session from the source named in that crop's 'sources' list. Values that could not be checked are null and listed in 'unverified'. stages_days, kc, root_depth_m and p_depletion come from FAO-56 Tables 11, 12 and 22 as printed; stages_days are FAO example rows (none is for the Philippines), so the engine should rescale them to season_days as FAO-56 advises. Kc values are for FAO's standard sub-humid climate (RHmin about 45%, wind about 2 m/s) and should be adjusted for humid Philippine conditions with FAO-56 Eq. 62 and 65. temp_c = FAO Ecocrop TMIN, TOPMN, TOPMX, TMAX. Where a single number was needed from a cited range (season_days), the rounded midpoint was used and this is said in the source text. Waterlogging tolerance uses the crop guide's own words where one exists; otherwise Ecocrop drainage: optimal drainage includes 'poorly drained' = high, range includes it = medium, neither = low (a team-chosen mapping). Drought tolerance uses the crop guide's words, or the FAO-56 Table 24 yield response factor Ky (Ky above 1 = low; below 1 = medium unless a source calls the crop drought tolerant). Yields are PSA OpenSTAT production divided by area for 2022-2024 (sums), Lanao del Norte unless noted. Calendars are national unless noted (no Lanao del Norte calendar was found). labor, market and most cover_value fields are left null for the team to fill from local sources. n_fixing on a crop outside the legume family (Fabaceae) is false by a team rule (an assumption, no source cited): only legumes are taken as nitrogen-fixing, and each crop's family is cited from Ecocrop. The team should confirm this rule or replace it with a citation.",
+    "general_sources": [
+      {
+        "citation": "Allen, R.G., Pereira, L.S., Raes, D., Smith, M. 1998. Crop evapotranspiration. FAO Irrigation and Drainage Paper 56. Chapter 6 (Tables 11, 12, 14)",
+        "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+      },
+      {
+        "citation": "FAO-56 Chapter 7 (Table 19, soil water characteristics)",
+        "url": "https://www.fao.org/4/x0490e/x0490e0c.htm"
+      },
+      {
+        "citation": "FAO-56 Chapter 8 (Table 22 rooting depth and p; Table 24 yield response factor Ky)",
+        "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+      },
+      {
+        "citation": "FAO Ecocrop database (full export redistributed by OpenCLIM/ecocrop, EcoCrop_DB.csv); official viewer at gaez.fao.org/pages/ecocrop",
+        "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+      },
+      {
+        "citation": "Philippine Statistics Authority, OpenSTAT, Agriculture: Crops tables (accessed via PXWeb API 2026-11-14)",
+        "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS"
+      },
+      {
+        "citation": "FAO GIEWS Country Brief Philippines, 29 January 2026, crop calendar",
+        "url": "https://www.fao.org/giews/countrybrief/country.jsp?code=PHL&lang=en"
+      },
+      {
+        "citation": "Brouwer, C., Heibloem, M. 1986. Irrigation Water Management Training Manual No. 3: Irrigation Water Needs. FAO. Chapter 4 (effective rainfall and paddy rice)",
+        "url": "https://www.fao.org/4/s2022e/s2022e08.htm"
+      },
+      {
+        "citation": "Kader, A.A. 1993, relative perishability table, reproduced in FAO 'Storage of horticultural crops'",
+        "url": "https://www.fao.org/4/x5403e/x5403e09.htm"
+      }
+    ]
+  },
+  "rice_extra_mm": 180,
+  "rice_extra_detail": {
+    "percolation_seepage_mm_per_day": {
+      "heavy_clay": 4,
+      "average": 6,
+      "sandy": 8
+    },
+    "land_prep_saturation_mm_once": 200,
+    "water_layer_establishment_mm_once": 100,
+    "how_rice_extra_mm_was_derived": "6 mm/day average percolation and seepage x 30 days = 180 mm/month while ponded. Add 200 mm in the month before transplanting (soil saturation for puddling) and 100 mm in the transplanting month (water layer). Use 4 mm/day for clayey and 8 mm/day for sandy soil feel.",
+    "citation": "Brouwer, C., Heibloem, M. 1986. FAO Irrigation Water Management Training Manual No. 3, Section 4.4 Irrigation water need of rice: SAT = 200 mm, PERC 4-8 mm/day (heavy clay 4, sandy 8, average 6), WL = 100 mm",
+    "url": "https://www.fao.org/4/s2022e/s2022e08.htm"
+  },
+  "taw_mm_per_m": {
+    "sandy": {
+      "min": 50,
+      "max": 110,
+      "fao_texture_class": "Sand (thetaFC - thetaWP 0.05-0.11 m3/m3); loamy sand is 0.06-0.12"
+    },
+    "loamy": {
+      "min": 130,
+      "max": 180,
+      "fao_texture_class": "Loam (0.13-0.18 m3/m3); sandy loam is 0.11-0.15, silt loam 0.13-0.19"
+    },
+    "clayey": {
+      "min": 120,
+      "max": 200,
+      "fao_texture_class": "Clay (0.12-0.20 m3/m3); silty clay is 0.13-0.19"
+    },
+    "citation": "FAO-56 Table 19, typical soil water characteristics: (thetaFC - thetaWP) in m3/m3, multiplied by 1000 to give mm of water per m of root depth. TAW = 1000 (thetaFC - thetaWP) Zr (FAO-56 Eq. 82)",
+    "url": "https://www.fao.org/4/x0490e/x0490e0c.htm"
+  },
+  "crops": [
+    {
+      "id": "lowland-rice",
+      "name": "Lowland rice (irrigated or rainfed paddy)",
+      "local_name": "Humay",
+      "family": "Poaceae",
+      "season_days": 112,
+      "stages_days": [
+        30,
+        30,
+        60,
+        30
+      ],
+      "kc": [
+        1.05,
+        1.2,
+        0.6
+      ],
+      "root_depth_m": [
+        0.5,
+        1.0
+      ],
+      "p_depletion": 0.2,
+      "temp_c": {
+        "min": 16,
+        "opt_low": 25,
+        "opt_high": 35,
+        "max": 38
+      },
+      "drought_tolerance": "low",
+      "waterlogging_tolerance": "high",
+      "n_fixing": false,
+      "labor": null,
+      "market": null,
+      "cover_value": null,
+      "perishability": "low",
+      "storable_if_dried": true,
+      "yield_t_per_ha": 4.53,
+      "typical_calendar": [
+        {
+          "plant_month": 6,
+          "harvest_month": 10
+        },
+        {
+          "plant_month": 11,
+          "harvest_month": 3
+        }
+      ],
+      "sources": [
+        {
+          "field_or_fields": "local_name",
+          "citation": "Wiktionary, Cebuano 'humay': the grass Oryza sativa; rice",
+          "url": "https://en.wiktionary.org/wiki/humay"
+        },
+        {
+          "field_or_fields": "family",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Oryza sativa listed under Gramineae (Poaceae)",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "season_days",
+          "citation": "PhilRice Rice Variety Database, NSIC Rc216 (a widely grown inbred): maturity 112 days",
+          "url": "https://dbmp.philrice.gov.ph/seeds/content/seed_characteristics/varietychar.php?Vchars=65"
+        },
+        {
+          "field_or_fields": "stages_days",
+          "citation": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Table 11 (stage lengths, days); row 'Rice, Dec; May, Tropics; Mediterranean' 30/30/60/30 = 150 days (the other Tropics row is 180 days). FAO-56 says to rescale stages to local season length",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "kc",
+          "citation": "Allen et al. 1998, FAO-56 Table 12 (single Kc for non-stressed crops in a sub-humid standard climate, RHmin about 45%, u2 about 2 m/s; Kc mid and Kc end need adjustment for the humid Philippine climate); Rice: Kc ini 1.05, Kc mid 1.20, Kc end 0.90-0.60. Lower end 0.60 chosen because FAO-56 says more humid climates have lower Kc end. FAO-56 Table 14 gives Kc ini 1.05 for sub-humid to humid climate with light wind",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "root_depth_m, p_depletion",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); Rice: Zr 0.5-1.0 m, p 0.20 (footnote 4: p for rice is 0.20 of saturation)",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "temp_c",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; entry Oryza sativa ssp. indica (EcoPort 8143): TMIN 16, TOPMN 25, TOPMX 35, TMAX 38. The generic Oryza sativa entry gives 10/20/30/36; indica chosen because Philippine lowland rice is indica",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "waterlogging_tolerance",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Oryza sativa optimal drainage 'poorly (saturated >50% of year)'. Rule used: optimal drainage includes 'poorly' = high",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "drought_tolerance",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); rice has the lowest p of all crops in the table (0.20 of saturation), meaning stress starts after very little soil drying; Ecocrop minimum annual rainfall for indica rice is 1000 mm, the highest among these crops",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "perishability, storable_if_dried",
+          "citation": "IRRI Rice Knowledge Bank, Storage: safe storage of rice for longer periods is possible if grain is kept at 14% moisture or less and protected from pests and re-wetting",
+          "url": "http://www.knowledgebank.irri.org/step-by-step-production/postharvest/storage"
+        },
+        {
+          "field_or_fields": "yield_t_per_ha",
+          "citation": "PSA OpenSTAT table 'Palay and Corn: Volume of Production' and 'Area Harvested', Palay (all ecosystems), Lanao del Norte, 2022-2024: production 600,225.78 t, area 132,605.72 ha, yield 4.53 t/ha (computed). For reference: irrigated 4.62, rainfed 4.08 t/ha in the same province and years",
+          "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0012E4EVCP0.px"
+        },
+        {
+          "field_or_fields": "typical_calendar",
+          "citation": "FAO GIEWS Country Brief Philippines, 29 January 2026, crop calendar graphic (national, not regional): rice main season sowing about April-June, harvest about September-December; rice second season sowing about October-December, harvest about January-April. Months chosen inside these windows so plant-to-harvest is about 4 months. Lanao del Norte specific calendar not found",
+          "url": "https://www.fao.org/giews/countrybrief/country.jsp?code=PHL&lang=en"
+        },
+        {
+          "field_or_fields": "n_fixing",
+          "citation": "Team rule (assumption, no source cited; see meta.method): family Poaceae is not a legume (Fabaceae), so n_fixing is false. The family is cited above."
+        }
+      ],
+      "unverified": [
+        "labor",
+        "market",
+        "cover_value"
+      ],
+      "notes": "Rice likes standing water, so it fits low, wet fields where other crops would rot."
+    },
+    {
+      "id": "corn",
+      "name": "Corn (maize, grain)",
+      "local_name": "Mais",
+      "family": "Poaceae",
+      "season_days": 95,
+      "stages_days": [
+        20,
+        35,
+        40,
+        30
+      ],
+      "kc": [
+        0.3,
+        1.2,
+        0.6
+      ],
+      "root_depth_m": [
+        1.0,
+        1.7
+      ],
+      "p_depletion": 0.55,
+      "temp_c": {
+        "min": 10,
+        "opt_low": 18,
+        "opt_high": 33,
+        "max": 47
+      },
+      "drought_tolerance": "low",
+      "waterlogging_tolerance": "low",
+      "n_fixing": false,
+      "labor": null,
+      "market": null,
+      "cover_value": null,
+      "perishability": "low",
+      "storable_if_dried": true,
+      "yield_t_per_ha": 3.19,
+      "typical_calendar": [
+        {
+          "plant_month": 5,
+          "harvest_month": 8
+        },
+        {
+          "plant_month": 11,
+          "harvest_month": 2
+        }
+      ],
+      "sources": [
+        {
+          "field_or_fields": "local_name",
+          "citation": "Wiktionary, Cebuano 'mais': maize, Zea mays; corn",
+          "url": "https://en.wiktionary.org/wiki/mais"
+        },
+        {
+          "field_or_fields": "family",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Zea mays listed under Gramineae (Poaceae)",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "season_days",
+          "citation": "PNS/BAFS 27:2018 Code of Practice for the Prevention and Reduction of Aflatoxin in Corn (DA-BAFS), 4.2.2: harvest at physiological maturity, about 90-100 DAP for white corn and 100-120 DAP for yellow corn. White corn is about 86% of Lanao del Norte corn area (PSA 2022-2024), so the midpoint of 90-100 days was used",
+          "url": "https://ppssd.buplant.da.gov.ph/storage/app/public/LegalReference/PNS_BAFS%2027_2018%20COP%20Aflatoxin%20in%20corn.pdf"
+        },
+        {
+          "field_or_fields": "stages_days",
+          "citation": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Table 11 (stage lengths, days); row 'Maize (grain), June, Nigeria (humid)' 20/35/40/30 = 125 days, chosen as the humid tropical row",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "kc",
+          "citation": "Allen et al. 1998, FAO-56 Table 12 (single Kc for non-stressed crops in a sub-humid standard climate, RHmin about 45%, u2 about 2 m/s; Kc mid and Kc end need adjustment for the humid Philippine climate); Maize field (grain): Kc ini 0.3 (cereals group), Kc mid 1.20, Kc end 0.60-0.35. Footnote 11: 0.60 is for harvest at high grain moisture, 0.35 after full field drying. 0.60 chosen because PNS/BAFS 27:2018 recommends harvest at physiological maturity followed by drying",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "root_depth_m, p_depletion",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); Maize, field (grain): Zr 1.0-1.7 m, p 0.55",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "temp_c",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; entry Zea mays ssp. mays (EcoPort 238663): 10/18/33/47",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "drought_tolerance",
+          "citation": "FAO-56 Table 24 (seasonal yield response factor Ky from FAO Paper 33): maize Ky 1.25, the highest of the crops here that are listed. Ky above 1 means yield falls faster than water use, so the crop is sensitive to drought",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "waterlogging_tolerance",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Zea mays ssp. mays drainage range 'well (dry spells), excessive'; no poorly drained class. Rule used: no 'poorly' in range = low",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "perishability, storable_if_dried",
+          "citation": "PNS/BAFS 27:2018: shelled corn is dried and stored; for stocks held more than a month, pest control is required",
+          "url": "https://ppssd.buplant.da.gov.ph/storage/app/public/LegalReference/PNS_BAFS%2027_2018%20COP%20Aflatoxin%20in%20corn.pdf"
+        },
+        {
+          "field_or_fields": "yield_t_per_ha",
+          "citation": "PSA OpenSTAT 'Palay and Corn' tables, Corn (white + yellow), Lanao del Norte, 2022-2024: production 981,399.05 t, area 307,556.70 ha, yield 3.19 t/ha (computed). White corn alone 3.02, yellow corn 4.27 t/ha",
+          "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0012E4EVCP0.px"
+        },
+        {
+          "field_or_fields": "typical_calendar",
+          "citation": "FAO GIEWS Country Brief Philippines, 29 January 2026, crop calendar graphic (national): maize main season sowing about April-June, harvest about July-September; second season sowing about October-December, harvest about January-April. Lanao del Norte specific calendar not found",
+          "url": "https://www.fao.org/giews/countrybrief/country.jsp?code=PHL&lang=en"
+        },
+        {
+          "field_or_fields": "n_fixing",
+          "citation": "Team rule (assumption, no source cited; see meta.method): family Poaceae is not a legume (Fabaceae), so n_fixing is false. The family is cited above."
+        }
+      ],
+      "unverified": [
+        "labor",
+        "market",
+        "cover_value"
+      ],
+      "notes": "Corn needs steady rain at flowering, so a dry spell then can cut the harvest hard."
+    },
+    {
+      "id": "mungbean",
+      "name": "Mungbean",
+      "local_name": "Mungo",
+      "family": "Fabaceae",
+      "season_days": 65,
+      "stages_days": [
+        20,
+        30,
+        30,
+        20
+      ],
+      "kc": [
+        0.4,
+        1.05,
+        0.35
+      ],
+      "root_depth_m": [
+        0.6,
+        1.0
+      ],
+      "p_depletion": 0.45,
+      "temp_c": {
+        "min": 8,
+        "opt_low": 21,
+        "opt_high": 36,
+        "max": 40
+      },
+      "drought_tolerance": "medium",
+      "waterlogging_tolerance": "low",
+      "n_fixing": true,
+      "labor": null,
+      "market": null,
+      "cover_value": null,
+      "perishability": "low",
+      "storable_if_dried": true,
+      "yield_t_per_ha": 0.63,
+      "typical_calendar": [
+        {
+          "plant_month": 5,
+          "harvest_month": 7
+        },
+        {
+          "plant_month": 9,
+          "harvest_month": 11
+        },
+        {
+          "plant_month": 2,
+          "harvest_month": 4
+        }
+      ],
+      "sources": [
+        {
+          "field_or_fields": "local_name",
+          "citation": "StuartXchange (G. Stuart), Philippine Medicinal Plants, Mongo: 'Mungo (Tag., Bis.)', 'Mongo (Tag.)'",
+          "url": "https://www.stuartxchange.org/Mongo.html"
+        },
+        {
+          "field_or_fields": "family",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Vigna radiata under Leguminosae (Fabaceae)",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "season_days, typical_calendar, drought_tolerance, waterlogging_tolerance, n_fixing, perishability, storable_if_dried",
+          "citation": "DA High Value Crops Development Program, Mungbean Production Guide: harvest 60-70 days after planting (65 used, the midpoint); Philippine seasons wet May-June, dry September-October, late dry February-March (national); 'relatively tolerant to drought'; 'sensitive to extended periods of water-logging'; N through symbiosis with N-fixing bacteria; store seeds in tight containers in a cool dry place",
+          "url": "https://hvcdp.da.gov.ph/wp-content/uploads/2022/05/Mungbean-Production-Guide.pdf"
+        },
+        {
+          "field_or_fields": "stages_days",
+          "citation": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Table 11 (stage lengths, days); row 'Green gram, cowpeas, March, Mediterranean' 20/30/30/20 = 110 days (only row for mungbean; longer than Philippine varieties, rescale to season_days)",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "kc",
+          "citation": "Allen et al. 1998, FAO-56 Table 12 (single Kc for non-stressed crops in a sub-humid standard climate, RHmin about 45%, u2 about 2 m/s; Kc mid and Kc end need adjustment for the humid Philippine climate); Green gram and cowpeas: Kc ini 0.4 (legumes group), Kc mid 1.05, Kc end 0.60-0.35 (footnote 6: first value harvested fresh, second harvested dry). 0.35 used for dry grain",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "root_depth_m, p_depletion",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); Green gram and cowpeas: Zr 0.6-1.0 m, p 0.45",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "temp_c",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Vigna radiata (EcoPort 2150): 8/21/36/40. The DA guide gives an optimum of 20-30 C",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "yield_t_per_ha",
+          "citation": "PSA OpenSTAT 'Vegetables and Root Crops' production and area, Mongo [Mungbean], Lanao del Norte, 2022-2024: production 563.30 t, area 896 ha, yield 0.63 t/ha (computed)",
+          "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0082E4EVCP3.px"
+        }
+      ],
+      "unverified": [
+        "labor",
+        "market",
+        "cover_value"
+      ],
+      "notes": "Mungbean is a quick legume that adds nitrogen to the soil and fits between two rice or corn crops."
+    },
+    {
+      "id": "peanut",
+      "name": "Peanut (groundnut)",
+      "local_name": "Mani",
+      "family": "Fabaceae",
+      "season_days": 120,
+      "stages_days": [
+        25,
+        35,
+        45,
+        25
+      ],
+      "kc": [
+        0.4,
+        1.15,
+        0.6
+      ],
+      "root_depth_m": [
+        0.5,
+        1.0
+      ],
+      "p_depletion": 0.5,
+      "temp_c": {
+        "min": 10,
+        "opt_low": 22,
+        "opt_high": 32,
+        "max": 45
+      },
+      "drought_tolerance": "medium",
+      "waterlogging_tolerance": "low",
+      "n_fixing": true,
+      "labor": null,
+      "market": null,
+      "cover_value": null,
+      "perishability": "low",
+      "storable_if_dried": true,
+      "yield_t_per_ha": 0.84,
+      "typical_calendar": [
+        {
+          "plant_month": 5,
+          "harvest_month": 9
+        },
+        {
+          "plant_month": 10,
+          "harvest_month": 2
+        }
+      ],
+      "sources": [
+        {
+          "field_or_fields": "local_name",
+          "citation": "Wiktionary, Cebuano 'mani': peanut",
+          "url": "https://en.wiktionary.org/wiki/mani"
+        },
+        {
+          "field_or_fields": "family",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Arachis hypogaea under Leguminosae (Fabaceae)",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "season_days, typical_calendar",
+          "citation": "Peanut Production Guide (BusinessDiary PH, Oct 2022, citing elgu2.ncc.gov.ph): peanuts mature within four months after planting (120 days used as the upper bound); plant May-June in the rainy season and October-November in the dry season (national). Secondary source: the DA-BPI peanut guide PDF returned 404",
+          "url": "https://businessdiary.com.ph/8977/peanut-production-guide"
+        },
+        {
+          "field_or_fields": "stages_days",
+          "citation": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Table 11 (stage lengths, days); row 'Groundnut, Dry season, West Africa' 25/35/45/25 = 130 days, chosen as the only tropical row",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "kc",
+          "citation": "Allen et al. 1998, FAO-56 Table 12 (single Kc for non-stressed crops in a sub-humid standard climate, RHmin about 45%, u2 about 2 m/s; Kc mid and Kc end need adjustment for the humid Philippine climate); Groundnut (Peanut): Kc ini 0.4 (legumes group), Kc mid 1.15, Kc end 0.60",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "root_depth_m, p_depletion",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); Groundnut (Peanut): Zr 0.5-1.0 m, p 0.50",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "temp_c",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Arachis hypogaea (EcoPort 2199): 10/22/32/45",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "drought_tolerance",
+          "citation": "FAO-56 Table 24 (Ky from FAO Paper 33): groundnut Ky 0.70, below 1, so yield falls less than water use. Rated medium, not high, because no source here calls it drought tolerant outright",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "waterlogging_tolerance",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Arachis hypogaea drainage 'well (dry spells)' only. Rule used: no 'poorly' in range = low",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "n_fixing",
+          "citation": "Legume (Fabaceae) per Ecocrop; StuartXchange Mani page lists family Fabaceae",
+          "url": "https://www.stuartxchange.org/Mani.html"
+        },
+        {
+          "field_or_fields": "perishability, storable_if_dried",
+          "citation": "Frontiers in Sustainable Food Systems 2023 (doi 10.3389/fsufs.2023.1275133): pods dried to about 8% moisture; groundnut seed is typically stored 6-8 months before planting",
+          "url": "https://www.frontiersin.org/journals/sustainable-food-systems/articles/10.3389/fsufs.2023.1275133/full"
+        },
+        {
+          "field_or_fields": "yield_t_per_ha",
+          "citation": "PSA OpenSTAT 'Vegetables and Root Crops', Peanut, with shell, dry, Lanao del Norte, 2022-2024: production 5,854.75 t, area 6,932 ha, yield 0.84 t/ha (computed). Caution: yearly yields fell 1.52, 1.09, 0.51 t/ha as recorded area tripled while production stayed flat",
+          "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0082E4EVCP3.px"
+        }
+      ],
+      "unverified": [
+        "labor",
+        "market",
+        "cover_value"
+      ],
+      "notes": "Peanut is a legume that feeds the soil with nitrogen, and dried pods keep for months."
+    },
+    {
+      "id": "soybean",
+      "name": "Soybean",
+      "local_name": "Soybeans (utaw)",
+      "family": "Fabaceae",
+      "season_days": 95,
+      "stages_days": [
+        15,
+        15,
+        40,
+        15
+      ],
+      "kc": [
+        0.4,
+        1.15,
+        0.5
+      ],
+      "root_depth_m": [
+        0.6,
+        1.3
+      ],
+      "p_depletion": 0.5,
+      "temp_c": {
+        "min": 10,
+        "opt_low": 20,
+        "opt_high": 33,
+        "max": 38
+      },
+      "drought_tolerance": "medium",
+      "waterlogging_tolerance": "low",
+      "n_fixing": true,
+      "labor": null,
+      "market": null,
+      "cover_value": null,
+      "perishability": "low",
+      "storable_if_dried": true,
+      "yield_t_per_ha": 0.91,
+      "typical_calendar": [
+        {
+          "plant_month": 4,
+          "harvest_month": 7
+        }
+      ],
+      "sources": [
+        {
+          "field_or_fields": "local_name",
+          "citation": "DA Caraga HVCDP Technoguide No. 12-2021 'Giya sa Pagpananum ug Soybeans' (written in Cebuano) uses 'soybeans'; Wiktionary Cebuano 'utaw' (etymology 2): black mongo, black soybean. Utaw may refer mainly to black soybean",
+          "url": "https://en.wiktionary.org/wiki/utaw"
+        },
+        {
+          "field_or_fields": "family",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Glycine max under Leguminosae (Fabaceae)",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "season_days, typical_calendar, waterlogging_tolerance, perishability, storable_if_dried",
+          "citation": "DA Caraga (Mindanao) Technoguide 'Giya sa Pagpananum ug Soybeans' 2021: harvest about 90-100 days after planting (95 used, midpoint); in Caraga plant March-April after the rains, harvest July-August; field must not hold standing water ('dili kini mapundohan ug tubig'); dried seed storage guidance for 3-4 months and for 10 months to 1 year. Caraga is the neighbouring Mindanao region, not Lanao del Norte",
+          "url": "https://caraga.da.gov.ph/wp-content/uploads/Publication/HVCDP/cy2022/Giya-sa-Pagpananum-ug-Soybeans.pdf"
+        },
+        {
+          "field_or_fields": "stages_days",
+          "citation": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Table 11 (stage lengths, days); row 'Soybeans, Dec, Tropics' 15/15/40/15 = 85 days",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "kc",
+          "citation": "Allen et al. 1998, FAO-56 Table 12 (single Kc for non-stressed crops in a sub-humid standard climate, RHmin about 45%, u2 about 2 m/s; Kc mid and Kc end need adjustment for the humid Philippine climate); Soybeans: Kc ini 0.4 (legumes group), Kc mid 1.15, Kc end 0.50",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "root_depth_m, p_depletion",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); Soybeans: Zr 0.6-1.3 m, p 0.50",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "temp_c",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Glycine max (EcoPort 1150): 10/20/33/38",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "drought_tolerance",
+          "citation": "FAO-56 Table 24 (Ky from FAO Paper 33): soybean Ky 0.85, below 1. Rated medium",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "n_fixing",
+          "citation": "Legume (Fabaceae) per Ecocrop and StuartXchange Soya page (family Fabaceae)",
+          "url": "https://www.stuartxchange.org/Soya.html"
+        },
+        {
+          "field_or_fields": "yield_t_per_ha",
+          "citation": "PSA OpenSTAT 'Vegetables and Root Crops', Soybeans, Region X (Northern Mindanao), 2022-2024: production 142.80 t, area 157.63 ha, yield 0.91 t/ha (computed). Lanao del Norte reports 0 ha, so the regional value is used",
+          "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0082E4EVCP3.px"
+        }
+      ],
+      "unverified": [
+        "labor",
+        "market",
+        "cover_value"
+      ],
+      "notes": "Soybean is a legume that adds nitrogen, but it needs a well-drained field after the rains."
+    },
+    {
+      "id": "string-bean",
+      "name": "String bean (yardlong bean, pole sitaw)",
+      "local_name": "Batong (balatong)",
+      "family": "Fabaceae",
+      "season_days": null,
+      "stages_days": [
+        20,
+        30,
+        30,
+        20
+      ],
+      "kc": [
+        0.4,
+        1.05,
+        0.6
+      ],
+      "root_depth_m": [
+        0.6,
+        1.0
+      ],
+      "p_depletion": 0.45,
+      "temp_c": {
+        "min": 14,
+        "opt_low": 20,
+        "opt_high": 35,
+        "max": 38
+      },
+      "drought_tolerance": "low",
+      "waterlogging_tolerance": "low",
+      "n_fixing": true,
+      "labor": null,
+      "market": null,
+      "cover_value": null,
+      "perishability": "high",
+      "storable_if_dried": false,
+      "yield_t_per_ha": 8.22,
+      "typical_calendar": [],
+      "sources": [
+        {
+          "field_or_fields": "local_name",
+          "citation": "Wiktionary, Cebuano 'balatong': yardlong bean (Vigna unguiculata subsp. sesquipedalis); 'batong' is the Metro Cebu, Bohol and Southern Leyte form. StuartXchange Sitaw page also lists Hamtak and Banor (Bis.)",
+          "url": "https://en.wiktionary.org/wiki/balatong"
+        },
+        {
+          "field_or_fields": "family",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Vigna unguiculata ssp. sesquipedalis under Leguminosae (Fabaceae)",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "stages_days",
+          "citation": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Table 11 (stage lengths, days); row 'Green gram, cowpeas, March, Mediterranean' 20/30/30/20 = 110 days (only cowpea row)",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "kc",
+          "citation": "Allen et al. 1998, FAO-56 Table 12 (single Kc for non-stressed crops in a sub-humid standard climate, RHmin about 45%, u2 about 2 m/s; Kc mid and Kc end need adjustment for the humid Philippine climate); Green gram and cowpeas: Kc ini 0.4, Kc mid 1.05, Kc end 0.60 (footnote 6: first Kc end is for harvested fresh). Footnote 2 says legumes on 1.5-2 m stakes may need a higher Kc mid (1.15 for green beans); pole sitaw is staked at 1.5-2 m (ATI-7 guide), so 1.05 may be low",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "root_depth_m, p_depletion",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); Green gram and cowpeas: Zr 0.6-1.0 m, p 0.45",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "temp_c",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Vigna unguiculata ssp. sesquipedalis (EcoPort 10834, common names include 'pole sitao'): 14/20/35/38",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "drought_tolerance, waterlogging_tolerance",
+          "citation": "DA-ATI Cordillera, Pole Sitaw Production flyer: requires constant supply of water, too little water causes flower and pod drop; too much water causes root rot; harvested 60-70 days from planting, every 3-4 days for up to 30 pickings",
+          "url": "https://ati2.da.gov.ph/ati-car/content/sites/default/files/2022-12/pole_sitaw_flyer.pdf"
+        },
+        {
+          "field_or_fields": "typical_calendar",
+          "citation": "DA-ATI Region VII String Beans Production Guide (source DA RFU-7, Mandaue City, Cebu): 'Can be grown throughout the year'. No fixed planting month, so the calendar is left empty",
+          "url": "https://ati2.da.gov.ph/ati-7/content/sites/default/files/users/user16/String%20Beans_FINAL2020.pdf"
+        },
+        {
+          "field_or_fields": "perishability, storable_if_dried",
+          "citation": "Kader 1993, reproduced in FAO 'Storage of horticultural crops': green beans are in the 'High' perishability class, 2-4 weeks potential storage even at near-optimum cold storage, so days at farm ambient temperature. Sold fresh as pods, not dried",
+          "url": "https://www.fao.org/4/x5403e/x5403e09.htm"
+        },
+        {
+          "field_or_fields": "n_fixing",
+          "citation": "Legume (Fabaceae) per Ecocrop and StuartXchange Sitaw page",
+          "url": "https://www.stuartxchange.org/Sitaw.html"
+        },
+        {
+          "field_or_fields": "yield_t_per_ha",
+          "citation": "PSA OpenSTAT 'Vegetables and Root Crops', Sitao [Stringbeans] (fresh pods), Lanao del Norte, 2022-2024: production 1,280.52 t, area 155.82 ha, yield 8.22 t/ha (computed). Small area; Region X gives 7.74 t/ha",
+          "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0082E4EVCP3.px"
+        }
+      ],
+      "unverified": [
+        "season_days",
+        "typical_calendar",
+        "labor",
+        "market",
+        "cover_value"
+      ],
+      "notes": "Sitaw is a legume that adds nitrogen, but fresh pods spoil in days, so it needs a nearby buyer."
+    },
+    {
+      "id": "sweet-potato",
+      "name": "Sweet potato",
+      "local_name": "Kamote",
+      "family": "Convolvulaceae",
+      "season_days": 105,
+      "stages_days": [
+        15,
+        30,
+        50,
+        30
+      ],
+      "kc": [
+        0.5,
+        1.15,
+        0.65
+      ],
+      "root_depth_m": [
+        1.0,
+        1.5
+      ],
+      "p_depletion": 0.65,
+      "temp_c": {
+        "min": 10,
+        "opt_low": 18,
+        "opt_high": 28,
+        "max": 38
+      },
+      "drought_tolerance": null,
+      "waterlogging_tolerance": "low",
+      "n_fixing": false,
+      "labor": null,
+      "market": null,
+      "cover_value": null,
+      "perishability": "medium",
+      "storable_if_dried": false,
+      "yield_t_per_ha": 10.14,
+      "typical_calendar": [],
+      "sources": [
+        {
+          "field_or_fields": "local_name",
+          "citation": "Wiktionary, Cebuano 'kamote': sweet potato; StuartXchange Kamote page: 'Kamote (all dialects)'",
+          "url": "https://en.wiktionary.org/wiki/kamote"
+        },
+        {
+          "field_or_fields": "family",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Ipomoea batatas under Convolvulaceae",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "season_days, waterlogging_tolerance",
+          "citation": "DA Region 02 HVCDP Sweet Potato Production Guide (2012): varieties usually harvested 3-4 months after planting (105 days used, midpoint of 90-120); cuttings rot when soil is waterlogged more than 24 hours and mature roots rot under prolonged waterlogging; 'Follow the planting season in your place' (no months given)",
+          "url": "https://cagayanvalley.da.gov.ph/wp-content/uploads/2018/02/sweet_potato.pdf"
+        },
+        {
+          "field_or_fields": "stages_days",
+          "citation": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Table 11 (stage lengths, days); row 'Sweet potato, Rainy season, Tropical regions' 15/30/50/30 = 125 days",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "kc",
+          "citation": "Allen et al. 1998, FAO-56 Table 12 (single Kc for non-stressed crops in a sub-humid standard climate, RHmin about 45%, u2 about 2 m/s; Kc mid and Kc end need adjustment for the humid Philippine climate); Sweet Potato: Kc ini 0.5 (roots and tubers group), Kc mid 1.15, Kc end 0.65",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "root_depth_m, p_depletion",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); Sweet Potato: Zr 1.0-1.5 m, p 0.65",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "temp_c",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Ipomoea batatas (EcoPort 1265): 10/18/28/38. The DA Region 02 guide gives an ambient 25-30 C",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "perishability, storable_if_dried",
+          "citation": "Kader 1993 in FAO 'Storage of horticultural crops': sweet potato is 'Low' perishability, 8-16 weeks, but only at near-optimum storage temperature and humidity. Rated medium here as a judgment for farm storage without cooling; the DA Region 02 guide warns that wet roots rot in storage. Sold fresh, not dried",
+          "url": "https://www.fao.org/4/x5403e/x5403e09.htm"
+        },
+        {
+          "field_or_fields": "yield_t_per_ha",
+          "citation": "PSA OpenSTAT 'Vegetables and Root Crops', Camote [Sweet potato], Lanao del Norte, 2022-2024: production 49,217 t, area 4,851.75 ha, yield 10.14 t/ha (computed)",
+          "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0082E4EVCP3.px"
+        },
+        {
+          "field_or_fields": "n_fixing",
+          "citation": "Team rule (assumption, no source cited; see meta.method): family Convolvulaceae is not a legume (Fabaceae), so n_fixing is false. The family is cited above."
+        }
+      ],
+      "unverified": [
+        "drought_tolerance",
+        "typical_calendar",
+        "labor",
+        "market",
+        "cover_value"
+      ],
+      "notes": "Kamote vines cover the ground fast, but the roots rot if the field stays flooded."
+    },
+    {
+      "id": "sorghum",
+      "name": "Sorghum (grain)",
+      "local_name": "Batad",
+      "family": "Poaceae",
+      "season_days": 103,
+      "stages_days": [
+        20,
+        35,
+        40,
+        30
+      ],
+      "kc": [
+        0.3,
+        1.0,
+        0.55
+      ],
+      "root_depth_m": [
+        1.0,
+        2.0
+      ],
+      "p_depletion": 0.55,
+      "temp_c": {
+        "min": 8,
+        "opt_low": 22,
+        "opt_high": 35,
+        "max": 40
+      },
+      "drought_tolerance": "high",
+      "waterlogging_tolerance": null,
+      "n_fixing": false,
+      "labor": null,
+      "market": null,
+      "cover_value": null,
+      "perishability": "low",
+      "storable_if_dried": true,
+      "yield_t_per_ha": null,
+      "typical_calendar": [
+        {
+          "plant_month": 12,
+          "harvest_month": 3
+        }
+      ],
+      "sources": [
+        {
+          "field_or_fields": "local_name",
+          "citation": "Wiktionary, Cebuano 'batad': sorghum; StuartXchange Batad page: 'Batad (Tag., Bik., Bis.)'",
+          "url": "https://en.wiktionary.org/wiki/batad"
+        },
+        {
+          "field_or_fields": "family",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Sorghum bicolor under Gramineae (Poaceae)",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "season_days, typical_calendar, drought_tolerance",
+          "citation": "DA Regional Field Office 5 (Bicol), 'National Sorghum Development Program kicks off in Naga City': ready for harvest 100-105 days after planting (103 used, rounded midpoint); best time to plant is December to March; suitable to rain-fed and arid areas. Bicol, not Mindanao",
+          "url": "https://bicol.da.gov.ph/national-sorghum-development-program-kicks-off-in-naga-city/"
+        },
+        {
+          "field_or_fields": "drought_tolerance",
+          "citation": "FAO-56 Table 24 (Ky from FAO Paper 33): sorghum Ky 0.9 vs maize 1.25",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "stages_days",
+          "citation": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Table 11 (stage lengths, days); row 'Sorghum, May/June, USA, Pakistan, Mediterranean' 20/35/40/30 = 130 days (no tropical row; the other row is Arid Region 140 days)",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "kc",
+          "citation": "Allen et al. 1998, FAO-56 Table 12 (single Kc for non-stressed crops in a sub-humid standard climate, RHmin about 45%, u2 about 2 m/s; Kc mid and Kc end need adjustment for the humid Philippine climate); Sorghum grain: Kc ini 0.3 (cereals group), Kc mid 1.00-1.10, Kc end 0.55. Lower Kc mid 1.00 chosen because FAO-56 Eq. 62 lowers Kc mid when RHmin is above 45%",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "root_depth_m, p_depletion",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); Sorghum grain: Zr 1.0-2.0 m, p 0.55",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "temp_c",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Sorghum bicolor (EcoPort 48747): 8/22/35/40",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "perishability, storable_if_dried",
+          "citation": "University of Georgia Extension C1017, Grain Sorghum Harvesting, Drying and Storing: sorghum to be held 12 months should be dried below 12% moisture",
+          "url": "https://fieldreport.caes.uga.edu/publications/C1017/grain-sorghum-harvesting-drying-and-storing/"
+        },
+        {
+          "field_or_fields": "yield_t_per_ha",
+          "citation": "Not set. PSA OpenSTAT lists Sorghum under Non-Food and Industrial Crops (tables 0072E4EVCP1 / 0092E4EAHM1); 2022-2024 national 1,879 t on 299 ha (6.27 t/ha) and Lanao del Norte only 0.65-0.87 ha per year (1.10 t/ha). The national figure is far above typical grain yields and may include sweet or forage sorghum, so neither was used",
+          "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0072E4EVCP1.px"
+        },
+        {
+          "field_or_fields": "waterlogging_tolerance",
+          "citation": "Not set. Ecocrop grain sorghum (EcoPort 48747) lists only well and excessively drained soils, but the Ecocrop sweet sorghum entry (EcoPort 1982) includes poorly drained soils, and the FAO Land and Water sorghum page (which describes tolerance of short waterlogging) returned HTTP 404 in this session",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "n_fixing",
+          "citation": "Team rule (assumption, no source cited; see meta.method): family Poaceae is not a legume (Fabaceae), so n_fixing is false. The family is cited above."
+        }
+      ],
+      "unverified": [
+        "waterlogging_tolerance",
+        "yield_t_per_ha",
+        "labor",
+        "market",
+        "cover_value"
+      ],
+      "notes": "Sorghum handles dry spells better than corn, which makes it a fallback for rain-fed uplands."
+    },
+    {
+      "id": "eggplant",
+      "name": "Eggplant",
+      "local_name": "Talong",
+      "family": "Solanaceae",
+      "season_days": null,
+      "stages_days": [
+        30,
+        45,
+        40,
+        25
+      ],
+      "kc": [
+        0.6,
+        1.05,
+        0.9
+      ],
+      "root_depth_m": [
+        0.7,
+        1.2
+      ],
+      "p_depletion": 0.45,
+      "temp_c": {
+        "min": 9,
+        "opt_low": 20,
+        "opt_high": 35,
+        "max": 40
+      },
+      "drought_tolerance": null,
+      "waterlogging_tolerance": "medium",
+      "n_fixing": false,
+      "labor": null,
+      "market": null,
+      "cover_value": null,
+      "perishability": "high",
+      "storable_if_dried": false,
+      "yield_t_per_ha": 6.9,
+      "typical_calendar": [],
+      "sources": [
+        {
+          "field_or_fields": "local_name",
+          "citation": "Wiktionary, Cebuano 'talong': eggplant; StuartXchange Talong page: 'Talong (Bik., Tag., Bis., Bon.)'",
+          "url": "https://en.wiktionary.org/wiki/talong"
+        },
+        {
+          "field_or_fields": "family",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Solanum melongena under Solanaceae",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "stages_days",
+          "citation": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Table 11 (stage lengths, days); row 'Egg plant, May/June, Mediterranean' 30/45/40/25 (the table prints the total as 40, a misprint for 140). No tropical row; the other row is Arid Region October 30/40/40/20 = 130",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "kc",
+          "citation": "Allen et al. 1998, FAO-56 Table 12 (single Kc for non-stressed crops in a sub-humid standard climate, RHmin about 45%, u2 about 2 m/s; Kc mid and Kc end need adjustment for the humid Philippine climate); Egg Plant: Kc ini 0.6 (Solanaceae group), Kc mid 1.05, Kc end 0.90",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "root_depth_m, p_depletion",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); Egg Plant: Zr 0.7-1.2 m, p 0.45",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "temp_c",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Solanum melongena (EcoPort 1965): 9/20/35/40. DA Region 02 guide gives 21-30 C during growth",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "waterlogging_tolerance, typical_calendar",
+          "citation": "DA Region 02 HVCDP Eggplant Production Guide (2017): 'moderately sensitive to flooding and moisture especially during flowering and fruit development' (rated medium); 'can be planted throughout the year', so no fixed calendar. DA-ATI 4B 'Gabay sa Produksyon ng Talong' also says 'bahagyang sensitibo sa pagkabaha' (slightly sensitive to flooding)",
+          "url": "https://cagayanvalley.da.gov.ph/wp-content/uploads/2018/02/Eggplant.pdf"
+        },
+        {
+          "field_or_fields": "perishability, storable_if_dried, season_days",
+          "citation": "DA-ATI Region VII Techno Guide on Organic Eggplant: harvest 60-80 days after transplanting, twice a week over 3-5 months; fruits keep up to 10 days even at 10-13 C and 85-90% RH, so days at farm ambient. Total field duration is not stated directly, so season_days is left null",
+          "url": "https://ati2.da.gov.ph/ati-7/content/sites/default/files/users/user16/eggplant_final.pdf"
+        },
+        {
+          "field_or_fields": "perishability",
+          "citation": "Kader 1993 in FAO 'Storage of horticultural crops': eggplant in the 'High' perishability class",
+          "url": "https://www.fao.org/4/x5403e/x5403e09.htm"
+        },
+        {
+          "field_or_fields": "yield_t_per_ha",
+          "citation": "PSA OpenSTAT 'Vegetables and Root Crops', Eggplant, Lanao del Norte, 2022-2024: production 5,276.12 t, area 764.5 ha, yield 6.90 t/ha (computed). National average 11.08 t/ha",
+          "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0082E4EVCP3.px"
+        },
+        {
+          "field_or_fields": "n_fixing",
+          "citation": "Team rule (assumption, no source cited; see meta.method): family Solanaceae is not a legume (Fabaceae), so n_fixing is false. The family is cited above."
+        }
+      ],
+      "unverified": [
+        "season_days",
+        "drought_tolerance",
+        "typical_calendar",
+        "labor",
+        "market",
+        "cover_value"
+      ],
+      "notes": "Eggplant gives many pickings over several months, but the fruit spoils within days of harvest."
+    },
+    {
+      "id": "sesbania-rostrata",
+      "name": "Sesbania rostrata (green manure)",
+      "local_name": null,
+      "family": "Fabaceae",
+      "season_days": 58,
+      "stages_days": null,
+      "kc": null,
+      "root_depth_m": null,
+      "p_depletion": null,
+      "temp_c": {
+        "min": 10,
+        "opt_low": 15,
+        "opt_high": 30,
+        "max": 35
+      },
+      "drought_tolerance": null,
+      "waterlogging_tolerance": "high",
+      "n_fixing": true,
+      "labor": null,
+      "market": null,
+      "cover_value": "high",
+      "perishability": null,
+      "storable_if_dried": null,
+      "yield_t_per_ha": null,
+      "typical_calendar": [
+        {
+          "plant_month": 5,
+          "harvest_month": 7
+        }
+      ],
+      "sources": [
+        {
+          "field_or_fields": "family, n_fixing, waterlogging_tolerance, season_days, typical_calendar, cover_value",
+          "citation": "Tropical Forages fact sheet, Sesbania rostrata: family Fabaceae; fixes large amounts of nitrogen (stem and root nodules); tolerant of waterlogging, mature plants grow in water 30 cm or more deep; as green manure it grows 55-60 days from a mid-May sowing (northern hemisphere) before incorporation, rice transplanted 7-10 days later (58 used, rounded midpoint; harvest_month here means the incorporation month); rice yield gain equal to 160-200 kg/ha N; vigorous stands suppress weeds",
+          "url": "https://tropicalforages.info/text/entities/sesbania_rostrata.htm"
+        },
+        {
+          "field_or_fields": "temp_c",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Sesbania rostrata (EcoPort 43996): 10/15/30/35. Tropical Forages says it grows best above 25 C",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "waterlogging_tolerance",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Sesbania rostrata optimal drainage 'poorly (saturated >50% of year)', abiotic tolerance 'flooding'",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "n_fixing",
+          "citation": "Wikipedia, Sesbania rostrata: forms N-fixing nodules on stems and roots; used as green manure in lowland rice after work at IRRI, Philippines",
+          "url": "https://en.wikipedia.org/wiki/Sesbania_rostrata"
+        },
+        {
+          "field_or_fields": "stages_days, kc, root_depth_m, p_depletion",
+          "citation": "Not in FAO-56 Tables 11, 12 or 22, so left null",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        }
+      ],
+      "unverified": [
+        "local_name",
+        "stages_days",
+        "kc",
+        "root_depth_m",
+        "p_depletion",
+        "drought_tolerance",
+        "labor",
+        "market",
+        "perishability",
+        "storable_if_dried",
+        "yield_t_per_ha"
+      ],
+      "notes": "Sesbania is grown in a wet field for about two months and then plowed in, so it feeds the next rice crop with nitrogen. It is not sold."
+    }
+  ]
+}
