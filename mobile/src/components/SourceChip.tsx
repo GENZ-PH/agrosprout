@@ -1,3 +1,4 @@
+import { createContext, useContext } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { SOURCES, type SourceKey } from "../content/sources";
@@ -35,13 +36,20 @@ export function SourceChip({ k, period = "" }: { k: SourceKey; period?: string }
   );
 }
 
-/** A row of source chips, for a card's "Sources" line. */
+/**
+ * True on the sample farm: its climate numbers are built from NASA POWER daily values, so a
+ * card's "NASA POWER, monthly" chip shows as "NASA POWER, daily" there.
+ */
+export const DemoDataContext = createContext(false);
+
+/** The NASA datasets a card uses, as clickable chips. Non-NASA sources are left out (they open nothing). */
 export function SourceChips({ keys, period = "" }: { keys: readonly SourceKey[]; period?: string }) {
-  if (keys.length === 0) return null;
+  const demo = useContext(DemoDataContext);
+  const nasa = [...new Set(keys.map((k) => (demo && k === "power" ? "power-daily" : k)))].filter((k) => SOURCES[k].nasa);
+  if (nasa.length === 0) return null;
   return (
-    <View style={styles.row} accessibilityLabel="Sources">
-      <Text style={[text.caption, styles.muted]}>Sources</Text>
-      {keys.map((k) => (
+    <View style={styles.row} accessibilityLabel="NASA data used">
+      {nasa.map((k) => (
         <SourceChip key={k} k={k} period={period} />
       ))}
     </View>

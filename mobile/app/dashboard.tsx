@@ -12,8 +12,10 @@ import { DataTracePanel } from "../src/components/DataTracePanel";
 import { HarvestCard } from "../src/components/HarvestCard";
 import { Header } from "../src/components/Header";
 import { LanguageSwitch } from "../src/components/LanguageSwitch";
-import { ensoLine, LotDataCard } from "../src/components/LotDataCard";
+import { ensoLine } from "../src/components/LotDataCard";
 import { SatelliteCard } from "../src/components/SatelliteCard";
+import { NasaDataStrip } from "../src/components/NasaDataStrip";
+import { DemoDataContext } from "../src/components/SourceChip";
 import { SeasonGuide } from "../src/components/SeasonGuide";
 import { ClimateExtremesCard } from "../src/components/ClimateExtremesCard";
 import { LotTabs } from "../src/components/LotTabs";
@@ -226,37 +228,28 @@ function Results({
       explanation={analysis.explanations.find((e) => e.option_key === selected.key)}
       leftOut={analysis.rotations.components_left_out}
       cropById={cropById}
-      defaultOpen={wide}
+      defaultOpen={false}
       info={{ id: "recommendations", period }}
     />
   );
+  // The NASA data view in three plain parts: the NASA datasets behind this lot (tiles that open
+  // the inspector), the weather and water they show, then how the plans compare.
+  const extremes = data ? <ClimateExtremesCard data={data} info={{ id: "climate-extremes", period }} /> : null;
   const evidenceView = (
     <>
-      <Text style={[text.small, styles.muted]}>{t("evidence.intro")}</Text>
+      {data ? <NasaDataStrip data={data} lotName={lot.name} info={{ id: "data-sources", period }} wide={wide} /> : null}
+
+      <Text style={styles.section} accessibilityRole="header">{`Weather and water on ${lot.name}`}</Text>
       <FieldYear options={options} selected={selected.key} onSelect={setPicked} monthly={analysis.monthly} cropById={cropById} info={{ id: "lot-snapshot", period }} />
-      {data && wide ? (
-        <View style={styles.row}>
-          <View style={styles.col}>
-            <LotDataCard data={data} info={{ id: "data-sources", period }} />
-          </View>
-          <View style={styles.col}>
-            <ClimateExtremesCard data={data} info={{ id: "climate-extremes", period }} />
-          </View>
-        </View>
-      ) : data ? (
-        <>
-          <LotDataCard data={data} info={{ id: "data-sources", period }} />
-          <ClimateExtremesCard data={data} info={{ id: "climate-extremes", period }} />
-        </>
-      ) : null}
+      {extremes}
       {data?.kind === "demo" ? <SatelliteCard farmId={data.id} lotName={lot.name} info={{ id: "satellite-checks", period }} /> : null}
+
+      <Text style={styles.section} accessibilityRole="header">How the plans compare</Text>
       {fit}
       {wide ? (
         <View style={styles.row}>
           <View style={styles.col}>
             <PlanTable options={options} selected={selected.key} onSelect={setPicked} info={{ id: "season-calendar", period }} />
-            <WhatIfCard scenario={scenario} onChange={setScenario} notes={analysis.scenario?.notes ?? []} period={period} />
-            <SoilHealthChart result={analysis.soil_health} options={options} cropName={cropName} period={period} />
           </View>
           <View style={styles.col}>{detail}</View>
         </View>
@@ -264,10 +257,10 @@ function Results({
         <>
           <PlanTable options={options} selected={selected.key} onSelect={setPicked} info={{ id: "season-calendar", period }} />
           {detail}
-          <WhatIfCard scenario={scenario} onChange={setScenario} notes={analysis.scenario?.notes ?? []} period={period} />
-          <SoilHealthChart result={analysis.soil_health} options={options} cropName={cropName} period={period} />
         </>
       )}
+      <WhatIfCard scenario={scenario} onChange={setScenario} notes={analysis.scenario?.notes ?? []} period={period} />
+      <SoilHealthChart result={analysis.soil_health} options={options} cropName={cropName} period={period} />
     </>
   );
 
@@ -282,7 +275,7 @@ function Results({
         value={tab}
         onChange={setTab}
       />
-      {tab === "plant" ? plantView : evidenceView}
+      <DemoDataContext.Provider value={data?.kind === "demo"}>{tab === "plant" ? plantView : evidenceView}</DemoDataContext.Provider>
       <DataTracePanel data={data} />
       {/* On a wide plant view the prompt already sits beside the harvest card. */}
       {wide && tab === "plant" ? null : <MonthsPrompt lot={lot} stage={analysis.stage} />}
@@ -341,6 +334,7 @@ function Narrow({ children }: { children: ReactNode }) {
 }
 
 const styles = StyleSheet.create({
+  section: { ...text.heading, fontSize: 22, marginTop: space.md },
   footer: { gap: space.sm, marginTop: space.lg },
   strong: { fontWeight: "700" },
   muted: { color: colors.muted },
