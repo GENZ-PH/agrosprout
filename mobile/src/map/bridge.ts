@@ -35,6 +35,12 @@ export interface MapPlace {
 /** Satellite basemap candidates for decision D25 (still open). */
 export type BasemapId = "esri-world-imagery" | "eox-s2cloudless" | "osm";
 
+/**
+ * Screen space (px) covered by the app's floating buttons and panels. Fitting the map
+ * to the lots keeps the lots clear of it.
+ */
+export type MapInset = { top: number; right: number; bottom: number; left: number };
+
 /** App → map page. */
 export type AppToMap =
   | {
@@ -48,6 +54,7 @@ export type AppToMap =
       center?: LonLat;
       zoom?: number;
       basemap?: BasemapId;
+      inset?: MapInset;
     }
   | { type: "setMode"; mode: MapMode; activeLotId?: string }
   /** Replace all lots (after add, rename, delete, undo). The map keeps unchanged shapes as they are. */
@@ -55,7 +62,9 @@ export type AppToMap =
   | { type: "setPlaces"; places: MapPlace[] }
   /** The phone's position from expo-location (works without signal). */
   | { type: "gps"; lat: number; lon: number; accuracy_m?: number }
-  | { type: "fitLots" };
+  | { type: "fitLots" }
+  /** The app's panels changed size. Used by the next fit; the view doesn't move. */
+  | { type: "setInset"; inset: MapInset };
 
 export type SketchRejectReason =
   /** The stroke was too short to be a lot outline. */

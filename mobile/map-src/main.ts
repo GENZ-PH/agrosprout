@@ -20,6 +20,7 @@ import {
   type BasemapId,
   BRIDGE_SOURCE_APP,
   BRIDGE_SOURCE_MAP,
+  type MapInset,
   type MapLot,
   type MapMode,
   type MapPlace,
@@ -261,11 +262,18 @@ function setPlaces(places: MapPlace[]) {
   }
 }
 
+// The part of the map covered by the app's buttons and panels (see MapInset).
+let inset: MapInset = { top: 0, right: 0, bottom: 0, left: 0 };
+
 function fitLots() {
   const rings = [...lotNames.keys()].map(ringOf).filter((r): r is LonLat[] => !!r);
   if (!rings.length) return;
   const bounds = L.latLngBounds(rings.flat().map(([lon, lat]) => [lat, lon] as [number, number]));
-  map.fitBounds(bounds, { padding: [40, 40], maxZoom: 18 });
+  map.fitBounds(bounds, {
+    paddingTopLeft: [inset.left + 40, inset.top + 40],
+    paddingBottomRight: [inset.right + 40, inset.bottom + 40],
+    maxZoom: 18,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -371,6 +379,7 @@ function receive(msg: AppToMap) {
   switch (msg.type) {
     case "init": {
       setBasemap(msg.basemap ?? DEFAULT_BASEMAP);
+      if (msg.inset) inset = msg.inset;
       setLots(msg.lots);
       setPlaces(msg.places);
       if (msg.lots.length) fitLots();
@@ -389,6 +398,9 @@ function receive(msg: AppToMap) {
       break;
     case "fitLots":
       fitLots();
+      break;
+    case "setInset":
+      inset = msg.inset;
       break;
     case "gps": {
       gpsLayer?.remove();
