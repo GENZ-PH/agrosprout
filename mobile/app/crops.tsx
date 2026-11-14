@@ -97,6 +97,9 @@ export default function CropsScreen() {
           {lots.map((lot) => (
             <LotCrops key={lot.id} lot={lot} />
           ))}
+          <Pressable onPress={() => router.push("/credits")} accessibilityRole="link" style={styles.creditsLink}>
+            <Text style={[text.small, styles.creditsText]}>Photo credits</Text>
+          </Pressable>
         </>
       )}
     </Screen>
@@ -282,6 +285,8 @@ function YourCrops({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  creditsLink: { minHeight: MIN_TOUCH, justifyContent: "center", alignSelf: "flex-start" },
+  creditsText: { color: colors.blue, textDecorationLine: "underline" },
   empty: { gap: space.md, paddingVertical: space.lg },
   section: {
     gap: space.md,
