@@ -20,13 +20,20 @@ type Props = {
   width?: "narrow" | "wide";
   /** Floats over the screen, e.g. the dashboard's "Adjust results" button (#165). */
   overlay?: ReactNode;
+  /** Stays at the top while the body scrolls, e.g. the dashboard's title and lot tabs. */
+  header?: ReactNode;
 };
 
 /** Page frame for every screen: safe area, scrolling body, optional pinned footer. */
-export function Screen({ children, footer, scrollEnabled = true, edgeToEdge = false, width = "narrow", overlay }: Props) {
+export function Screen({ children, footer, scrollEnabled = true, edgeToEdge = false, width = "narrow", overlay, header }: Props) {
   const max = width === "wide" ? styles.wide : null;
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom", "left", "right"]}>
+      {header ? (
+        <View style={styles.headerBar}>
+          <View style={[styles.headerInner, max]}>{header}</View>
+        </View>
+      ) : null}
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={edgeToEdge ? styles.edge : [styles.content, max, overlay ? styles.underOverlay : null]}
@@ -57,4 +64,6 @@ const styles = StyleSheet.create({
   edge: { flexGrow: 1 },
   footer: { ...column, gap: space.sm, paddingTop: space.sm, paddingBottom: space.lg },
   wide: { maxWidth: MAX_WIDE_WIDTH },
+  headerBar: { backgroundColor: colors.bg, borderBottomWidth: 1, borderBottomColor: colors.border, zIndex: 2 },
+  headerInner: { ...column, gap: space.xs, paddingTop: space.sm, paddingBottom: space.sm },
 });

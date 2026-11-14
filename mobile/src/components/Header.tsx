@@ -14,9 +14,11 @@ type Props = {
   fallbackHref?: Href;
   /** Right side, e.g. "Step 1 of 2". */
   right?: ReactNode;
+  /** Between the title and the right side, e.g. the dashboard's lot tabs on a wide window. */
+  middle?: ReactNode;
 };
 
-export function Header({ title, leading = "back", fallbackHref = "/", right }: Props) {
+export function Header({ title, leading = "back", fallbackHref = "/", right, middle }: Props) {
   const goBack = () => (router.canGoBack() ? router.back() : router.replace(fallbackHref));
   return (
     <View style={styles.wrap}>
@@ -32,9 +34,10 @@ export function Header({ title, leading = "back", fallbackHref = "/", right }: P
             <Icon name={leading} />
           </Pressable>
         ) : null}
-        <Text style={styles.title} accessibilityRole="header" numberOfLines={2}>
+        <Text style={middle ? styles.titleInline : styles.title} accessibilityRole="header" numberOfLines={middle ? 1 : 2}>
           {title}
         </Text>
+        {middle ? <View style={styles.middle}>{middle}</View> : null}
         {typeof right === "string" ? <Text style={styles.right}>{right}</Text> : right}
       </View>
       {/* Only while the phone has no signal (#36). */}
@@ -56,5 +59,8 @@ const styles = StyleSheet.create({
   },
   pressed: { backgroundColor: colors.pressed },
   title: { ...text.title, flex: 1 },
+  // Beside the lot tabs: as wide as its words, never squeezed.
+  titleInline: { ...text.title, flexShrink: 0, marginRight: space.md },
+  middle: { flex: 1, minWidth: 0 },
   right: { ...text.small, color: colors.muted },
 });
