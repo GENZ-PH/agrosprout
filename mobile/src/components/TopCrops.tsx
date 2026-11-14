@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { cropById } from "../data/crops";
 import { cropShortName } from "../lots/crop-picks";
-import { goodMonthsText, topCropReason, type CropSuggestion } from "../lots/suggest-core";
+import { goodMonthsText, topCropReason, type CropSuggestion, type NoFitTrouble } from "../lots/suggest-core";
 import { CropImage } from "./CropImage";
 import { FitBadge } from "./CropFitCard";
 import { Icon } from "./Icon";
@@ -13,11 +13,14 @@ import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
 // S2 "Top 3 for this lot" (#152): the library crops that suit the lot best on its NASA data, best first.
 // One crop per lot (D13): the rows are one radio group; tapping a row makes that crop the lot's crop.
+// Poor fit crops are never listed; when every crop is a Poor fit in every month, it says so instead.
 
 type Props = {
   lotName: string;
   /** `topCrops(lotSuggestions(...))`, best first. */
   top: readonly CropSuggestion[];
+  /** `noCropFits(...)`: set when no crop grows well on the lot in any month. */
+  noFit: { why: NoFitTrouble | null } | null;
   /** The years of the lot's data, for the ⓘ text. */
   period: string;
   /** The lot's crop, or null when it has none, or several (a farm saved before D13 changed). */
@@ -28,19 +31,20 @@ type Props = {
 export const TOP_CROPS_CAPTION =
   "From NASA rain, temperature and soil wetness at this lot. A guide, not a rule: check with your agricultural technician.";
 
-export function TopCrops({ lotName, top, period, chosen, onChoose }: Props) {
+export function TopCrops({ lotName, top, period, chosen, onChoose, noFit }: Props) {
   const [info, setInfo] = useState(false);
-  if (top.length === 0) return null;
+  const none = top.length === 0 && noFit !== null;
+  if (top.length === 0 && !none) return null;
   return (
     <View style={styles.block}>
       <View style={styles.head}>
         <Text style={[text.bodyStrong, styles.flex]} accessibilityRole="header">
-          Top {top.length} for this lot
+          {none ? "No good match for this lot" : `Top ${top.length} for this lot`}
         </Text>
         <Pressable
           onPress={() => setInfo((v) => !v)}
           accessibilityRole="button"
-          accessibilityLabel={`What am I looking at? About the top ${top.length} crops for ${lotName}`}
+          accessibilityLabel={`What am I looking at? About the top crops for ${lotName}`}
           accessibilityState={{ expanded: info }}
           aria-expanded={info}
           style={({ pressed }) => [styles.info, pressed && styles.pressed]}
@@ -49,11 +53,18 @@ export function TopCrops({ lotName, top, period, chosen, onChoose }: Props) {
         </Pressable>
       </View>
       {info ? <ExplainerBox id="top-crops" period={period} /> : null}
-      <View style={styles.list} accessibilityRole="radiogroup" accessibilityLabel={`Top ${top.length} crops for ${lotName}`}>
-        {top.map((s, i) => (
-          <TopRow key={s.crop_id} rank={i + 1} s={s} selected={s.crop_id === chosen} onPress={() => onChoose(s.crop_id)} />
-        ))}
-      </View>
+      {none ? (
+        <Text style={text.body}>
+          {`None of our crops grow well on ${lotName} in any planting month${noFit?.why ? `: it is ${noFit.why} for most of them` : ""}. ` +
+            "Check that the lot is in the right place on the map, or search for the crop you grow."}
+        </Text>
+      ) : (
+        <View style={styles.list} accessibilityRole="radiogroup" accessibilityLabel={`Top ${top.length} crops for ${lotName}`}>
+          {top.map((s, i) => (
+            <TopRow key={s.crop_id} rank={i + 1} s={s} selected={s.crop_id === chosen} onPress={() => onChoose(s.crop_id)} />
+          ))}
+        </View>
+      )}
       <Text style={text.caption}>{TOP_CROPS_CAPTION}</Text>
     </View>
   );
