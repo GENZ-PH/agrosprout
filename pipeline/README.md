@@ -18,8 +18,9 @@ python3 pipeline/build_demo.py            # downloads once, then uses pipeline/r
 python3 pipeline/build_demo.py --offline  # cache only
 ```
 
-Farms are listed in `demo_farms.json`. **D1 (demo coordinates) is still open**: the one point there is the
-NASA POWER reference point from `docs/03` and is provisional. Add or replace farms there, then re-run.
+Farms are listed in `demo_farms.json`. **D1 (demo coordinates) is still open**: the one point there (8.0°N, 123.8°E) is provisional. It is a flat lowland spot
+(SRTM about 35 m, 2% slope) in the west Lanao del Norte NASA POWER cell, picked because the earlier Iligan point (8.23°N, 124.24°E) lies in a cell
+POWER reports at about 742 m, which made rice read cool (`docs/03`). Replace it with a real lowland paddy lot, add the upland lot, then re-run.
 Elevation and slope come from SRTM automatically (`--no-srtm` skips it, and then ET₀ uses sea level and says so). A value written in `demo_farms.json` (`elevation_m`, `slope_pct`) wins over SRTM.
 
 ## Tests
