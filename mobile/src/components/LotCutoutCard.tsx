@@ -34,6 +34,8 @@ type Props = {
   cropName: (id: string) => string;
   /** The years of the lot's data, e.g. "2001-2025", for the ⓘ text. */
   period: string;
+  /** Inside the lot comparison dialog: no card frame of its own. */
+  flat?: boolean;
 };
 
 /** SVG text is a serif font on web unless told otherwise; match the app's system font. */
@@ -47,7 +49,7 @@ const SIDE_BY_SIDE_MIN = 420;
 /** Below this width the layer switch is 2 x 2 so the labels never scroll sideways. */
 const SEGMENTS_ONE_ROW_MIN = 520;
 
-export function LotCutoutCard({ lot, analysis, library, cropName, period }: Props) {
+export function LotCutoutCard({ lot, analysis, library, cropName, period, flat }: Props) {
   const [layer, setLayer] = useState<CutoutLayer>("soil");
   const [width, setWidth] = useState(0);
   const model = useMemo(
@@ -73,6 +75,7 @@ export function LotCutoutCard({ lot, analysis, library, cropName, period }: Prop
       explainer="lot-cutout"
       period={period}
       subtitle="Compare your current crops with the best other option for this lot."
+      flat={flat}
     >
       <View style={styles.body} onLayout={onLayout}>
         <View style={styles.meta}>

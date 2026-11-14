@@ -18,13 +18,15 @@ type Props = {
   period: string;
   /** One short line under the title. */
   subtitle?: string;
+  /** No border or padding, for a card shown inside a dialog that already frames it (#171). */
+  flat?: boolean;
   children: ReactNode;
 };
 
-export function InfoCard({ title, explainer, period, subtitle, children }: Props) {
+export function InfoCard({ title, explainer, period, subtitle, flat = false, children }: Props) {
   const [open, setOpen] = useState(false);
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, flat && styles.flat]}>
       <View style={styles.head}>
         <Text style={[text.heading, styles.flex]} accessibilityRole="header">
           {title}
@@ -89,6 +91,7 @@ export function Bullets({ lines }: { lines: readonly string[] }) {
 }
 
 const styles = StyleSheet.create({
+  flat: { borderWidth: 0, padding: 0, borderRadius: 0 },
   card: {
     backgroundColor: colors.surface,
     borderWidth: 1,

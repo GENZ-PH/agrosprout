@@ -16,7 +16,7 @@ import { SatelliteCard } from "../src/components/SatelliteCard";
 import { DemoDataContext } from "../src/components/SourceChip";
 import { YearCalendar } from "../src/components/YearCalendar";
 import type { Scenario } from "../src/engine/scenario";
-import { LotCutoutCard } from "../src/components/LotCutoutCard";
+import { LotCompareModal } from "../src/components/LotCompareModal";
 import { LotTabs } from "../src/components/LotTabs";
 import { Notice } from "../src/components/Notice";
 import { PrioritiesCard } from "../src/components/PrioritiesCard";
@@ -50,8 +50,9 @@ import type { Farm, Lot } from "../src/types";
 // Farm map (#124): "Your lots on the map" sits above the lot tabs as the whole-farm overview.
 // Each lot is colored by its crop fit; tapping a lot selects it like its tab.
 //
-// Lot cutout (#134): right below the farm map on every screen size, the
-// selected lot's own shape drawn twice, now vs the best other option, colored by one data layer.
+// Lot comparison (#134, #171): tapping a lot on the farm map selects it and opens a dialog with
+// the lot's own shape drawn twice, now vs the best other option, colored by one data layer. A
+// "Compare" button under the map opens it too (screen readers and keyboards can't tap the map).
 // It uses the same no-scenario results as the map, so the what-if slider doesn't change it.
 
 const cropName = (id: string) => cropById(id)?.name ?? id;
@@ -63,6 +64,18 @@ export default function DashboardScreen() {
   const views = useFarmLotViews(farm);
   const { wide } = useLayout();
   const selectLot = useCallback((id: string) => router.setParams({ lot: id }), []);
+  // The lot comparison dialog (#171) is open for this lot id; null = closed.
+  const [compareId, setCompareId] = useState<string | null>(null);
+  const openLot = useCallback(
+    (id: string) => {
+      selectLot(id);
+      setCompareId(id);
+    },
+    [selectLot],
+  );
+  const lotView = lot ? views[lot.id] : undefined;
+  const compareLot = farm.lots.find((l) => l.id === compareId);
+  const compareView = compareLot ? views[compareLot.id] : undefined;
 
   // The sample farm's numbers come from NASA POWER daily: its source chips say so (#144).
   return (
@@ -80,15 +93,28 @@ export default function DashboardScreen() {
             lots={farm.lots}
             views={views}
             selectedId={lot.id}
-            onSelect={selectLot}
+            onSelect={openLot}
             wide={wide}
           />
-          {(() => {
-            const v = views[lot.id];
-            return v?.kind === "ready" ? (
-              <LotCutoutCard lot={lot} analysis={v.analysis} library={CROP_LIBRARY} cropName={cropName} period={v.period} />
-            ) : null;
-          })()}
+          {lotView?.kind === "ready" ? (
+            <Button
+              label={`Compare ${lot.name} with the best option`}
+              variant="secondary"
+              icon="shape"
+              onPress={() => setCompareId(lot.id)}
+              style={styles.compareButton}
+            />
+          ) : null}
+          {compareLot && compareView?.kind === "ready" ? (
+            <LotCompareModal
+              lot={compareLot}
+              analysis={compareView.analysis}
+              library={CROP_LIBRARY}
+              cropName={cropName}
+              period={compareView.period}
+              onClose={() => setCompareId(null)}
+            />
+          ) : null}
           <LotTabs
             lots={farm.lots}
             selectedId={lot.id}
@@ -309,6 +335,7 @@ function Narrow({ children }: { children: ReactNode }) {
 const styles = StyleSheet.create({
   // Each card keeps its own height, so a short card doesn't get an empty stretched bottom.
   row: { flexDirection: "row", alignItems: "flex-start", gap: space.lg },
+  compareButton: { alignSelf: "flex-start" },
   col: { flex: 1, minWidth: 0 },
   section: { gap: space.lg },
   narrow: { width: "100%", maxWidth: MAX_CONTENT_WIDTH, gap: space.lg },
