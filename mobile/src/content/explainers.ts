@@ -313,6 +313,29 @@ export const DATA_SOURCES: readonly DataSource[] = [
   },
 ];
 
+/**
+ * NASA datasets the challenge names and how this app treats them (#112, Part 4). Checked against the
+ * code on main, not against plans: say "not used" until a dataset really drives a result.
+ */
+export interface DatasetStatus {
+  name: string;
+  status: "Used" | "Demo farm only" | "Not used";
+  note: string;
+}
+
+export const CHALLENGE_DATASETS: readonly DatasetStatus[] = [
+  { name: "NASA POWER", status: "Used", note: "Drives every result for every lot you draw." },
+  {
+    name: "SRTM (elevation and slope)",
+    status: "Demo farm only",
+    note: "The demo farm file has elevation and slope from SRTM. Lots you draw do not use it yet, so their evaporation is calculated at sea level and their erosion check relies on the land type you give.",
+  },
+  { name: "SMAP (soil moisture)", status: "Not used", note: "Soil wetness comes from NASA POWER, a model estimate, not from the SMAP satellite." },
+  { name: "GPM (rainfall)", status: "Not used", note: "Rainfall comes from NASA POWER." },
+  { name: "MODIS, Landsat (vegetation)", status: "Not used", note: "Vegetation stress is not measured." },
+  { name: "ECOSTRESS, GRACE and GRACE-FO", status: "Not used", note: "Not needed for the lot-level questions this app answers." },
+];
+
 /** Known limitations to state openly (docs/07 §8), plus the ones found while building. */
 export const LIMITATIONS: readonly string[] = [
   "Climate is for a coarse grid cell, not field scale. There is no field-scale water model.",
@@ -326,6 +349,10 @@ export const LIMITATIONS: readonly string[] = [
   // D31 (#107): ground area = map area x sqrt(1 + (slope % / 100)^2), so 20% -> +2.0%, 30% -> +4.4%.
   "Lot area is measured flat, as on a map. On sloping land the ground itself is a little larger: about 2% more on a 20% slope and about 4% more on a 30% slope.",
   "Results are for comparing options, not for predicting yield or income.",
+  "The results come from statistics and rules (a water balance and scores worked out on your phone), not from a trained SI model. SI tools helped to build the app.",
+  "Frost is not modelled. The app checks each crop's lower temperature limit instead.",
+  "Forage value and the equipment you have are not part of the scores, and water soaking into the soil is not modelled separately: ground cover and erosion stand in for it.",
+  "Soil comes only from what you tell us (soil feel and land type). The app does not use a soil map.",
 ];
 
 /** Fill `{name}` tokens, e.g. `fill(text, { period: "2001-2025" })`. Unknown tokens are left as they are. */
