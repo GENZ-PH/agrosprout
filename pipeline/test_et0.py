@@ -10,7 +10,9 @@ matches the printed precision. These are the SAME numbers as
 mobile/src/data/et0.test.ts, so passing both proves the two implementations agree.
 """
 
+import json
 import unittest
+from pathlib import Path
 
 import et0
 
@@ -151,3 +153,19 @@ class Monthly(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SharedFixture(unittest.TestCase):
+    """Same cases as mobile/src/data/et0.test.ts (pipeline/fixtures/et0_shared_cases.json, #57)."""
+
+    def test_matches_shared_cases(self):
+        data = json.loads((Path(__file__).parent / "fixtures" / "et0_shared_cases.json").read_text())
+        tol = data["tolerance_mm_day"]
+        for c in data["cases"]:
+            r = et0.monthly_et0(**c["inputs"])
+            self.assertEqual(r.elevation_assumed, c["expected"]["elevation_assumed"], c["name"])
+            for got, want in zip(r.et0_mm_day, c["expected"]["et0_mm_day"]):
+                if want is None:
+                    self.assertIsNone(got, c["name"])
+                else:
+                    self.assertAlmostEqual(got, want, delta=tol, msg=c["name"])
