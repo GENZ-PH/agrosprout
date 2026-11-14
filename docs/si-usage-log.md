@@ -103,3 +103,4 @@
 ## Draft answer for the "Use of SI" form field (update before submitting)
 
 > We used SI tools as assistants, not to originate the idea. Claude Code (Anthropic) helped us research the challenge materials, organize our planning documents, and write and review code. [List other tools.] The rotation concept, design decisions, and agronomic rules were chosen by our team. SI-assisted code is marked in commit metadata and file headers; SI-generated images carry a visible watermark. No NASA branding appears in any SI-generated content.
+| 2026-11-14 | earnieacts | Claude Code | Placed the existing optional lot-details form (#41) in S1: a Details tool on the saved-lot panel opens land type, water and soil questions in a scrolling panel with Done. Tried in the web build: answers select and persist, the dashboard still loads. | `mobile/app/lots.tsx` | Team and johnrald1 check the wording and layout |
