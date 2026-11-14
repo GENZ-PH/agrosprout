@@ -2,6 +2,7 @@
 // Every value has a source, or the label "assumption: validate locally"
 // (CLAUDE.md rules 3 and 9). Changing a value here must not need code
 // changes anywhere else. Validated at the 20:00 sanity review (#32).
+import type { DestinationType, Level, RouteProfile, TransportMode } from "../types";
 
 // ---------------------------------------------------------------------------
 // Water balance (docs/07-rotation-engine.md §2)
@@ -259,3 +260,83 @@ export const PRIORITY_COMPONENTS = {
   income: ["I", "M"],
   labor: ["L", "M"],
 } as const;
+
+// ---------------------------------------------------------------------------
+// Market access and travel time (docs/07-rotation-engine.md §3c, #27)
+// Every value in this section is a DEFAULT ASSUMPTION (CLAUDE.md rule 9):
+// the farmer's own travel time always wins, and the UI must never show these
+// as measured facts. v0 proposals; the Engine lead confirms them (D27).
+// ---------------------------------------------------------------------------
+
+/**
+ * Average one-way speed per transport mode with a harvest load on rural
+ * roads, km/h, including slow stretches. Used for "road route" (OSRM
+ * distance / speed) and "rough estimate" times (src/data/routing.ts).
+ * assumption: validate locally. No measured source for local roads.
+ */
+export const TRAVEL_SPEED_KMH: Readonly<Record<TransportMode, number>> = {
+  walk: 4,
+  carabao: 3,
+  bicycle: 10,
+  motorcycle: 30,
+  tricycle: 20,
+  jeepney: 20,
+  truck: 30,
+};
+
+/**
+ * Waiting time per trip for shared transport, minutes (docs/07 §3c: "+ waiting
+ * time for jeepney/bus"). Modes not listed wait 0.
+ * assumption: validate locally.
+ */
+export const TRAVEL_WAIT_MIN: Readonly<Partial<Record<TransportMode, number>>> = {
+  jeepney: 30,
+};
+
+/**
+ * Road distance / straight-line distance for the offline "rough estimate",
+ * per routing profile (src/data/routing.ts profileForMode).
+ * Source: one team test near Iligan, 2026-11-14 (docs/07 §3c): 11.5 km
+ * straight line, 18.8 km walking route (1.6x), 32.1 km car route (2.8x).
+ * bike has no measurement and uses the car value (bicycles mostly follow the
+ * same roads). assumption: validate locally (one route only; hilly terrain).
+ */
+export const ROAD_CIRCUITY: Readonly<Record<RouteProfile, number>> = {
+  foot: 1.6,
+  bike: 2.8,
+  car: 2.8,
+};
+
+/**
+ * Market access (M) per crop from the one-way travel time t (minutes) to the
+ * crop's best destination, by the crop's perishability (crops.json, Kader
+ * 1993 classes where cited):
+ *   M = 100 when t <= ok, falling linearly to ACCESS_FLOOR at t >= max.
+ * assumption: validate locally (no source for how far each class can travel;
+ * check with an agricultural technician at the 20:00 review, #32).
+ */
+export const ACCESS_MINUTES: Readonly<Record<Level, { ok: number; max: number }>> = {
+  high: { ok: 60, max: 180 },
+  medium: { ok: 120, max: 360 },
+  low: { ok: 180, max: 600 },
+};
+
+/**
+ * Lowest M for a far destination. Not 0: a long trip makes selling harder,
+ * not impossible. assumption: validate locally.
+ */
+export const ACCESS_FLOOR = 20;
+
+/**
+ * Destination types where a crop can be sold (docs/07 §3c: "nearest market
+ * or buyer"). A co-op buys from its members. Source: team spec (D17).
+ */
+export const SALE_DESTINATION_TYPES: readonly DestinationType[] = ["market", "buyer", "coop"];
+
+/**
+ * Storage bonus (docs/07 §3c): for crops of these perishability levels a
+ * storage destination counts as a destination too, so M stays high when the
+ * market is far ("can store and sell when prices are better"; general
+ * practice, actual prices unknown). Source: team spec.
+ */
+export const STORAGE_PERISHABILITY: readonly Level[] = ["low", "medium"];
