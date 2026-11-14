@@ -76,6 +76,16 @@ function LotCompare({ farm, lot, columns }: { farm: Farm; lot: Lot; columns: 1 |
   );
 
   if (view.kind === "loading") return <Text style={text.caption}>Loading {lot.name}...</Text>;
+  if (view.kind === "no-soil")
+    return (
+      <Narrow>
+        <Notice tone="warn">
+          NASA has no soil moisture data for {lot.name}. This spot looks like sea or ice, not farmland, so its months can&apos;t be
+          compared. Move the lot onto your farm. If your farm really is here, on a very small island, NASA has no data for it, so we can&apos;t rate it.
+        </Notice>
+        <Button label={`Move ${lot.name} on the map`} href={{ pathname: "/lots", params: { lot: lot.id } }} />
+      </Narrow>
+    );
   if (view.kind === "no-crops")
     return (
       <Narrow>
