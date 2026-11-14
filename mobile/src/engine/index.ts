@@ -15,7 +15,7 @@ export { applyScenario } from "./scenario";
 export type { Scenario as ClimateScenario, ScenarioResult } from "./scenario";
 export { harvestMonthMinutes, tripHours, tripsPerHarvest, wetRoad } from "./harvestTrips";
 export type { HarvestTrips, TripsGap, WetRoad } from "./harvestTrips";
-export { explain } from "./explain";
+export { explain, COMPONENT_LABELS } from "./explain";
 export type { Confidence, ConfidenceLevel, ConfidenceReason, ExplainInput, ExplainLine, Explanation } from "./explain";
 export type {
   PlantingWindowInput,

@@ -137,8 +137,10 @@ test("texts never use the word AI, and every number in a why line comes from the
 
 test("the ranking flipping between a dry and a wet year gives low confidence", () => {
   const { result } = run(known);
-  // Build a result where B beats A in a dry year but loses to A in a wet year.
+  // Build a result where B beats A on the total in a dry year but loses to A in a
+  // wet year: same scores except water fit, so only the rain scenario decides.
   const flipped = structuredClone(result);
+  flipped.options[1].scores = { ...flipped.options[0].scores };
   flipped.options[0].water_fit_range = { p20: 50, p50: 60, p80: 90 };
   flipped.options[1].water_fit_range = { p20: 80, p50: 70, p80: 60 };
   const ex = explain({ result: flipped, lot: { details: known }, data: ILIGAN_LOT_FIXTURE, library: lib });
@@ -146,6 +148,77 @@ test("the ranking flipping between a dry and a wet year gives low confidence", (
     assert.equal(e.confidence.level, "low");
     assert.ok(e.confidence.reasons.includes("ranking-flips-dry-wet"));
   }
+});
+
+test("a water-fit swap that doesn't change which option scores higher overall is not a flip", () => {
+  const { result } = run(known, [{ crop_id: "lowland-rice", seasons: [{ plant_month: 6, harvest_month: 10 }] }]);
+  // B's other scores keep it above A in both years, even though A has the better wet-year water fit.
+  const steady = structuredClone(result);
+  steady.options[1].scores = { ...steady.options[0].scores, S: (steady.options[0].scores.S as number) + 40 };
+  steady.options[0].water_fit_range = { p20: 50, p50: 60, p80: 70 };
+  steady.options[1].water_fit_range = { p20: 60, p50: 60, p80: 60 };
+  const b = explain({ result: steady, lot: { details: known }, data: ILIGAN_LOT_FIXTURE, library: lib })[1];
+  assert.ok(!b.confidence.reasons.includes("ranking-flips-dry-wet"), b.confidence.reasons.join(", "));
+});
+
+test("a missing water fit range is reported and keeps confidence below High", () => {
+  const { result } = run(known);
+  const gap = structuredClone(result);
+  gap.options[1].water_fit_range = { p20: null, p50: 60, p80: null };
+  const b = explain({ result: gap, lot: { details: known }, data: ILIGAN_LOT_FIXTURE, library: lib })[1];
+  assert.ok(b.confidence.reasons.includes("dry-wet-not-checked"));
+  assert.notEqual(b.confidence.level, "high");
+});
+
+test("soil feel counts as an unknown input only when paddy rice is in the comparison", () => {
+  const cornOnly = [{ crop_id: "corn", seasons: [{ plant_month: 5, harvest_month: 8 }] }];
+  const { result, ex } = run({ ...known, soil: "unknown" }, cornOnly);
+  for (const e of ex) {
+    const opt = result.options.find((o) => o.key === e.option_key)!;
+    const rice = [opt, result.options[0]].some((o) => o.slots.some((s) => s.crop_id === "lowland-rice"));
+    assert.equal(e.unknowns.some((u) => u.code === "unknown.soil"), rice, e.option_key);
+    assert.equal(e.confidence.reasons.includes("one-unknown-input"), rice, e.option_key);
+  }
+});
+
+test("evidence names each data source with its period and the crops.json citations actually used", () => {
+  const { ex } = run(known, crops("lowland-rice", "mungbean"));
+  for (const e of ex) {
+    const rain = e.evidence.find((l) => l.code === "evidence.data.rain");
+    assert.ok(rain && rain.text.includes("NASA POWER PRECTOTCORR") && rain.text.includes("2001-2024"), rain?.text ?? "no rain line");
+    assert.ok(e.evidence.some((l) => l.code.startsWith("evidence.crop.kc.") && l.text.includes("FAO-56")), e.option_key);
+    assert.ok(!e.evidence.some((l) => l.code === "evidence.power"), "the general line is only a fallback");
+  }
+  const withMung = ex.find((e) => e.evidence.some((l) => l.code.startsWith("evidence.crop.n_fixing.")));
+  assert.ok(withMung?.evidence.find((l) => l.code.startsWith("evidence.crop.n_fixing."))?.text.includes("Mungbean"));
+  // Without provenance the general NASA POWER line is used.
+  const { result } = run(known);
+  const { provenance: _drop, ...noProv } = ILIGAN_LOT_FIXTURE;
+  const bare = explain({ result, lot: { details: known }, data: noProv, library: lib });
+  assert.ok(bare[0].evidence.some((l) => l.code === "evidence.power"));
+});
+
+test("each destination gets one road question naming its harvest months and its name", () => {
+  const dest: Destination = { id: "d1", name: "Town market", type: "market", point: [124.3, 8.28], mode: "motorcycle", load_kg_per_trip: null, fare_one_way: null };
+  const travel: Travel[] = [{ destination_id: "d1", distance_km: 10, minutes: 40, source: "farmer", route_profile: null }];
+  const access = marketAccess({ crops: lib.crops, destinations: [dest], travel });
+  const { result } = run(known, crops("lowland-rice"), access);
+  const ex = explain({ result, lot: { details: known }, data: ILIGAN_LOT_FIXTURE, library: lib, access, destinations: [dest] });
+  for (const e of ex) {
+    const roads = e.check_locally.filter((c) => c.code.startsWith("check.road."));
+    assert.equal(roads.length, 1, e.option_key);
+    const opt = result.options.find((o) => o.key === e.option_key)!;
+    for (const s of opt.slots) assert.ok(roads[0].text.includes(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][s.harvest_month - 1]), roads[0].text);
+    assert.match(roads[0].text, /^You harvest in .+\. Is the road to Town market passable then\?$/);
+    assert.equal(e.check_locally[e.check_locally.length - 1].code, "check.technician");
+  }
+});
+
+test("component labels are the farmer-facing words from the spec", () => {
+  const { ex } = run(known);
+  const all = ex.flatMap((e) => [...e.benefits, ...e.tradeoffs, ...e.why]).map((l) => l.text).join("\n");
+  assert.doesNotMatch(all, /\b(Water fit|Climate safety|Soil building|Erosion protection|Pest break)\b/);
+  assert.match(all, /Fits your rain|Builds soil|Breaks pest cycles/);
 });
 
 test("missing crop-library values are listed once per crop and keep confidence below High", () => {

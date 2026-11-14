@@ -379,8 +379,10 @@ export const EXPLAIN_MIN_DELTA_POINTS = 1;
 /**
  * Confidence is Low when this many key inputs are farmer estimates or
  * "I don't know" (land type, water source, soil feel, or planting months that
- * are the typical calendar instead of the farmer's). Source: team spec
- * (docs/07 §5, "two or more key inputs"). One such input gives Medium.
+ * are the typical calendar instead of the farmer's). Soil feel counts only
+ * when paddy rice is in the comparison, because it only sets rice water loss
+ * in the water balance. Source: team spec (docs/07 §5, "two or more key
+ * inputs"). One such input gives Medium.
  */
 export const CONFIDENCE_LOW_UNKNOWN_INPUTS = 2;
 
