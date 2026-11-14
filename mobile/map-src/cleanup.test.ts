@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { cleanSketch, CLEANUP, closeRing, corners, isSimpleRing, ringAreaM2 } from "./cleanup";
+import { cleanSketch, CLEANUP, closeRing, corners, isSimpleRing, pointInRing, ringAreaM2 } from "./cleanup";
 import type { LonLat } from "../src/types";
 
 // Recorded-style sample strokes, generated so the expected answers are known
@@ -88,4 +88,13 @@ test("closeRing drops repeated points and closes the loop", () => {
   assert.equal(ring.length, 5);
   assert.deepEqual(ring[0], ring[ring.length - 1]);
   assert.ok(Math.abs(ringAreaM2(ring) - 900) < 5);
+});
+
+test("pointInRing finds taps inside a lot, including a notched (concave) one", () => {
+  // An L-shaped lot: 40 x 40 m with the top-right 20 x 20 m quarter cut out.
+  const ring = closeRing([at(0, 0), at(40, 0), at(40, 20), at(20, 20), at(20, 40), at(0, 40)]);
+  assert.equal(pointInRing(at(10, 10), ring), true);
+  assert.equal(pointInRing(at(10, 30), ring), true);
+  assert.equal(pointInRing(at(30, 30), ring), false, "inside the notch is outside the lot");
+  assert.equal(pointInRing(at(50, 10), ring), false);
 });

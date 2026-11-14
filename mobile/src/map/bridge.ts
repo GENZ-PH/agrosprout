@@ -15,17 +15,29 @@ export type MapMode =
   | "sketch"
   /** Tap each corner, then tap the first point to close. */
   | "corners"
-  /** One finger moves the map. Lots show as clean outlines, without points. Tapping does nothing. */
+  /** One finger moves the map. Lots show as clean outlines, without points. Tapping a lot posts `lotTapped`. */
   | "view"
   /** Adjust the active lot: its points show. Drag a point, tap an edge dot to add one, long-press to remove one. */
   | "select"
   /** Tap once to drop a pin (S1 fallback, S6 places). */
   | "pin";
 
+/**
+ * How the dashboard's farm map (#124) colors a lot. Without it a lot keeps the S1 drawing
+ * look. The status words go in the lot's label, so color is never the only cue.
+ */
+export interface MapLotStyle {
+  /** Fill and outline color, `#RRGGBB` (from the app's theme.ts). Anything else is ignored. */
+  color: string;
+  /** Short status in words, shown after the name and area, e.g. "Watch out". */
+  status: string;
+}
+
 export interface MapLot {
   id: string;
   name: string;
   geometry: LotPolygon;
+  style?: MapLotStyle;
 }
 
 export interface MapPlace {
@@ -88,6 +100,8 @@ export type MapToApp =
   | { type: "lotEditing"; id: string; area_ha: number }
   | { type: "sketchRejected"; reason: SketchRejectReason }
   | { type: "pinPlaced"; point: LonLat }
+  /** A tap inside a lot in "view" mode (the dashboard map selects that lot; S1 ignores it). */
+  | { type: "lotTapped"; id: string }
   /** The map switched mode by itself (e.g. to "view" after a lot is drawn). */
   | { type: "modeChanged"; mode: MapMode }
   /** After every zoom, and once after `init`. The app uses it to check the map is close enough to draw. */

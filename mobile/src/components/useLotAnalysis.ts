@@ -48,3 +48,42 @@ export function useLotAnalysis(
     return view;
   }, [data, destinations, priorities, lot, scenario]);
 }
+
+/**
+ * `useLotAnalysis` for every lot at once, by lot id, for the dashboard's farm map (#124), which
+ * colors each lot by its crop fit. Same data reads and the same engine run per lot, no scenario.
+ */
+export function useFarmLotViews(farm: Pick<Farm, "destinations" | "priorities" | "lots">): Record<string, DashboardLotView> {
+  const { lots, destinations, priorities } = farm;
+  // One key for the whole farm: any lot's new download, moved outline, or added/removed lot reads again.
+  const readKey = lots.map((l) => `${l.id}|${l.data_ref}|${l.data_status}|${l.centroid.join(",")}`).join(";");
+  const [read, setRead] = useState<{ key: string; data: Record<string, LotData | null> } | null>(null);
+
+  useEffect(() => {
+    let current = true;
+    Promise.all(lots.map(async (l) => [l.id, await readLotData(l.data_ref, asyncStorageLotDataStore, DEMO_FARMS)] as const)).then(
+      (entries) => {
+        if (current) setRead({ key: readKey, data: Object.fromEntries(entries) });
+      },
+    );
+    return () => {
+      current = false;
+    };
+    // `readKey` covers every field of `lots` that is read here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readKey]);
+
+  const data = read?.key === readKey ? read.data : undefined;
+  return useMemo(() => {
+    const out: Record<string, DashboardLotView> = {};
+    for (const lot of lots) {
+      const lotData = data?.[lot.id];
+      if (lotData === undefined && lot.crops.length > 0) {
+        out[lot.id] = { kind: "loading" };
+        continue;
+      }
+      out[lot.id] = lotView({ farm: { destinations, priorities }, lot, data: lotData ?? null, library: CROP_LIBRARY });
+    }
+    return out;
+  }, [data, destinations, priorities, lots]);
+}
