@@ -40,6 +40,11 @@ export interface FarmActions {
   setTravel: (lotId: string, travel: Travel) => void;
   /** Adds a harvest destination and returns its id ("dest-N"). */
   addDestination: (destination: NewDestination) => string;
+  /**
+   * Changes a destination. A new transport mode or a moved pin also removes every lot's travel entry for
+   * it, because those times were for the old way of travelling or the old place (the travel sync fills
+   * them again; a time the farmer typed for the old mode must not stay as "your time" for the new one).
+   */
   updateDestination: (id: string, patch: DestinationPatch) => void;
   /** Removes the destination and every lot's travel entry for it. */
   deleteDestination: (id: string) => void;
@@ -162,9 +167,19 @@ export function farmStateCreator(deps: FarmDeps): StateCreator<FarmState, [["zus
       },
 
       updateDestination: (id, patch) =>
-        set((s) => ({
-          destinations: s.destinations.map((d) => (d.id === id ? { ...d, ...patch, id } : d)),
-        })),
+        set((s) => {
+          const before = s.destinations.find((d) => d.id === id);
+          const changesTrip =
+            !!before &&
+            ((patch.mode !== undefined && patch.mode !== before.mode) ||
+              (patch.point !== undefined && (patch.point[0] !== before.point[0] || patch.point[1] !== before.point[1])));
+          return {
+            destinations: s.destinations.map((d) => (d.id === id ? { ...d, ...patch, id } : d)),
+            lots: changesTrip
+              ? s.lots.map((l) => ({ ...l, travel: l.travel.filter((t) => t.destination_id !== id) }))
+              : s.lots,
+          };
+        }),
 
       deleteDestination: (id) =>
         set((s) => ({

@@ -1,16 +1,18 @@
 import * as Location from "expo-location";
 import { type Href, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { BackHandler, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
+import { BackHandler, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 
 import { Button } from "../src/components/Button";
 import { Icon, type IconName } from "../src/components/Icon";
+import { LotDetailsForm } from "../src/components/LotDetailsForm";
 import { Screen } from "../src/components/Screen";
 import { colors, MIN_TOUCH, radius, space, text } from "../src/components/theme";
 import { isPinLot, parseHectares, pinShape } from "../src/lots/lot-editor";
 import { useLotEditor } from "../src/lots/use-lot-editor";
 import type { MapInset, MapLot, MapMode, MapPlace, MapToApp } from "../src/map/bridge";
 import { MapView, type MapViewHandle } from "../src/map/MapView";
+import { useFarmStore } from "../src/state/farm-store";
 
 // S1 Draw your lot (#21, docs/11-user-flow.md): a full-screen map for ONE lot. Only a
 // back button floats at the top; the steps and actions sit in one panel at the bottom
@@ -48,7 +50,8 @@ export default function LotsScreen() {
   /** Opened from "+ Add lot" on the dashboard: draw one more lot. */
   const adding = useLocalSearchParams<{ new?: string }>().new === "1";
   const mapRef = useRef<MapViewHandle>(null);
-  const wide = useWindowDimensions().width >= WIDE;
+  const { width: winWidth, height: winHeight } = useWindowDimensions();
+  const wide = winWidth >= WIDE;
   const [sheetHeight, setSheetHeight] = useState(0);
   // Fitting the map to the lot keeps it clear of the round buttons (top) and the panel.
   const inset = useMemo<MapInset>(
@@ -71,11 +74,12 @@ export default function LotsScreen() {
   const lot =
     rows.find((r) => r.id === savedId) ?? rows.find((r) => r.area_ha === null) ?? (adding ? undefined : rows[0]);
   const saved = lots.find((l) => l.id === lot?.id);
+  const updateLot = useFarmStore((s) => s.updateLot);
   const name = lot?.name ?? "your lot";
 
   const [mode, setMode] = useState<MapMode>("view");
   const zoom = useRef<number | null>(null);
-  const [panel, setPanel] = useState<"pin" | "rename" | null>(null);
+  const [panel, setPanel] = useState<"pin" | "rename" | "details" | null>(null);
   const [areaText, setAreaText] = useState("");
   const [nameText, setNameText] = useState("");
   const [editingHa, setEditingHa] = useState<number | null>(null);
@@ -297,6 +301,17 @@ export default function LotsScreen() {
                 <Button label="Cancel" variant="quiet" onPress={() => setPanel(null)} style={styles.flex} />
               </View>
             </>
+          ) : panel === "details" && saved ? (
+            <>
+              <Text style={text.title} accessibilityRole="header">
+                {`About ${name} (optional)`}
+              </Text>
+              {/* Three questions are taller than the panel on a phone: scroll them, keep Done in view. */}
+              <ScrollView style={{ maxHeight: Math.max(160, winHeight - 260) }}>
+                <LotDetailsForm value={saved.details} onChange={(details) => updateLot(saved.id, { details })} />
+              </ScrollView>
+              <Button label="Done" icon="check" onPress={() => setPanel(null)} />
+            </>
           ) : drawing ? (
             <>
               <View style={styles.titleRow}>
@@ -386,6 +401,7 @@ export default function LotsScreen() {
                       <Tool icon="shape" label="Adjust" accessibilityLabel="Adjust the corners" onPress={adjust} />
                     )}
                     <Tool icon="draw" label="Redraw" onPress={() => start("sketch")} />
+                    <Tool icon="sprout" label="Details" accessibilityLabel="Optional lot details: land, water, soil" onPress={() => setPanel("details")} />
                   </View>
                   <Button
                     label={adding ? `Next: crops for ${name}` : "Next: your crops"}
