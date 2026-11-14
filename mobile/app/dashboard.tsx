@@ -10,6 +10,7 @@ import { FooterLinks } from "../src/components/FooterLinks";
 import { Header } from "../src/components/Header";
 import { HarvestCard } from "../src/components/HarvestCard";
 import { WhatIfCard } from "../src/components/WhatIfCard";
+import { ElNinoNotice } from "../src/components/ElNinoNotice";
 import { YearCalendar } from "../src/components/YearCalendar";
 import type { Scenario } from "../src/engine/scenario";
 import { LotCutoutCard } from "../src/components/LotCutoutCard";
@@ -83,6 +84,7 @@ export default function DashboardScreen() {
               <LotCutoutCard lot={lot} analysis={v.analysis} library={CROP_LIBRARY} cropName={cropName} period={v.period} />
             ) : null;
           })()}
+          <ElNinoNotice />
           <LotTabs
             lots={farm.lots}
             selectedId={lot.id}
