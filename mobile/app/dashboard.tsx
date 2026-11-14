@@ -65,6 +65,9 @@ export default function DashboardScreen() {
   const views = useFarmLotViews(farm);
   const { wide } = useLayout();
   const selectLot = useCallback((id: string) => router.setParams({ lot: id }), []);
+  // Soft warning from the land map (Natural Earth): NASA's coarse cells read inner seas and lakes as land. Shown
+  // first under the tabs, because it is about this lot and asks for action; the no-soil note (sea or ice) wins.
+  const onWater = useMemo(() => (lot ? lotLooksLikeWater(LAND_WATER, lot) : false), [lot]);
 
   // The sample farm's numbers come from NASA POWER daily: its source chips say so (#144).
   return (
@@ -97,6 +100,15 @@ export default function DashboardScreen() {
             onSelect={selectLot}
             onAdd={() => router.push({ pathname: "/lots", params: { new: "1" } })}
           />
+          {onWater && views[lot.id]?.kind !== "no-soil" ? (
+            <Narrow>
+              <Notice tone="warn">
+                {lot.name} looks like it is on water (sea or lake) on our map. If this is your farm, you can go on. If not, move the
+                lot onto your farm.
+              </Notice>
+              <Button label={`Move ${lot.name} on the map`} variant="secondary" href={{ pathname: "/lots", params: { lot: lot.id } }} />
+            </Narrow>
+          ) : null}
           <ElNinoNotice />
           <LotResults key={lot.id} farm={farm} lot={lot} />
         </>
@@ -119,10 +131,6 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
   const setPriorities = useFarmStore((s) => s.setPriorities);
   const { wide } = useLayout();
 
-  // Soft warning from the land map (Natural Earth): NASA's coarse cells read inner seas and lakes as land.
-  const onWater = useMemo(() => lotLooksLikeWater(LAND_WATER, lot), [lot]);
-
-  const body = (() => {
   switch (view.kind) {
     case "loading":
       return <Text style={text.caption}>Loading {lot.name}...</Text>;
@@ -264,21 +272,6 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
       );
     }
   }
-  })();
-
-  if (!onWater || view.kind === "no-soil" || view.kind === "loading") return body;
-  return (
-    <>
-      <Narrow>
-        <Notice tone="warn">
-          {lot.name} looks like it is on water (sea or lake) on our map. If this is your farm, you can go on. If not, move the lot
-          onto your farm.
-        </Notice>
-        <Button label={`Move ${lot.name} on the map`} variant="secondary" href={{ pathname: "/lots", params: { lot: lot.id } }} />
-      </Narrow>
-      {body}
-    </>
-  );
 }
 
 /**

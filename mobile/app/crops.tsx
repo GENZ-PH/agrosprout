@@ -1,6 +1,6 @@
 import { onlineManager } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
-import { useMemo, useSyncExternalStore } from "react";
+import { useMemo, useRef, useSyncExternalStore } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "../src/components/Button";
@@ -117,13 +117,14 @@ function LotCrops({ lot }: { lot: Lot }) {
   // One crop per lot: a crop counts as chosen only when it is the lot's only crop.
   const chosen = lot.crops.length === 1 ? lot.crops[0].crop_id : null;
   const line = dataLine(lot.data_status, online, noSoil);
+  const search = useRef<{ focus: () => void }>(null);
   // Soft: NASA's coarse cells read inner seas and lakes as land, so the lot is also checked against a land map.
   const onWater = useMemo(() => !noSoil && lotLooksLikeWater(LAND_WATER, lot), [noSoil, lot]);
 
   return (
     <View style={styles.section}>
       <View style={styles.sectionHead}>
-        <Text style={text.heading} accessibilityRole="header">
+        <Text style={text.title} accessibilityRole="header">
           {lot.name}
         </Text>
         <Text style={[text.small, { color: colors.muted }]}>
@@ -131,17 +132,24 @@ function LotCrops({ lot }: { lot: Lot }) {
         </Text>
       </View>
 
-      <CropSearch lotName={lot.name} entries={SEARCH_ENTRIES} chosen={chosen} onPick={(id) => setCrops(lot.id, chooseCrop(lot.crops, id))} />
+      <CropSearch
+        lotName={lot.name}
+        entries={SEARCH_ENTRIES}
+        chosen={chosen}
+        onPick={(id) => setCrops(lot.id, chooseCrop(lot.crops, id))}
+        searchRef={search}
+      />
 
       <YourCrops
         lotName={lot.name}
         crops={lot.crops}
         hasTop={top.length > 0}
         onRemove={(id) => setCrops(lot.id, toggleCrop(lot.crops, id))}
+        onSearch={() => search.current?.focus()}
       />
 
       <View
-        style={[styles.dataLine, line.tone === "ready" ? styles.dataReady : line.tone === "error" ? styles.dataError : null]}
+        style={line.tone === "ready" ? styles.dataQuiet : [styles.dataLine, line.tone === "error" ? styles.dataError : null]}
         accessibilityLiveRegion="polite"
       >
         <Icon
@@ -149,7 +157,7 @@ function LotCrops({ lot }: { lot: Lot }) {
           size={18}
           color={line.tone === "ready" ? colors.green : line.tone === "error" ? colors.amber : colors.muted}
         />
-        <Text style={[text.small, styles.flex]}>{line.text}</Text>
+        <Text style={[text.small, styles.flex, line.tone === "ready" && { color: colors.muted }]}>{line.text}</Text>
         {noSoil ? (
           <Button
             label="Move lot"
@@ -206,12 +214,15 @@ function YourCrops({
   crops,
   hasTop,
   onRemove,
+  onSearch,
 }: {
   lotName: string;
   crops: readonly LotCrop[];
   /** Top crops are shown below, so the empty text can point to them. */
   hasTop: boolean;
   onRemove: (cropId: string) => void;
+  /** Puts the cursor in the search box above. */
+  onSearch: () => void;
 }) {
   return (
     <View style={styles.yours} accessibilityLiveRegion="polite">
@@ -222,11 +233,16 @@ function YourCrops({
         <Text style={[text.small, { color: colors.muted }]}>One crop per lot now: the crop you choose next replaces these.</Text>
       ) : null}
       {crops.length === 0 ? (
-        <View style={styles.emptyCrop}>
+        <Pressable
+          onPress={onSearch}
+          accessibilityRole="button"
+          accessibilityLabel={`No crop on ${lotName} yet. Search for a crop`}
+          style={({ pressed }) => [styles.emptyCrop, pressed && styles.pressed]}
+        >
           <Text style={[text.body, { color: colors.muted }]}>
             {hasTop ? "None yet. Search for a crop above, or tap one of the top crops below." : "None yet. Search for a crop above."}
           </Text>
-        </View>
+        </Pressable>
       ) : (
         crops.map((c) => {
           const other = isOtherCrop(c.crop_id);
@@ -277,7 +293,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     backgroundColor: colors.pressed,
   },
-  dataReady: { backgroundColor: colors.greenTint },
+  // Ready needs no action, so no box: a green box here read like a second chosen crop (UI review 2026-11-15).
+  dataQuiet: { flexDirection: "row", alignItems: "center", gap: space.sm, marginTop: space.sm },
   dataError: { backgroundColor: colors.amberTint },
   yours: { gap: space.sm },
   cropCard: {
