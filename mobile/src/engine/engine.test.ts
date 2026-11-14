@@ -29,7 +29,7 @@ test("engine entry points exist; later ones say which issue implements them", ()
   assert.equal(typeof engine.cropFit, "function");
   assert.equal(typeof engine.rotations, "function");
   assert.equal(typeof engine.plantingWindow, "function");
-  assert.throws(() => engine.marketAccess(), /#27/);
+  assert.equal(typeof engine.marketAccess, "function");
   assert.throws(() => engine.explain(), /#28/);
 });
 
