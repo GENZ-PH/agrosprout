@@ -122,7 +122,7 @@ test("parseBackup rejects files that are not a valid farm backup, with a reason"
     return r.ok ? "" : r.reason;
   };
   assert.match((parseBackup("{oops") as { reason: string }).reason, /not valid JSON/);
-  assert.match(bad((b) => (b.kind = "something")), /not an AgriResilience/);
+  assert.match(bad((b) => (b.kind = "something")), /not an AgroSprout/);
   assert.match(bad((b) => (b.format = 2)), /format 2/);
   assert.match(bad((b) => (b.farm.version = 2)), /version 2/);
   assert.match(bad((b) => (b.farm.priorities.water = 150)), /priorities/);
