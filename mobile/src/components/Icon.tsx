@@ -5,6 +5,7 @@ import ChevronLeft from "lucide-react-native/icons/chevron-left";
 import ChevronRight from "lucide-react-native/icons/chevron-right";
 import CircleAlert from "lucide-react-native/icons/circle-alert";
 import Clock from "lucide-react-native/icons/clock";
+import Droplet from "lucide-react-native/icons/droplet";
 import Info from "lucide-react-native/icons/info";
 import LocateFixed from "lucide-react-native/icons/locate-fixed";
 import Lock from "lucide-react-native/icons/lock";
@@ -14,8 +15,11 @@ import Minimize2 from "lucide-react-native/icons/minimize-2";
 import Pencil from "lucide-react-native/icons/pencil";
 import Plus from "lucide-react-native/icons/plus";
 import Scan from "lucide-react-native/icons/scan";
+import ShoppingBasket from "lucide-react-native/icons/shopping-basket";
 import Spline from "lucide-react-native/icons/spline";
 import Sprout from "lucide-react-native/icons/sprout";
+import Sun from "lucide-react-native/icons/sun";
+import Thermometer from "lucide-react-native/icons/thermometer";
 import Trash2 from "lucide-react-native/icons/trash-2";
 import Undo2 from "lucide-react-native/icons/undo-2";
 import VectorSquare from "lucide-react-native/icons/vector-square";
@@ -48,6 +52,14 @@ const ICONS = {
   collapse: Minimize2,
   corners: Scan,
   pin: MapPin,
+  /** Dry month: a sun. */
+  sun: Sun,
+  /** Wet month: a rain drop. */
+  drop: Droplet,
+  /** Hot month: a thermometer. */
+  heat: Thermometer,
+  /** Harvest: a basket. */
+  basket: ShoppingBasket,
   /** A shape with corner handles: "Adjust the corners". */
   shape: VectorSquare,
 } satisfies Record<string, LucideIcon>;
