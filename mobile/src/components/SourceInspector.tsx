@@ -243,6 +243,8 @@ const styles = StyleSheet.create({
   call: { gap: 2 },
   method: { gap: space.xs, paddingTop: space.sm, borderTopWidth: 1, borderTopColor: colors.border },
   link: { ...text.small, color: colors.blue, textDecorationLine: "underline" },
+  /** A 44 dp tap target around the one-line link (#45). */
+  linkRow: { minHeight: MIN_TOUCH, justifyContent: "center" },
 });
 
 // ---------------------------------------------------------------------------
@@ -339,7 +341,7 @@ export function OverviewBody({ c }: { c: PanelContext }) {
               <Text style={[text.small, styles.flex]}>{t}</Text>
             </View>
           ))}
-          <Pressable onPress={() => router.push("/data")} accessibilityRole="link">
+          <Pressable onPress={() => router.push("/data")} accessibilityRole="link" style={styles.linkRow}>
             <Text style={styles.link}>All data sources and limits</Text>
           </Pressable>
         </Section>
