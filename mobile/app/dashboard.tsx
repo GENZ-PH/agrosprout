@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { Button } from "../src/components/Button";
 import { CropFitCard } from "../src/components/CropFitCard";
 import { Disclaimer } from "../src/components/Disclaimer";
+import { HarvestCard } from "../src/components/HarvestCard";
 import { Header } from "../src/components/Header";
 import { LotTabs } from "../src/components/LotTabs";
 import { Notice } from "../src/components/Notice";
@@ -26,8 +27,9 @@ import type { Farm, Lot } from "../src/types";
 // S3 Dashboard (#29, docs/11-user-flow.md): results per lot, worked out on the phone from the
 // lot's NASA data. So far: the lot tabs with "+ Add lot" (D32: S1 then S2 for the new lot), Your crops here,
 // What matters to you (priority chips, #40), Recommendations (options A-D with
-// their explanations) and the 3-year Soil Health card (#43). The other S3 cards (lot snapshot,
-// soil moisture, getting your harvest out, continue prompt) go in LotResults too.
+// their explanations), the 3-year Soil Health card (#43), Getting your harvest out (opens S6,
+// #30) and the Continue prompt (S4). The other S3 cards (lot snapshot, soil moisture) go in
+// LotResults too.
 // `useLotAnalysis` already returns everything they need (`LotAnalysis` in src/engine/analyze.ts).
 //
 // Big screens (#114): on a laptop window (expanded, >= 840 dp) the page widens to 1200 px, Your
@@ -124,6 +126,9 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
           columns={wide ? 2 : 1}
         />
       );
+      const harvest = (
+        <HarvestCard lot={lot} destinations={farm.destinations} analysis={analysis} cropName={cropName} period={period} />
+      );
       return (
         <>
           {analysis.stage === 1 ? (
@@ -147,13 +152,19 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
               </View>
               {priorities}
               {recommendations}
-              <MonthsPrompt lot={lot} stage={analysis.stage} />
+              <View style={styles.row}>
+                <View style={styles.col}>{harvest}</View>
+                <View style={styles.col}>
+                  <MonthsPrompt lot={lot} stage={analysis.stage} />
+                </View>
+              </View>
             </>
           ) : (
             <>
               {fit}
               {priorities}
               {recommendations}
+              {harvest}
               {soil}
               <MonthsPrompt lot={lot} stage={analysis.stage} />
             </>
