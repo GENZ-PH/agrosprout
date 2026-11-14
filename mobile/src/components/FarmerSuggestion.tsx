@@ -27,6 +27,8 @@ type Props = {
   componentsLeftOut: readonly ComponentKey[];
   /** Farmer seasons the results lengthen to the crop's own season (`longerSeasons`). */
   longer?: readonly LongerSeason[];
+  /** A what-if is on: the SI summary waits for a tap instead of loading by itself. */
+  whatIf?: boolean;
 };
 
 const shortName = (name: string) => name.replace(/\s*\(.*\)\s*$/, "").trim();
@@ -51,11 +53,12 @@ function YearRow({ label, strip, cropById }: { label: string; strip: (string | n
   );
 }
 
-export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, cropById, componentsLeftOut, longer = [] }: Props) {
+export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, cropById, componentsLeftOut, longer = [], whatIf = false }: Props) {
   const isA = pick.key === "A";
   const name = (id: string) => shortName(cropName(id));
   const reasons = plainReasons(pick, a, componentsLeftOut);
   const check = checkFirst(explanation);
+  const siRequest = explanation ? explainRequest({ pick, a, explanation, cropName, componentsLeftOut }) : null;
   const crops = [...new Set(pick.slots.map((s) => s.crop_id))];
   const yours = a ? [...new Set(a.slots.map((s) => s.crop_id))] : [];
   const legend = [...new Set([...crops, ...(isA ? [] : yours)])];
@@ -137,7 +140,7 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
         </View>
       ) : null}
 
-      {explanation ? <ExplainWithSI request={explainRequest({ pick, a, explanation, cropName, componentsLeftOut })} /> : null}
+      {siRequest ? <ExplainWithSI key={JSON.stringify(siRequest)} request={siRequest} auto={!whatIf} /> : null}
       <Text style={text.caption}>
         {isA ? "Your crops already score highest on this lot." : `This is plan ${pick.key} (${OPTION_LABELS[pick.key]}) in the details for your technician.`} You
         and your technician decide.

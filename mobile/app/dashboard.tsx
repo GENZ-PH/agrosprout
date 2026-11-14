@@ -339,6 +339,7 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
           cropById={cropById}
           componentsLeftOut={analysis.rotations.components_left_out}
           longer={longerSeasons(lot, cropById)}
+          whatIf={scenario !== null}
         />
       ) : null;
       const monthsHref = { pathname: "/months", params: { lot: lot.id } } as const;
