@@ -24,6 +24,8 @@ export type {
   PlantingWindowInput,
   PlantingWindowResult,
   SeasonWindow,
+  BlockedWindow,
+  WindowClash,
   WindowDriver,
   WindowGap,
   WindowMetrics,

@@ -26,3 +26,9 @@ test("period token is filled from the lot's data and unknown tokens stay", () =>
 test("every data source names a period and a resolution", () => {
   for (const s of DATA_SOURCES) assert.ok(s.period && s.resolution && s.used_for, s.name);
 });
+
+test("the months card never says already good for a blocked month", () => {
+  const read = EXPLAINERS["months-compare"].read;
+  assert.match(read, /clash/);
+  assert.match(read, /even on a lot with nothing else on it/);
+});

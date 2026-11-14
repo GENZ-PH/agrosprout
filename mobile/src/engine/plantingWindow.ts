@@ -58,15 +58,40 @@ export type WindowDriver =
 
 export type WindowUnknown = "lot-details-unknown" | "fit-not-computable" | "dry-year-differs";
 
+/** Another season of the same lot that a month would run into (index into the farmer's own seasons). */
+export interface WindowClash {
+  crop_id: string;
+  season_index: number;
+}
+
+/** A month that would clearly beat the farmer's, if it did not run into another season of the lot. */
+export interface BlockedWindow {
+  /** Scored as if this season were the only one on the lot, so the clash does not lower it. */
+  month: WindowMetrics;
+  /** Fit points the month would gain over the farmer's month, both scored as the only season on the lot. */
+  delta: number;
+  /** Shift of that month in months, 1-6 later (+) or earlier (-). */
+  shift_months: number;
+  /** The farmer's own seasons it would run into. */
+  clashes: WindowClash[];
+}
+
 export interface SeasonWindow {
   crop_id: string;
   /** Index into the farmer's `seasons` for this crop (0-based). */
   season_index: number;
-  /** "already-good" = nothing beat the farmer's month by the margin. "unknown" = Fit could not be computed. */
-  status: "better" | "already-good" | "unknown";
+  /**
+   * "better" = a month that fits the lot clearly beats the farmer's.
+   * "blocked" = a month would clearly beat it, but only by running into another season of the lot: not offered as a move, shown as a trade-off.
+   * "already-good" = nothing beats the farmer's month by the margin, even on a lot with nothing else on it.
+   * "unknown" = Fit could not be computed.
+   */
+  status: "better" | "blocked" | "already-good" | "unknown";
   yours: WindowMetrics;
   better: WindowMetrics | null;
-  /** Fit points gained by the better month; `null` when there is none. */
+  /** Set only when `status` is "blocked". */
+  blocked: BlockedWindow | null;
+  /** Fit points gained by the better month; `null` when there is none (see `blocked.delta` for a blocked one). */
   delta: number | null;
   /** Shift of the better month in months, 1-6 later (+) or earlier (-); `null` when there is none. */
   shift_months: number | null;
@@ -170,12 +195,16 @@ export function plantingWindow(input: PlantingWindowInput): PlantingWindowResult
 
   const base = entries.map((e) => evaluateSlot(e.crop, e.slot, ctx));
 
-  /** Metrics for entry `i` planted in `month`, with every other season unchanged. */
-  const evaluate = (i: number, month: number): { metrics: WindowMetrics; ev: SlotEval } => {
+  /**
+   * Metrics for entry `i` planted in `month`, with every other season unchanged.
+   * With `alone`, the lot is scored as if that season were the only one on it (used to
+   * size a month that is blocked by another season, so the clash itself does not count).
+   */
+  const evaluate = (i: number, month: number, alone = false): { metrics: WindowMetrics; ev: SlotEval } => {
     const e = entries[i];
     const slot: RotationSlot = { ...e.slot, plant_month: month, harvest_month: harvestMonthOf(month, e.slot.season_days) };
     const ev = month === e.slot.plant_month ? base[i] : evaluateSlot(e.crop, slot, ctx);
-    const rotation = scoreRotation(base.map((b, j) => (j === i ? ev : b)), scoreCtx, true);
+    const rotation = scoreRotation(alone ? [ev] : base.map((b, j) => (j === i ? ev : b)), scoreCtx, true);
     const scores = { W: rotation.scores.W, H: rotation.scores.H, E: input.lot.details.land_type === "sloping" ? rotation.scores.E : null };
     const fit = weightedFit(scores, keys);
     const w20 = rotation.water_fit_range.p20;
@@ -206,19 +235,25 @@ export function plantingWindow(input: PlantingWindowInput): PlantingWindowResult
     const unknowns: WindowUnknown[] = [];
     if (detailsUnknown) unknowns.push("lot-details-unknown");
 
-    // Feasible alternatives: pass the hard filters and do not collide with the farmer's other seasons.
+    // Alternatives that pass the hard filters. Those that run into one of the farmer's other
+    // seasons are kept apart: never offered as a move, but a clearly better one is reported as "blocked".
     const feasible: WindowMetrics[] = [];
+    const clashing: { metrics: WindowMetrics; clashes: WindowClash[] }[] = [];
     for (let m = 1; m <= 12; m++) {
       if (m === e.slot.plant_month) continue;
       const { metrics, ev } = evaluate(i, m);
       if (ev.rejected.length > 0) continue;
-      const collides = base.some((other, j) => {
-        if (j === i) return false;
+      const clashes: WindowClash[] = [];
+      base.forEach((other, j) => {
+        if (j === i) return;
         const wasTogether = gapDays(interval(base[i]), interval(other)) < 0; // intercropped in the farmer's own calendar
-        if (wasTogether) return false;
-        return gapDays(interval(ev), interval(other)) < TURNAROUND_DAYS;
+        if (wasTogether) return;
+        if (gapDays(interval(ev), interval(other)) < TURNAROUND_DAYS) {
+          clashes.push({ crop_id: entries[j].crop_id, season_index: entries[j].season_index });
+        }
       });
-      if (!collides) feasible.push(metrics);
+      if (clashes.length === 0) feasible.push(metrics);
+      else clashing.push({ metrics: evaluate(i, m, true).metrics, clashes });
     }
 
     if (yours.fit === null) {
@@ -229,6 +264,7 @@ export function plantingWindow(input: PlantingWindowInput): PlantingWindowResult
         status: "unknown",
         yours,
         better: null,
+        blocked: null,
         delta: null,
         shift_months: null,
         drivers: [],
@@ -239,21 +275,45 @@ export function plantingWindow(input: PlantingWindowInput): PlantingWindowResult
 
     const yoursFit = yours.fit;
     const scored = feasible.filter((m) => m.fit !== null);
-    const qualifying = scored.filter((m) => {
-      const gain = (m.fit as number) - yoursFit;
-      return gain >= WINDOW_MARGIN_POINTS || (gain > 0 && m.stress_months.length < yours.stress_months.length);
-    });
-    let better: WindowMetrics | null = null;
-    if (qualifying.length > 0) {
-      const bestGain = Math.max(...qualifying.map((m) => (m.fit as number) - yoursFit));
-      const enough = qualifying.filter((m) => (m.fit as number) - yoursFit >= WINDOW_GAIN_CAPTURE_SHARE * bestGain);
+    /**
+     * The best month in `pool` that clearly beats `from` (the farmer's month): by the margin, or, when
+     * `allowFewerStress`, by any gain that removes a stress month. `null` if none does.
+     */
+    const pickBetter = (pool: WindowMetrics[], from: WindowMetrics, allowFewerStress: boolean): WindowMetrics | null => {
+      const base = from.fit as number;
+      const qualifying = pool.filter((m) => {
+        if (m.fit === null) return false;
+        const gain = m.fit - base;
+        return gain >= WINDOW_MARGIN_POINTS || (allowFewerStress && gain > 0 && m.stress_months.length < from.stress_months.length);
+      });
+      if (qualifying.length === 0) return null;
+      const bestGain = Math.max(...qualifying.map((m) => (m.fit as number) - base));
+      const enough = qualifying.filter((m) => (m.fit as number) - base >= WINDOW_GAIN_CAPTURE_SHARE * bestGain);
       enough.sort((a, b) => {
         const sa = signedShift(e.slot.plant_month, a.plant_month);
         const sb = signedShift(e.slot.plant_month, b.plant_month);
         // Smallest shift first; for equal size prefer the later month, then the higher Fit.
         return Math.abs(sa) - Math.abs(sb) || sb - sa || (b.fit as number) - (a.fit as number);
       });
-      better = enough[0];
+      return enough[0];
+    };
+    const better = pickBetter(scored, yours, true);
+
+    // Nothing fits the lot: would a month that runs into another season have beaten the farmer's by the
+    // margin if the lot had nothing else on it? Both are scored alone, so the clash does not count against it.
+    let blocked: BlockedWindow | null = null;
+    if (!better && clashing.length > 0) {
+      const yoursAlone = evaluate(i, e.slot.plant_month, true).metrics;
+      const pick = yoursAlone.fit === null ? null : pickBetter(clashing.map((c) => c.metrics), yoursAlone, false);
+      const hit = clashing.find((c) => c.metrics === pick);
+      if (pick && hit) {
+        blocked = {
+          month: pick,
+          delta: (pick.fit as number) - (yoursAlone.fit as number),
+          shift_months: signedShift(e.slot.plant_month, pick.plant_month),
+          clashes: hit.clashes,
+        };
+      }
     }
 
     // Dry-year check: does the best month change when the year is dry (P20) instead of typical (P50)?
@@ -262,23 +322,26 @@ export function plantingWindow(input: PlantingWindowInput): PlantingWindowResult
     const bestP50 = [yours, ...scored].reduce<WindowMetrics>((a, m) => ((m.fit as number) > (a.fit as number) ? m : a), yours);
     if (bestP20 && bestP20.plant_month !== bestP50.plant_month) unknowns.push("dry-year-differs");
 
+    // What improves in the better month, or in the blocked one (so the text can say why it would help).
+    const target = better ?? blocked?.month ?? null;
     const drivers: WindowDriver[] = [];
-    if (better) {
-      if (better.stress_months.length < yours.stress_months.length) drivers.push("fewer-stress-months");
-      if ((better.scores.W ?? 0) > (yours.scores.W ?? 0)) drivers.push("better-water-fit");
-      if ((better.scores.H ?? 0) > (yours.scores.H ?? 0)) {
-        if (better.heat_months.length < yours.heat_months.length) drivers.push("less-heat-risk");
-        if (better.waterlog_months.length < yours.waterlog_months.length) drivers.push("less-waterlogging");
+    if (target) {
+      if (target.stress_months.length < yours.stress_months.length) drivers.push("fewer-stress-months");
+      if ((target.scores.W ?? 0) > (yours.scores.W ?? 0)) drivers.push("better-water-fit");
+      if ((target.scores.H ?? 0) > (yours.scores.H ?? 0)) {
+        if (target.heat_months.length < yours.heat_months.length) drivers.push("less-heat-risk");
+        if (target.waterlog_months.length < yours.waterlog_months.length) drivers.push("less-waterlogging");
       }
-      if (keys.includes("E") && (better.scores.E ?? 0) > (yours.scores.E ?? 0)) drivers.push("less-erosion");
+      if (keys.includes("E") && (target.scores.E ?? 0) > (yours.scores.E ?? 0)) drivers.push("less-erosion");
     }
 
     return {
       crop_id: e.crop_id,
       season_index: e.season_index,
-      status: better ? "better" : "already-good",
+      status: better ? "better" : blocked ? "blocked" : "already-good",
       yours,
       better,
+      blocked,
       delta: better ? (better.fit as number) - yoursFit : null,
       shift_months: better ? signedShift(e.slot.plant_month, better.plant_month) : null,
       drivers,
