@@ -12,7 +12,7 @@
 ## High-Level Project Summary
 *What did you develop? How does it address the challenge? Why is it important?*
 
-> AgriResilience is a free app that helps a smallholder farmer decide what to plant, and when, on each of their own lots. The farmer draws their lots on a satellite map with a finger and picks the crop on each lot. The app then pulls 25 years of NASA POWER climate data for each lot and compares the farmer's current crop with three other rotations (best for water, best for soil, and balanced) on rain, heat, soil health, erosion and pest cycles, plus market access once the farmer adds where the harvest goes. It also checks the farmer's planting months against better ones. Every result says why, what it is based on, what is uncertain, and what to check with the local agricultural technician. It runs in a phone or laptop browser (an Android build is in progress), needs no account, and saved results work offline. This matters now: PAGASA reports a very strong El Niño expected to last into the first half of 2027, so choosing a crop and planting month that fit a dry year protects the harvest. It is built for small farms: the Philippine Statistics Authority's 2022 Census of Agriculture and Fisheries counted 7.73 million farms, and 55.8 percent were smaller than half a hectare.
+> AgriResilience is a free app that helps a smallholder farmer decide what to plant, and when, on each of their own lots. The farmer draws their lots on a satellite map with a finger and picks the crop on each lot. The app then pulls 25 years of NASA POWER climate data for each lot and compares the farmer's current crop with three other rotations (best for water, best for soil, and balanced) on rain, heat, soil health, erosion and pest cycles, plus market access once the farmer adds where the harvest goes. It also checks the farmer's planting months against better ones. Every result says why, what it is based on, what is uncertain, and what to check with the local agricultural technician. It runs in a phone or laptop browser, needs no account, and saved results work offline. This matters now: PAGASA reports a very strong El Niño expected to last into the first half of 2027, so choosing a crop and planting month that fit a dry year protects the harvest. It is built for small farms: the Philippine Statistics Authority's 2022 Census of Agriculture and Fisheries counted 7.73 million farms, and 55.8 percent were smaller than half a hectare.
 
 ## Link to Project Demo
 `TBD` (public link; 30-second video or 7 slides at most; open it in a private window on a phone before submitting)
@@ -21,7 +21,6 @@
 - Web app (no login): https://agrosprout.pages.dev (primary; Cloudflare Pages, no domain to renew)
 - Same app on our domain: https://agrosprout.inovsea.com
 - Source code: https://github.com/GENZ-PH/agrosprout *(repo must be public before submitting, #54)*
-- Android APK: `TBD` (#50)
 
 Tip for judges, also on the start screen: tap **See a sample farm** to see full results without drawing anything and without signal.
 
@@ -75,7 +74,8 @@ We want a farmer to see, before planting, which season on each lot is likely to 
 - add Filipino and Cebuano;
 - a view for technicians and cooperatives that covers several farms;
 - bring satellite data to every lot the farmer draws, not only the sample farm: SMAP soil moisture, GPM IMERG rain, MODIS and HLS greenness, ECOSTRESS evaporative stress, FLDAS, and SRTM elevation for live lots;
-- local soil data in place of the farmer's soil answer.
+- local soil data in place of the farmer's soil answer;
+- an installable Android app built from the same code (the web app already runs in a phone browser).
 
 **Tools, languages, hardware, and software used**
 
@@ -84,9 +84,9 @@ We want a farmer to see, before planting, which season on each lot is likely to 
 - Map: Leaflet, Terra Draw and Turf.js, bundled into an offline map page with esbuild; Esri World Imagery basemap.
 - Data and methods: NASA POWER API (monthly per lot; daily for the sample farm), NASA SRTM v3 via Open Topo Data, GPM IMERG and SMAP L4 via NASA Earthdata; FAO-56; FAO Training Manual No. 3; FAO Ecocrop; PSA OpenSTAT yields; NOAA ONI; DOST-PAGASA; OSRM road routing on OpenStreetMap data.
 - Testing: Node.js test runner (over 400 tests for the engine, data and screens' logic), Python unittest for the pipeline.
-- Hosting and build: Cloudflare Pages (web), EAS Build (Android), GitHub.
+- Hosting and build: Cloudflare Pages (web), GitHub.
 - SI assistant: Claude Code (Anthropic); see "Use of SI".
-- Hardware: Android phones and laptops.
+- Hardware: none needed beyond a phone or laptop with a web browser.
 
 ## Use of Super Intelligence (SI)
 > Draft lives in [../si-usage-log.md](../si-usage-log.md#draft-answer-for-the-use-of-si-form-field-update-before-submitting). Copy the final version here. Judges do not see this field, but they see the SI labels in the project, so both must match.

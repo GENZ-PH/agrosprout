@@ -18,6 +18,7 @@
     "build:types": "tsc -p tsconfig.types.json"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
     "@hono/zod-validator": "^0.9.1",
     "hono": "^4.13.18",
     "zod": "^4.6.7"

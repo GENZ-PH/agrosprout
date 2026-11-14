@@ -56,7 +56,7 @@ export function MonthChart({ series, min = 0, unit, decimals = 0 }: { series: Mo
             {ticks.map((v) => (
               <G key={v}>
                 <Line x1={AXIS_W} x2={width} y1={y(v)} y2={y(v)} stroke={v === bottom ? colors.borderStrong : colors.border} strokeWidth={1} />
-                <SvgText x={AXIS_W - 4} y={y(v) + 4} fontSize={11} textAnchor="end" fontFamily={SVG_FONT} fill={colors.muted}>
+                <SvgText x={AXIS_W - 4} y={y(v) + 4} fontSize={12} textAnchor="end" fontFamily={SVG_FONT} fill={colors.muted}>
                   {v.toFixed(decimals)}
                 </SvgText>
               </G>
@@ -99,7 +99,7 @@ export function MonthChart({ series, min = 0, unit, decimals = 0 }: { series: Mo
               );
             })}
             {MONTH_INITIALS.map((m, i) => (
-              <SvgText key={i} x={AXIS_W + i * colW + colW / 2} y={PAD_TOP + H + 16} fontSize={11} textAnchor="middle" fontFamily={SVG_FONT} fill={colors.muted}>
+              <SvgText key={i} x={AXIS_W + i * colW + colW / 2} y={PAD_TOP + H + 16} fontSize={12} textAnchor="middle" fontFamily={SVG_FONT} fill={colors.muted}>
                 {m}
               </SvgText>
             ))}

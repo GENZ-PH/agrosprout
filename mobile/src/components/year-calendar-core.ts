@@ -33,3 +33,19 @@ export function yearCalendarLines(month: MonthState, name: (id: string) => strin
   for (const r of month.risks) out.push({ icon: r === "dry" ? "sun" : r === "hot" ? "heat" : "drop", tone: `risk-${r}`, text: RISK_TIPS[r] });
   return out;
 }
+
+const RISK_WORDS = { dry: "short of water", hot: "too hot", wet: "too wet" } as const;
+
+/**
+ * What a screen reader says for one month tile (#45): the month, then what the tile's icons show,
+ * e.g. "June, now: plant Lowland rice; short of water". The full lines are read when it is tapped.
+ */
+export function tileLabel(month: MonthState, monthName: string, name: (id: string) => string, isNow = false): string {
+  const parts: string[] = [];
+  if (month.plant.length) parts.push(`plant ${listNames(month.plant.map(name))}`);
+  if (month.harvest.length) parts.push(`harvest ${listNames(month.harvest.map(name))}`);
+  if (month.field.length === 0) parts.push("bare soil");
+  else if (!month.plant.length && !month.harvest.length) parts.push(`${listNames(month.field.map(name))} in the field`);
+  for (const r of month.risks) parts.push(RISK_WORDS[r]);
+  return `${monthName}${isNow ? ", now" : ""}: ${parts.join("; ")}`;
+}
