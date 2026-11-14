@@ -227,7 +227,9 @@ function sendLot(id: string, fix: ShapeFix) {
 /** Mirrors the app's lot list. Shapes that did not change are left alone, so an edit in progress survives. */
 function setLots(lots: MapLot[]) {
   const keep = new Set(lots.map((l) => l.id));
-  for (const id of [...lotNames.keys()]) {
+  // Every lot shape on the map, including one just drawn under an id the app has
+  // since replaced (a new lot is saved under the farm store's id).
+  for (const id of new Set([...lotNames.keys(), ...lastRing.keys()])) {
     if (!keep.has(id)) {
       if (draw.hasFeature(id)) draw.removeFeatures([id]);
       updateLabel(id, null);
@@ -239,8 +241,11 @@ function setLots(lots: MapLot[]) {
     lotNames.set(lot.id, lot.name);
     const ring = lot.geometry.coordinates[0];
     const current = ringOf(lot.id);
-    if (!current || JSON.stringify(current) !== JSON.stringify(ring)) putLot(lot.id, ring);
-    else updateLabel(lot.id, current);
+    if (!current || JSON.stringify(current) !== JSON.stringify(ring)) {
+      putLot(lot.id, ring);
+      // Keep the corners of the lot being edited draggable after it is re-added.
+      if (mode === "select" && lot.id === activeLotId) draw.selectFeature(lot.id);
+    } else updateLabel(lot.id, current);
   }
 }
 
