@@ -47,6 +47,8 @@ export interface FarmActions {
   setPriorities: (patch: Partial<Priorities>) => void;
   /** Deletes the whole farm and every lot's saved climate data. */
   clearAll: () => void;
+  /** Replaces the whole farm (restore from a backup file, #49). Id counters continue after the highest id. */
+  replaceFarm: (farm: Farm) => void;
 }
 
 export type FarmState = FarmData & FarmActions;
@@ -66,6 +68,13 @@ export const emptyFarm = (): FarmData => ({
   next_lot_number: 1,
   next_destination_number: 1,
 });
+
+/** Next free number after ids like "lot-7" (prefix "lot-") → 8. */
+export const nextNumberAfter = (ids: string[], prefix: string) =>
+  ids.reduce((max, id) => {
+    const n = id.startsWith(prefix) ? Number(id.slice(prefix.length)) : NaN;
+    return Number.isInteger(n) && n >= max ? n + 1 : max;
+  }, 1);
 
 const clamp = (v: number) => (Number.isFinite(v) ? Math.min(100, Math.max(0, v)) : 50);
 
@@ -178,6 +187,15 @@ export function farmStateCreator(deps: FarmDeps): StateCreator<FarmState, [["zus
         set(emptyFarm());
         refs.forEach(removeQuietly);
       },
+
+      replaceFarm: (farm) =>
+        set({
+          lots: farm.lots,
+          destinations: farm.destinations,
+          priorities: farm.priorities,
+          next_lot_number: nextNumberAfter(farm.lots.map((l) => l.id), "lot-"),
+          next_destination_number: nextNumberAfter(farm.destinations.map((d) => d.id), "dest-"),
+        }),
     };
   };
 }
