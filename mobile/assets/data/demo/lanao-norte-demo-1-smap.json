@@ -1,0 +1,303 @@
+{
+  "id": "lanao-norte-demo-1",
+  "product": "SMAP L4 Global 3-hourly 9 km EASE-Grid Surface and Root Zone Soil Moisture Geophysical Data (SPL4SMGP)",
+  "version": "Version 8 (008)",
+  "native_res": "9 km EASE-Grid 2.0 Global (EPSG:6933) cell",
+  "period": "2015-04 to 2025-12",
+  "point": {
+    "lat": 8.0,
+    "lon": 123.8
+  },
+  "grid_cell": {
+    "grid": "EASE-Grid 2.0 Global 9 km (3856 x 1624)",
+    "row": 699,
+    "col": 3254,
+    "cell_lat": 7.9687,
+    "cell_lon": 123.843,
+    "note": "cell_lat/cell_lon are the cell centre as written in the SPL4SMGP files"
+  },
+  "units": "m3/m3 (volumetric water content)",
+  "sampling": {
+    "granule": "03:00-06:00 UTC 3-hourly average (granule centre 04:30 UTC, 12:30 Philippine time)",
+    "days_of_month": [
+      1,
+      6,
+      11,
+      16,
+      21,
+      26
+    ],
+    "min_samples_per_month": 4,
+    "granules_requested": 774,
+    "valid_surface_samples": 774,
+    "valid_rootzone_samples": 774,
+    "sample_days_without_granule": [],
+    "statistic": "mean of the samples in each year-month, then mean, p20, p80 across years per calendar month (linear-interpolated percentiles)"
+  },
+  "monthly": [
+    {
+      "month": 1,
+      "surface_m3m3": {
+        "mean": 0.344,
+        "p20": 0.258,
+        "p80": 0.412,
+        "n": 10
+      },
+      "rootzone_m3m3": {
+        "mean": 0.368,
+        "p20": 0.293,
+        "p80": 0.427,
+        "n": 10
+      }
+    },
+    {
+      "month": 2,
+      "surface_m3m3": {
+        "mean": 0.312,
+        "p20": 0.207,
+        "p80": 0.383,
+        "n": 10
+      },
+      "rootzone_m3m3": {
+        "mean": 0.342,
+        "p20": 0.266,
+        "p80": 0.4,
+        "n": 10
+      }
+    },
+    {
+      "month": 3,
+      "surface_m3m3": {
+        "mean": 0.277,
+        "p20": 0.183,
+        "p80": 0.365,
+        "n": 10
+      },
+      "rootzone_m3m3": {
+        "mean": 0.311,
+        "p20": 0.239,
+        "p80": 0.37,
+        "n": 10
+      }
+    },
+    {
+      "month": 4,
+      "surface_m3m3": {
+        "mean": 0.252,
+        "p20": 0.166,
+        "p80": 0.324,
+        "n": 11
+      },
+      "rootzone_m3m3": {
+        "mean": 0.288,
+        "p20": 0.227,
+        "p80": 0.34,
+        "n": 11
+      }
+    },
+    {
+      "month": 5,
+      "surface_m3m3": {
+        "mean": 0.283,
+        "p20": 0.197,
+        "p80": 0.352,
+        "n": 11
+      },
+      "rootzone_m3m3": {
+        "mean": 0.307,
+        "p20": 0.239,
+        "p80": 0.362,
+        "n": 11
+      }
+    },
+    {
+      "month": 6,
+      "surface_m3m3": {
+        "mean": 0.333,
+        "p20": 0.27,
+        "p80": 0.386,
+        "n": 11
+      },
+      "rootzone_m3m3": {
+        "mean": 0.344,
+        "p20": 0.291,
+        "p80": 0.392,
+        "n": 11
+      }
+    },
+    {
+      "month": 7,
+      "surface_m3m3": {
+        "mean": 0.365,
+        "p20": 0.335,
+        "p80": 0.386,
+        "n": 11
+      },
+      "rootzone_m3m3": {
+        "mean": 0.375,
+        "p20": 0.341,
+        "p80": 0.398,
+        "n": 11
+      }
+    },
+    {
+      "month": 8,
+      "surface_m3m3": {
+        "mean": 0.368,
+        "p20": 0.35,
+        "p80": 0.394,
+        "n": 11
+      },
+      "rootzone_m3m3": {
+        "mean": 0.377,
+        "p20": 0.345,
+        "p80": 0.406,
+        "n": 11
+      }
+    },
+    {
+      "month": 9,
+      "surface_m3m3": {
+        "mean": 0.369,
+        "p20": 0.352,
+        "p80": 0.392,
+        "n": 11
+      },
+      "rootzone_m3m3": {
+        "mean": 0.377,
+        "p20": 0.359,
+        "p80": 0.399,
+        "n": 11
+      }
+    },
+    {
+      "month": 10,
+      "surface_m3m3": {
+        "mean": 0.369,
+        "p20": 0.351,
+        "p80": 0.397,
+        "n": 11
+      },
+      "rootzone_m3m3": {
+        "mean": 0.379,
+        "p20": 0.36,
+        "p80": 0.409,
+        "n": 11
+      }
+    },
+    {
+      "month": 11,
+      "surface_m3m3": {
+        "mean": 0.372,
+        "p20": 0.341,
+        "p80": 0.405,
+        "n": 11
+      },
+      "rootzone_m3m3": {
+        "mean": 0.385,
+        "p20": 0.347,
+        "p80": 0.422,
+        "n": 11
+      }
+    },
+    {
+      "month": 12,
+      "surface_m3m3": {
+        "mean": 0.354,
+        "p20": 0.31,
+        "p80": 0.4,
+        "n": 11
+      },
+      "rootzone_m3m3": {
+        "mean": 0.37,
+        "p20": 0.334,
+        "p80": 0.419,
+        "n": 11
+      }
+    }
+  ],
+  "power_compare": {
+    "label": "NASA POWER GWETROOT (model root-zone soil wetness): a different quantity",
+    "quantity": "degree of saturation, 0 = dry, 1 = saturated, unitless",
+    "not_comparable_note": "GWETROOT is a fraction of saturation, SMAP sm_rootzone is volumetric water content (m3/m3). They are not the same number and should not be subtracted or plotted on one axis without saying so.",
+    "source": "NASA POWER daily GWETROOT",
+    "native_res": "0.5° × 0.625° grid cell",
+    "period": "2001-2025",
+    "statistic": "mean of the daily values per calendar month (copied from lanao-norte-demo-1.json monthly.rootzone_wetness)",
+    "from_file": "mobile/assets/data/demo/lanao-norte-demo-1.json",
+    "monthly": [
+      {
+        "month": 1,
+        "gwetroot": 0.906
+      },
+      {
+        "month": 2,
+        "gwetroot": 0.833
+      },
+      {
+        "month": 3,
+        "gwetroot": 0.765
+      },
+      {
+        "month": 4,
+        "gwetroot": 0.728
+      },
+      {
+        "month": 5,
+        "gwetroot": 0.773
+      },
+      {
+        "month": 6,
+        "gwetroot": 0.882
+      },
+      {
+        "month": 7,
+        "gwetroot": 0.958
+      },
+      {
+        "month": 8,
+        "gwetroot": 0.954
+      },
+      {
+        "month": 9,
+        "gwetroot": 0.96
+      },
+      {
+        "month": 10,
+        "gwetroot": 0.974
+      },
+      {
+        "month": 11,
+        "gwetroot": 0.97
+      },
+      {
+        "month": 12,
+        "gwetroot": 0.94
+      }
+    ]
+  },
+  "provenance": [
+    {
+      "source": "NASA NSIDC DAAC, SPL4SMGP Version 8, variables sm_surface and sm_rootzone",
+      "citation": "Reichle, R., De Lannoy, G., Koster, R. D., Crow, W. T., Kimball, J. S., Liu, Q. & Bechtold, M. (2025). SMAP L4 Global 3-hourly 9 km EASE-Grid Surface and Root Zone Soil Moisture Geophysical Data . (SPL4SMGP, Version 8). [Data Set]. Boulder, Colorado USA. NASA National Snow and Ice Data Center Distributed Active Archive Center. https://doi.org/10.5067/T5RUATAQREF8 . Subset: cell row 699, col 3254 (EASE-Grid 2.0 9 km), 04:30 UTC granules on days 1, 6, 11, 16, 21, 26 of each month, 2015-04 to 2025-12. Date Accessed 2026-11-14.",
+      "doi": "10.5067/T5RUATAQREF8",
+      "url": "https://nsidc.org/data/spl4smgp/versions/8",
+      "access": "NASA Earthdata cloud OPeNDAP (https://opendap.earthdata.nasa.gov), DAP4 CSV subset; granule list from CMR",
+      "retrieved": "2026-11-14"
+    },
+    {
+      "source": "NASA POWER daily GWETROOT (power_compare block)",
+      "citation": "see lanao-norte-demo-1.json provenance",
+      "doi": null,
+      "url": "https://power.larc.nasa.gov/",
+      "retrieved": "2026-11-14"
+    }
+  ],
+  "caveats": [
+    "SPL4SMGP is a model analysis (the NASA land model with SMAP brightness temperatures assimilated), not a direct satellite reading of this field.",
+    "Surface is the top 0-5 cm, root zone is 0-100 cm, both as a 9 km cell average. A single paddy or upland lot can be much wetter or drier than the cell, and irrigation or flooding in the lot is not in the product.",
+    "Sampled, not complete: one 3-hour average (03:00-06:00 UTC) on 6 days per month. Monthly values are means of those samples.",
+    "The point sits about 320 m from the west edge and about 550 m from the north edge of its 9 km cell, so lots a few hundred metres west or north may fall in the neighbouring cell.",
+    "SMAP starts 2015-03-31, so this is about 11 years, not the 25 years used for NASA POWER."
+  ]
+}

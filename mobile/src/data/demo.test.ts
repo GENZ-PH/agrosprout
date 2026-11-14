@@ -7,7 +7,9 @@ import { join } from 'node:path';
 import type { LotData, MonthlySeries } from '../types';
 
 const DIR = join(process.cwd(), 'assets', 'data', 'demo');
-const files = readdirSync(DIR).filter((f) => f.endsWith('.json'));
+// Satellite side files (GPM IMERG, SMAP; MODIS NDVI later) sit next to the farm file with their own shape.
+const SATELLITE = /-(ndvi|imerg|smap)\.json$/;
+const files = readdirSync(DIR).filter((f) => f.endsWith('.json') && !SATELLITE.test(f));
 
 const twelve = (s: MonthlySeries | null, name: string) => {
   assert.ok(s !== null, name);

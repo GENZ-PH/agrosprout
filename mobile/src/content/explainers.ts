@@ -1,3 +1,4 @@
+import type { SourceKey } from "./sources";
 // Plain-language texts for the app (#31): the ⓘ explainer behind every card, the Learn
 // glossary, the Data & limits page and the standing disclaimer.
 //
@@ -24,6 +25,7 @@ export type ExplainerId =
   | "what-if"
   | "farm-map"
   | "lot-cutout"
+  | "satellite-checks"
   | "top-crops";
 
 export interface Explainer {
@@ -34,6 +36,8 @@ export interface Explainer {
   what: string;
   /** Where it comes from. */
   source: string;
+  /** The datasets and methods behind the card, as source chips (sources.ts). */
+  sources: readonly SourceKey[];
   /** How to read it. */
   read: string;
   /** Its limits, one short sentence each. */
@@ -46,6 +50,7 @@ export const DISCLAIMER =
 export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   "lot-snapshot": {
     id: "lot-snapshot",
+    sources: ["power", "fao56", "brouwer"],
     title: "Lot snapshot",
     what: "The average rain and the water that crops and the air would use up, month by month, for your lot. Bars show rain next to the crop water need. Dry and wet months are marked.",
     source:
@@ -60,6 +65,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   },
   "soil-moisture": {
     id: "soil-moisture",
+    sources: ["power"],
     title: "Soil moisture",
     what: "How wet the soil is around the roots, month by month, from 0 (dry) to 1 (saturated). Months of dry stress for crops are marked.",
     source: "NASA POWER root-zone soil wetness (GWETROOT), a model estimate. Years used: {period}.",
@@ -71,6 +77,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   },
   "your-crops": {
     id: "your-crops",
+    sources: ["power", "fao56", "ecocrop", "crop-library"],
     title: "Your crops here",
     what: "For each crop you chose, whether this lot suits it: Good fit, Watch out or Poor fit, with the one or two main reasons (water, heat, waterlogging and, once you add places, the distance to market).",
     source:
@@ -84,6 +91,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   },
   "farm-map": {
     id: "farm-map",
+    sources: ["power", "fao56", "ecocrop", "crop-library", "farmer"],
     title: "Your lots on the map",
     what: "Each lot you drew, colored by how well it suits the crops you grow there. A lot shows the result of its weakest crop, the same Good fit, Watch out or Poor fit as in \"Your crops here\". The label on each lot gives its name, its area and the result in words.",
     source:
@@ -98,6 +106,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   "top-crops": {
     id: "top-crops",
     title: "Top 3 for this lot",
+    sources: ["power", "fao56", "ecocrop", "crop-library", "farmer"],
     what: "The 3 crops from our crop list that suit this lot best, and the planting months when each one does best. Tap one to choose it as the lot's crop, or search for any other crop you grow.",
     source:
       "Rain, temperature and soil wetness from NASA POWER at this lot ({period}). Crop water use from FAO-56 (Allen and others, 1998) and temperature ranges from the FAO Ecocrop database, each cited in the crop library (crops.json). It is the same check as \"Your crops here\", and your answer about the lot's water is used. Crop names in the search: FAO Ecocrop © FAO, via OpenCLIM/ecocrop.",
@@ -114,6 +123,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   },
   "lot-cutout": {
     id: "lot-cutout",
+    sources: ["power", "fao56", "ecocrop", "crop-library", "farmer"],
     title: "Now vs best option",
     what: "The shape of the lot you drew, shown twice: on the left with your crops now, on the right with the best other option for this lot (the one with the highest total score). Each shape is filled with one color for the kind of data you pick: Soil health, Crop fit, Root-zone wetness or Rain in a dry year. The number or words on the shape is its value.",
     source:
@@ -128,6 +138,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   },
   "harvest-out": {
     id: "harvest-out",
+    sources: ["osm", "crop-library", "farmer"],
     title: "Getting your harvest out",
     what: "How long it takes to bring the harvest from each lot to the places where you sell or store it, and which crops suit that trip.",
     source:
@@ -141,6 +152,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   },
   recommendations: {
     id: "recommendations",
+    sources: ["power", "fao56", "brouwer", "ecocrop", "crop-library"],
     title: "Recommendations",
     what: "Several ways to use your lot over the year: your own crops, and options that add or swap crops. Each option says why it was suggested, what evidence it rests on, what it improves, what is not known and what to check locally.",
     source:
@@ -155,6 +167,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   },
   priorities: {
     id: "priorities",
+    sources: ["farmer"],
     title: "What matters to you",
     what: "Four choices: save water, build soil, extra income and less work. Tapping them re-ranks the options straight away, on your phone.",
     source: "Your own answers. The choices only change how much each score counts; they do not change the data.",
@@ -163,6 +176,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   },
   "months-compare": {
     id: "months-compare",
+    sources: ["power", "fao56", "ecocrop", "crop-library", "farmer"],
     title: "Your months vs better months",
     what: "For each crop and season, your planting months next to the best nearby months we found, with the same crop and season length.",
     source: "The same water balance and temperature checks as the recommendations, run for each of the 12 possible planting months, using NASA POWER data for {period}.",
@@ -175,6 +189,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   },
   "season-calendar": {
     id: "season-calendar",
+    sources: ["power", "crop-library", "farmer"],
     title: "Whole-lot calendar",
     what: "Your calendar next to a better-timed calendar and alternative rotations, across the whole year for one lot.",
     source: "Your own months, the options from the recommendations and the planting-month scan.",
@@ -183,6 +198,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   },
   "year-calendar": {
     id: "year-calendar",
+    sources: ["power", "fao56", "ecocrop", "crop-library"],
     title: "Your year on your lot",
     what: "Each month of the year for the plan you pick: when to plant, when to harvest, and the months a crop may be short of water, too hot or too wet.",
     source:
@@ -196,6 +212,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   },
   "what-if": {
     id: "what-if",
+    sources: ["power", "fao56"],
     title: "What if it is drier or warmer?",
     what: "The same results recalculated for a change in rainfall and temperature that you pick with the sliders.",
     source: "Your lot's NASA POWER data with the rainfall and temperature changed as set; evaporation is recalculated for the warmer temperature.",
@@ -203,6 +220,21 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     limits: [
       "It is a what-if, not a forecast.",
       "Humidity, wind, sunshine and soil wetness are kept at today's values.",
+    ],
+  },
+  "satellite-checks": {
+    id: "satellite-checks",
+    title: "Satellite checks",
+    what: "NASA satellite data for the sample farm next to the NASA POWER numbers the results use: rain from GPM IMERG and soil moisture from SMAP.",
+    source:
+      "GPM IMERG Final V07 monthly rain (0.1°, GES DISC) and SMAP L4 soil moisture (SPL4SMGP v8, 9 km, NSIDC). Fetched once by the team's pipeline and bundled with the app; NASA POWER for {period}.",
+    sources: ["imerg", "smap", "power-daily"],
+    read: "Look at the shape over the year: do the wet and dry months line up? The sizes differ because each product covers a different area and measures a different thing. Tap a source name to see how each number is worked out.",
+    limits: [
+      "These are checks, not inputs: the scores do not use them.",
+      "Only the sample farm has them, because they are fetched ahead of time, not on the phone.",
+      "SMAP covers 2015 onward, and IMERG monthly files end at 2025-09.",
+      "A satellite grid cell is larger than the lot, and the sample farm's location is provisional.",
     ],
   },
 };
@@ -386,8 +418,8 @@ export const CHALLENGE_DATASETS: readonly DatasetStatus[] = [
     status: "Demo farm only",
     note: "The demo farm file has elevation and slope from SRTM. Lots you draw do not use it yet, so their evaporation is calculated at sea level and their erosion check relies on the land type you give.",
   },
-  { name: "SMAP (soil moisture)", status: "Not used", note: "Soil wetness comes from NASA POWER, a model estimate, not from the SMAP satellite." },
-  { name: "GPM (rainfall)", status: "Not used", note: "Rainfall comes from NASA POWER." },
+  { name: "SMAP (soil moisture)", status: "Demo farm only", note: "SMAP L4 (SPL4SMGP v8, 9 km, 2015-2025) is shown for the sample farm in Satellite checks, as a check. The scores use NASA POWER soil wetness." },
+  { name: "GPM IMERG (rainfall)", status: "Demo farm only", note: "IMERG Final V07 monthly rain (0.1°, 2001 to 2025-09) is shown for the sample farm beside NASA POWER rain in Satellite checks. The scores use NASA POWER rain." },
   { name: "MODIS, Landsat (vegetation)", status: "Not used", note: "Vegetation stress is not measured." },
   { name: "ECOSTRESS, GRACE and GRACE-FO", status: "Not used", note: "Not needed for the lot-level questions this app answers." },
 ];

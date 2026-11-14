@@ -1,0 +1,13 @@
+Dataset: SMAP_L4_SM_gph_20150401T043000_Vv8010_001.h5
+/Geophysical_Data/sm_rootzone[0], 0.157636, 0.228314, 0.238935
+/Geophysical_Data/sm_rootzone[1], 0.224835, 0.22807, 0.239606
+/Geophysical_Data/sm_rootzone[2], 0.216962, 0.221051, 0.223187
+/Geophysical_Data/sm_surface[0], 0.0925093, 0.178294, 0.189097
+/Geophysical_Data/sm_surface[1], 0.170116, 0.179393, 0.186961
+/Geophysical_Data/sm_surface[2], 0.167796, 0.171458, 0.173045
+/cell_lon[0], 123.75, 123.843, 123.937
+/cell_lon[1], 123.75, 123.843, 123.937
+/cell_lon[2], 123.75, 123.843, 123.937
+/cell_lat[0], 8.03999, 8.03999, 8.03999
+/cell_lat[1], 7.9687, 7.9687, 7.9687
+/cell_lat[2], 7.89743, 7.89743, 7.89743
