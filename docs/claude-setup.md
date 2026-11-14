@@ -39,7 +39,17 @@ Source: [VoltAgent/awesome-claude-code-subagents](https://github.com/VoltAgent/a
 
 **Vetting done before install (build phase):** six of the seven files are identical (ignoring line endings) to copies already installed at the user level. `mobile-developer` is new and was read in full: it has no URLs, shell commands, or credential handling. Its generic checklist mentions push notifications, analytics, and app-store work that are out of scope here; `.claude/CLAUDE.md` (no login, no backend storage, MoSCoW scope) still applies when it runs.
 
-**Considered and skipped:** `data-engineer` (`python-pro` covers our small scripts), `react-specialist` (overlaps `mobile-developer`), `qa-expert` (`test-automator` writes the tests; the bug bash in #46 follows `docs/08`). `scientific-literature-researcher`, because it's biomedical-focused and needs a third-party MCP server (`bgpt.pro`). `research-analyst` covers our literature needs.
+**Web-first responsive UI (added 2026-11-14 for #114, same catalog commit `ed74d11`, copied unmodified):**
+
+| Agent | Category | Model | Use it for (in this project) |
+|---|---|---|---|
+| `frontend-developer` | 01-core-development | sonnet | Responsive web layouts: breakpoints, the wide map + panel and dashboard grid (#114) |
+| `expo-react-native-expert` | 02-language-specialists | sonnet | Expo Router, react-native-web, `useWindowDimensions`, making one layout serve Android and web |
+| `ui-ux-tester` | 04-quality-security | sonnet | Walk the user flow in the browser at desktop and phone widths; report spacing, overflow and layout defects |
+
+**Vetting done before install (web-first UI):** `frontend-developer` and `ui-ux-tester` are identical (ignoring line endings) to copies already installed at the user level. `expo-react-native-expert` is new and was read in full. None of the three has URLs, shell commands, or credential handling. `expo-react-native-expert`'s generic checklist covers push notifications, OTA updates, iOS, auth and store submission, all out of scope here. `ui-ux-tester` drives the browser through the Chrome MCP and Computer Use tools, so it only works where a teammate has those connected. `.claude/CLAUDE.md` still applies when any of them runs.
+
+**Considered and skipped:** `data-engineer` (`python-pro` covers our small scripts), `react-specialist` (overlaps `mobile-developer` and `expo-react-native-expert`), `qa-expert` (`test-automator` writes the tests; the bug bash in #46 follows `docs/08`). `scientific-literature-researcher`, because it's biomedical-focused and needs a third-party MCP server (`bgpt.pro`). `research-analyst` covers our literature needs. `design-bridge`, because it copies the look of an existing brand's website, and we have our own design tokens in `theme.ts`.
 
 ### How to invoke
 
