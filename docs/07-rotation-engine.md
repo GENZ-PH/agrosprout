@@ -180,6 +180,13 @@ Generated for each strategy from the score deltas against **A (Current)** and fr
 
 Plain-language rules: short sentences, no jargon without a glossary link, numbers rounded, units always shown.
 
+**v0 as implemented (`mobile/src/engine/explain.ts`, #28).** Every line carries a stable `code` so it can be translated later (#37). Component names use the farmer-facing labels from the §4 table. Evidence lists each data source from the lot's provenance (source, period, grid size) and the `crops.json` citation behind each crop value used. Check-locally adds one road question per destination, naming its harvest months. Confidence:
+
+- **Low** if an option moves from above A to below A (or back) when the total is recomputed with the dry-year (P20) and wet-year (P80) water fit, using the farmer's weights and whole points. For A, the check is against every option.
+- **Low** also if 2 or more key inputs are "I don't know" or assumed: land type, water source, typical-calendar months, and soil feel only when paddy rice is in the comparison, since soil feel only sets rice water loss.
+- **Medium** with one such input, missing scores, missing crop-library values, or when the dry/wet check can't run.
+- **High** otherwise.
+
 ## 6. "SI" / statistical component (challenge consideration: compare approaches)
 
 | Approach | What it does | Tier |
