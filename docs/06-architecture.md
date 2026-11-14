@@ -86,6 +86,27 @@ flowchart TB
 | Android build | **EAS Build** (`eas build -p android --profile preview`) → APK | Needs a free Expo account (D29). **Do a first test build on Saturday evening** so build problems surface early. |
 | Web build | `npx expo export --platform web` → static `dist/` | Hosting still open (D8). Must be public with no login by Sunday. |
 
+## Engine entry point for the screens: `analyzeLot()` (#29, #34)
+
+Screens do not call the engine pieces one by one. `analyzeLot({ farm, lot, data, library, scenario? })` in `mobile/src/engine/analyze.ts` runs them in the right order and returns one `LotAnalysis` for a lot:
+
+```mermaid
+flowchart LR
+  IN["farm (places, priorities)<br/>lot (crops, details, travel)<br/>lot climate data<br/>crop library"] --> SC["what-if scenario<br/>(optional)"]
+  SC --> AC["market access"]
+  AC --> RO["rotation options A-D"]
+  RO --> EX["explanations"]
+  RO --> SH["soil-health lines"]
+  SC --> CF["crop fit<br/>(your crops here)"]
+  SC --> PW["planting windows<br/>(your months vs better)"]
+  AC --> HV["trips per harvest"]
+```
+
+- It is pure TypeScript with no React Native imports, so it runs offline on both targets and in Node tests.
+- With no scenario the climate is the lot's own; with one, every result above is computed from the scenario's climate, and `scenario.notes` carries the "what if, not a forecast" wording.
+- It invents nothing: a missing input stays `null` or becomes a `gaps` entry (`unknown-crop`, `no-crops`), and `stage` is 1 until the farmer gives planting months.
+- A screen picks the pieces it needs from the result (the dashboard: `crop_fits`, `rotations`, `explanations`, `harvest`; S5: `planting`; the 3-year view: `soil_health`).
+
 ## Map WebView bridge
 
 ```mermaid
