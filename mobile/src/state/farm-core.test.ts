@@ -122,6 +122,38 @@ test("destinations: add, update, and delete removes every lot's travel to it", a
   assert.deepEqual(s.getState().lots[0].travel, []);
 });
 
+test("a new transport mode or a moved pin clears the times for that place, other changes keep them", async () => {
+  const s = await openFarm(raw);
+  const lotId = s.getState().addLot(square);
+  const destId = s.getState().addDestination({
+    name: "Market", type: "market", point: [124.24, 8.23], mode: "motorcycle", load_kg_per_trip: null, fare_one_way: null,
+  });
+  const otherId = s.getState().addDestination({
+    name: "Dryer", type: "storage", point: [124.3, 8.3], mode: "motorcycle", load_kg_per_trip: null, fare_one_way: null,
+  });
+  const farmerTime = (id: string): Travel => ({ destination_id: id, distance_km: 5, minutes: 20, source: "farmer", route_profile: null });
+  const fill = () => {
+    s.getState().setTravel(lotId, farmerTime(destId));
+    s.getState().setTravel(lotId, farmerTime(otherId));
+  };
+  const ids = () => s.getState().lots[0].travel.map((t) => t.destination_id).sort();
+
+  fill();
+  s.getState().updateDestination(destId, { name: "Poblacion market", load_kg_per_trip: 80, mode: "motorcycle" });
+  assert.deepEqual(ids(), [destId, otherId].sort(), "a rename, a load and the same mode keep the times");
+
+  s.getState().updateDestination(destId, { mode: "walk" });
+  assert.deepEqual(ids(), [otherId], "walking instead of motorcycle: the old times go, other places keep theirs");
+
+  fill();
+  s.getState().updateDestination(destId, { point: [124.25, 8.24] });
+  assert.deepEqual(ids(), [otherId], "a moved pin clears its times");
+
+  fill();
+  s.getState().updateDestination(destId, { point: [124.25, 8.24] });
+  assert.deepEqual(ids(), [destId, otherId].sort(), "the same pin again keeps them");
+});
+
 test("setPriorities clamps to 0-100 and keeps unchanged values", async () => {
   const s = await openFarm(raw);
   s.getState().setPriorities({ water: 140, soil: -5 });
