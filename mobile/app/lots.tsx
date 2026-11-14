@@ -1,12 +1,12 @@
 import * as Location from "expo-location";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { BackHandler, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { BackHandler, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 
 import { Button } from "../src/components/Button";
 import { Header } from "../src/components/Header";
 import { Icon } from "../src/components/Icon";
 import { LotRow } from "../src/components/LotRow";
-import { Screen } from "../src/components/Screen";
+import { Screen, useWide } from "../src/components/Screen";
 import { colors, radius, space, text } from "../src/components/theme";
 import type { MapLot, MapMode, MapPlace, MapToApp } from "../src/map/bridge";
 import { MapView, type MapViewHandle } from "../src/map/MapView";
@@ -203,8 +203,14 @@ export default function LotsScreen() {
     </Text>
   );
 
+  // On a laptop the map sits beside the tools and the lot list, and fills the window height.
+  const desk = useWide() && !full;
+  const deskMapHeight = Math.max(420, useWindowDimensions().height - 190);
+
   return (
     <Screen
+      wide
+      footerEnd
       scrollEnabled={!full}
       edgeToEdge={full}
       footer={
@@ -225,7 +231,8 @@ export default function LotsScreen() {
     >
       {full ? null : <Header title="Plot your lots" right="Step 1 of 2" />}
 
-      <View style={full ? styles.mapFull : styles.mapWrap}>
+      <View style={full ? styles.fullBody : desk ? styles.deskRow : styles.stack}>
+      <View style={full ? styles.mapFull : desk ? [styles.mapWrap, styles.deskMap, { height: deskMapHeight }] : styles.mapWrap}>
         <MapView
           ref={mapRef}
           lots={mapLots}
@@ -270,7 +277,7 @@ export default function LotsScreen() {
       </View>
 
       {full ? null : (
-        <>
+        <View style={desk ? styles.deskSide : styles.stack}>
           {statusLine}
           {tools}
 
@@ -333,8 +340,9 @@ export default function LotsScreen() {
               }}
             />
           </View>
-        </>
+        </View>
       )}
+      </View>
     </Screen>
   );
 }
@@ -357,6 +365,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  stack: { gap: space.lg },
+  fullBody: { flex: 1 },
+  deskRow: { flexDirection: "row", alignItems: "flex-start", gap: space.xl },
+  deskMap: { flex: 1.5 },
+  deskSide: { flex: 1, minWidth: 0, gap: space.lg },
   mapFull: { flex: 1, minHeight: 320, backgroundColor: colors.mapBg },
   // Top centre, between Leaflet's zoom buttons (left) and Find me (right).
   topBar: {

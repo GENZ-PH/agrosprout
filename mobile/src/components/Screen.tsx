@@ -1,8 +1,11 @@
 import type { ReactNode } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { colors, MAX_CONTENT_WIDTH, space, WIDE_CONTENT_WIDTH } from "./theme";
+import { colors, MAX_CONTENT_WIDTH, space, TWO_COLUMN_MIN, WIDE_CONTENT_WIDTH } from "./theme";
+
+/** True on a laptop or tablet-sized window, where screens lay out side by side. */
+export const useWide = () => useWindowDimensions().width >= TWO_COLUMN_MIN;
 
 type Props = {
   children: ReactNode;
@@ -14,10 +17,13 @@ type Props = {
   edgeToEdge?: boolean;
   /** true = a wider column on large screens, for side-by-side results (judges use laptops). */
   wide?: boolean;
+  /** With `wide`: keep the footer (the Next button) button-sized at the right, not stretched across. */
+  footerEnd?: boolean;
 };
 
 /** Page frame for every screen: safe area, scrolling body, optional pinned footer. */
-export function Screen({ children, footer, scrollEnabled = true, edgeToEdge = false, wide = false }: Props) {
+export function Screen({ children, footer, scrollEnabled = true, edgeToEdge = false, wide = false, footerEnd = false }: Props) {
+  const isWide = useWide();
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom", "left", "right"]}>
       <ScrollView
@@ -28,7 +34,11 @@ export function Screen({ children, footer, scrollEnabled = true, edgeToEdge = fa
       >
         {children}
       </ScrollView>
-      {footer ? <View style={[styles.footer, wide && styles.wide]}>{footer}</View> : null}
+      {footer ? (
+        <View style={[styles.footer, wide && styles.wide]}>
+          {wide && footerEnd && isWide ? <View style={styles.footerEnd}>{footer}</View> : footer}
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -46,5 +56,6 @@ const styles = StyleSheet.create({
   content: { ...column, flexGrow: 1, gap: space.lg, paddingTop: space.sm, paddingBottom: space.xl },
   edge: { flexGrow: 1 },
   wide: { maxWidth: WIDE_CONTENT_WIDTH },
+  footerEnd: { alignSelf: "flex-end", width: 380, gap: space.sm },
   footer: { ...column, gap: space.sm, paddingTop: space.sm, paddingBottom: space.lg },
 });

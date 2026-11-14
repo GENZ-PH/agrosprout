@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Button } from "../src/components/Button";
 import { Header } from "../src/components/Header";
 import { Icon } from "../src/components/Icon";
-import { Screen } from "../src/components/Screen";
+import { Screen, useWide } from "../src/components/Screen";
 import { colors, MIN_TOUCH, radius, space, text } from "../src/components/theme";
 import { CROP_LIBRARY } from "../src/data/crops";
 import {
@@ -34,9 +34,12 @@ const useOnline = () =>
 export default function CropsScreen() {
   const lots = useFarmStore((s) => s.lots);
   const missing = lotsWithoutCrops(lots);
+  const wide = useWide();
 
   return (
     <Screen
+      wide
+      footerEnd
       footer={
         <>
           {lots.length > 0 && missing.length > 0 ? (
@@ -64,9 +67,13 @@ export default function CropsScreen() {
           <Text style={[text.body, { color: colors.muted }]}>
             Tap every crop you grow on each lot, one after another or at the same time. You can change this later.
           </Text>
-          {lots.map((lot) => (
-            <LotCrops key={lot.id} lot={lot} />
-          ))}
+          <View style={wide ? styles.lotGrid : styles.stack}>
+            {lots.map((lot) => (
+              <View key={lot.id} style={wide ? styles.cell : undefined}>
+                <LotCrops lot={lot} />
+              </View>
+            ))}
+          </View>
         </>
       )}
     </Screen>
@@ -219,6 +226,10 @@ function CropChip({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  stack: { gap: space.lg },
+  // Two lots side by side on a laptop.
+  lotGrid: { flexDirection: "row", flexWrap: "wrap", alignItems: "flex-start", gap: space.lg },
+  cell: { flexBasis: "45%", flexGrow: 1, minWidth: 0 },
   empty: { gap: space.md, paddingVertical: space.lg },
   section: {
     gap: space.sm,
