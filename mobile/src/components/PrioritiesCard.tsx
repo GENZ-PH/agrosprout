@@ -53,8 +53,8 @@ export function PrioritiesCard({ priorities, onToggle, notScored, period }: Prop
 
       {missing.length > 0 ? (
         <Text style={[text.small, { color: colors.amber }]} accessibilityLiveRegion="polite">
-          {chipList(missing)} can&apos;t change the ranking yet: {missing.length > 1 ? "they need" : "it needs"} a place
-          where you sell or store your harvest.
+          {chipList(missing)} can&apos;t change the ranking yet: the data behind {missing.length > 1 ? "them" : "it"} is missing. Income and
+          market access need a place where you sell or store your harvest.
         </Text>
       ) : null}
     </InfoCard>

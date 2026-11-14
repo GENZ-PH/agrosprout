@@ -762,7 +762,8 @@
         "typical_calendar",
         "labor",
         "market",
-        "cover_value"
+        "cover_value",
+        "forage_residue"
       ],
       "notes": "Sitaw is a legume that adds nitrogen, but fresh pods spoil in days, so it needs a nearby buyer. forage_residue left null: Feedipedia's cowpea forage datasheet (feedipedia.org/node/233) says cowpea haulms are a useful feed and lists 'yard-long bean' only as a common name; it does not describe yardlong bean vines after pod picking, so no value was taken. Not listed in 'unverified' yet because src/data/crops.test.ts does not know the field."
     },
@@ -1090,7 +1091,8 @@
         "typical_calendar",
         "labor",
         "market",
-        "cover_value"
+        "cover_value",
+        "forage_residue"
       ],
       "notes": "Eggplant gives many pickings over several months, but the fruit spoils within days of harvest. forage_residue left null: no Feedipedia, FAO or PCAARRD source on feeding eggplant residue was found (read 2026-11-14). Not listed in 'unverified' yet because src/data/crops.test.ts does not know the field."
     },
@@ -1164,7 +1166,8 @@
         "market",
         "perishability",
         "storable_if_dried",
-        "yield_t_per_ha"
+        "yield_t_per_ha",
+        "forage_residue"
       ],
       "notes": "Sesbania is grown in a wet field for about two months and then plowed in, so it feeds the next rice crop with nitrogen. It is not sold. forage_residue left null: Feedipedia has a datasheet for Sesbania sesban, not S. rostrata, and values are not carried across species; the crop is grown here as a green manure. Not listed in 'unverified' yet because src/data/crops.test.ts does not know the field."
     }

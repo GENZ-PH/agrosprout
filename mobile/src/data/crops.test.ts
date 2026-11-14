@@ -35,6 +35,7 @@ const VALUE_FIELDS = [
   "storable_if_dried",
   "yield_t_per_ha",
   "typical_calendar",
+  "forage_residue",
 ] as const satisfies readonly (keyof Crop)[];
 
 const LEVEL_FIELDS = [
