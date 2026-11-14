@@ -6,6 +6,7 @@ import { Button } from "../src/components/Button";
 import { CropFitCard } from "../src/components/CropFitCard";
 import { Disclaimer } from "../src/components/Disclaimer";
 import { FarmMapCard } from "../src/components/FarmMapCard";
+import { FooterLinks } from "../src/components/FooterLinks";
 import { Header } from "../src/components/Header";
 import { LotTabs } from "../src/components/LotTabs";
 import { Notice } from "../src/components/Notice";
@@ -50,7 +51,12 @@ export default function DashboardScreen() {
   const selectLot = useCallback((id: string) => router.setParams({ lot: id }), []);
 
   return (
-    <Screen width="wide" footer={<Disclaimer />}>
+    <Screen width="wide" footer={
+        <>
+          <FooterLinks />
+          <Disclaimer />
+        </>
+      }>
       <Header title="Your farm" />
       {lot ? (
         <>
