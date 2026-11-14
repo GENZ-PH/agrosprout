@@ -9,7 +9,7 @@ import {
 } from "./params";
 
 /** Day of year (0-based, common year) of the 1st of a month (1-12). */
-function monthStartDay(month: number): number {
+export function monthStartDay(month: number): number {
   let d = 0;
   for (let m = 0; m < month - 1; m++) d += DAYS_IN_MONTH[m];
   return d;
