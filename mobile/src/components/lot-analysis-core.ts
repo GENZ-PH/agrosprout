@@ -26,7 +26,8 @@ export type LotView =
    * `error` (or `ready` with nothing saved) = it won't come by itself; offer to try again.
    */
   | { kind: "no-data"; status: DataStatus }
-  | { kind: "ready"; analysis: LotAnalysis }
+  /** `period` = the years the lot's data covers (e.g. "2001-2025"), for the ⓘ explainer texts. */
+  | { kind: "ready"; analysis: LotAnalysis; period: string }
   /** The engine threw. Shown as a message instead of a blank screen; details go to the console. */
   | { kind: "failed"; message: string };
 
@@ -41,7 +42,7 @@ export function lotView({ farm, lot, data, library }: LotViewInput): LotView {
   if (lot.crops.length === 0) return { kind: "no-crops" };
   if (!data) return { kind: "no-data", status: lot.data_status };
   try {
-    return { kind: "ready", analysis: analyzeLot({ farm, lot, data, library }) };
+    return { kind: "ready", analysis: analyzeLot({ farm, lot, data, library }), period: data.period };
   } catch (e) {
     return { kind: "failed", message: e instanceof Error ? e.message : String(e) };
   }
