@@ -1,8 +1,8 @@
 import { hc } from "hono/client";
 import type { AppType } from "../../../api/types/index";
+import { API_URL } from "../env";
 
-/** API base URL: set per environment (Cloudflare Pages env vars, or mobile/.env for local dev). */
-export const API_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8787";
+export { API_URL };
 const TIMEOUT_MS = 15_000;
 
 export type ApiErrorBody = { code: string; message: string; details?: unknown };

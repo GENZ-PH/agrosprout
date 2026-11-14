@@ -107,8 +107,13 @@ save.mutate({ id: "x" });
 ```
 
 - Never call `fetch` directly for the API. The hooks handle the base URL, timeout (15 s), error shape and offline cache.
-- Query keys: start with the area name, then the inputs: `["power", lat, lon]`.
-- Errors: `error.code` is the Worker's code (`invalid_request`, `rate_limited`, `not_found`, ...) or `network_error` / `timeout` from the client.
+- **Query keys:** add one key factory per API area in `keys` (`src/api/hooks.ts`), e.g. `keys.power.lot(lat, lon)` → `["power", lat, lon]`. Mutations invalidate a whole area with `queryClient.invalidateQueries({ queryKey: keys.power.all })`.
+- **Freshness:** pass `staleTime: STALE.DAY` (or `MINUTE`, `HOUR`, `FOREVER`) from `src/state/query-client.ts` instead of raw numbers.
+- **Retries:** network errors and 5xx retry once; 4xx never retry; mutations never retry.
+- **Offline cache:** every successful query is saved to the device unless it sets `meta: { persist: false }` (use that for live-only data like `/v1/health`). The saved cache is dropped automatically when the app version in `app.json` changes, or when `CACHE_SCHEMA` is bumped.
+- **Online/focus:** on Android the app tells TanStack Query when the connection drops (NetInfo) and when it comes back to the foreground (`src/net/sync.ts`); the browser handles this on web.
+- **Errors:** `error.code` is the Worker's code (`invalid_request`, `rate_limited`, `not_found`, ...) or `network_error` / `timeout` from the client.
+- **Config:** read env values only through `src/env.ts` (`API_URL`, `APP_VERSION`, `IS_WEB`, `IS_NATIVE`), never `process.env` directly.
 
 ### TanStack Query or Zustand?
 
@@ -117,7 +122,11 @@ save.mutate({ id: "x" });
 | **TanStack Query** (via `useApiQuery`) | Anything that comes from the API | `src/api/` |
 | **Zustand** (via `createPersistedStore`) | Anything the farmer creates or chooses: lots, crops, months, settings | `src/state/` |
 
-Both are saved to the device (AsyncStorage), so the app opens with data when offline. Copy `src/state/example-store.ts` to start a store. Bump the `version` argument when a store's shape changes. Bump `QUERY_CACHE_BUSTER` in `src/state/query-client.ts` after a breaking API change.
+Both are saved to the device (AsyncStorage), so the app opens with data when offline. Copy `src/state/example-store.ts` to start a store. When a store's saved shape changes, bump `version` and pass a `migrate(old, fromVersion)` that converts old data; without `migrate`, old data is dropped. Bump `CACHE_SCHEMA` in `src/state/query-client.ts` after a breaking API change.
+
+## Why it is set up this way
+
+The plumbing follows patterns from two larger React Native apps (Bluesky's social app and delvo.ph), kept to what a 40-hour build needs: one env module, key factories, named freshness values, no retries on 4xx, NetInfo/AppState sync, saving only successful queries, and versioned stores. Their heavier parts (MMKV, OpenAPI codegen, offline mutation queues, custom rollouts) are left out on purpose.
 
 ## Deployments
 

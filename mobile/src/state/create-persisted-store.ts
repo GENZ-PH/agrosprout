@@ -7,12 +7,22 @@ import { createJSONStorage, persist } from "zustand/middleware";
  * Use TanStack Query (src/api/hooks.ts) for anything that comes from the API,
  * and a store made with this helper for anything the farmer creates.
  */
-export function createPersistedStore<T>(name: string, initializer: StateCreator<T, [["zustand/persist", unknown]]>, version = 1) {
+export function createPersistedStore<T>(
+  name: string,
+  initializer: StateCreator<T, [["zustand/persist", unknown]]>,
+  options: {
+    /** Bump when the saved shape changes, and handle the old shape in `migrate`. */
+    version?: number;
+    /** Turns data saved by an older version into the current shape. Without it, old data is dropped. */
+    migrate?: (persisted: unknown, fromVersion: number) => T | Promise<T>;
+  } = {},
+) {
   return create<T>()(
     persist(initializer, {
       name: `agrosprout-${name}`,
       storage: createJSONStorage(() => AsyncStorage),
-      version,
+      version: options.version ?? 1,
+      migrate: options.migrate,
     }),
   );
 }
