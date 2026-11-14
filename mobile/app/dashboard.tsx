@@ -11,6 +11,7 @@ import { Header } from "../src/components/Header";
 import { HarvestCard } from "../src/components/HarvestCard";
 import { WhatIfCard } from "../src/components/WhatIfCard";
 import type { Scenario } from "../src/engine/scenario";
+import { LotCutoutCard } from "../src/components/LotCutoutCard";
 import { LotTabs } from "../src/components/LotTabs";
 import { Notice } from "../src/components/Notice";
 import { PrioritiesCard } from "../src/components/PrioritiesCard";
@@ -23,7 +24,7 @@ import { SoilHealthChart } from "../src/components/SoilHealthChart";
 import { colors, MAX_CONTENT_WIDTH, radius, space, text } from "../src/components/theme";
 import { useLayout } from "../src/components/useLayout";
 import { useFarmLotViews, useLotAnalysis } from "../src/components/useLotAnalysis";
-import { cropById } from "../src/data/crops";
+import { CROP_LIBRARY, cropById } from "../src/data/crops";
 import { isOtherCrop } from "../src/lots/crop-picks";
 import { seasonsText } from "../src/lots/months-core";
 import { useFarm, useFarmStore } from "../src/state/farm-store";
@@ -43,6 +44,10 @@ import type { Farm, Lot } from "../src/types";
 //
 // Farm map (#124): "Your lots on the map" sits above the lot tabs as the whole-farm overview.
 // Each lot is colored by its crop fit; tapping a lot selects it like its tab.
+//
+// Lot cutout (#134): right below the farm map on every screen size, the
+// selected lot's own shape drawn twice, now vs the best other option, colored by one data layer.
+// It uses the same no-scenario results as the map, so the what-if slider doesn't change it.
 
 const cropName = (id: string) => cropById(id)?.name ?? id;
 
@@ -71,6 +76,12 @@ export default function DashboardScreen() {
             onSelect={selectLot}
             wide={wide}
           />
+          {(() => {
+            const v = views[lot.id];
+            return v?.kind === "ready" ? (
+              <LotCutoutCard lot={lot} analysis={v.analysis} library={CROP_LIBRARY} cropName={cropName} period={v.period} />
+            ) : null;
+          })()}
           <LotTabs
             lots={farm.lots}
             selectedId={lot.id}
