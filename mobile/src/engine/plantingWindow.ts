@@ -15,6 +15,7 @@ import {
   WINDOW_MARGIN_POINTS,
 } from "./params";
 import { evaluateSlot, scoreRotation, type RotationSlot, type ScoreContext, type SlotEval } from "./scores";
+import { wetRoad } from "./harvestTrips";
 import { harvestMonthOf, seasonLengthDays } from "./season";
 import type { Scenario } from "./waterBalance";
 
@@ -44,6 +45,8 @@ export interface WindowMetrics {
   /** Weighted W + H (+ E): P50 water, and P20 water for the dry-year check. `null` when a score is missing. */
   fit: number | null;
   fit_p20: number | null;
+  /** True when the harvest month is a heavy-rain month: slower roads and harder drying (#44). Informational, not in Fit. */
+  harvest_road_wet: boolean;
 }
 
 export type WindowDriver =
@@ -190,6 +193,7 @@ export function plantingWindow(input: PlantingWindowInput): PlantingWindowResult
         scores,
         fit,
         fit_p20,
+        harvest_road_wet: wetRoad(slot.harvest_month, ctx.monthly).wet,
       },
     };
   };
