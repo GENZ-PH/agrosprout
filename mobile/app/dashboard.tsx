@@ -35,12 +35,15 @@ const cropName = (id: string) => cropById(id)?.name ?? id;
 export default function DashboardScreen() {
   const farm = useFarm();
   const { t } = useT();
+  // On a phone the switch gets its own row, so the title is never cut short.
+  const wide = useWindowDimensions().width >= TWO_COLUMN_MIN;
   const { lot: lotParam } = useLocalSearchParams<{ lot?: string }>();
   const lot = farm.lots.find((l) => l.id === lotParam) ?? farm.lots[0];
 
   return (
     <Screen wide footer={<Disclaimer />}>
-      <Header title={t("dash.title")} right={<LanguageSwitch />} />
+      <Header title={t("dash.title")} right={wide ? <LanguageSwitch /> : undefined} />
+      {wide ? null : <LanguageSwitch />}
       {lot ? (
         <>
           {isDemoFarm(farm.lots) ? (

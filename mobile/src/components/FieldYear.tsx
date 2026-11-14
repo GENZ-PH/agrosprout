@@ -32,6 +32,8 @@ type Props = {
 const LANE_H = 26;
 const LANE_GAP = 3;
 const RAIN_H = 64;
+// Narrower than this (a phone), the score meter gives its room to the plan name.
+const METER_MIN = 420;
 // SVG text does not inherit the app font on web, so name the system stack.
 const SVG_FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
 const SOIL = "#CFC6B4";
@@ -96,14 +98,16 @@ export function FieldYear({ options, selected, onSelect, precip, cropById }: Pro
               <View style={[styles.key, isSelected && styles.keySelected]}>
                 <Text style={[styles.keyText, isSelected && styles.keyTextSelected]}>{o.key}</Text>
               </View>
-              <Text style={styles.planName} numberOfLines={1}>
+              <Text style={styles.planName} numberOfLines={2}>
                 {planName(o.kind, t)}
               </Text>
               {o.top_total ? <Text style={styles.best}>{t("plan.best")}</Text> : null}
-              <View style={styles.meter}>
-                <View style={[styles.meterFill, isSelected && styles.meterFillSelected, { width: `${Math.max(0, Math.min(100, o.total ?? 0))}%` }]} />
-              </View>
-              <Text style={styles.score}>{o.total === null ? t("year.noScore") : Math.round(o.total)}</Text>
+              {width >= METER_MIN ? (
+                <View style={styles.meter}>
+                  <View style={[styles.meterFill, isSelected && styles.meterFillSelected, { width: `${Math.max(0, Math.min(100, o.total ?? 0))}%` }]} />
+                </View>
+              ) : null}
+              <Text style={[styles.score, width < METER_MIN && styles.scoreEnd]}>{o.total === null ? t("year.noScore") : Math.round(o.total)}</Text>
             </View>
 
             {width > 0 ? (
@@ -213,11 +217,12 @@ const styles = StyleSheet.create({
   keyText: { fontSize: 14, fontWeight: "700", color: colors.ink },
   keyTextSelected: { color: colors.white },
   planName: { ...text.bodyStrong, flexShrink: 1 },
-  best: { ...text.caption, color: colors.green, fontWeight: "700", backgroundColor: colors.greenTint, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill, overflow: "hidden" },
+  best: { ...text.caption, color: colors.green, fontWeight: "700", backgroundColor: colors.greenTint, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill, overflow: "hidden", flexShrink: 0 },
   meter: { marginLeft: "auto", width: 72, height: 6, borderRadius: 3, backgroundColor: colors.bg, overflow: "hidden" },
   meterFill: { height: 6, borderRadius: 3, backgroundColor: colors.borderStrong },
   meterFillSelected: { backgroundColor: colors.green },
   score: { ...text.heading, minWidth: 30, textAlign: "right", fontVariant: ["tabular-nums"] },
+  scoreEnd: { marginLeft: "auto" },
   rowFoot: { ...text.caption },
   legend: { flexDirection: "row", flexWrap: "wrap", columnGap: space.lg, rowGap: 6, paddingTop: space.sm, borderTopWidth: 1, borderTopColor: colors.border },
   legendItem: { flexDirection: "row", alignItems: "center", gap: 6 },
