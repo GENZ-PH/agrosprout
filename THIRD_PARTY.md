@@ -130,6 +130,21 @@ Python 3.11+ standard library only (`urllib`, `json`, `csv`, `unittest`, …). N
 - **UI icons:** drawn by the team as SVG paths in `mobile/src/components/Icon.tsx`. No icon font, no emoji.
 - **Fonts:** the system font of each platform. No font files are bundled.
 - **App icon, Android adaptive icon, splash, and favicon** (`mobile/assets/*.png`): these are still the **Expo project template's default images** (the Expo logo), added with the scaffold (#55). Replace them with the team's own icon before the final build (#50); then update this line.
+- **Crop pictures** (`mobile/assets/crops/*.webp`, #169): square crops of free-license photos from Wikimedia Commons, resized to 160 px (so each is a modified copy; the photographer's license applies to our copy). Shown in the app and credited on the Data and limits page. The team should confirm the choice of pictures.
+
+| Picture | Crop | Author | License | Source |
+|---|---|---|---|---|
+| `assets/crops/lowland-rice.webp` | Rice | Douglas Paul Perkins | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | <https://commons.wikimedia.org/wiki/File:Rice_plant.jpg> |
+| `assets/crops/corn.webp` | Corn | Forest and Kim Starr | [CC BY 3.0 US](https://creativecommons.org/licenses/by/3.0/us/) | <https://commons.wikimedia.org/wiki/File:Starr-160618-0718-Zea_mays-immature_cob_with_silks-Hawea_Pl_Olinda-Maui_(28067473235).jpg> |
+| `assets/crops/mungbean.webp` | Mung bean | Sanjay Acharya | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) | <https://commons.wikimedia.org/wiki/File:Bean_pod_of_Vigna_radiata_(mung_bean).jpg> |
+| `assets/crops/peanut.webp` | Peanut | Pollinator | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) | <https://commons.wikimedia.org/wiki/File:Peanut_9417.jpg> |
+| `assets/crops/soybean.webp` | Soybean | United Soybean Board | [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/) | <https://commons.wikimedia.org/wiki/File:Soybean_Pods_(10059910446).jpg> |
+| `assets/crops/string-bean.webp` | String bean | David | Public domain | <https://commons.wikimedia.org/wiki/File:Long_Bean.JPG> |
+| `assets/crops/sweet-potato.webp` | Sweet potato | miya | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | <https://commons.wikimedia.org/wiki/File:Ipomoea_batatasL_ja01.jpg> |
+| `assets/crops/sorghum.webp` | Sorghum | Chris Light | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | <https://commons.wikimedia.org/wiki/File:Sorghum_6364.jpg> |
+| `assets/crops/eggplant.webp` | Eggplant | Joydeep | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) | <https://commons.wikimedia.org/wiki/File:Solanum_melongena_24_08_2012_(1).JPG> |
+| `assets/crops/sesbania-rostrata.webp` | Sesbania rostrata | NMNH (Smithsonian National Museum of Natural History, herbarium specimen) | [CC0](https://creativecommons.org/publicdomain/zero/1.0/) | <https://commons.wikimedia.org/wiki/File:Sesbania_rostrata-NMNH-13374155.jpg> |
+
 - **SI-generated images:** none so far. Any that are added must carry a visible "SI-generated" watermark and be listed here (CLAUDE.md rule 4).
 - **Screenshots** in the demo deck and README come from the app itself (#51).
 
