@@ -19,6 +19,7 @@ import et0
 from aggregate import (
     annual, mean, monthly_stat, per_calendar_month, percentile, trend_per_decade,
 )
+import fetch_srtm
 from fetch_power import cache_path, daily_series, fetch_daily, solar_unit
 
 HERE = Path(__file__).parent
@@ -32,7 +33,8 @@ def r(values: list[Optional[float]], digits: int = 2) -> list[Optional[float]]:
     return [None if v is None else round(v, digits) for v in values]
 
 
-def build(farm: dict, raw: dict, retrieved: str) -> dict:
+def build(farm: dict, raw: dict, retrieved: str, srtm: Optional[dict] = None) -> dict:
+    """`srtm` is the result of `fetch_srtm.elevation_and_slope`; the farm's own values win over it."""
     d = daily_series(raw)
     unit = solar_unit(raw)
     lat, lon = farm["lat"], farm["lon"]
@@ -57,7 +59,9 @@ def build(farm: dict, raw: dict, retrieved: str) -> dict:
         "p80": per_calendar_month(precip, lambda v: percentile(v, 0.8)),
     }
 
-    elev = farm.get("elevation_m")
+    srtm = srtm or {}
+    elev = farm.get("elevation_m") if farm.get("elevation_m") is not None else srtm.get("elevation_m")
+    slope = farm.get("slope_pct") if farm.get("slope_pct") is not None else srtm.get("slope_pct")
     cell_elev = raw.get("geometry", {}).get("coordinates", [None, None, None])[2]
     caveats = [
         "Climate values describe a NASA POWER grid cell of roughly 50 km, not your exact field. "
@@ -67,6 +71,12 @@ def build(farm: dict, raw: dict, retrieved: str) -> dict:
         caveats.append(
             f"NASA reports this cell's average elevation as about {round(cell_elev)} m. The values "
             "describe that average height, so a field at a different elevation will differ, mainly in temperature."
+        )
+    caveats += srtm.get("caveats", [])
+    if elev is not None and cell_elev is not None and cell_elev - elev > 100:
+        caveats.append(
+            f"This lot is at about {round(elev)} m but the NASA cell averages {round(cell_elev)} m, so temperatures "
+            "here may read cooler than at the field."
         )
     e = et0.monthly_et0(
         tmax_c=tmax, tmin_c=tmin, rh_mean_pct=rh, wind_ms_2m=ws, rs_mj_m2_day=rs,
@@ -107,7 +117,7 @@ def build(farm: dict, raw: dict, retrieved: str) -> dict:
         "lat": lat,
         "lon": lon,
         "elevation_m": elev,
-        "slope_pct": farm.get("slope_pct"),
+        "slope_pct": slope,
         "period": period,
         "monthly": {
             "precip_mm": {k: r(v, 1) for k, v in p.items()},
@@ -139,6 +149,10 @@ def build(farm: dict, raw: dict, retrieved: str) -> dict:
             prov("monthly.solar_mj_m2_day", "NASA POWER daily ALLSKY_SFC_SW_DWN", "converted to MJ m-2 day-1"),
             prov("monthly.heat_days_gt35", "NASA POWER daily T2M_MAX", "mean days per month above 35 °C"),
             prov("monthly.heavy_rain_days_gt50mm", "NASA POWER daily PRECTOTCORR", "mean days per month above 50 mm"),
+            *([prov("elevation_m", fetch_srtm.CITATION, "height at the point") | {"native_res": "1 arc-second (~30 m)", "period": fetch_srtm.ACQUIRED}]
+              if farm.get("elevation_m") is None and elev is not None else []),
+            *([prov("slope_pct", fetch_srtm.CITATION, "Horn slope from a 3 x 3 grid with 30 m spacing, heights returned in whole metres, rounded to whole percent: a rough terrain class") | {"native_res": "1 arc-second (~30 m)", "period": fetch_srtm.ACQUIRED}]
+              if farm.get("slope_pct") is None and slope is not None else []),
             prov("trends", "NASA POWER daily", f"{TREND_METHOD}; per decade; dry-season deficit = ET0 minus rain in the months where the typical year is short of rain"),
         ],
         "caveats": caveats,
@@ -148,6 +162,7 @@ def build(farm: dict, raw: dict, retrieved: str) -> dict:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--offline", action="store_true", help="use only pipeline/raw/ (fail if a farm is not cached)")
+    ap.add_argument("--no-srtm", action="store_true", help="skip the SRTM elevation and slope lookup")
     args = ap.parse_args()
     farms = json.loads((HERE / "demo_farms.json").read_text())["farms"]
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -155,7 +170,16 @@ def main() -> None:
         if args.offline and not cache_path(farm["lat"], farm["lon"], START, END).exists():
             raise SystemExit(f"{farm['id']}: not in the cache (run without --offline)")
         raw = fetch_daily(farm["lat"], farm["lon"], START, END)
-        data = build(farm, raw, date.today().isoformat())
+        srtm = None
+        needs = farm.get("elevation_m") is None or farm.get("slope_pct") is None
+        if needs and not args.no_srtm:
+            if args.offline and not fetch_srtm.cache_path(farm["lat"], farm["lon"], fetch_srtm.SPACING_M).exists():
+                raise SystemExit(f"{farm['id']}: SRTM not in the cache (run without --offline or use --no-srtm)")
+            try:
+                srtm = fetch_srtm.elevation_and_slope(farm["lat"], farm["lon"])
+            except OSError as err:  # network trouble: keep going without it, and say so
+                print(f"{farm['id']}: SRTM lookup failed ({err}); elevation and slope left unknown")
+        data = build(farm, raw, date.today().isoformat(), srtm)
         out = OUT_DIR / f"{farm['id']}.json"
         out.write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n")
         print(f"wrote {out.relative_to(HERE.parent)}")

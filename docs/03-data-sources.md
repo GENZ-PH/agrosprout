@@ -35,11 +35,13 @@ Quick reachability and CORS tests of sources beyond POWER. "CORS" = browser can 
 Elevation caveat: both elevation APIs agree on 6 m, so the Iligan coastal point is low. The POWER cell-vs-lowland caveat above is still unresolved.
 
 **SRTM via Open Topo Data** (from https://www.opentopodata.org/datasets/srtm/, read 2026-11-14):
-- **Citation wording:** "NASA SRTM v3 (1 arc-second, ~30 m), served via Open Topo Data". The public API uses SRTM Version 3 at both `srtm30m` and `srtm90m`. The files originate from USGS/Earthdata.
+- **Citation wording (updated 2026-11-14):** the NASA Earthdata catalogue page for SRTMGL1 v003 recommends "NASA JPL. (2013). NASA Shuttle Radar Topography Mission Global 1 arc second [Data set]. NASA Land Processes Distributed Active Archive Center. https://doi.org/10.5067/MEASURES/SRTM/SRTMGL1.003" and says the dataset "is openly shared, without restriction". Acquisition: 2000-02-11 to 2000-02-21. We cite that, and add "served via Open Topo Data". The public API uses SRTM Version 3 at both `srtm30m` and `srtm90m`. Version 3 filled the voids of earlier versions with ASTER GDEM v2, GMTED2010 or NED.
 - **Coverage:** −60° to 60° latitude, so the Philippines is covered.
 - **Ocean caveat:** ocean areas inside a tile read **0 m**, and points outside any tile return `null`. Sanity-check coastal lot points (handle `null`, and flag a 0 m result near the shoreline).
 - **Self-hosting:** possible, but the tiles need an Earthdata login to download. Not worth it for 40 hours.
-- **Not documented on that page:** CORS and rate limits. Our test saw no CORS header, so use it in `pipeline/` only (pre-bake the demo farm).
+- **Public API limits** (https://www.opentopodata.org/, read 2026-11-14): max 100 locations per request, 1 call per second, 1000 calls per day. **No terms of use, attribution rule or statement on commercial use is published for the public instance** (checked the site, the API docs and the GitHub README; the software is MIT). CORS is not documented, and our test saw no CORS header, so use it in `pipeline/` only (pre-bake the demo farm).
+- **No-data:** by default `null` means either outside the dataset or no data at that cell, and the two cannot be told apart.
+- **Precision of what we got:** heights came back in whole metres at every point we tried (bilinear and cubic alike), and the slope over 30, 60 and 90 m spacing differed by a few percent (measured 2026-11-14 at two points). `slope_pct` is therefore stored in whole percent as a rough terrain class. Vertical accuracy is not stated on the pages we could read.
 
 ## Philippine sources (researched 2026-11-14)
 
