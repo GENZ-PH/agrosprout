@@ -1,11 +1,11 @@
 {
-  "_note": "D1 (demo site coordinates) is still open. The one point below is the NASA POWER reference point already used in docs/03 and the test fixture (Iligan area, lowland). It is PROVISIONAL: the team replaces or adds the lowland paddy lot and the upland lot, then re-runs build_demo.py.",
+  "_note": "D1 (demo site coordinates) is still open. The point below is PROVISIONAL: a lowland, flat spot (SRTM about 35 m, 2% slope) in the west Lanao del Norte NASA POWER cell, chosen because the earlier Iligan point sits in a cell POWER averages at about 742 m, which made rice read cool (docs/03). The team replaces it with a real lowland paddy lot (and adds the upland lot), then re-runs build_demo.py.",
   "farms": [
     {
       "id": "lanao-norte-demo-1",
-      "name": "Lanao del Norte demo farm (provisional point)",
-      "lat": 8.23,
-      "lon": 124.24,
+      "name": "Lanao del Norte demo farm (provisional lowland point)",
+      "lat": 8.0,
+      "lon": 123.8,
       "elevation_m": null
     }
   ]
