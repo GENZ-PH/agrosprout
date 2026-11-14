@@ -23,6 +23,7 @@ import type { DataStatus, LotData, MonthlySeries, Provenance } from '../types';
 import { lotDataKey } from '../types';
 import { fetchWithTimeout } from '../net/fetch';
 import { DAYS_IN_MONTH, monthlyEt0, solarToMJ } from './et0';
+import { fetchSrtm, roundForSrtm, SRTM_ACQUIRED, SRTM_CITATION, type SrtmFetcher, type SrtmResult } from './srtm';
 
 export { lotDataKey };
 
@@ -247,9 +248,12 @@ export function parsePowerMonthly(json: unknown, retrieved: string, lotId = ''):
     kind: 'live',
     lat: roundForPower(lat),
     lon: roundForPower(lon),
-    // SRTM elevation arrives with #9. Until then ET0 uses sea level (contract) and says so.
+    // SRTM elevation is added by `applySrtm` when the elevation service answers; until then
+    // ET0 uses sea level (contract) and says so.
     elevation_m: null,
     slope_pct: null,
+    srtm_point: null,
+    cell_elevation_m: Number.isFinite(elev) ? elev : null,
     period,
     monthly: {
       precip_mm: precip,
@@ -282,6 +286,85 @@ export function parsePowerMonthly(json: unknown, retrieved: string, lotId = ''):
     ],
     caveats,
   };
+}
+
+// ---------------------------------------------------------------------------
+// NASA SRTM: field elevation and slope (#9, #57)
+// ---------------------------------------------------------------------------
+
+const SEA_LEVEL_NOTE = 'sea-level pressure assumed until the SRTM elevation is available';
+
+/**
+ * Adds the field's SRTM elevation and slope to live lot data and recomputes ET0 with the
+ * air pressure at that elevation (FAO-56 Eq. 7). Temperature is NOT corrected: there is no
+ * local lapse-rate source yet (#112 A1), so a caveat compares the field and cell heights instead.
+ */
+export function applySrtm(data: LotData, srtm: SrtmResult): LotData {
+  const m = data.monthly;
+  let et0 = m.et0_mm;
+  const caveats = data.caveats.filter((c) => !c.startsWith('Evapotranspiration:') && !c.startsWith('Field elevation'));
+  if (srtm.elevation_m !== null && m.rh2m_pct && m.ws2m_ms && m.solar_mj_m2_day) {
+    try {
+      const e = monthlyEt0({
+        tmaxC: m.tmax_c,
+        tminC: m.tmin_c,
+        rhMeanPct: m.rh2m_pct,
+        windMs2m: m.ws2m_ms,
+        rsMjM2Day: m.solar_mj_m2_day,
+        latDeg: data.lat,
+        elevM: srtm.elevation_m,
+      });
+      et0 = e.et0MmMonth;
+      for (const w of e.warnings) caveats.push(`Evapotranspiration: ${w}`);
+    } catch (err) {
+      if (!(err instanceof RangeError)) throw err;
+    }
+  }
+  const cell = data.cell_elevation_m;
+  if (srtm.elevation_m !== null && typeof cell === 'number') {
+    caveats.push(
+      `Field elevation from NASA SRTM: about ${Math.round(srtm.elevation_m)} m. The climate numbers are for the NASA POWER cell average of about ${Math.round(cell)} m, so temperatures here can differ from the field, and are not adjusted.`,
+    );
+  }
+  caveats.push(...srtm.caveats);
+  const provenance = data.provenance
+    .filter((p) => !p.field.startsWith('elevation_m') && !p.field.startsWith('slope_pct'))
+    .map((p) => (p.field === 'monthly.et0_mm' && srtm.elevation_m !== null && p.note ? { ...p, note: p.note.replace(SEA_LEVEL_NOTE, 'air pressure from the SRTM field elevation (FAO-56 Eq. 7)') } : p));
+  const srtmProv = (field: string, note: string): Provenance => ({
+    field,
+    source: SRTM_CITATION,
+    native_res: '1 arc-second (about 30 m)',
+    period: SRTM_ACQUIRED,
+    retrieved: data.provenance[0]?.retrieved ?? '',
+    note,
+  });
+  if (srtm.elevation_m !== null) provenance.push(srtmProv('elevation_m', 'lot centre rounded to 0.001 degree (about 110 m) before sending'));
+  if (srtm.slope_pct !== null) provenance.push(srtmProv('slope_pct', 'Horn (1981) slope on a 3 x 3 grid 30 m apart, whole percent; a rough terrain class'));
+  return {
+    ...data,
+    elevation_m: srtm.elevation_m,
+    slope_pct: srtm.slope_pct,
+    srtm_point: [srtm.lat, srtm.lon],
+    monthly: { ...m, et0_mm: et0 },
+    provenance,
+    caveats,
+  };
+}
+
+/** True when stored live data has no SRTM answer for this lot centre yet. */
+export function needsSrtm(data: LotData, lat: number, lon: number): boolean {
+  const p = data.srtm_point;
+  return !p || p[0] !== roundForSrtm(lat) || p[1] !== roundForSrtm(lon);
+}
+
+/** Best effort: SRTM trouble never blocks the climate data. */
+async function withSrtm(data: LotData, lat: number, lon: number, fetcher: SrtmFetcher | undefined, signal?: AbortSignal): Promise<LotData> {
+  if (!fetcher || !needsSrtm(data, lat, lon)) return data;
+  try {
+    return applySrtm(data, await fetchSrtm(lat, lon, fetcher, signal));
+  } catch {
+    return data;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -341,6 +424,8 @@ export async function ensureLotData(args: {
   lon: number;
   store: LotDataStore;
   fetcher?: PowerFetcher;
+  /** NASA SRTM elevation fetcher; omitted = no elevation request (tests, or no network). */
+  srtmFetcher?: SrtmFetcher;
   now?: () => Date;
   force?: boolean;
   signal?: AbortSignal;
@@ -353,12 +438,16 @@ export async function ensureLotData(args: {
 
   const stored = await readStored(store, key);
   if (stored && !force && stored.lat === want.lat && stored.lon === want.lon) {
-    return { status: 'ready', data: stored, fetched: false };
+    // Climate is current; fill in the field elevation if this lot centre has none yet.
+    const data = await withSrtm(stored, lat, lon, args.srtmFetcher, signal);
+    if (data !== stored) await store.set(key, JSON.stringify(data));
+    return { status: 'ready', data, fetched: data !== stored };
   }
 
   try {
     const json = await fetcher(want.lat, want.lon, signal);
-    const data = parsePowerMonthly(json, now().toISOString().slice(0, 10), lotId);
+    const parsed = parsePowerMonthly(json, now().toISOString().slice(0, 10), lotId);
+    const data = await withSrtm(parsed, lat, lon, args.srtmFetcher, signal);
     await store.set(key, JSON.stringify(data));
     return { status: 'ready', data, fetched: true };
   } catch (err) {

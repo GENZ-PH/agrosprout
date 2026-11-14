@@ -21,7 +21,7 @@ An offline-first mobile app (Expo React Native: Android app for farmers + web bu
 5. **English** for all submission materials.
 6. The app **supports and doesn't replace** farmer judgment and agricultural technicians. Keep that framing in the UI copy.
 7. Scope discipline: respect the MoSCoW in `docs/05-mvp-scope.md` and the cut order in `docs/08-hackathon-schedule.md`. Flag scope creep.
-8. **No login, no accounts, no backend storage.** Farm data (lots, crops, destinations, months) lives in AsyncStorage on the device. Outbound location data is limited to the NASA POWER request (lot centroid rounded to 0.1°) and the optional OSRM routing request (rounded to ~100 m).
+8. **No login, no accounts, no backend storage.** Farm data (lots, crops, destinations, months) lives in AsyncStorage on the device. Outbound location data is limited to the NASA POWER request (lot centroid rounded to 0.1°), the NASA SRTM elevation request (lot centroid rounded to 0.001°, ~110 m; on the web via the same-origin Pages Function `mobile/functions/api/srtm.ts`, which stores nothing but an edge-cache copy of the public answer) and the optional OSRM routing request (rounded to ~100 m). (SRTM added 2026-11-14 on the preview branch, approved by RomartM.)
 9. Travel-time defaults (mode speeds, loads, circuity, perishability thresholds) are **assumptions**. Label them so in `params.ts` and the UI, and the farmer's own travel time always wins.
 
 ## Technical conventions (proposed; see decision log)

@@ -38,7 +38,7 @@ test("the recommendations text uses the same score names the app shows", () => {
   for (const label of Object.values(COMPONENT_LABELS)) assert.ok(EXPLAINERS.recommendations.read.includes(label), label);
 });
 
-test("only NASA POWER is listed as used for every lot, and each dataset has a note", () => {
-  assert.deepEqual(CHALLENGE_DATASETS.filter((d) => d.status === "Used").map((d) => d.name), ["NASA POWER"]);
+test("NASA POWER and SRTM are listed as used for every lot, and each dataset has a note", () => {
+  assert.deepEqual(CHALLENGE_DATASETS.filter((d) => d.status === "Used").map((d) => d.name), ["NASA POWER", "SRTM (elevation and slope)"]);
   for (const d of CHALLENGE_DATASETS) assert.ok(d.note, d.name);
 });

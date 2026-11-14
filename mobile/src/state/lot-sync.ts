@@ -1,7 +1,10 @@
+import { Platform } from "react-native";
 import { asyncStorageLotDataStore } from "../data/lotdata-store";
+import { makeSrtmFetcher } from "../data/srtm";
 import { onlineManager } from "@tanstack/react-query";
 import { onReconnect } from "../net/reconnect";
 import { useFarmStore } from "./farm-store";
+import { useLotDataRev } from "./lotdata-rev";
 import { syncPendingLots } from "./lot-sync-core";
 
 let running: Promise<unknown> | null = null;
@@ -35,6 +38,9 @@ export function runLotSync(): Promise<unknown> {
     getLots: () => useFarmStore.getState().lots,
     setStatus: (id, data_status) => useFarmStore.getState().updateLot(id, { data_status }),
     store: asyncStorageLotDataStore,
+    // NASA SRTM field elevation and slope; the web build goes through our same-origin proxy.
+    srtmFetcher: makeSrtmFetcher(Platform.OS === "web"),
+    onDataChanged: () => useLotDataRev.getState().bump(),
   })
     .catch((e: unknown) => console.warn(`[lot-sync] ${String(e)}`))
     .finally(() => {

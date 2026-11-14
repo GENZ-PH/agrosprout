@@ -6,9 +6,10 @@ import { useT } from "../i18n/lang-store";
 import { cropLabel } from "../i18n/strings";
 import { shortCropName } from "./field-year-core";
 import { fitReasonText } from "./plan-text";
+import { type InfoRef, useExplainer } from "./InfoToggle";
 import { colors, radius, space, text } from "./theme";
 
-type Props = { fits: readonly CropFit[]; cropById: (id: string) => Crop | undefined };
+type Props = { fits: readonly CropFit[]; cropById: (id: string) => Crop | undefined; info?: InfoRef };
 
 const TONE: Record<FitLevel, { bg: string; fg: string }> = {
   good: { bg: colors.greenTint, fg: colors.green },
@@ -18,13 +19,18 @@ const TONE: Record<FitLevel, { bg: string; fg: string }> = {
 };
 
 /** "Your crops here": how each crop the farmer grows fits this lot's rain and temperature. */
-export function CropFitList({ fits, cropById }: Props) {
+export function CropFitList({ fits, cropById, info }: Props) {
   const { t, lang, months } = useT();
+  const ex = useExplainer(info, t("fit.title"));
   return (
     <View style={styles.card}>
-      <Text style={text.heading} accessibilityRole="header">
-        {t("fit.title")}
-      </Text>
+      <View style={styles.titleRow}>
+        <Text style={[text.heading, styles.titleText]} accessibilityRole="header">
+          {t("fit.title")}
+        </Text>
+        {ex.button}
+      </View>
+      {ex.box}
       {fits.map((f) => {
         const crop = cropById(f.crop_id);
         const tone = TONE[f.level];
@@ -58,6 +64,8 @@ export function CropFitList({ fits, cropById }: Props) {
 }
 
 const styles = StyleSheet.create({
+  titleRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
+  titleText: { flex: 1 },
   card: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: space.lg, gap: space.md },
   row: { gap: 4, paddingTop: space.md, borderTopWidth: 1, borderTopColor: colors.border },
   rowHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: space.sm },

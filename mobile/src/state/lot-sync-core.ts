@@ -1,4 +1,5 @@
 import { ensureLotData, type LotDataStore, type PowerFetcher } from "../data/power";
+import type { SrtmFetcher } from "../data/srtm";
 import type { DataStatus, Lot } from "../types";
 
 // Fetches NASA POWER data for lots saved as `pending` (06-architecture: "Save the lot and mark
@@ -9,6 +10,10 @@ export interface LotSyncDeps {
   setStatus: (lotId: string, status: DataStatus) => void;
   store: LotDataStore;
   fetcher?: PowerFetcher;
+  /** NASA SRTM elevation fetcher. When given, ready live lots without a field elevation are filled in too. */
+  srtmFetcher?: SrtmFetcher;
+  /** Called when a lot's saved data changed but its status did not (SRTM filled in later). */
+  onDataChanged?: (lotId: string) => void;
   signal?: AbortSignal;
 }
 
@@ -27,17 +32,20 @@ export interface LotSyncResult {
  */
 export async function syncPendingLots(deps: LotSyncDeps): Promise<LotSyncResult> {
   const result: LotSyncResult = { checked: [], ready: [], pending: [], error: [] };
-  const todo = deps.getLots().filter((l) => l.data_status === "pending" && l.data_ref.startsWith("lotdata:"));
+  const live = deps.getLots().filter((l) => l.data_ref.startsWith("lotdata:"));
+  const todo = live.filter((l) => l.data_status === "pending" || (deps.srtmFetcher && l.data_status === "ready"));
   for (const lot of todo) {
     if (deps.signal?.aborted) break;
     const [lon, lat] = lot.centroid;
-    const r = await ensureLotData({ lotId: lot.id, lat, lon, store: deps.store, fetcher: deps.fetcher, signal: deps.signal });
+    const r = await ensureLotData({ lotId: lot.id, lat, lon, store: deps.store, fetcher: deps.fetcher, srtmFetcher: deps.srtmFetcher, signal: deps.signal });
     result.checked.push(lot.id);
     result[r.status].push(lot.id);
     // The farmer may have deleted or moved the lot meanwhile: only update a lot that is still pending.
     const now = deps.getLots().find((l) => l.id === lot.id);
     if (now && now.data_status === "pending" && now.centroid[0] === lon && now.centroid[1] === lat) {
       deps.setStatus(lot.id, r.status);
+    } else if (lot.data_status === "ready" && r.fetched && r.status === "ready") {
+      deps.onDataChanged?.(lot.id);
     }
     if (r.status === "pending") break;
   }

@@ -18,7 +18,10 @@ import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 // explanation (engine/explain.ts, in English): why, benefits, trade-offs, gaps, local checks
 // and every source.
 
+import { type InfoRef, useExplainer } from "./InfoToggle";
+
 type Props = {
+  info?: InfoRef;
   option: RotationOption;
   /** Plan A, the farmer's own crops: the baseline every score is compared with. */
   baseline: RotationOption;
@@ -29,8 +32,9 @@ type Props = {
   defaultOpen?: boolean;
 };
 
-export function PlanDetail({ option, baseline, explanation, leftOut, cropById, defaultOpen = false }: Props) {
+export function PlanDetail({ option, baseline, explanation, leftOut, cropById, defaultOpen = false, info }: Props) {
   const { t, lang, months } = useT();
+  const ex = useExplainer(info, planName(option.kind, t));
   const [open, setOpen] = useState(defaultOpen);
   const isBaseline = option.key === baseline.key;
   const crop = (id: string) => cropLabel(lang, cropById(id), id);
@@ -70,7 +74,9 @@ export function PlanDetail({ option, baseline, explanation, leftOut, cropById, d
           <Text style={styles.totalNumber}>{option.total === null ? "?" : Math.round(option.total)}</Text>
           <Text style={text.caption}>{t("detail.outOf")}</Text>
         </View>
+        {ex.button}
       </View>
+      {ex.box}
 
       <View style={styles.sequence}>
         {option.slots.map((s, i) => (

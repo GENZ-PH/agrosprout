@@ -28,7 +28,7 @@ export type LotView =
    */
   | { kind: "no-data"; status: DataStatus }
   /** `period` = the years the lot's data covers (e.g. "2001-2025"), for the ⓘ explainer texts. */
-  | { kind: "ready"; analysis: LotAnalysis; period: string }
+  | { kind: "ready"; analysis: LotAnalysis; period: string; /** The lot's climate data, for the data-sources card. */ data?: LotData }
   /** The engine threw. Shown as a message instead of a blank screen; details go to the console. */
   | { kind: "failed"; message: string };
 
@@ -45,7 +45,7 @@ export function lotView({ farm, lot, data, library, scenario }: LotViewInput): L
   if (lot.crops.length === 0) return { kind: "no-crops" };
   if (!data) return { kind: "no-data", status: lot.data_status };
   try {
-    return { kind: "ready", analysis: analyzeLot({ farm, lot, data, library, scenario }), period: data.period };
+    return { kind: "ready", analysis: analyzeLot({ farm, lot, data, library, scenario }), period: data.period, data };
   } catch (e) {
     return { kind: "failed", message: e instanceof Error ? e.message : String(e) };
   }

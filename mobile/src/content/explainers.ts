@@ -21,7 +21,8 @@ export type ExplainerId =
   | "months-compare"
   | "season-calendar"
   | "what-if"
-  | "farm-map";
+  | "farm-map"
+  | "data-sources";
 
 export interface Explainer {
   id: ExplainerId;
@@ -146,6 +147,18 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     source: "Your own months, the options from the recommendations and the planting-month scan.",
     read: "Bars that overlap mean crops grown together on the same lot. Empty months mean bare soil, which can wash away in heavy rain.",
     limits: ["Only crops you chose are shown; other possible crops appear as alternatives, not as advice."],
+  },
+  "data-sources": {
+    id: "data-sources",
+    title: "NASA data behind this lot",
+    what: "Each NASA dataset that feeds this lot's results, the value it gives for this lot, and how coarse it is.",
+    source:
+      "NASA POWER for climate ({period}), NASA SRTM for the field's elevation and slope, and on the sample farm also NASA satellite checks (MODIS vegetation, GPM IMERG rain and SMAP soil moisture) when they are bundled. El Niño context is from PAGASA and NOAA.",
+    read: "Read the value line first: it is what this lot gets from that dataset. The grey line says how wide an area the value covers and which years it comes from.",
+    limits: [
+      "A value for a large grid cell describes the area around your lot, not the lot itself.",
+      "The El Niño line is context for this season. The results themselves use long-term records, not a forecast.",
+    ],
   },
   "what-if": {
     id: "what-if",
@@ -291,6 +304,13 @@ export const DATA_SOURCES: readonly DataSource[] = [
     resolution: "Per crop",
   },
   {
+    name: "NASA SRTM v3, 1 arc-second (NASA JPL, 2013), via Open Topo Data",
+    used_for: "The field's elevation (for the air pressure in the evaporation sum) and its slope.",
+    period: "Measured 11 to 21 February 2000",
+    resolution: "About 30 m. Lots you draw: the lot centre is rounded to about 110 m before it is sent.",
+    url: "https://doi.org/10.5067/MEASURES/SRTM/SRTMGL1.003",
+  },
+  {
     name: "OpenStreetMap routing (FOSSGIS server)",
     used_for: "Road distance from your lot to a harvest place, when you are online.",
     period: "Current road map",
@@ -327,8 +347,8 @@ export const CHALLENGE_DATASETS: readonly DatasetStatus[] = [
   { name: "NASA POWER", status: "Used", note: "Drives every result for every lot you draw." },
   {
     name: "SRTM (elevation and slope)",
-    status: "Demo farm only",
-    note: "The demo farm file has elevation and slope from SRTM. Lots you draw do not use it yet, so their evaporation is calculated at sea level and their erosion check relies on the land type you give.",
+    status: "Used",
+    note: "Every lot gets its field elevation and slope from SRTM (lots you draw: the lot centre rounded to about 110 m is sent once, with a signal). The elevation sets the air pressure in the evaporation sum. The slope is shown next to your land type; the erosion score still uses the land type you give.",
   },
   { name: "SMAP (soil moisture)", status: "Not used", note: "Soil wetness comes from NASA POWER, a model estimate, not from the SMAP satellite." },
   { name: "GPM (rainfall)", status: "Not used", note: "Rainfall comes from NASA POWER." },
@@ -343,7 +363,7 @@ export const LIMITATIONS: readonly string[] = [
   "Crop values are general and not specific to a variety.",
   "Market and labor information is rough and needs local prices.",
   "The soil-health score is a relative indicator from the model, not a lab test.",
-  "Temperatures for lots you draw are estimated from the monthly mean and daily range, and if your field's elevation is not known evaporation is calculated at sea level.",
+  "Temperatures for lots you draw are estimated from the monthly mean and daily range, and they are for the NASA grid cell's average height, not your field's: no height correction is applied, because we found no local source for one. If your field's elevation could not be loaded, evaporation is calculated at sea level.",
   "Crop water use is not adjusted for a humid, low-wind climate, so it may be slightly too high in such places.",
   "Travel speeds, loads per trip and wet-road effects are assumptions, and transport cost is not calculated unless you enter a fare.",
   // D31 (#107): ground area = map area x sqrt(1 + (slope % / 100)^2), so 20% -> +2.0%, 30% -> +4.4%.

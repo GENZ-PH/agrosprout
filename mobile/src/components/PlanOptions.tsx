@@ -11,23 +11,31 @@ import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 // Every option for the lot as one tappable row named by its crops, so a farmer picks by what
 // gets planted, not by a letter. The best match carries a badge; the score stays small.
 
+import { type InfoRef, useExplainer } from "./InfoToggle";
+
 type Props = {
+  info?: InfoRef;
   options: readonly RotationOption[];
   selected: OptionKey;
   onSelect: (key: OptionKey) => void;
   cropById: (id: string) => Crop | undefined;
 };
 
-export function PlanOptions({ options, selected, onSelect, cropById }: Props) {
+export function PlanOptions({ options, selected, onSelect, cropById, info }: Props) {
   const { t, lang } = useT();
+  const ex = useExplainer(info, t("options.title"));
   return (
     <View style={styles.wrap}>
       <View style={styles.head}>
-        <Text style={text.heading} accessibilityRole="header">
-          {t("options.title")}
-        </Text>
+        <View style={styles.headRow}>
+          <Text style={[text.heading, styles.flex]} accessibilityRole="header">
+            {t("options.title")}
+          </Text>
+          {ex.button}
+        </View>
         <Text style={text.caption}>{t("options.hint")}</Text>
       </View>
+      {ex.box}
       {options.map((o) => {
         const on = o.key === selected;
         const crops = cropListText(o.slots.map((s) => cropLabel(lang, cropById(s.crop_id), s.crop_id)));
@@ -57,6 +65,8 @@ export function PlanOptions({ options, selected, onSelect, cropById }: Props) {
 }
 
 const styles = StyleSheet.create({
+  headRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
+  flex: { flex: 1 },
   wrap: { gap: space.sm },
   head: { gap: 2 },
   row: {

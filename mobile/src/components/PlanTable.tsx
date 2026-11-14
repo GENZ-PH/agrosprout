@@ -10,14 +10,18 @@ import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 // empty, months short of water, months too hot or too wet, crop families, days with
 // soil-feeding crops, and the overall score last. One column per plan; tap a column to open it.
 
+import { type InfoRef, useExplainer } from "./InfoToggle";
+
 type Props = {
+  info?: InfoRef;
   options: readonly RotationOption[];
   selected: OptionKey;
   onSelect: (key: OptionKey) => void;
 };
 
-export function PlanTable({ options, selected, onSelect }: Props) {
+export function PlanTable({ options, selected, onSelect, info }: Props) {
   const { t } = useT();
+  const ex = useExplainer(info, t("table.title"));
   const rows = planFacts(options);
   // On a phone the columns are too narrow for names: the letters match the calendar above.
   const narrow = useWindowDimensions().width < 560;
@@ -27,8 +31,10 @@ export function PlanTable({ options, selected, onSelect }: Props) {
         <Text style={text.heading} accessibilityRole="header">
           {t("table.title")}
         </Text>
-        <Text style={text.caption}>{t("table.hint")}</Text>
+        <Text style={[text.caption, styles.flexHint]}>{t("table.hint")}</Text>
+        {ex.button}
       </View>
+      {ex.box}
 
       <View style={styles.row}>
         <View style={[styles.label, narrow && styles.labelNarrow]} />
@@ -71,8 +77,9 @@ export function PlanTable({ options, selected, onSelect }: Props) {
 }
 
 const styles = StyleSheet.create({
+  flexHint: { flex: 1 },
   card: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: space.lg },
-  titleRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "baseline", justifyContent: "space-between", columnGap: space.lg, rowGap: 2, paddingBottom: space.sm },
+  titleRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", columnGap: space.lg, rowGap: 2, paddingBottom: space.sm },
   row: { flexDirection: "row", alignItems: "stretch" },
   rule: { borderTopWidth: 1, borderTopColor: colors.border },
   scoreRow: { borderTopColor: colors.borderStrong },

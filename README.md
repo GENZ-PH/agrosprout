@@ -41,7 +41,7 @@ Priority chips (save water, build soil, extra income, less work) re-rank the opt
 |---|---|---|---|---|
 | **NASA POWER** monthly point API (Agroclimatology) | `T2M`, `T2M_RANGE`, `PRECTOTCORR`, `RH2M`, `WS2M`, `ALLSKY_SFC_SW_DWN`, `GWETROOT` | 2001–2025 | Fetched by the app for each of the farmer's lots ([`power.ts`](mobile/src/data/power.ts)) | Reference evapotranspiration (ET₀), rain in a dry, typical, and wet year (P20/P50/P80), water balance and stress months, crop temperature fit, waterlogging risk |
 | **NASA POWER** daily point API | `T2M_MAX`, `T2M_MIN`, `PRECTOTCORR`, `RH2M`, `WS2M`, `ALLSKY_SFC_SW_DWN`, `GWETROOT` | 2001–2025 | Bundled demo farm, built by [`pipeline/build_demo.py`](pipeline/build_demo.py) | Everything above, plus days above 35 °C, days with more than 50 mm of rain (erosion on bare soil), and long-term trends (Sen's slope and Mann-Kendall) |
-| **SRTM** Global 1 arc-second v3 (SRTMGL1, NASA JPL via LP DAAC, served by Open Topo Data) | Elevation, slope (from a 3 × 3 grid) | Feb 2000 | Bundled demo farm, built by [`pipeline/fetch_srtm.py`](pipeline/fetch_srtm.py) | The demo farm's elevation sets the air pressure in its ET₀ and in the what-if recompute. Slope is saved with the farm; the scores don't use it yet |
+| **SRTM** Global 1 arc-second v3 (SRTMGL1, NASA JPL via LP DAAC, served by Open Topo Data) | Elevation, slope (from a 3 × 3 grid) | Feb 2000 | Bundled demo farm ([`pipeline/fetch_srtm.py`](pipeline/fetch_srtm.py)) and every lot the farmer draws ([`srtm.ts`](mobile/src/data/srtm.ts), centre rounded to about 110 m) | The field's elevation sets the air pressure in ET₀ and in the what-if recompute, and is shown next to the NASA POWER cell's average height. Slope is shown with the lot; the erosion score still uses the farmer's land type |
 
 POWER's native grid is a 0.5° × 0.625° cell, so the climate is a regional average, not a field measurement. Each value the app shows carries its source, resolution, and period.
 
@@ -66,7 +66,7 @@ flowchart LR
 
 **Offline-first.** The app needs a connection once per lot, to load the map and fetch NASA POWER. It saves the data on the phone and runs the engine there, so the dashboard and comparisons work offline afterwards. A demo farm built from NASA POWER daily data is bundled for use without a connection.
 
-**Privacy.** No login and no account. Lots, crops, months, and destinations stay in the phone's storage. The only location data that leaves the phone is the lot's center rounded to 0.1° (sent to NASA POWER) and, if the farmer adds a destination, points rounded to about 100 m (sent to the road-routing server).
+**Privacy.** No login and no account. Lots, crops, months, and destinations stay in the phone's storage. The only location data that leaves the phone is the lot's center rounded to 0.1° (sent to NASA POWER), the lot's center rounded to about 110 m (sent once for its NASA SRTM elevation and slope; the web app asks through its own Cloudflare function because the public elevation service does not allow browser requests) and, if the farmer adds a destination, points rounded to about 100 m (sent to the road-routing server).
 
 ## What works today
 

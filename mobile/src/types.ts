@@ -223,8 +223,12 @@ export interface LotData {
   lon: number;
   /** SRTM elevation, m (#9). `null` = unknown: ET0 used sea level and a caveat says so. */
   elevation_m: number | null;
-  /** SRTM-derived slope, %. `null` for live lots (use `LotDetails.land_type`). */
+  /** SRTM-derived slope, %. `null` when unknown (use `LotDetails.land_type`). */
   slope_pct: number | null;
+  /** Live lots: the point sent to SRTM, the lot centre rounded to 0.001° (~110 m, rule 8). */
+  srtm_point?: [number, number] | null;
+  /** Live lots: the NASA POWER grid cell's average elevation, m, from the POWER answer. */
+  cell_elevation_m?: number | null;
   /** Years summarized, e.g. "2001-2024". */
   period: string;
   monthly: LotMonthly;

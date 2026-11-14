@@ -16,7 +16,10 @@ import { colors, radius, space, text } from "./theme";
 // the months a crop is short of water, too hot or too wet. Reading across is time; reading
 // down compares the plans.
 
+import { type InfoRef, useExplainer } from "./InfoToggle";
+
 type Props = {
+  info?: InfoRef;
   options: readonly RotationOption[];
   selected: OptionKey;
   onSelect: (key: OptionKey) => void;
@@ -41,8 +44,9 @@ const RISK_COLOR: Record<RiskKind, string> = { stress: colors.amber, heat: color
 const riskMonths = (o: RotationOption, kind: RiskKind) =>
   inFieldMonths(kind === "stress" ? o.metrics.stress_months : kind === "heat" ? o.metrics.heat_months : o.metrics.waterlog_months, occupiedMonths(o.slots));
 
-export function FieldYear({ options, selected, onSelect, monthly, cropById }: Props) {
+export function FieldYear({ options, selected, onSelect, monthly, cropById, info }: Props) {
   const { t, lang, months } = useT();
+  const ex = useExplainer(info, t("year.title"));
   const [width, setWidth] = useState(0);
   const onLayout = (e: LayoutChangeEvent) => setWidth(Math.round(e.nativeEvent.layout.width));
 
@@ -64,6 +68,15 @@ export function FieldYear({ options, selected, onSelect, monthly, cropById }: Pr
 
   return (
     <View style={styles.card}>
+      {info ? (
+        <View style={styles.titleRow}>
+          <Text style={[text.heading, styles.titleText]} accessibilityRole="header">
+            {t("year.title")}
+          </Text>
+          {ex.button}
+        </View>
+      ) : null}
+      {ex.box}
       <View onLayout={onLayout}>
         {width > 0 ? (
           <Svg width={width} height={CLIMATE_H + 22} accessibilityLabel={`${t("legend.rain")}. ${t("legend.et0")}.`}>
@@ -221,6 +234,8 @@ function BareSoil({ x, w, h }: { x: number; w: number; h: number }) {
 }
 
 const styles = StyleSheet.create({
+  titleRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
+  titleText: { flex: 1 },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,

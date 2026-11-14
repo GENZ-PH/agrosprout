@@ -11,6 +11,7 @@ import { FooterLinks } from "../src/components/FooterLinks";
 import { HarvestCard } from "../src/components/HarvestCard";
 import { Header } from "../src/components/Header";
 import { LanguageSwitch } from "../src/components/LanguageSwitch";
+import { LotDataCard } from "../src/components/LotDataCard";
 import { LotTabs } from "../src/components/LotTabs";
 import { Notice } from "../src/components/Notice";
 import { PlanDetail } from "../src/components/PlanDetail";
@@ -35,7 +36,7 @@ import { seasonsText } from "../src/lots/months-core";
 import { shortCropName } from "../src/components/recommendations-core";
 import { isDemoFarm } from "../src/state/demo-farm";
 import { useFarm, useFarmStore } from "../src/state/farm-store";
-import type { Farm, Lot, Priorities } from "../src/types";
+import type { Farm, Lot, LotData, Priorities } from "../src/types";
 
 // S3 Dashboard, PREVIEW presentation (branch preview/dashboard-ui, not for merge). Same app
 // and same engine output as main; only the results are presented differently, in two views:
@@ -150,7 +151,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
         </Narrow>
       );
     case "ready":
-      return <Results farm={farm} lot={lot} analysis={view.analysis} period={view.period} scenario={scenario} setScenario={setScenario} />;
+      return <Results farm={farm} lot={lot} analysis={view.analysis} period={view.period} data={view.data} scenario={scenario} setScenario={setScenario} />;
   }
 }
 
@@ -159,6 +160,7 @@ function Results({
   lot,
   analysis,
   period,
+  data,
   scenario,
   setScenario,
 }: {
@@ -166,6 +168,7 @@ function Results({
   lot: Lot;
   analysis: LotAnalysis;
   period: string;
+  data?: LotData;
   scenario: Scenario | null;
   setScenario: (s: Scenario | null) => void;
 }) {
@@ -185,9 +188,9 @@ function Results({
     setPriorities(next);
   };
 
-  const plantCard = <PlantCard option={selected} baseline={baseline} lotName={lot.name} cropById={cropById} />;
-  const optionsList = <PlanOptions options={options} selected={selected.key} onSelect={setPicked} cropById={cropById} />;
-  const fit = <CropFitList fits={analysis.crop_fits} cropById={cropById} />;
+  const plantCard = <PlantCard option={selected} baseline={baseline} lotName={lot.name} cropById={cropById} info={{ id: "recommendations", period }} />;
+  const optionsList = <PlanOptions options={options} selected={selected.key} onSelect={setPicked} cropById={cropById} info={{ id: "priorities", period }} />;
+  const fit = <CropFitList fits={analysis.crop_fits} cropById={cropById} info={{ id: "your-crops", period }} />;
   const harvest = <HarvestCard lot={lot} destinations={farm.destinations} harvest={analysis.harvest} cropName={cropName} period={period} />;
 
   const plantView = wide ? (
@@ -217,17 +220,19 @@ function Results({
       leftOut={analysis.rotations.components_left_out}
       cropById={cropById}
       defaultOpen={wide}
+      info={{ id: "recommendations", period }}
     />
   );
   const evidenceView = (
     <>
       <Text style={[text.small, styles.muted]}>{t("evidence.intro")}</Text>
-      <FieldYear options={options} selected={selected.key} onSelect={setPicked} monthly={analysis.monthly} cropById={cropById} />
+      <FieldYear options={options} selected={selected.key} onSelect={setPicked} monthly={analysis.monthly} cropById={cropById} info={{ id: "lot-snapshot", period }} />
       <Text style={text.caption}>{t("year.source")}</Text>
+      {data ? <LotDataCard data={data} info={{ id: "data-sources", period }} /> : null}
       {wide ? (
         <View style={styles.row}>
           <View style={styles.col}>
-            <PlanTable options={options} selected={selected.key} onSelect={setPicked} />
+            <PlanTable options={options} selected={selected.key} onSelect={setPicked} info={{ id: "season-calendar", period }} />
             <WhatIfCard scenario={scenario} onChange={setScenario} notes={analysis.scenario?.notes ?? []} period={period} />
             <SoilHealthChart result={analysis.soil_health} options={options} cropName={cropName} />
           </View>
@@ -235,7 +240,7 @@ function Results({
         </View>
       ) : (
         <>
-          <PlanTable options={options} selected={selected.key} onSelect={setPicked} />
+          <PlanTable options={options} selected={selected.key} onSelect={setPicked} info={{ id: "season-calendar", period }} />
           {detail}
           <WhatIfCard scenario={scenario} onChange={setScenario} notes={analysis.scenario?.notes ?? []} period={period} />
           <SoilHealthChart result={analysis.soil_health} options={options} cropName={cropName} />

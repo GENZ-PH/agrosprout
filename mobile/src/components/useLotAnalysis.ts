@@ -5,6 +5,7 @@ import { CROP_LIBRARY } from "../data/crops";
 import { asyncStorageLotDataStore } from "../data/lotdata-store";
 import type { Scenario } from "../engine/scenario";
 import type { Farm, Lot, LotData } from "../types";
+import { useLotDataRev } from "../state/lotdata-rev";
 import { lotView, readLotData, type DemoFarms, type LotView } from "./lot-analysis-core";
 
 // The dashboard's results for one lot (#29, #43). Reads the lot's climate data from the phone
@@ -26,7 +27,8 @@ export function useLotAnalysis(
   scenario: Scenario | null = null,
 ): DashboardLotView {
   // Read again when the data could have changed: a new download (status) or a moved lot.
-  const readKey = `${lot.data_ref}|${lot.data_status}|${lot.centroid.join(",")}`;
+  const rev = useLotDataRev((s) => s.rev);
+  const readKey = `${lot.data_ref}|${lot.data_status}|${lot.centroid.join(",")}|${rev}`;
   const [read, setRead] = useState<{ key: string; data: LotData | null } | null>(null);
 
   useEffect(() => {

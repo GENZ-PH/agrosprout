@@ -15,7 +15,10 @@ import { colors, radius, space, text } from "./theme";
 // harvest month of each, a one-line picture of the year, and plain reasons against the crops
 // grown now. What to ask the technician comes last. No scores up front: one small line only.
 
+import { type InfoRef, useExplainer } from "./InfoToggle";
+
 type Props = {
+  info?: InfoRef;
   option: RotationOption;
   baseline: RotationOption;
   lotName: string;
@@ -25,7 +28,7 @@ type Props = {
 const STRIP_H = 30;
 const SVG_FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
 
-export function PlantCard({ option, baseline, lotName, cropById }: Props) {
+export function PlantCard({ option, baseline, lotName, cropById, info }: Props) {
   const { t, lang, months } = useT();
   const [width, setWidth] = useState(0);
   const onLayout = (e: LayoutChangeEvent) => setWidth(Math.round(e.nativeEvent.layout.width));
@@ -40,6 +43,7 @@ export function PlantCard({ option, baseline, lotName, cropById }: Props) {
   const { pieces } = bandPieces(option.slots);
   const monthW = (m: number) => (m === 12 ? width : monthX(m + 1) * width) - monthX(m) * width;
 
+  const ex = useExplainer(info, title);
   return (
     <View style={styles.card}>
       <View style={styles.titleRow}>
@@ -52,7 +56,9 @@ export function PlantCard({ option, baseline, lotName, cropById }: Props) {
           </Text>
           <Text style={text.small}>{planName(option.kind, t)}</Text>
         </View>
+        {ex.button}
       </View>
+      {ex.box}
 
       <View style={styles.steps}>
         {option.slots.map((s, i) => {
