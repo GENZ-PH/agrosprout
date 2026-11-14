@@ -1,6 +1,6 @@
 import { Redirect, router, useLocalSearchParams } from "expo-router";
-import { Fragment, type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { describeScenario } from "../src/components/what-if-core";
 import { AdjustButton, AdjustSheet } from "../src/components/AdjustControls";
@@ -12,6 +12,7 @@ import { FarmMapCard } from "../src/components/FarmMapCard";
 import { FooterLinks } from "../src/components/FooterLinks";
 import { Header } from "../src/components/Header";
 import { HarvestCard } from "../src/components/HarvestCard";
+import { Icon, type IconName } from "../src/components/Icon";
 import { NasaDataButton } from "../src/components/NasaDataButton";
 import { openOverview, setPanelContext } from "../src/components/inspector-store";
 import { canDock } from "../src/components/SourceInspector";
@@ -81,7 +82,9 @@ export default function DashboardScreen() {
   const lot = farm.lots.find((l) => l.id === lotParam) ?? farm.lots[0];
   const updateLotName = useFarmStore((s) => s.updateLot);
   const views = useFarmLotViews(farm);
-  const { wide, width } = useLayout();
+  const { wide, width, contentWidth } = useLayout();
+  // The lot tabs sit beside the title when there is room, else on their own row under it.
+  const oneRowHeader = contentWidth >= 720;
   // On a big window (mostly judges and technicians), the NASA data panel starts open once per
   // visit; on a phone it waits for the header button. Leaving the dashboard clears its lot.
   useEffect(() => {
@@ -128,6 +131,29 @@ export default function DashboardScreen() {
     <DemoDataContext.Provider value={lot?.data_ref.startsWith("demo/") ?? false}>
     <Screen
       width="wide"
+      header={
+        // Fixed at the top (2026-11-15): the title, the lot tabs and the NASA data button stay in
+        // reach while the farmer scrolls. One row on a wide window, two rows on a phone.
+        (() => {
+          const tabs = lot ? (
+            <LotTabs
+              lots={farm.lots}
+              selectedId={lot.id}
+              onSelect={selectLot}
+              onAdd={() => router.push({ pathname: "/lots", params: { new: "1" } })}
+              onRename={(id, name) => updateLotName(id, { name })}
+            />
+          ) : null;
+          return oneRowHeader ? (
+            <Header title="Your farm" middle={tabs} right={<NasaDataButton />} />
+          ) : (
+            <>
+              <Header title="Your farm" right={<NasaDataButton />} />
+              {tabs}
+            </>
+          );
+        })()
+      }
       overlay={
         // Hidden while the lot comparison dialog is open, so it doesn't sit on top of it.
         lot && views[lot.id]?.kind === "ready" && !compareLot ? (
@@ -135,19 +161,8 @@ export default function DashboardScreen() {
         ) : null
       }
     >
-      <Header
-        title="Your farm"
-        right={<NasaDataButton />}
-      />
       {lot ? (
         <>
-          <LotTabs
-            lots={farm.lots}
-            selectedId={lot.id}
-            onSelect={selectLot}
-            onAdd={() => router.push({ pathname: "/lots", params: { new: "1" } })}
-            onRename={(id, name) => updateLotName(id, { name })}
-          />
           {onWater && views[lot.id]?.kind !== "no-soil" ? (
             <Narrow>
               <Notice tone="warn">
@@ -220,7 +235,6 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
   const view = useLotAnalysis(farm, lot, scenario);
   const updateLot = useFarmStore((s) => s.updateLot);
   const setPriorities = useFarmStore((s) => s.setPriorities);
-  const { wide } = useLayout();
 
   // The farm map stays on the page while a lot is loading or has no results yet.
   const withOverview = (node: ReactNode) => (
@@ -293,7 +307,7 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
           componentsLeftOut={analysis.rotations.components_left_out}
           cropName={cropName}
           period={period}
-          columns={wide ? 2 : 1}
+          columns={1}
         />
       );
       // S5 (#34, #95): always under Recommendations, on the usual months (assumed) until the farmer gives theirs.
@@ -307,7 +321,7 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
               Your planting months next to the best months we found for this lot from NASA rain and temperature data. You
               and your agricultural technician decide.
             </Text>
-            <MonthsCompareList months={months} period={period} columns={wide ? 2 : 1} />
+            <MonthsCompareList months={months} period={period} columns={1} />
           </View>
         ) : null;
       const harvestCard = (
@@ -361,9 +375,9 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
           {topCard}
           {yearCalendar}
           <ElNinoNotice />
-          {harvestCard}
-          <MonthsPrompt lot={lot} stage={analysis.stage} />
-          <Button label="Details for your technician" variant="secondary" icon="info" onPress={openOverview} style={styles.detailsButton} />
+          {/* With a place added, the travel times are worth a card; without one, it is a next step. */}
+          {farm.destinations.length > 0 ? harvestCard : null}
+          <NextSteps lot={lot} stage={analysis.stage} hasPlaces={farm.destinations.length > 0} />
           <AdjustSheet visible={adjustOpen} onClose={closeAdjust}>
             {priorities}
             {whatIf}
@@ -411,58 +425,72 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
 }
 
 /**
- * The Continue prompt at the end of the dashboard (docs/11-user-flow.md S3 → S4): give your
- * planting months for a sharper comparison, or Later. Once months are given, a way to change them.
+ * "Next steps" at the end of the dashboard (2026-11-15): one list of things the farmer can do, in
+ * place of separate cards of different sizes. Planting months (docs/11-user-flow.md S3 → S4), a
+ * place to sell (S6, only until one is added), and the details for their technician.
  */
-function MonthsPrompt({ lot, stage }: { lot: Lot; stage: 1 | 2 }) {
-  const [later, setLater] = useState(false);
-  if (stage === 1 && later) return null;
+function NextSteps({ lot, stage, hasPlaces }: { lot: Lot; stage: 1 | 2; hasPlaces: boolean }) {
   const listed = lot.crops.filter((c) => !isOtherCrop(c.crop_id));
   const given = listed.filter((c) => c.seasons.length > 0);
-  const usual = listed.filter((c) => c.seasons.length === 0);
   const short = (id: string) => shortCropName(cropName(id));
-  // Stage 1 is the next step, so it stands out (green, reading width). Once the months are given it is
-  // only a status line with a change button, so it looks like the cards around it (the same width as
-  // "Getting your harvest out").
-  const Wrap = stage === 1 ? Narrow : Fragment;
+  const rows: { key: string; icon: IconName; title: string; body: string; onPress: () => void }[] = [
+    stage === 1
+      ? {
+          key: "months",
+          icon: "sprout",
+          title: "Tell us your planting months",
+          body: `For a sharper comparison: "Your crops" then uses your months on ${lot.name} instead of the usual ones.`,
+          onPress: () => router.push({ pathname: "/months", params: { lot: lot.id } }),
+        }
+      : {
+          key: "months",
+          icon: "sprout",
+          title: "Your planting months",
+          body: given.map((c) => `${short(c.crop_id)} ${seasonsText(c.seasons)}`).join("; ") + ". Tap to change.",
+          onPress: () => router.push({ pathname: "/months", params: { lot: lot.id } }),
+        },
+    ...(hasPlaces
+      ? []
+      : [
+          {
+            key: "places",
+            icon: "pin" as IconName,
+            title: "Add where you sell your harvest",
+            body: "Then travel time to market counts in the results.",
+            onPress: () => router.push("/places"),
+          },
+        ]),
+    {
+      key: "details",
+      icon: "info",
+      title: "Details for your technician",
+      body: "Every plan, its scores and the NASA data behind them.",
+      onPress: openOverview,
+    },
+  ];
   return (
-    <Wrap>
-      <View style={stage === 1 ? styles.prompt : styles.plainCard}>
-        <Text style={text.heading} accessibilityRole="header">
-          {stage === 1 ? "Want a sharper comparison?" : "Your planting months"}
-        </Text>
-        <Text style={text.body}>
-          {stage === 1
-            ? `Tell us which months you plant on ${lot.name}. Option A then uses your months instead of the usual ones.`
-            : `Your crops are worked out on your months: ${given.map((c) => `${short(c.crop_id)} ${seasonsText(c.seasons)}`).join("; ")}.` +
-              (usual.length > 0
-                ? ` ${usual.map((c) => short(c.crop_id)).join(", ")} ${usual.length === 1 ? "keeps" : "keep"} the usual months (assumed).`
-                : "")}
-        </Text>
-        {/* Stage 2: the comparison itself is above (S5 under Recommendations), so only the change button. */}
-        <View style={stage === 1 ? styles.promptRow : styles.promptCol}>
-          {stage === 1 ? (
-            <>
-              <Button
-                label="Continue"
-                iconAfter="chevron"
-                href={{ pathname: "/months", params: { lot: lot.id } }}
-                style={styles.col}
-              />
-              <Button label="Later" variant="quiet" onPress={() => setLater(true)} style={styles.col} />
-            </>
-          ) : (
-            <>
-              <Button
-                label="Change your months"
-                variant="secondary"
-                href={{ pathname: "/months", params: { lot: lot.id } }}
-              />
-            </>
-          )}
-        </View>
-      </View>
-    </Wrap>
+    <View style={styles.steps}>
+      <Text style={[text.heading, styles.stepsTitle]} accessibilityRole="header">
+        Next steps
+      </Text>
+      {rows.map((r, i) => (
+        <Pressable
+          key={r.key}
+          onPress={r.onPress}
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.step, i > 0 && styles.stepLine, pressed && styles.stepPressed]}
+        >
+          <View style={styles.stepIcon}>
+            <Icon name={r.icon} size={20} color={colors.green} />
+          </View>
+          <View style={styles.col}>
+            <Text style={text.bodyStrong}>{r.title}</Text>
+            <Text style={text.caption}>{r.body}</Text>
+          </View>
+          <Icon name="chevron" size={20} color={colors.muted} />
+        </Pressable>
+      ))}
+    </View>
   );
 }
 
@@ -490,25 +518,12 @@ const styles = StyleSheet.create({
   col: { flex: 1, minWidth: 0 },
   section: { gap: space.lg },
   narrow: { width: "100%", maxWidth: MAX_CONTENT_WIDTH, gap: space.lg },
-  prompt: {
-    gap: space.md,
-    padding: space.lg,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: colors.green,
-    backgroundColor: colors.greenTint,
-  },
-  plainCard: {
-    gap: space.md,
-    padding: space.lg,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  promptRow: { flexDirection: "row", gap: space.sm },
-  promptCol: { gap: space.sm },
   sheetLinks: { gap: space.sm },
-  detailsButton: { alignSelf: "flex-start" },
+  steps: { borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, overflow: "hidden" },
+  stepsTitle: { paddingHorizontal: space.lg, paddingTop: space.lg, paddingBottom: space.sm },
+  step: { flexDirection: "row", alignItems: "center", gap: space.md, minHeight: 64, paddingHorizontal: space.lg, paddingVertical: space.md },
+  stepLine: { borderTopWidth: 1, borderTopColor: colors.border },
+  stepPressed: { backgroundColor: colors.pressed },
+  stepIcon: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: colors.greenTint },
   footer: { gap: space.xs, marginTop: space.lg },
 });

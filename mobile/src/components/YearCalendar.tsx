@@ -174,8 +174,8 @@ const styles = StyleSheet.create({
     borderColor: colors.borderStrong,
     backgroundColor: colors.surface,
   },
-  planOn: { borderColor: colors.green, borderWidth: 2, backgroundColor: colors.greenTint },
-  planTextOn: { color: colors.green, fontWeight: "700" },
+  planOn: { borderColor: colors.green, backgroundColor: colors.green },
+  planTextOn: { color: colors.white, fontWeight: "700" },
   strip: { gap: 6, paddingVertical: 2, flexGrow: 1 },
   stripWide: { flexDirection: "row" },
   tile: {

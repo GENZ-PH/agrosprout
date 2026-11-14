@@ -44,7 +44,6 @@ export function LotTabs({ lots, selectedId, onSelect, onAdd, onRename }: Props) 
 
   return (
     <View style={styles.wrap}>
-      <Text style={text.caption}>Your lots</Text>
       <View>
         <ScrollView
           horizontal
