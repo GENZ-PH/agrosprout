@@ -175,7 +175,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
               Your planting months next to the best months we found for this lot from NASA rain and temperature data. You
               and your agricultural technician decide.
             </Text>
-            <MonthsCompareList months={months} period={period} />
+            <MonthsCompareList months={months} period={period} columns={wide ? 2 : 1} />
           </View>
         ) : null;
       const harvestCard = (
