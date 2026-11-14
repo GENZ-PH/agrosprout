@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { Button } from "../src/components/Button";
 import { CropFitCard } from "../src/components/CropFitCard";
 import { Disclaimer } from "../src/components/Disclaimer";
+import { FooterLinks } from "../src/components/FooterLinks";
 import { Header } from "../src/components/Header";
 import { LotTabs } from "../src/components/LotTabs";
 import { Notice } from "../src/components/Notice";
@@ -40,7 +41,12 @@ export default function DashboardScreen() {
   const lot = farm.lots.find((l) => l.id === lotParam) ?? farm.lots[0];
 
   return (
-    <Screen width="wide" footer={<Disclaimer />}>
+    <Screen width="wide" footer={
+        <>
+          <FooterLinks />
+          <Disclaimer />
+        </>
+      }>
       <Header title="Your farm" />
       {lot ? (
         <>
