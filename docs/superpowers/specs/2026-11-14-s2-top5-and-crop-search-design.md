@@ -1,5 +1,7 @@
 # S2 crops: top 5 for this lot + search to select
 
+> **Changed after build (johnrald1 for the team, 2026-11-14):** the list shows the **top 3**, not 5, and a lot has **one crop** (D13 changed in `docs/decision-log.md`). Tapping a top-3 row or a search result makes it the lot's crop and replaces the old one; a farm saved earlier keeps its crops until one is chosen. Where this document says 5 or multi-select, read 3 and one crop.
+
 Date: 2026-11-14 · Owner: johnrald1 (frontend) · Status: **approved** (johnrald1, 2026-11-14). Plan: `docs/superpowers/plans/2026-11-14-s2-top5-and-crop-search.md`
 Related: #25 (S2), #29 (dashboard), D13, D24, `docs/03-data-sources.md`, `docs/si-usage-log.md`
 
@@ -26,7 +28,7 @@ search to select", "team is good for that".
 - Ranking Ecocrop-only crops. They can be picked but are not scored (same as "Other" today).
 - Any live API call for plants. Everything is bundled and works offline.
 - Engine or dashboard changes. The dashboard keeps reading `lot.crops` exactly as now.
-- One crop per lot (raised earlier, would change D13). S2 stays multi-select.
+- ~~One crop per lot (raised earlier, would change D13). S2 stays multi-select.~~ Changed: one crop per lot (see the note at the top).
 
 ## Anti-goals (a failure even if it works)
 

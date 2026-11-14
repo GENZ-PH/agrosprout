@@ -110,28 +110,29 @@ const RANK: Record<FitLevel, number> = { good: 0, watch: 1, poor: 2, unknown: 3 
 const compare = (order: string[]) => (a: CropSuggestion, b: CropSuggestion) =>
   RANK[a.level] - RANK[b.level] || b.best_months.length - a.best_months.length || order.indexOf(a.crop_id) - order.indexOf(b.crop_id);
 
-test("top crops: at most 5, never unknown, sorted by level then month count then library order", () => {
+test("top crops: 3 by default, never unknown, sorted by level then month count then library order", () => {
   for (const water of ["unknown", "rain", "full"] as const) {
     const s = lotSuggestions({ ...UNKNOWN, water }, ILIGAN_LOT_FIXTURE, CROP_LIBRARY);
     const top = topCrops(s);
     const order = CROP_LIBRARY.crops.map((c) => c.id);
     const cmp = compare(order);
-    assert.ok(top.length <= 5 && top.length > 0, water);
+    assert.ok(top.length <= 3 && top.length > 0, water);
     assert.ok(top.every((c) => c.level !== "unknown"), water);
     for (let i = 1; i < top.length; i++) assert.ok(cmp(top[i - 1], top[i]) < 0, `${water}: ${top[i - 1].crop_id} before ${top[i].crop_id}`);
     const left = s.crops.filter((c) => c.level !== "unknown" && !top.includes(c));
-    if (top.length === 5) for (const c of left) assert.ok(cmp(top[4], c) < 0, `${water}: ${c.crop_id} would rank above the 5th`);
-    else assert.deepEqual(left, [], `${water}: fewer than 5 only when every rated crop is in`);
+    if (top.length === 3) for (const c of left) assert.ok(cmp(top[2], c) < 0, `${water}: ${c.crop_id} would rank above the 3rd`);
+    else assert.deepEqual(left, [], `${water}: fewer than 3 only when every rated crop is in`);
+    assert.equal(topCrops(s, 5).length, 5, `${water}: n is still a parameter`);
   }
 });
 
-test("fewer than 5 rated crops returns all of them, and a crop with no season length never appears", () => {
-  const [rice, corn, mung] = ["lowland-rice", "corn", "mungbean"].map((id) => CROP_LIBRARY.crops.find((c) => c.id === id)!);
+test("fewer than 3 rated crops returns all of them, and a crop with no season length never appears", () => {
+  const [rice, corn] = ["lowland-rice", "corn"].map((id) => CROP_LIBRARY.crops.find((c) => c.id === id)!);
   const noLength = { ...rice, id: "no-length", season_days: null, stages_days: null };
-  const lib: CropLibrary = { ...CROP_LIBRARY, crops: [noLength, rice, corn, mung] };
+  const lib: CropLibrary = { ...CROP_LIBRARY, crops: [noLength, rice, corn] };
   const top = topCrops(lotSuggestions(UNKNOWN, ILIGAN_LOT_FIXTURE, lib));
-  assert.deepEqual(top.map((c) => c.crop_id).sort(), ["corn", "lowland-rice", "mungbean"]);
-  assert.equal(topCrops(lotSuggestions(UNKNOWN, ILIGAN_LOT_FIXTURE, lib), 2).length, 2);
+  assert.deepEqual(top.map((c) => c.crop_id).sort(), ["corn", "lowland-rice"]);
+  assert.equal(topCrops(lotSuggestions(UNKNOWN, ILIGAN_LOT_FIXTURE, lib), 1).length, 1);
 });
 
 test("a crop with no season length is unknown", () => {

@@ -7,13 +7,15 @@ import { Icon } from "./Icon";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
 // S2 crop search (#152): one box finds any crop, offline, in our crop list and the FAO Ecocrop names.
-// Tapping the box shows our crop list; typing narrows it and adds Ecocrop crops. "Add “…”" saves what was typed.
+// Tapping the box shows our crop list; typing narrows it and adds Ecocrop crops. "Choose “…”" saves what was typed.
 // Our crops are saved by id and scored; any other crop is saved as `other:<name>` and not scored.
+// One crop per lot (D13): choosing a crop replaces the lot's crop.
 
 type Props = {
   lotName: string;
   entries: readonly SearchEntry[];
-  picked: ReadonlySet<string>;
+  /** The lot's crop, or null when it has none, or several (a farm saved before D13 changed). */
+  chosen: string | null;
   onPick: (cropId: string) => void;
 };
 
@@ -22,7 +24,7 @@ const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 /** The crop id a result is saved as. */
 const pickId = (r: SearchResult) => (r.entry.kind === "library" ? r.entry.crop_id : otherCropId(r.title)!);
 
-export function CropSearch({ lotName, entries, picked, onPick }: Props) {
+export function CropSearch({ lotName, entries, chosen, onPick }: Props) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const input = useRef<ComponentRef<typeof TextInput>>(null);
@@ -39,13 +41,13 @@ export function CropSearch({ lotName, entries, picked, onPick }: Props) {
     Keyboard.dismiss();
   };
   const pick = (id: string) => {
-    if (!picked.has(id)) onPick(id);
+    if (id !== chosen) onPick(id);
     close();
   };
   const submit = () => {
-    const first = out.results.find((r) => !picked.has(pickId(r)));
+    const first = out.results.find((r) => pickId(r) !== chosen);
     if (first) pick(pickId(first));
-    else if (addId && !picked.has(addId)) pick(addId);
+    else if (addId && addId !== chosen) pick(addId);
   };
 
   return (
@@ -93,23 +95,23 @@ export function CropSearch({ lotName, entries, picked, onPick }: Props) {
               r={r}
               last={i === out.results.length - 1 && !addName}
               browsing={query.trim() === ""}
-              added={picked.has(pickId(r))}
+              added={pickId(r) === chosen}
               onPress={() => pick(pickId(r))}
             />
           ))}
           {addName && addId ? (
             <Pressable
               onPress={() => pick(addId)}
-              disabled={picked.has(addId)}
+              disabled={addId === chosen}
               accessibilityRole="button"
-              accessibilityLabel={picked.has(addId) ? `${addName}, already added` : `Add ${addName} as you typed it. It is not scored.`}
-              accessibilityState={{ disabled: picked.has(addId) }}
+              accessibilityLabel={addId === chosen ? `${addName}, your crop now` : `Choose ${addName} as you typed it. It is not scored.`}
+              accessibilityState={{ disabled: addId === chosen }}
               style={({ pressed }) => [styles.row, styles.addRow, pressed && styles.pressed]}
             >
-              <Icon name={picked.has(addId) ? "check" : "plus"} size={20} color={colors.green} />
+              <Icon name={addId === chosen ? "check" : "plus"} size={20} color={colors.green} />
               <View style={styles.flex}>
                 <Text style={text.bodyStrong}>
-                  {picked.has(addId) ? `${addName} is added` : `Add “${addName}”`}
+                  {addId === chosen ? `${addName} is your crop` : `Choose “${addName}”`}
                 </Text>
                 <Text style={text.caption}>Saved as you typed it. Not scored yet.</Text>
               </View>
@@ -141,7 +143,7 @@ function ResultRow({
   const local = ours ? e.local : null;
   const also = r.matched ? `Also called ${r.matched}` : null;
   const label = [
-    added ? `${r.title}, already added` : `Add ${r.title}`,
+    added ? `${r.title}, your crop now` : `Choose ${r.title}`,
     local,
     ours ? "From our crop list" : "Not scored yet",
     also,
@@ -174,7 +176,7 @@ function ResultRow({
       {added ? (
         <View style={styles.added}>
           <Icon name="check" size={18} color={colors.green} />
-          <Text style={[text.small, styles.ours]}>Added</Text>
+          <Text style={[text.small, styles.ours]}>Your crop</Text>
         </View>
       ) : (
         <Icon name="plus" size={20} color={colors.green} />

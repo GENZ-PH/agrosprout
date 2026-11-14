@@ -28,9 +28,13 @@ export function toggleCrop(crops: LotCrop[], cropId: string): LotCrop[] {
     : [...crops, { crop_id: cropId, seasons: [] }];
 }
 
-/** Adds the crop with no months yet, or returns `crops` unchanged when it is already picked (search and top 5 picks). */
-export function addCrop(crops: LotCrop[], cropId: string): LotCrop[] {
-  return crops.some((c) => c.crop_id === cropId) ? crops : [...crops, { crop_id: cropId, seasons: [] }];
+/**
+ * One crop per lot (D13, changed by the team 2026-11-14): the chosen crop replaces whatever the lot had.
+ * A crop already on the lot keeps its months. Unchanged `crops` when it is already the only crop.
+ */
+export function chooseCrop(crops: LotCrop[], cropId: string): LotCrop[] {
+  if (crops.length === 1 && crops[0].crop_id === cropId) return crops;
+  return [crops.find((c) => c.crop_id === cropId) ?? { crop_id: cropId, seasons: [] }];
 }
 
 /** Lots that have no crop picked yet. */

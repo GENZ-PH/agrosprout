@@ -3,7 +3,7 @@ import { cropSeasonDays, harvestMonthOf } from "../engine/season";
 import type { CropLibrary, LotData, LotDetails } from "../types";
 import { monthShort } from "./months-core";
 
-// S2 "Top 5 for this lot" (#152): every crop in the library rated on this lot's NASA data with the engine's
+// S2 "Top 3 for this lot" (#152): every crop in the library rated on this lot's NASA data with the engine's
 // crop fit (cropFit.ts), so the farmer sees which crops suit the lot, and when, before picking.
 // Each crop is tried as one season of its usual length planted in each month (on the 15th, like
 // the rotation engine's scan, docs/07 §3). No React Native imports, so it runs in Node tests.
@@ -59,7 +59,7 @@ export function lotSuggestions(details: LotDetails, data: Pick<LotData, "monthly
  * The `n` crops that suit the lot best: best level first (Good, Watch out, Poor; unknown never), then more
  * planting months at that level (a team assumption: a wider window is more forgiving), then library order.
  */
-export function topCrops(s: LotSuggestions, n = 5): CropSuggestion[] {
+export function topCrops(s: LotSuggestions, n = 3): CropSuggestion[] {
   return s.crops
     .map((c, i) => ({ c, i }))
     .filter(({ c }) => c.level !== "unknown")

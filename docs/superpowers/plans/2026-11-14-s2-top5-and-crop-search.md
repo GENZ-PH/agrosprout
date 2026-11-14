@@ -1,5 +1,7 @@
 # S2 Top 5 + Crop Search Implementation Plan
 
+> **Changed after Task 4 (johnrald1 for the team, 2026-11-14):** top 3 instead of 5, and one crop per lot (D13). `addCrop` became `chooseCrop`; rows are a radio group. See the spec's note.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** On S2 (`/crops`), show each lot's top 5 library crops ranked by the engine on its NASA data (tap to pick), and replace the fixed crop grid with an offline search over our crops + FAO Ecocrop names.

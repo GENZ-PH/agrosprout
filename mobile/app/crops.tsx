@@ -13,16 +13,17 @@ import { TopCrops } from "../src/components/TopCrops";
 import { useLotData } from "../src/components/useLotAnalysis";
 import { CROP_LIBRARY, cropById } from "../src/data/crops";
 import { ECOCROP_NAMES } from "../src/data/ecocrop";
-import { addCrop, cropShortName, dataLine, isOtherCrop, lotsWithoutCrops, otherCropName, toggleCrop } from "../src/lots/crop-picks";
+import { chooseCrop, cropShortName, dataLine, isOtherCrop, lotsWithoutCrops, otherCropName, toggleCrop } from "../src/lots/crop-picks";
 import { buildSearchEntries } from "../src/lots/crop-search-core";
 import { lotSuggestions, topCrops } from "../src/lots/suggest-core";
 import { areaLabel, isPinLot } from "../src/lots/lot-editor";
 import { useFarmStore } from "../src/state/farm-store";
 import type { Lot, LotCrop } from "../src/types";
 
-// S2 What do you plant on each lot? (#25, #152, docs/11-user-flow.md). Per lot: the top 5 crops for the lot
-// from its NASA data (once the data is on the phone), a search over our crop list and the FAO Ecocrop names,
-// and the crops picked so far. Picks are saved in the farm store as they are tapped. The NASA data for each lot
+// S2 What do you plant on each lot? (#25, #152, docs/11-user-flow.md). One crop per lot (D13, changed by the
+// team 2026-11-14). Per lot: the top 3 crops for the lot from its NASA data (once the data is on the phone), a
+// search over our crop list and the FAO Ecocrop names, and the lot's crop. A farm saved earlier may still have
+// several crops on a lot: they all show, and the next crop chosen replaces them. Saved as it is tapped. The NASA data for each lot
 // keeps loading in the background (lot sync); Next never waits for it. Onboarding ends here.
 // /crops?lot=<id> shows one lot only: the lot just added with "+ Add lot" (D32), or
 // a lot whose crops are missing on the dashboard. Next goes back to that lot's results.
@@ -50,7 +51,7 @@ export default function CropsScreen() {
         <>
           {lots.length > 0 && missing.length > 0 ? (
             <Text style={[text.small, { color: colors.amber }]}>
-              Pick at least one crop for {missing.map((l) => l.name).join(", ")}.
+              Choose a crop for {missing.map((l) => l.name).join(", ")}.
             </Text>
           ) : null}
           {oneLot ? (
@@ -82,8 +83,8 @@ export default function CropsScreen() {
         <>
           <Text style={[text.body, { color: colors.muted }]}>
             {oneLot
-              ? "Pick the crops you grow on this lot: tap one of the top crops, or search for it. You can change this later."
-              : "Pick the crops you grow on each lot: tap one of the top crops, or search for it. You can change this later."}
+              ? "Choose the crop you grow on this lot: tap one of the top crops, or search for it. You can change it later."
+              : "Choose the crop you grow on each lot: tap one of the top crops, or search for it. You can change it later."}
           </Text>
           {lots.map((lot) => (
             <LotCrops key={lot.id} lot={lot} />
@@ -101,7 +102,8 @@ function LotCrops({ lot }: { lot: Lot }) {
   const data = useLotData(lot);
   const top = useMemo(() => (data ? topCrops(lotSuggestions(lot.details, data, CROP_LIBRARY)) : []), [data, lot.details]);
 
-  const picked = new Set(lot.crops.map((c) => c.crop_id));
+  // One crop per lot: a crop counts as chosen only when it is the lot's only crop.
+  const chosen = lot.crops.length === 1 ? lot.crops[0].crop_id : null;
   const line = dataLine(lot.data_status, online);
 
   return (
@@ -140,25 +142,28 @@ function LotCrops({ lot }: { lot: Lot }) {
           lotName={lot.name}
           top={top}
           period={data.period}
-          picked={picked}
-          onToggle={(id) => setCrops(lot.id, toggleCrop(lot.crops, id))}
+          chosen={chosen}
+          onChoose={(id) => setCrops(lot.id, chooseCrop(lot.crops, id))}
         />
       ) : null}
 
-      <CropSearch lotName={lot.name} entries={SEARCH_ENTRIES} picked={picked} onPick={(id) => setCrops(lot.id, addCrop(lot.crops, id))} />
+      <CropSearch lotName={lot.name} entries={SEARCH_ENTRIES} chosen={chosen} onPick={(id) => setCrops(lot.id, chooseCrop(lot.crops, id))} />
 
       <YourCrops lotName={lot.name} crops={lot.crops} onRemove={(id) => setCrops(lot.id, toggleCrop(lot.crops, id))} />
     </View>
   );
 }
 
-/** Every crop picked on the lot, in pick order, each with a ✕ to take it off. */
+/** The lot's crop with a ✕ to take it off. A farm saved before D13 changed may show several, until one is chosen. */
 function YourCrops({ lotName, crops, onRemove }: { lotName: string; crops: readonly LotCrop[]; onRemove: (cropId: string) => void }) {
   return (
     <View style={styles.yours} accessibilityLiveRegion="polite">
       <Text style={text.bodyStrong} accessibilityRole="header">
-        Your crops on {lotName}
+        {crops.length > 1 ? `Your crops on ${lotName}` : `Your crop on ${lotName}`}
       </Text>
+      {crops.length > 1 ? (
+        <Text style={[text.small, { color: colors.muted }]}>One crop per lot now: the crop you choose next replaces these.</Text>
+      ) : null}
       {crops.length === 0 ? (
         <Text style={[text.small, { color: colors.muted }]}>None yet. Tap a crop above, or search for it.</Text>
       ) : (

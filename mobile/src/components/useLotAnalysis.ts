@@ -19,7 +19,7 @@ export type DashboardLotView = LotView | { kind: "loading" };
 /**
  * The lot's climate data saved on the phone (live download or bundled demo farm). `undefined` while it
  * is being read, `null` when there is none yet. Read again on a new download (status) or a moved lot.
- * Used by the dashboard (below) and S2's top 5 for the lot (#152).
+ * Used by the dashboard (below) and S2's top 3 for the lot (#152).
  */
 export function useLotData(lot: Pick<Lot, "data_ref" | "data_status" | "centroid">): LotData | null | undefined {
   const readKey = `${lot.data_ref}|${lot.data_status}|${lot.centroid.join(",")}`;

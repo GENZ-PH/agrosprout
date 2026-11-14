@@ -10,8 +10,8 @@ import { ExplainerBox } from "./InfoCard";
 import { FIT_LABELS, fitReasonText } from "./recommendations-core";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
-// S2 "Top 5 for this lot" (#152): the library crops that suit the lot best on its NASA data, best first.
-// Each row is one checkbox: tap to add the crop to the lot, tap again to take it off.
+// S2 "Top 3 for this lot" (#152): the library crops that suit the lot best on its NASA data, best first.
+// One crop per lot (D13): the rows are one radio group; tapping a row makes that crop the lot's crop.
 
 type Props = {
   lotName: string;
@@ -19,14 +19,15 @@ type Props = {
   top: readonly CropSuggestion[];
   /** The years of the lot's data, for the ⓘ text. */
   period: string;
-  picked: ReadonlySet<string>;
-  onToggle: (cropId: string) => void;
+  /** The lot's crop, or null when it has none, or several (a farm saved before D13 changed). */
+  chosen: string | null;
+  onChoose: (cropId: string) => void;
 };
 
-export const TOP5_CAPTION =
+export const TOP_CROPS_CAPTION =
   "From NASA rain, temperature and soil wetness at this lot. A guide, not a rule: check with your agricultural technician.";
 
-export function TopCrops({ lotName, top, period, picked, onToggle }: Props) {
+export function TopCrops({ lotName, top, period, chosen, onChoose }: Props) {
   const [info, setInfo] = useState(false);
   if (top.length === 0) return null;
   return (
@@ -46,13 +47,13 @@ export function TopCrops({ lotName, top, period, picked, onToggle }: Props) {
           <Icon name="info" size={22} color={colors.green} />
         </Pressable>
       </View>
-      {info ? <ExplainerBox id="top5" period={period} /> : null}
-      <View style={styles.list}>
+      {info ? <ExplainerBox id="top-crops" period={period} /> : null}
+      <View style={styles.list} accessibilityRole="radiogroup" accessibilityLabel={`Top ${top.length} crops for ${lotName}`}>
         {top.map((s, i) => (
-          <TopRow key={s.crop_id} rank={i + 1} s={s} selected={picked.has(s.crop_id)} onPress={() => onToggle(s.crop_id)} />
+          <TopRow key={s.crop_id} rank={i + 1} s={s} selected={s.crop_id === chosen} onPress={() => onChoose(s.crop_id)} />
         ))}
       </View>
-      <Text style={text.caption}>{TOP5_CAPTION}</Text>
+      <Text style={text.caption}>{TOP_CROPS_CAPTION}</Text>
     </View>
   );
 }
@@ -67,7 +68,7 @@ function TopRow({ rank, s, selected, onPress }: { rank: number; s: CropSuggestio
   return (
     <Pressable
       onPress={onPress}
-      accessibilityRole="checkbox"
+      accessibilityRole="radio"
       accessibilityState={{ checked: selected }}
       // React Native Web drops accessibilityState.checked; aria-checked reaches the DOM.
       aria-checked={selected}
@@ -87,7 +88,7 @@ function TopRow({ rank, s, selected, onPress }: { rank: number; s: CropSuggestio
         </View>
         {reason ? <Text style={text.caption}>{reason}</Text> : null}
       </View>
-      <View style={[styles.box, selected && styles.boxOn]}>{selected ? <Icon name="check" size={18} color={colors.white} /> : null}</View>
+      <View style={[styles.radio, selected && styles.radioOn]}>{selected ? <View style={styles.dot} /> : null}</View>
     </Pressable>
   );
 }
@@ -111,19 +112,21 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: colors.surface,
   },
-  rowOn: { borderColor: colors.green, borderWidth: 2, backgroundColor: colors.greenTint },
+  // White, not the green tint: the Good fit badge is green tint and would disappear into the row.
+  rowOn: { borderColor: colors.green, borderWidth: 2 },
   pressed: { backgroundColor: colors.pressed },
   body: { gap: space.xs },
   fitLine: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", columnGap: space.sm, rowGap: space.xs },
-  box: {
+  radio: {
     width: 26,
     height: 26,
-    borderRadius: 6,
+    borderRadius: radius.pill,
     borderWidth: 2,
     borderColor: colors.borderStrong,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.surface,
   },
-  boxOn: { borderColor: colors.green, backgroundColor: colors.green },
+  radioOn: { borderColor: colors.green },
+  dot: { width: 14, height: 14, borderRadius: radius.pill, backgroundColor: colors.green },
 });

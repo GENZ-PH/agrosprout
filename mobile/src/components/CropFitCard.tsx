@@ -51,7 +51,7 @@ export function CropFitCard({ fits, cropName, period }: Props) {
   );
 }
 
-/** Good fit / Watch out / Poor fit / Not sure yet, in the level's colors. Also used by S2's top 5. */
+/** Good fit / Watch out / Poor fit / Not sure yet, in the level's colors. Also used by S2's top 3. */
 export function FitBadge({ level }: { level: FitLevel }) {
   const b = BADGE[level];
   return (
