@@ -28,7 +28,7 @@ flowchart TD
 ```
 
 - **S0 Welcome:** "Start" (no sign-up); returning users go straight to the dashboard.
-- **S1 Plot lots:** sketch each lot with a finger → the app converts it to a clean plot → drag points to adjust. Onboarding draws Lot 1; more lots come from **+ Add lot** on the dashboard (D31). Tap-corners or pin + area as alternatives.
+- **S1 Plot lots:** sketch each lot with a finger → the app converts it to a clean plot → drag points to adjust. Onboarding draws Lot 1; more lots come from **+ Add lot** on the dashboard (D32). Tap-corners or pin + area as alternatives.
 - **S2 Crops per lot:** pick everything planted on each lot (many crops per lot). The NASA data fetch runs in the background. **Onboarding ends here.**
 - **S3 Dashboard:** per lot: rain vs water need, soil moisture, crop fit, ≥3 rotation recommendations ("Your crops" on an assumed typical calendar + alternatives), each with Why / Evidence / Benefits / Unknowns / Check locally. Every chart has a "ⓘ What am I looking at?" explainer. Priority chips re-rank the results.
 - **S4 Planting months (optional):** per lot, per crop: planting → harvest months; + another season.
@@ -40,7 +40,7 @@ flowchart TD
 
 ### Must (the demo fails without these)
 - [ ] **No login / no account**; all farm data stored on the device
-- [ ] **S1 map onboarding**: **freehand sketch → auto-converted clean plot**, plot points **draggable** (+ add/remove points), tap-corners as a second way, pin + area fallback; **multiple lots** (+ Add lot on the dashboard, D31), rename/delete, live area
+- [ ] **S1 map onboarding**: **freehand sketch → auto-converted clean plot**, plot points **draggable** (+ add/remove points), tap-corners as a second way, pin + area fallback; **multiple lots** (+ Add lot on the dashboard, D32), rename/delete, live area
 - [ ] **S2 multiple crops per lot**
 - [ ] **Short onboarding: S0 → S1 lots → S2 crops → dashboard** (nothing else is required before results)
 - [ ] **S6 harvest destinations (add anytime, outside onboarding)**: opened from the dashboard card or Edit farm; pin market/storage/buyer/co-op, transport mode per destination, **travel time per lot** (rough offline estimate at minimum) that the **farmer can confirm or correct**; travel time feeds the Market access score and explanations

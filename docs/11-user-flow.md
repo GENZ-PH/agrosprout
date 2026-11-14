@@ -44,7 +44,7 @@ flowchart LR
 - **Adjust the plot:** the plot shows **big draggable corner points**. **Drag a point** to move it, **tap the small "+" on an edge** to add a point there, **long-press a point** to remove it. The area (hectares) updates live while dragging. **Undo** and **Redraw** are always visible.
 - **[Could]** "Straighten?" If the sketch is nearly a rectangle, offer to snap it to a clean rectangle (still adjustable).
 - While in Draw mode, **one finger draws and two fingers move/zoom the map**, so sketching doesn't fight with panning.
-- **One lot in onboarding** (D31, proposed): the map fills the screen, and the actions float on top of it. The farmer draws **Lot 1** (tap its name to rename it), then **Next → S2**.
+- **One lot in onboarding** (D32, proposed): the map fills the screen, and the actions float on top of it. The farmer draws **Lot 1** (tap its name to rename it), then **Next → S2**.
 - **More lots come from the dashboard:** **"+ Add lot"** on S3 opens this same map for Lot 2…Lot N, then S2 for that lot's crops. Each lot can be **renamed, re-adjusted, redrawn, or deleted** from its lot menu on the dashboard or from Edit farm.
 - **[suggested]** Optional "Lot details", each defaulting to **"I don't know"**:
   - Land type: lowland/paddy · upland · sloping
@@ -60,7 +60,7 @@ flowchart LR
 - Next → S3. **Onboarding ends here.** Harvest destinations are added later (S6) to keep onboarding short.
 
 ### S3 — Dashboard (results + data + explanations)
-Per lot (tabs or swipe cards). **"+ Add lot"** sits next to the lot tabs (opens S1 for the new lot, then S2 for its crops), and each lot has a menu: **Redraw · Rename · Delete** (D31).
+Per lot (tabs or swipe cards). **"+ Add lot"** sits next to the lot tabs (opens S1 for the new lot, then S2 for its crops), and each lot has a menu: **Redraw · Rename · Delete** (D32).
 
 | Card | Shows | "ⓘ What am I looking at?" explains |
 |---|---|---|

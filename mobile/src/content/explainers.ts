@@ -309,6 +309,8 @@ export const LIMITATIONS: readonly string[] = [
   "Temperatures for lots you draw are estimated from the monthly mean and daily range, and if your field's elevation is not known evaporation is calculated at sea level.",
   "Crop water use is not adjusted for a humid, low-wind climate, so it may be slightly too high in such places.",
   "Travel speeds, loads per trip and wet-road effects are assumptions, and transport cost is not calculated unless you enter a fare.",
+  // D31 (#107): ground area = map area x sqrt(1 + (slope % / 100)^2), so 20% -> +2.0%, 30% -> +4.4%.
+  "Lot area is measured flat, as on a map. On sloping land the ground itself is a little larger: about 2% more on a 20% slope and about 4% more on a 30% slope.",
   "Results are for comparing options, not for predicting yield or income.",
 ];
 

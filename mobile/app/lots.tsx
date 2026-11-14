@@ -14,7 +14,7 @@ import { MapView, type MapViewHandle } from "../src/map/MapView";
 
 // S1 Draw your lot (#21, docs/11-user-flow.md): a full-screen map for ONE lot, with
 // the actions as floating buttons. More lots are added later from the dashboard
-// (D31, proposed). A drawn lot is saved in the farm store (#18) at once, and the
+// (D32, proposed). A drawn lot is saved in the farm store (#18) at once, and the
 // lot sync starts fetching its NASA data in the background. Next → S2 crops.
 
 const MODE_HINT: Partial<Record<MapMode, (lot: string) => string>> = {
