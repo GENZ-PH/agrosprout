@@ -27,7 +27,7 @@ test("src/engine imports no React, React Native or Expo module", () => {
 test("engine entry points exist; later ones say which issue implements them", () => {
   assert.equal(typeof engine.waterBalance, "function");
   assert.equal(typeof engine.cropFit, "function");
-  assert.throws(() => engine.rotations(), /#26/);
+  assert.equal(typeof engine.rotations, "function");
   assert.throws(() => engine.plantingWindow(), /#33/);
   assert.throws(() => engine.marketAccess(), /#27/);
   assert.throws(() => engine.explain(), /#28/);

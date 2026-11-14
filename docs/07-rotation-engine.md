@@ -66,6 +66,12 @@ A rotation is a 12-month cycle of `(crop, start_month)` slots, repeated for the 
 3. Score the survivors (section 4) and keep the top N for each objective.
 4. **Present**: **A = Your crops** (always; on the actual calendar in stage 2, or the assumed typical calendar in stage 1), **B = best for water**, **C = best for soil**, **D = best balanced for the farmer's weights**. De-duplicate so every pair differs by at least one crop or a shift of more than one month. If D duplicates B or C, show the next best. Candidate crops always include the farmer's own crops; alternatives add at most 1–2 new crops, so suggestions stay close to what the farmer already knows.
 
+**v0 as implemented (`mobile/src/engine/rotations.ts`, #26):**
+
+- Every crop in `crops.json` with a season length, Kc, FAO-56 stages, and a temperature range is tried in every planting month (planted on the 15th). A slot that fails a hard filter isn't offered. The waterlogging filter uses the same 0.9 wetness cut-off as the crop-fit warning, so the app never suggests a crop it would flag. At the Iligan test point this keeps corn and mungbean to Feb–Apr plantings. The farmer's own rotation (A) is never filtered; it's shown with its risks.
+- Alternatives keep at least one of the farmer's crops (the engine relaxes this only when none of them passes the filters), add at most 2 new crops, and leave at least `TURNAROUND_DAYS` (10) between harvest and the next planting, including across the new year.
+- B, C and D are the top totals with only "save water", only "build soil", and the farmer's own priorities. Each is the best candidate that isn't too similar to an option already chosen. **Consequence:** if one candidate is best on everything, B gets it and C and D get the next distinct ones, so C or D can score lower than B, even on their own objective. The engine marks the option with the highest total (`top_total`) so the UI can badge it instead of assuming D.
+
 ## 3b. Planting-window scan: "your months vs better months" (stage 2, S5)
 
 For each crop the farmer plants on a lot, for each of their seasons:
@@ -138,6 +144,21 @@ flowchart TD
 | **Labor (L)** | Inverse of crop labor level | "Easy to manage" |
 
 **Weights from the sliders:** Save water → W, H · Build soil → S, E, B · Extra income → I, M · Low labor → L, M (trip burden). If no destination was given, M is left out and the weights renormalize. Total = Σ wₖ·scoreₖ, normalized. **All coefficients (a, b, c, d, k1–k3) live in one `engine/params.ts` with a comment and source for each.** Changing a coefficient must not require code changes elsewhere.
+
+**v0 formulas as implemented (`mobile/src/engine/scores.ts`, #26).** The coefficients are written in share form, so every score stays within 0–100 with no extra scaling constant:
+
+| Score | v0 formula | Spec coefficients it replaces |
+|---|---|---|
+| W | `100 × (1 − mean WSI)` over the rotation's crops, P50; P20 and P80 also returned as a range | none |
+| H | `100 × (1 − risky crop days ÷ crop days)`; a day is risky when the month's mean temperature is above the crop's Ecocrop optimum, or a low-tolerance crop meets root-zone wetness ≥ 0.9. Monthly means for every lot, so live and demo lots score the same way; daily heat days (> 35 °C) are a later refinement | k1, k2 |
+| S | `100 × (0.25·legume share + 0.25·cover-credit share + 0.25·share of the year not bare + 0.25·family diversity)`; shares are of 365 days; diversity is 0 for 1 family and 1 for 3 or more | a, b, c, d (equal weights: **assumption**) |
+| E | `100 × (1 − slope factor × share of the year's rain falling on bare soil)`; rain weight = heavy-rain days (demo farms) or P50 monthly rain; slope factor lowland 0.3 · upland 0.6 · sloping 1.0 · unknown 0.6 | k3 (**assumption**) |
+| B | `100 × (1 − same-family crop changes ÷ crop changes)`, cyclic (rice after rice = 0); family diversity is counted in S | none |
+| I | Field-day-weighted market level, L/M/H → 30/60/90 | none |
+| M | Mean of the per-crop scores from `marketAccess` (#27) | none |
+| L | Field-day-weighted inverse labor level, L/M/H → 90/60/30 (**assumption**: mirrors the income scale) | none |
+
+A score with missing data is `null`, never guessed. A component that's `null` for every candidate is left out of all totals, and its priority's weight goes to that priority's other components. A priority with no scorable component is reported (`priorities_not_scored`) so the UI can say so. **Today `crops.json` has no `market`, `labor` or `cover_value` levels (`null` in the cited draft), so I and L are left out and "extra income" and "less work" can't be scored until the team fills those in or the farmer adds a destination (M).**
 
 ### Soil Health Index trajectory (3-year view)
 
