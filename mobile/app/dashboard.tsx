@@ -215,14 +215,32 @@ function MonthsPrompt({ lot, stage }: { lot: Lot; stage: 1 | 2 }) {
                 ? ` ${usual.map((c) => short(c.crop_id)).join(", ")} ${usual.length === 1 ? "keeps" : "keep"} the usual months (assumed).`
                 : "")}
         </Text>
-        <View style={styles.promptRow}>
-          <Button
-            label={stage === 1 ? "Continue" : "Change your months"}
-            iconAfter="chevron"
-            href={{ pathname: "/months", params: { lot: lot.id } }}
-            style={styles.col}
-          />
-          {stage === 1 ? <Button label="Later" variant="quiet" onPress={() => setLater(true)} style={styles.col} /> : null}
+        {/* Stage 2 stacks its two longer buttons so their labels fit on a phone. */}
+        <View style={stage === 1 ? styles.promptRow : styles.promptCol}>
+          {stage === 1 ? (
+            <>
+              <Button
+                label="Continue"
+                iconAfter="chevron"
+                href={{ pathname: "/months", params: { lot: lot.id } }}
+                style={styles.col}
+              />
+              <Button label="Later" variant="quiet" onPress={() => setLater(true)} style={styles.col} />
+            </>
+          ) : (
+            <>
+              <Button
+                label="Compare your months"
+                iconAfter="chevron"
+                href={{ pathname: "/compare", params: { lot: lot.id } }}
+              />
+              <Button
+                label="Change your months"
+                variant="secondary"
+                href={{ pathname: "/months", params: { lot: lot.id } }}
+              />
+            </>
+          )}
         </View>
       </View>
     </Narrow>
@@ -248,4 +266,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.greenTint,
   },
   promptRow: { flexDirection: "row", gap: space.sm },
+  promptCol: { gap: space.sm },
 });

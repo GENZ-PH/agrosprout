@@ -28,23 +28,27 @@ import type { CropSeason, Lot, LotCrop } from "../src/types";
 // a 12-month strip: tap the planting month, then the harvest month. "+ Add another season"
 // for crops planted twice a year. Saved in lot.crops[].seasons as soon as a season is
 // complete. A crop with no months keeps its usual (typical) calendar, labelled assumed.
-// Opened from the dashboard's Continue prompt as /months?lot=<id>.
+// Opened from the dashboard's Continue prompt as /months?lot=<id>; Next goes to S5 (/compare).
 
 export default function MonthsScreen() {
   const lots = useFarmStore((s) => s.lots);
   const { lot: lotParam } = useLocalSearchParams<{ lot?: string }>();
   const lot = lots.find((l) => l.id === lotParam) ?? lots[0];
+  // With months given, next is S5 (your months vs better months); with none, back to the results.
+  // dismissTo goes back to S5 if it is under this screen, else replaces this screen with it.
+  const hasMonths = lot?.crops.some((c) => c.seasons.length > 0) ?? false;
 
   return (
     <Screen
       footer={
         lot ? (
           <Button
-            label="Done: see your results"
+            label={hasMonths ? "Next: compare your months" : "Done: see your results"}
             iconAfter="chevron"
             size="lg"
-            // Back to the dashboard under this screen, on this lot's tab.
-            onPress={() => router.dismissTo({ pathname: "/dashboard", params: { lot: lot.id } })}
+            onPress={() =>
+              router.dismissTo({ pathname: hasMonths ? "/compare" : "/dashboard", params: { lot: lot.id } })
+            }
           />
         ) : null
       }
