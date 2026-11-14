@@ -1,0 +1,57 @@
+import type { Farm, Lot, LonLat } from "../types";
+import { useFarmStore } from "./farm-store";
+
+// The bundled demo farm (#36): two lots at the provisional demo point (pipeline/demo_farms.json,
+// 8.0 N, 123.8 E), read from assets/data/demo/lanao-norte-demo-1.json, so results show with no
+// signal and no drawing. The persona is fictional (docs/05). Both lots sit in the same NASA
+// POWER cell, so they share climate numbers and differ by land type, water and crops.
+
+const DEMO_REF = "demo/lanao-norte-demo-1";
+
+/** A square lot of `sideM` metres with its south-west corner at `sw`. */
+function square(sw: LonLat, sideM: number): Pick<Lot, "geometry" | "centroid" | "area_ha"> {
+  const dLat = sideM / 110_574; // metres per degree of latitude
+  const dLon = sideM / (111_320 * Math.cos((sw[1] * Math.PI) / 180));
+  const [x, y] = sw;
+  return {
+    geometry: { type: "Polygon", coordinates: [[[x, y], [x + dLon, y], [x + dLon, y + dLat], [x, y + dLat], [x, y]]] },
+    centroid: [x + dLon / 2, y + dLat / 2],
+    area_ha: Math.round((sideM * sideM) / 100) / 100,
+  };
+}
+
+export const DEMO_FARM: Farm = {
+  version: 1,
+  destinations: [],
+  priorities: { water: 50, soil: 50, income: 50, labor: 50 },
+  lots: [
+    {
+      id: "lot-1",
+      name: "Paddy lot",
+      ...square([123.8, 8.0], 100),
+      details: { land_type: "lowland", water: "rain", soil: "clayey" },
+      crops: [{ crop_id: "lowland-rice", seasons: [] }],
+      data_status: "ready",
+      data_ref: DEMO_REF,
+      travel: [],
+    },
+    {
+      id: "lot-2",
+      name: "Upland lot",
+      ...square([123.802, 8.001], 70),
+      details: { land_type: "sloping", water: "rain", soil: "loamy" },
+      crops: [{ crop_id: "corn", seasons: [] }, { crop_id: "eggplant", seasons: [] }],
+      data_status: "ready",
+      data_ref: DEMO_REF,
+      travel: [],
+    },
+  ],
+};
+
+/** True when the saved farm is the demo farm (every lot reads the bundled demo data). */
+export const isDemoFarm = (lots: readonly Pick<Lot, "data_ref">[]) => lots.length > 0 && lots.every((l) => l.data_ref === DEMO_REF);
+
+/** Replaces the farm on this device with the demo farm. Call only when the farm is empty or already the demo. */
+export function loadDemoFarm() {
+  useFarmStore.getState().replaceFarm(DEMO_FARM);
+}

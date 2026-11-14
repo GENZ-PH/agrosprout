@@ -37,6 +37,11 @@ export const MIN_TOUCH = 44;
 /** Widest the content gets on a desktop browser (judges use the web build). */
 export const MAX_CONTENT_WIDTH = 560;
 
+/** Width of the results screens on a laptop: two columns side by side. */
+export const WIDE_CONTENT_WIDTH = 1120;
+/** From this window width up, results use two columns. */
+export const TWO_COLUMN_MIN = 900;
+
 export const text = {
   display: { fontSize: 32, lineHeight: 38, fontWeight: "700", color: colors.ink },
   title: { fontSize: 22, lineHeight: 28, fontWeight: "700", color: colors.ink },
