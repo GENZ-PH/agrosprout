@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-
 
 import type { Lot } from "../types";
 import { Icon } from "./Icon";
-import { colors, MIN_TOUCH, space, text } from "./theme";
+import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
 type Props = {
   lots: readonly Pick<Lot, "id" | "name">[];
@@ -19,8 +19,8 @@ type Props = {
 const MAX_NAME = 40;
 
 /**
- * One tab per lot, for the per-lot screens (S3, S4, S5): a tab bar with the open lot underlined,
- * then a "+" tab to add a lot. Scrolls sideways when the names don't fit. Tapping the open lot turns
+ * One tab per lot, for the per-lot screens (S3, S4, S5): a row of chips with the open lot filled
+ * green, then an "Add lot" chip. Scrolls sideways when the names don't fit. Tapping the open lot turns
  * its name into a text field right in the tab: Enter or tapping away saves, Escape or an empty name
  * keeps the old one. Results then read "Our suggestion for Riverside paddy".
  */
@@ -44,7 +44,8 @@ export function LotTabs({ lots, selectedId, onSelect, onAdd, onRename }: Props) 
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.bar}>
+      <Text style={text.caption}>Your lots</Text>
+      <View>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -74,10 +75,10 @@ export function LotTabs({ lots, selectedId, onSelect, onAdd, onRename }: Props) 
                     returnKeyType="done"
                     accessibilityLabel="Lot name"
                     placeholder="Lot name"
-                    placeholderTextColor={colors.muted}
+                    placeholderTextColor={colors.greenTint}
                     style={[text.bodyStrong, styles.input]}
                   />
-                  <Icon name="check" size={16} color={colors.green} />
+                  <Icon name="check" size={18} color={colors.white} />
                 </View>
               );
             }
@@ -93,7 +94,7 @@ export function LotTabs({ lots, selectedId, onSelect, onAdd, onRename }: Props) 
                 <Text style={[text.bodyStrong, selected ? styles.selectedLabel : styles.label]} numberOfLines={1}>
                   {l.name}
                 </Text>
-                {selected && onRename ? <Icon name="pencil" size={16} color={colors.green} /> : null}
+                {selected && onRename ? <Icon name="pencil" size={16} color={colors.white} /> : null}
               </Pressable>
             );
           })}
@@ -104,7 +105,8 @@ export function LotTabs({ lots, selectedId, onSelect, onAdd, onRename }: Props) 
               accessibilityLabel="Add a lot"
               style={({ pressed }) => [styles.tab, styles.add, pressed && styles.pressed]}
             >
-              <Icon name="plus" size={22} color={colors.green} />
+              <Icon name="plus" size={18} color={colors.green} />
+              <Text style={[text.bodyStrong, styles.addLabel]}>Add lot</Text>
             </Pressable>
           ) : null}
         </ScrollView>
@@ -115,31 +117,35 @@ export function LotTabs({ lots, selectedId, onSelect, onAdd, onRename }: Props) 
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: space.sm },
-  bar: { borderBottomWidth: 1, borderBottomColor: colors.border },
+  wrap: { gap: space.xs },
   scroll: { flexGrow: 0 },
-  row: { gap: space.xs },
+  row: { gap: space.sm, paddingVertical: 2 },
+  // Chips: the open lot is solid green, the others are white with a clear border, so each lot
+  // reads as something to tap (the 2026-11-15 underline tabs were too easy to miss).
   tab: {
     flexDirection: "row",
     alignItems: "center",
     gap: space.xs,
     minHeight: MIN_TOUCH + 4,
     paddingHorizontal: space.md,
-    borderBottomWidth: 3,
-    borderBottomColor: "transparent",
+    borderRadius: radius.pill,
+    borderWidth: 1.5,
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.surface,
   },
-  selected: { borderBottomColor: colors.green },
+  selected: { backgroundColor: colors.green, borderColor: colors.green },
   pressed: { backgroundColor: colors.pressed },
-  label: { color: colors.muted },
-  selectedLabel: { color: colors.green },
-  add: { minWidth: MIN_TOUCH, justifyContent: "center", paddingHorizontal: space.sm },
+  label: { color: colors.ink },
+  selectedLabel: { color: colors.white },
+  add: { borderStyle: "dashed", borderColor: colors.green, backgroundColor: "transparent" },
+  addLabel: { color: colors.green },
   input: {
     minWidth: 120,
     maxWidth: 220,
     paddingVertical: 4,
     paddingHorizontal: 0,
-    color: colors.green,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.green,
+    color: colors.white,
+    borderBottomWidth: 1.5,
+    borderBottomColor: colors.white,
   },
 });
