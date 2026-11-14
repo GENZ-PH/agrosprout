@@ -1,6 +1,5 @@
 /// <reference types="node" />
 import { readFileSync } from 'node:fs';
-import path from 'node:path';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -28,7 +27,7 @@ import {
  * not with the TypeScript under test.
  */
 const fixture: unknown = JSON.parse(
-  readFileSync(path.join(__dirname, '__fixtures__', 'power-monthly-8.2N-124.2E-2001-2025.json'), 'utf8'),
+  readFileSync(new URL('./__fixtures__/power-monthly-8.2N-124.2E-2001-2025.json', import.meta.url), 'utf8'),
 );
 
 const EXPECTED = {

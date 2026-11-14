@@ -15,6 +15,8 @@
  * 2 m, radiation in MJ m-2 day-1, ET0 in mm/day (and mm/month).
  */
 
+import type { MonthlySeries } from '../types';
+
 // ---------------------------------------------------------------------------
 // Constants (each with its FAO-56 source)
 // ---------------------------------------------------------------------------
@@ -89,16 +91,16 @@ export interface Et0DayResult {
   };
 }
 
-/** One value per month, January first. `null` = missing (POWER `-999`). */
-export type MonthlySeries = readonly (number | null)[];
+/** Inputs are read-only 12-month series (`MonthlySeries` from the shared contract, `null` = missing). */
+type MonthlyInput = Readonly<MonthlySeries>;
 
 export interface MonthlyEt0Inputs {
-  tmaxC: MonthlySeries;
-  tminC: MonthlySeries;
-  rhMeanPct: MonthlySeries;
-  windMs2m: MonthlySeries;
+  tmaxC: MonthlyInput;
+  tminC: MonthlyInput;
+  rhMeanPct: MonthlyInput;
+  windMs2m: MonthlyInput;
   /** Solar radiation already in MJ m-2 day-1 (see `solarToMJ`). */
-  rsMjM2Day: MonthlySeries;
+  rsMjM2Day: MonthlyInput;
   latDeg: number;
   /** SRTM elevation when known (#9). `null` falls back to sea level, flagged as an assumption. */
   elevM: number | null;
@@ -106,9 +108,9 @@ export interface MonthlyEt0Inputs {
 
 export interface MonthlyEt0Result {
   /** ET0 per month in mm/day, `null` where an input was missing. */
-  et0MmDay: (number | null)[];
+  et0MmDay: MonthlySeries;
   /** ET0 per month in mm/month (mm/day times days in the month), `null` where missing. */
-  et0MmMonth: (number | null)[];
+  et0MmMonth: MonthlySeries;
   /** True when elevation was not supplied and sea level (0 m) was used. */
   elevationAssumed: boolean;
   /** Human-readable notes, e.g. months where G fell back to 0. */

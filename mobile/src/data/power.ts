@@ -21,6 +21,7 @@
 
 import type { DataStatus, LotData, MonthlySeries, Provenance } from '../types';
 import { lotDataKey } from '../types';
+import { fetchWithTimeout } from '../net/fetch';
 import { DAYS_IN_MONTH, monthlyEt0, solarToMJ } from './et0';
 
 export { lotDataKey };
@@ -46,8 +47,6 @@ export const POWER_PARAMS = [
 ] as const;
 /** Native resolution of the underlying (MERRA-2 based) grid, for provenance text. */
 const NATIVE_RES = '0.5° × 0.625° grid cell';
-/** Request timeout, matching the 15 s used by the API hooks (docs/12-infrastructure.md). */
-const FETCH_TIMEOUT_MS = 15_000;
 
 // ---------------------------------------------------------------------------
 // Types: the shared contract lives in `../types` (issue #4, frozen)
@@ -97,24 +96,15 @@ export function powerUrl(lat: number, lon: number): string {
   return `${POWER_BASE}?${q.toString()}`;
 }
 
-/** Plain network fetch with a timeout. Throws `PowerHttpError` for non-2xx responses. */
+/** Plain network fetch with a timeout (shared helper). Throws `PowerHttpError` for non-2xx responses. */
 export async function fetchPowerMonthly(
   lat: number,
   lon: number,
   signal?: AbortSignal,
 ): Promise<unknown> {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
-  const onAbort = () => ctrl.abort();
-  signal?.addEventListener('abort', onAbort);
-  try {
-    const res = await fetch(powerUrl(lat, lon), { signal: ctrl.signal });
-    if (!res.ok) throw new PowerHttpError(res.status);
-    return await res.json();
-  } finally {
-    clearTimeout(timer);
-    signal?.removeEventListener('abort', onAbort);
-  }
+  const res = await fetchWithTimeout(powerUrl(lat, lon), { signal });
+  if (!res.ok) throw new PowerHttpError(res.status);
+  return await res.json();
 }
 
 // ---------------------------------------------------------------------------

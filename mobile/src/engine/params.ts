@@ -2,6 +2,7 @@
 // Every value has a source, or the label "assumption: validate locally"
 // (CLAUDE.md rules 3 and 9). Changing a value here must not need code
 // changes anywhere else. Validated at the 20:00 sanity review (#32).
+import type { DestinationType, Level, RouteProfile, TransportMode } from "../types";
 
 // ---------------------------------------------------------------------------
 // Water balance (docs/07-rotation-engine.md §2)
@@ -127,3 +128,239 @@ export const TEMP_CHECK = "monthly-mean" as const;
  * monthly means run 0.74-0.97, so the cut-off has to sit high.
  */
 export const WATERLOG_WETNESS_MIN = 0.9;
+
+// ---------------------------------------------------------------------------
+// Candidate rotations (docs/07-rotation-engine.md §3, #26)
+// ---------------------------------------------------------------------------
+
+/**
+ * A rotation is 1 to this many crops in a 12-month cycle.
+ * Source: team spec, docs/07-rotation-engine.md §3 step 1.
+ */
+export const MAX_CROPS_PER_ROTATION = 3;
+
+/**
+ * Minimum days between one harvest and the next planting on the same lot.
+ * Source: team spec, docs/07 §3 ("a 10-14 day turnaround"); the lower bound
+ * is used as the minimum gap. assumption: validate locally.
+ */
+export const TURNAROUND_DAYS = 10;
+
+/**
+ * Alternatives add at most this many crops the farmer does not already grow,
+ * so suggestions stay close to what the farmer knows.
+ * Source: team spec, docs/07 §3 step 4 (D10).
+ */
+export const MAX_NEW_CROPS = 2;
+
+/**
+ * Hard filters for alternatives (docs/07 §3 step 2). The farmer's own
+ * rotation (option A) is never filtered; it is shown with its risks.
+ * - Water: reject when the typical-year (P50) WSI, with the lot's water
+ *   source, is above this. Same value as WSI_POOR_MIN (team spec).
+ * - Temperature: reject when a month's mean temperature is outside the
+ *   crop's Ecocrop [min, max] (same check as crop fit, TEMP_CHECK).
+ * - Waterlogging: reject a crop with LOW waterlogging tolerance in any month
+ *   with root-zone wetness at or above this. Same value as the crop-fit
+ *   warning, so the app never suggests a crop it would flag.
+ *   assumption: validate locally; calibrate on the demo site.
+ */
+export const HARD_FILTER_WSI_MAX = WSI_POOR_MIN;
+export const HARD_FILTER_WATERLOG_WETNESS_MIN = WATERLOG_WETNESS_MIN;
+
+/**
+ * Two options are "too similar" (de-duplication, docs/07 §3 step 4) when
+ * they have the same crops and every planting month is within this many
+ * months of its match. Source: team spec ("a shift of more than one month").
+ */
+export const SIMILAR_SHIFT_MONTHS = 1;
+
+// ---------------------------------------------------------------------------
+// Component scores, 0-100 (docs/07-rotation-engine.md §4, #26)
+// ---------------------------------------------------------------------------
+
+/**
+ * Income (I): team-entered relative market level per crop, weighted by the
+ * days each crop is in the field. Source: team spec, docs/07 §4
+ * (L/M/H -> 30/60/90). Flagged "rough; needs local prices" in the UI.
+ * Left out (null) while crops.json has no `market` level for a crop.
+ */
+export const INCOME_LEVEL_SCORE = { low: 30, medium: 60, high: 90 } as const;
+
+/**
+ * Labor (L): inverse of the crop's labor level, weighted by field days.
+ * Source: team spec, docs/07 §4 ("inverse of crop labor level"); the values
+ * mirror the income scale. assumption: validate locally.
+ * Left out (null) while crops.json has no `labor` level for a crop.
+ */
+export const LABOR_LEVEL_SCORE = { low: 90, medium: 60, high: 30 } as const;
+
+/**
+ * Soil building (S) = 100 x (legume x legume share of the year
+ *                          + cover   x cover-credit share of the year
+ *                          + covered x share of the year not bare
+ *                          + families x family diversity)
+ * These are the spec's a, b, c, d (docs/07 §4) in share form so S stays 0-100.
+ * Equal weights: there is no source for their relative importance.
+ * assumption: validate locally.
+ */
+export const SOIL_WEIGHTS = { legume: 0.25, cover: 0.25, covered: 0.25, families: 0.25 } as const;
+
+/**
+ * Cover credit per day in the field, from crops.json `cover_value`.
+ * assumption: validate locally. `null` counts as no credit (not a guess of
+ * a benefit) and is reported as a data gap.
+ */
+export const COVER_CREDIT = { low: 0, medium: 0.5, high: 1 } as const;
+
+/**
+ * Family diversity reaches full credit at this many plant families
+ * (1 family = 0). Equal to MAX_CROPS_PER_ROTATION, the most a rotation can have.
+ */
+export const FAMILIES_FOR_FULL_CREDIT = MAX_CROPS_PER_ROTATION;
+
+/**
+ * Erosion protection (E) = 100 x (1 - slope factor x share of the year's
+ * rain that falls while the lot is bare). The rain weight per month is
+ * heavy-rain days (> 50 mm, demo farms, daily NASA POWER) when available,
+ * else typical-year (P50) monthly rain. This is the spec's k3 term in share
+ * form (docs/07 §4).
+ * Slope factor by the farmer's land type. assumption: validate locally (no
+ * source; flat paddies lose less soil than slopes). "unknown" uses the
+ * moderate upland value (docs/07 §1) and lowers confidence.
+ */
+export const EROSION_SLOPE_FACTOR = {
+  lowland: 0.3,
+  upland: 0.6,
+  sloping: 1,
+  unknown: 0.6,
+} as const;
+
+/**
+ * Climate risk (H) = 100 x (1 - risky crop days / crop days). A crop day is
+ * risky when its month has a mean temperature above the crop's Ecocrop
+ * optimal high, or root-zone wetness at or above WATERLOG_WETNESS_MIN for a
+ * crop with low waterlogging tolerance. This is the spec's k1, k2 terms in
+ * share form (docs/07 §4). v0 uses monthly means for every lot, so live and
+ * demo lots are scored the same way; daily heat days (> 35 °C) for demo
+ * farms are a later refinement. Method choice: assumption: validate locally.
+ */
+export const CLIMATE_RISK_METHOD = "share-of-crop-days" as const;
+
+/**
+ * Which component scores each farmer priority weighs (docs/07 §4).
+ * A priority's slider value is split equally among its components that
+ * have data; components with no data are left out and the weights
+ * renormalize (e.g. M when the farmer has no destination yet).
+ * Source: team spec.
+ */
+export const PRIORITY_COMPONENTS = {
+  water: ["W", "H"],
+  soil: ["S", "E", "B"],
+  income: ["I", "M"],
+  labor: ["L", "M"],
+} as const;
+
+/**
+ * Planting-window scan (docs/07 §3b, #33).
+ *
+ * Fit of one planting month = weighted mean of the water fit (W), climate
+ * risk (H) and, on sloping lots, erosion protection (E) of the lot's rotation
+ * with that month, each 0-100. Equal weights. assumption: validate locally.
+ */
+export const WINDOW_FIT_WEIGHTS = { W: 1, H: 1, E: 1 } as const;
+
+/**
+ * "Better months" are shown only when the best month beats the farmer's by
+ * at least this many Fit points, or has at least one fewer typical-year
+ * stress month while also scoring higher. The 10 points come from the team
+ * spec (docs/07 §3b, "e.g. 10 points"). assumption: validate locally.
+ */
+export const WINDOW_MARGIN_POINTS = 10;
+
+/**
+ * Among months that clear the margin, pick the smallest shift that still
+ * captures at least this share of the best month's gain, so the advice stays
+ * easy to act on (docs/07 §3b). assumption: validate locally.
+ */
+export const WINDOW_GAIN_CAPTURE_SHARE = 0.8;
+
+// ---------------------------------------------------------------------------
+// Market access and travel time (docs/07-rotation-engine.md §3c, #27)
+// Every value in this section is a DEFAULT ASSUMPTION (CLAUDE.md rule 9):
+// the farmer's own travel time always wins, and the UI must never show these
+// as measured facts. v0 proposals; the Engine lead confirms them (D27).
+// ---------------------------------------------------------------------------
+
+/**
+ * Average one-way speed per transport mode with a harvest load on rural
+ * roads, km/h, including slow stretches. Used for "road route" (OSRM
+ * distance / speed) and "rough estimate" times (src/data/routing.ts).
+ * assumption: validate locally. No measured source for local roads.
+ */
+export const TRAVEL_SPEED_KMH: Readonly<Record<TransportMode, number>> = {
+  walk: 4,
+  carabao: 3,
+  bicycle: 10,
+  motorcycle: 30,
+  tricycle: 20,
+  jeepney: 20,
+  truck: 30,
+};
+
+/**
+ * Waiting time per trip for shared transport, minutes (docs/07 §3c: "+ waiting
+ * time for jeepney/bus"). Modes not listed wait 0.
+ * assumption: validate locally.
+ */
+export const TRAVEL_WAIT_MIN: Readonly<Partial<Record<TransportMode, number>>> = {
+  jeepney: 30,
+};
+
+/**
+ * Road distance / straight-line distance for the offline "rough estimate",
+ * per routing profile (src/data/routing.ts profileForMode).
+ * Source: one team test near Iligan, 2026-11-14 (docs/07 §3c): 11.5 km
+ * straight line, 18.8 km walking route (1.6x), 32.1 km car route (2.8x).
+ * bike has no measurement and uses the car value (bicycles mostly follow the
+ * same roads). assumption: validate locally (one route only; hilly terrain).
+ */
+export const ROAD_CIRCUITY: Readonly<Record<RouteProfile, number>> = {
+  foot: 1.6,
+  bike: 2.8,
+  car: 2.8,
+};
+
+/**
+ * Market access (M) per crop from the one-way travel time t (minutes) to the
+ * crop's best destination, by the crop's perishability (crops.json, Kader
+ * 1993 classes where cited):
+ *   M = 100 when t <= ok, falling linearly to ACCESS_FLOOR at t >= max.
+ * assumption: validate locally (no source for how far each class can travel;
+ * check with an agricultural technician at the 20:00 review, #32).
+ */
+export const ACCESS_MINUTES: Readonly<Record<Level, { ok: number; max: number }>> = {
+  high: { ok: 60, max: 180 },
+  medium: { ok: 120, max: 360 },
+  low: { ok: 180, max: 600 },
+};
+
+/**
+ * Lowest M for a far destination. Not 0: a long trip makes selling harder,
+ * not impossible. assumption: validate locally.
+ */
+export const ACCESS_FLOOR = 20;
+
+/**
+ * Destination types where a crop can be sold (docs/07 §3c: "nearest market
+ * or buyer"). A co-op buys from its members. Source: team spec (D17).
+ */
+export const SALE_DESTINATION_TYPES: readonly DestinationType[] = ["market", "buyer", "coop"];
+
+/**
+ * Storage bonus (docs/07 §3c): for crops of these perishability levels a
+ * storage destination counts as a destination too, so M stays high when the
+ * market is far ("can store and sell when prices are better"; general
+ * practice, actual prices unknown). Source: team spec.
+ */
+export const STORAGE_PERISHABILITY: readonly Level[] = ["low", "medium"];
