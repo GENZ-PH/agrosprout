@@ -123,6 +123,7 @@ flowchart TD
 - **[Should] Wet-season roads:** in months whose median rain is above `heavy_rain_month_mm` (NASA POWER / IMERG), multiply `t` by `wet_road_factor` (assumption). This applies to the **harvest month**, so the planting-window scan (§3b) can prefer harvests outside the heaviest-rain months, which is also when drying grain is hardest.
 - **[Could] Fare:** if the farmer enters a one-way fare, show transport cost per harvest = trips × 2 × fare. Never guess fares.
 - **Storage bonus:** if the farmer has a storage destination, low/medium perishability crops keep M high even when the market is far, with the explanation "can store and sell when prices are better" (cite as a general practice; actual prices are unknown).
+- **v0 implementation (#27, `mobile/src/engine/access.ts`):** the best destination is the one with the shortest one-way time among markets, buyers and co-ops, plus storage places for low/medium perishability crops. When one destination has more than one time, the farmer's wins, then the road route, then the estimate. A crop with unknown perishability, or a high-perishability crop when the farmer has only storage places, gets no M (never guessed). The offline estimate uses the circuity of the mode's routing profile (foot 1.6×, car 2.8×, from the test above; bike uses the car value). Speeds, waiting time, thresholds and the floor are in `params.ts`, each labeled an assumption.
 
 ### Explanation hooks
 

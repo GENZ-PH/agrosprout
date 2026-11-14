@@ -18,6 +18,9 @@ export type {
   RotationsInput,
   RotationsResult,
 } from "./rotations";
+/** Market access (M) per crop and layered travel time (07 §3c, #27). */
+export { accessScore, marketAccess, pickTravel, travelAssumptionsFor, TRAVEL_SOURCE_INFO } from "./access";
+export type { AccessGap, CropAccess, MarketAccessInput, MarketAccessResult, TravelConfidence } from "./access";
 export { priorityWeights, totalScore, COMPONENT_KEYS } from "./scores";
 export type {
   ComponentKey,
@@ -39,11 +42,6 @@ class NotImplementedYet extends Error {
 /** "Your months vs better months" planting-window scan (07 §3b). */
 export function plantingWindow(..._args: unknown[]): never {
   throw new NotImplementedYet("plantingWindow", "#33");
-}
-
-/** Market access score and layered travel time (07 §3c). */
-export function marketAccess(..._args: unknown[]): never {
-  throw new NotImplementedYet("marketAccess", "#27");
 }
 
 /** Template-driven explanations and confidence (07 §5). */
