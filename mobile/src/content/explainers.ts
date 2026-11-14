@@ -421,7 +421,9 @@ export const CHALLENGE_DATASETS: readonly DatasetStatus[] = [
   { name: "SMAP (soil moisture)", status: "Demo farm only", note: "SMAP L4 (SPL4SMGP v8, 9 km, 2015-2025) is shown for the sample farm in Satellite checks, as a check. The scores use NASA POWER soil wetness." },
   { name: "GPM IMERG (rainfall)", status: "Demo farm only", note: "IMERG Final V07 monthly rain (0.1°, 2001 to 2025-09) is shown for the sample farm beside NASA POWER rain in Satellite checks. The scores use NASA POWER rain." },
   { name: "MODIS, Landsat (vegetation)", status: "Not used", note: "Vegetation stress is not measured." },
-  { name: "ECOSTRESS, GRACE and GRACE-FO", status: "Not used", note: "Not needed for the lot-level questions this app answers." },
+  { name: "ECOSTRESS (evaporation)", status: "Not used", note: "Not in the app yet. Evaporation is worked out from NASA POWER with the FAO-56 method." },
+  { name: "GRACE and GRACE-FO (water storage)", status: "Not used", note: "They measure water stored over large regions, far coarser than a farm lot." },
+  { name: "GEDI (forest structure)", status: "Not used", note: "It measures the height and structure of forests and other vegetation, not field crops." },
 ];
 
 /** Known limitations to state openly (docs/07 §8), plus the ones found while building. */
