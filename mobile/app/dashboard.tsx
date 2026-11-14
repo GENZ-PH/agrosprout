@@ -10,6 +10,9 @@ import { FooterLinks } from "../src/components/FooterLinks";
 import { Header } from "../src/components/Header";
 import { HarvestCard } from "../src/components/HarvestCard";
 import { WhatIfCard } from "../src/components/WhatIfCard";
+import { DataTracePanel } from "../src/components/DataTracePanel";
+import { SatelliteCard } from "../src/components/SatelliteCard";
+import { DemoDataContext } from "../src/components/SourceChip";
 import { YearCalendar } from "../src/components/YearCalendar";
 import type { Scenario } from "../src/engine/scenario";
 import { LotCutoutCard } from "../src/components/LotCutoutCard";
@@ -60,7 +63,9 @@ export default function DashboardScreen() {
   const { wide } = useLayout();
   const selectLot = useCallback((id: string) => router.setParams({ lot: id }), []);
 
+  // The sample farm's numbers come from NASA POWER daily: its source chips say so (#144).
   return (
+    <DemoDataContext.Provider value={lot?.data_ref.startsWith("demo/") ?? false}>
     <Screen width="wide" footer={
         <>
           <FooterLinks />
@@ -98,6 +103,7 @@ export default function DashboardScreen() {
         </Narrow>
       )}
     </Screen>
+    </DemoDataContext.Provider>
   );
 }
 
@@ -140,7 +146,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
         </Narrow>
       );
     case "ready": {
-      const { analysis, period, months } = view;
+      const { analysis, period, months, data } = view;
       const fit = <CropFitCard fits={analysis.crop_fits} cropName={cropName} period={period} />;
       const soil = <SoilHealthChart result={analysis.soil_health} options={analysis.rotations.options} cropName={cropName} />;
       // Farm-wide choice (#40): the same chips on every lot tab; each lot re-ranks with it.
@@ -185,6 +191,10 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
       const whatIf = (
         <WhatIfCard scenario={scenario} onChange={setScenario} notes={analysis.scenario?.notes ?? []} period={period} />
       );
+      // NASA satellite checks (IMERG rain, SMAP soil moisture) are bundled for the sample farm only (#144).
+      const satellite =
+        data.kind === "demo" ? <SatelliteCard farmId={data.id} lotName={lot.name} info={{ id: "satellite-checks", period }} /> : null;
+      const trace = <DataTracePanel data={data} />;
       return (
         <>
           {analysis.stage === 1 ? (
@@ -210,8 +220,10 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
               {recommendations}
               {yearCalendar}
               {monthsCompare}
+              {satellite}
               {harvestCard}
               {whatIf}
+              {trace}
               <MonthsPrompt lot={lot} stage={analysis.stage} />
             </>
           ) : (
@@ -224,6 +236,8 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
               {harvestCard}
               {whatIf}
               {soil}
+              {satellite}
+              {trace}
               <MonthsPrompt lot={lot} stage={analysis.stage} />
             </>
           )}

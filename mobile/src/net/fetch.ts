@@ -2,6 +2,8 @@
 // cancelling a query). Shared by the API client and any direct call such as NASA POWER.
 // Uses only AbortController and addEventListener, so it does not depend on AbortSignal.any.
 
+import { startCall } from "./call-log";
+
 export const DEFAULT_TIMEOUT_MS = 15_000;
 
 export class TimeoutError extends Error {
@@ -32,9 +34,19 @@ export function fetchWithTimeout(
     else outer.addEventListener("abort", forwardAbort);
   }
 
+  // Data requests are recorded for the "NASA data on this page" panel (call-log.ts).
+  const url = typeof input === "string" ? input : input instanceof URL ? input.href : (input as Request).url;
+  const done = startCall(url);
+
   return fetch(input, { ...init, signal: controller.signal })
+    .then((res) => {
+      done?.({ http: res.status });
+      return res;
+    })
     .catch((e: unknown) => {
-      throw timedOut ? new TimeoutError(timeoutMs) : e;
+      const err = timedOut ? new TimeoutError(timeoutMs) : e;
+      done?.({ error: err instanceof Error ? err.message : String(err) });
+      throw err;
     })
     .finally(() => {
       clearTimeout(timer);
