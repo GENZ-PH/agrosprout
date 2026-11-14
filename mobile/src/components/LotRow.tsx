@@ -1,20 +1,22 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
-import type { DraftLot } from "../mock/draft-lots";
+import { areaLabel, type DraftLot } from "../mock/draft-lots";
 import { Button } from "./Button";
 import { Icon, type IconName } from "./Icon";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
 type Props = {
   lot: DraftLot;
+  /** Live area while a corner is being dragged, shown instead of the saved one. */
+  editingAreaHa?: number;
   onPlot: () => void;
   onRename: (name: string) => void;
   onDelete: () => void;
 };
 
 /** One lot under the S1 map: plot or redraw, rename in place, delete with a confirm step. */
-export function LotRow({ lot, onPlot, onRename, onDelete }: Props) {
+export function LotRow({ lot, editingAreaHa, onPlot, onRename, onDelete }: Props) {
   const [mode, setMode] = useState<"view" | "rename" | "delete">("view");
   const [draftName, setDraftName] = useState(lot.name);
 
@@ -70,7 +72,9 @@ export function LotRow({ lot, onPlot, onRename, onDelete }: Props) {
     <View style={[styles.card, styles.row]}>
       <View style={styles.info}>
         <Text style={text.bodyStrong}>{lot.name}</Text>
-        <Text style={[text.small, { color: colors.muted }]}>{status(lot)}</Text>
+        <Text style={[text.small, { color: colors.muted }]}>
+          {editingAreaHa !== undefined ? `${editingAreaHa.toFixed(2)} ha` : areaLabel(lot)}
+        </Text>
       </View>
       <Pressable
         onPress={onPlot}
@@ -97,13 +101,6 @@ export function LotRow({ lot, onPlot, onRename, onDelete }: Props) {
       <IconButton icon="trash" label={`Delete ${lot.name}`} color={colors.danger} onPress={() => setMode("delete")} />
     </View>
   );
-}
-
-function status(lot: DraftLot): string {
-  if (!lot.method) return "Not drawn yet";
-  if (lot.method === "pin") return `${lot.typed_area_ha} ha (your number)`;
-  // Area comes from the drawn polygon once the map (#19) is in.
-  return "__ ha";
 }
 
 function IconButton({
