@@ -29,12 +29,13 @@ flowchart LR
 | | Production (`main`) | Preview (every other branch / PR) |
 |---|---|---|
 | Web | https://agrosprout.inovsea.com | `https://<branch>.agrosprout.pages.dev` |
-| API | https://agrosprout-api.bitter-silence-900e.workers.dev | https://agrosprout-api-preview.bitter-silence-900e.workers.dev |
+| API | https://api.agrosprout.inovsea.com | https://api-preview.agrosprout.inovsea.com |
+| API fallback | https://agrosprout-api.bitter-silence-900e.workers.dev | https://agrosprout-api-preview.bitter-silence-900e.workers.dev |
 | D1 (`DB`) | `agrosprout-db` | `agrosprout-db-preview` |
 | R2 (`ASSETS`) | `agrosprout-assets` | `agrosprout-assets-preview` |
 | `EXPO_PUBLIC_API_URL` | production API | preview API |
 
-Preview deploys never touch production data. Cloudflare account: inovsea (admin@inovsea.com). `api.agrosprout.inovsea.com` is not available yet (the `inovsea.com` DNS zone is in another Cloudflare account), so use the `workers.dev` URLs.
+Preview deploys never touch production data. Cloudflare account: inovsea (admin@inovsea.com), which also holds the `inovsea.com` DNS zone. The `workers.dev` URLs are a fallback if a custom domain has a problem.
 
 ## Local development
 
@@ -147,7 +148,7 @@ All automatic, through Cloudflare's own Git integration. No GitHub Actions.
 | **D1 migration failed** | `npx wrangler d1 migrations list agrosprout-db --remote` to see what ran. Fix forward with a new migration. To restore data: `npx wrangler d1 time-travel restore agrosprout-db --timestamp <before the bad migration>`. |
 | **API down during judging** | The app keeps working from the cached API data and the on-device stores (offline-first). The bundled demo farm still loads. Show `/v1/health` once it is back. |
 | **Rate limit hit during the demo** | Raise `limit` in `api/wrangler.jsonc` (`ratelimits`) and merge, or roll back to a version with a higher limit. |
-| **Custom domain problem** | Use `https://agrosprout.pages.dev` for the web app. The API already uses `workers.dev`. |
+| **Custom domain problem** | Use `https://agrosprout.pages.dev` for the web app and the `workers.dev` API fallback URLs, and set `EXPO_PUBLIC_API_URL` to the fallback in the Pages settings. |
 | **Free-tier limits** | Workers: 100k requests/day. D1: 5M rows read/day, 100k rows written/day, 5 GB. R2: 10 GB, 1M writes and 10M reads per month. Pages: 500 builds/month. If one is hit, fall back to the cached data and the demo farm, and tell the infra owner. |
 
 ## Access
