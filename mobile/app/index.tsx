@@ -1,6 +1,6 @@
 import { Text, View } from "react-native";
 
-// Placeholder route so the build has an entry point. The Frontend track replaces this screen.
+// Placeholder welcome route (S0, #17). The Frontend track builds this screen.
 export default function Index() {
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
