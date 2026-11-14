@@ -1,9 +1,9 @@
 import { hc } from "hono/client";
 import type { AppType } from "../../../api/types/index";
 import { API_URL } from "../env";
+import { fetchWithTimeout, TimeoutError } from "../net/fetch";
 
 export { API_URL };
-const TIMEOUT_MS = 15_000;
 
 export type ApiErrorBody = { code: string; message: string; details?: unknown };
 
@@ -19,14 +19,8 @@ export class ApiError extends Error {
   }
 }
 
-const fetchWithTimeout: typeof fetch = (input, init) => {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-  return fetch(input, { ...init, signal: init?.signal ?? controller.signal }).finally(() => clearTimeout(timer));
-};
-
-/** Typed client: routes, params and responses come from the Worker's AppType. */
-export const api = hc<AppType>(API_URL, { fetch: fetchWithTimeout });
+/** Typed client: routes, params and responses come from the Worker's AppType. 15 s timeout per request. */
+export const api = hc<AppType>(API_URL, { fetch: (input: RequestInfo | URL, init?: RequestInit) => fetchWithTimeout(input, init) });
 
 type JsonResponse = { status: number; json(): Promise<unknown> };
 type Body<R extends JsonResponse> = Awaited<ReturnType<R["json"]>>;
@@ -38,8 +32,9 @@ export async function unwrap<R extends JsonResponse>(request: Promise<R>): Promi
   try {
     res = await request;
   } catch (e) {
-    const aborted = e instanceof Error && e.name === "AbortError";
-    throw new ApiError(aborted ? "timeout" : "network_error", aborted ? "Request timed out" : "Network error", 0);
+    if (e instanceof TimeoutError) throw new ApiError("timeout", e.message, 0);
+    if (e instanceof Error && e.name === "AbortError") throw new ApiError("aborted", "Request was cancelled", 0);
+    throw new ApiError("network_error", "Network error", 0);
   }
   let body: unknown;
   try {
