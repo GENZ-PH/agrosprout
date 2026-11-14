@@ -39,3 +39,20 @@ export const chipList = (chips: readonly { label: string }[]) =>
         .slice(0, -1)
         .map((c) => c.label)
         .join(", ")} and ${chips[chips.length - 1].label}`;
+
+/**
+ * The always-visible note under the chips when some priorities have no data behind them yet
+ * (#150 review: a judge tapped Extra income and nothing changed). Income (I) and work (L) have no
+ * data until the crop list has local prices and labor needs; both priorities also weigh the trip
+ * to market (M), which counts only once the farmer adds a place. `null` when every chip counts.
+ */
+export function notScoredNote(notScored: readonly PriorityKey[]): string | null {
+  const chips = PRIORITY_CHIPS.filter((c) => notScored.includes(c.key));
+  if (chips.length === 0) return null;
+  const many = chips.length > 1;
+  return (
+    `${chipList(chips)} ${many ? "don't" : "doesn't"} change the scores yet: the crop list has no local prices or ` +
+    `labor needs yet. Add a place where you sell or store your harvest and ${many ? "they count" : "it counts"} ` +
+    "how easy the trip to market is."
+  );
+}
