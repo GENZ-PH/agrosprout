@@ -63,6 +63,24 @@ export function YearCalendar({ options, lotName, cropById, period, initialKey }:
         </Pressable>
       </View>
       {info ? <ExplainerBox id="year-calendar" period={period} /> : null}
+      <View style={styles.plans} accessibilityRole="radiogroup" accessibilityLabel="Plan to show">
+        <Text style={[text.small, styles.muted]}>Plan</Text>
+        {options.map((o) => {
+          const on = o.key === selected.key;
+          return (
+            <Pressable
+              key={o.key}
+              onPress={() => setKey(o.key)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: on }}
+              aria-checked={on}
+              style={[styles.plan, on && styles.planOn]}
+            >
+              <Text style={[text.small, on && styles.planTextOn]}>{OPTION_LABELS[o.key]}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
       <Text style={[text.small, styles.muted]}>Tap a month to see what to do.</Text>
 
       <ScrollView
@@ -118,24 +136,6 @@ export function YearCalendar({ options, lotName, cropById, period, initialKey }:
         ))}
       </View>
 
-      <View style={styles.plans} accessibilityRole="radiogroup" accessibilityLabel="Plan to show">
-        <Text style={[text.small, styles.muted]}>Showing the year for</Text>
-        {options.map((o) => {
-          const on = o.key === selected.key;
-          return (
-            <Pressable
-              key={o.key}
-              onPress={() => setKey(o.key)}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: on }}
-              aria-checked={on}
-              style={[styles.plan, on && styles.planOn]}
-            >
-              <Text style={[text.small, on && styles.planTextOn]}>{OPTION_LABELS[o.key]}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
     </View>
   );
 }
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
   blockTitle: { fontSize: 20, lineHeight: 26, fontWeight: "800", color: colors.ink },
   info: { minWidth: MIN_TOUCH, minHeight: MIN_TOUCH, alignItems: "center", justifyContent: "center" },
-  plans: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: space.sm, paddingTop: space.sm },
+  plans: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: space.sm },
   plan: {
     minHeight: 44,
     justifyContent: "center",

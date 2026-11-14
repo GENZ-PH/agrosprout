@@ -9,7 +9,7 @@ import { checkFirst, cropSequence, type LongerSeason, plainReasons, yearStrip } 
 import { familyStyle, MONTH_NAMES } from "./field-year-core";
 import { Icon } from "./Icon";
 import { OPTION_LABELS } from "./soil-health-chart-core";
-import { colors, optionColors, radius, space, text } from "./theme";
+import { colors, space, text } from "./theme";
 
 // "Our suggestion for Lot 1" (dashboard audit 2026-11-15): the first card, for a farmer who finds
 // numbers and charts hard. One answer, the year as pictures (the plan next to what they plant now),
@@ -64,7 +64,7 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
   const legend = [...new Set([...crops, ...(isA ? [] : yours)])];
 
   return (
-    <View style={[styles.card, { borderLeftColor: optionColors[pick.key] }]} accessibilityRole="summary">
+    <View style={styles.card} accessibilityRole="summary">
       <Text style={styles.kicker}>Our suggestion for {lotName}</Text>
       <Text style={text.title} accessibilityRole="header">
         {isA ? "Keep your crops" : cropSequence(pick, name)}
@@ -147,15 +147,8 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
 }
 
 const styles = StyleSheet.create({
-  card: {
-    gap: space.md,
-    padding: space.lg,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderLeftWidth: 5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
+  // Part of the lot tab, not a boxed alert (2026-11-15): plain page content under the header.
+  card: { gap: space.md, paddingTop: space.sm },
   kicker: { fontSize: 15, lineHeight: 20, fontWeight: "700", color: colors.olive },
   pics: { flexDirection: "row", flexWrap: "wrap", gap: space.md },
   pic: { alignItems: "center", gap: 2, maxWidth: 88 },
