@@ -5,6 +5,7 @@ import { SOURCES, type SourceKey } from "../content/sources";
 import { type CallRecord, getCalls, subscribeCalls } from "../net/call-log";
 import type { LotData, Provenance } from "../types";
 import { Icon } from "./Icon";
+import { SourceChip } from "./SourceChip";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
 // "NASA data on this page": a panel that opens to show, as it happens, every data request the
@@ -100,7 +101,9 @@ export function DataTracePanel({ data }: { data?: LotData }) {
               {held.map((h) => (
                 <View key={h.key} style={styles.row}>
                   <View style={styles.rowHead}>
-                    <Text style={[text.small, styles.strong, styles.flex]}>{SOURCES[h.key].name}</Text>
+                    <View style={styles.flex}>
+                      <SourceChip k={h.key} period={h.period} />
+                    </View>
                     <Text style={styles.tag}>{data?.kind === "demo" ? "Bundled" : "Saved on phone"}</Text>
                   </View>
                   <Text style={styles.endpoint}>{h.endpoint}</Text>
@@ -128,7 +131,9 @@ function CallRow({ c }: { c: CallRecord }) {
   return (
     <View style={styles.row}>
       <View style={styles.rowHead}>
-        <Text style={[text.small, styles.strong, styles.flex]}>{s.name}</Text>
+        <View style={styles.flex}>
+          <SourceChip k={c.source} />
+        </View>
         <Text style={[styles.tag, c.status === "ok" ? styles.tagOk : c.status === "error" ? styles.tagErr : styles.tagLive]}>{status}</Text>
       </View>
       <Text style={text.caption}>{c.purpose}</Text>

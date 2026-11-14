@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { EXPLAINERS, fill, type ExplainerId } from "../content/explainers";
 import { SOURCES, type SourceKey } from "../content/sources";
+import { SourceChip, SourceChips } from "./SourceChip";
 import { Icon } from "./Icon";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
@@ -41,6 +42,7 @@ export function InfoCard({ title, explainer, period, subtitle, children }: Props
       </View>
       {subtitle ? <Text style={text.caption}>{subtitle}</Text> : null}
       {open ? <ExplainerBox id={explainer} period={period} /> : null}
+      <SourceChips keys={EXPLAINERS[explainer].sources} period={period} />
       {children}
     </View>
   );
@@ -77,8 +79,7 @@ export function SourceList({ keys, period }: { keys: readonly SourceKey[]; perio
         return (
           <View key={k} style={styles.source} accessible accessibilityLabel={`${s.name}, ${s.by}. ${s.gives}. ${s.scale}. ${fill(s.years, { period })}.`}>
             <View style={styles.sourceHead}>
-              <Text style={[text.small, styles.sourceName]}>{s.name}</Text>
-              {s.nasa ? <Text style={styles.nasa}>NASA data</Text> : null}
+              <SourceChip k={k} period={period} />
             </View>
             <Text style={[text.caption, styles.muted]}>{`${s.gives}. ${s.scale}, ${fill(s.years, { period })}. ${s.by}.`}</Text>
           </View>

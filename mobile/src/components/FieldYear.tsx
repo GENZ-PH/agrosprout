@@ -77,6 +77,7 @@ export function FieldYear({ options, selected, onSelect, monthly, cropById, info
         </View>
       ) : null}
       {ex.box}
+      {ex.chips}
       <View onLayout={onLayout}>
         {width > 0 ? (
           <Svg width={width} height={CLIMATE_H + 22} accessibilityLabel={`${t("legend.rain")}. ${t("legend.et0")}.`}>

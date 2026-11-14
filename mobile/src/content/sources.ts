@@ -17,7 +17,8 @@ export type SourceKey =
   | "osm"
   | "oni"
   | "pagasa"
-  | "farmer";
+  | "farmer"
+  | "shi";
 
 export interface SourceTag {
   /** Short name, the same everywhere in the app. */
@@ -136,6 +137,14 @@ export const SOURCES: Readonly<Record<SourceKey, SourceTag>> = {
     gives: "Season outlook for the Philippines",
     scale: "Country",
     years: "Latest advisory",
+    nasa: false,
+  },
+  shi: {
+    name: "Soil health index",
+    by: "This app (docs/07-rotation-engine.md §4)",
+    gives: "A relative soil-health line per plan over three years",
+    scale: "Per plan",
+    years: "Three years ahead",
     nasa: false,
   },
   farmer: {

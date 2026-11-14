@@ -5,6 +5,8 @@ import Svg, { Circle, G, Line, Path, Rect, Text as SvgText } from "react-native-
 import type { OptionKey, RotationOption, SoilHealthResult } from "../engine";
 import { Icon } from "./Icon";
 import { ExplainerBox } from "./InfoCard";
+import { SourceChips } from "./SourceChip";
+import { EXPLAINERS } from "../content/explainers";
 import {
   chartSummary,
   monthCells,
@@ -96,6 +98,7 @@ export function SoilHealthChart({ result, options, cropName, onInfoPress, period
         </Pressable>
       </View>
       <Text style={text.caption}>Not a soil test. Compare the options on this lot with each other.</Text>
+      <SourceChips keys={EXPLAINERS["soil-health"].sources} period={period} />
 
       <View
         onLayout={onLayout}

@@ -35,6 +35,7 @@ export function PlanTable({ options, selected, onSelect, info }: Props) {
         {ex.button}
       </View>
       {ex.box}
+      {ex.chips}
 
       <View style={styles.row}>
         <View style={[styles.label, narrow && styles.labelNarrow]} />

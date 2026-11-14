@@ -77,6 +77,7 @@ export function PlanDetail({ option, baseline, explanation, leftOut, cropById, d
         {ex.button}
       </View>
       {ex.box}
+      {ex.chips}
 
       <View style={styles.sequence}>
         {option.slots.map((s, i) => (

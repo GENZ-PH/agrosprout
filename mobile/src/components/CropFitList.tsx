@@ -31,6 +31,7 @@ export function CropFitList({ fits, cropById, info }: Props) {
         {ex.button}
       </View>
       {ex.box}
+      {ex.chips}
       {fits.map((f) => {
         const crop = cropById(f.crop_id);
         const tone = TONE[f.level];

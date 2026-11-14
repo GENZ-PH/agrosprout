@@ -36,6 +36,7 @@ export function ClimateExtremesCard({ data, info }: { data: LotData; info?: Info
         {ex.button}
       </View>
       {ex.box}
+      {ex.chips}
       <Text style={[text.small, styles.muted]}>{`Average days per month, NASA POWER daily data, ${period}.`}</Text>
       {rows.map((r) => {
         const line = monthsLine(r.series);

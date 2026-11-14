@@ -50,7 +50,7 @@ export const DISCLAIMER =
 export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   "lot-snapshot": {
     id: "lot-snapshot",
-    title: "Lot snapshot",
+    title: "The year on this lot",
     what: "The average rain and the water that crops and the air would use up, month by month, for your lot. Bars show rain next to the crop water need. Dry and wet months are marked.",
     source:
       "NASA POWER. Rain, temperature, humidity and wind come from NASA's MERRA-2 weather model, and sunshine from NASA's CERES satellite data. Years used: {period}. Evaporation (ET₀) is worked out on your phone from those NASA values with the FAO-56 Penman-Monteith method (Allen and others, 1998).",
@@ -77,7 +77,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   },
   "your-crops": {
     id: "your-crops",
-    title: "Your crops here",
+    title: "Your crops on this lot",
     what: "For each crop you chose, whether this lot suits it: Good fit, Watch out or Poor fit, with the one or two main reasons (water, heat, waterlogging and, once you add places, the distance to market).",
     source:
       "Crop water use from FAO-56 (Allen and others, 1998), temperature ranges from the FAO Ecocrop database, and rain and temperature from NASA POWER. Each crop value is cited in the crop library (crops.json).",
@@ -119,7 +119,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   },
   recommendations: {
     id: "recommendations",
-    title: "Recommendations",
+    title: "The chosen plan",
     what: "Several ways to use your lot over the year: your own crops, and options that add or swap crops. Each option says why it was suggested, what evidence it rests on, what it improves, what is not known and what to check locally.",
     source:
       "The scores combine the water balance (FAO-56 crop water use and effective rain, Brouwer and Heibloem, 1986), the crop's temperature range, and crop traits from the crop library. Your options are compared with your own crops.",
@@ -134,7 +134,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   },
   priorities: {
     id: "priorities",
-    title: "What matters to you",
+    title: "What matters most to you?",
     what: "Five choices: save water, build soil, extra income, less work and feed animals. Tapping them re-ranks the options straight away, on your phone.",
     source: "Your own answers. The choices only change how much each score counts; they do not change the data.",
     sources: ["farmer", "feedipedia"],
@@ -159,7 +159,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   },
   "season-calendar": {
     id: "season-calendar",
-    title: "Whole-lot calendar",
+    title: "The plans side by side",
     what: "Your calendar next to a better-timed calendar and alternative rotations, across the whole year for one lot.",
     source: "Your own months, the options from the recommendations and the planting-month scan.",
     sources: ["power", "crop-library", "farmer"],
@@ -208,7 +208,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   },
   "season-guide": {
     id: "season-guide",
-    title: "This month and your year",
+    title: "Your year on your lot",
     what: "What the chosen plan asks of you this month, what comes next, and each month of the year: when to plant, when to harvest, and the months a crop may be short of water, too hot or too wet.",
     source:
       "The plan comes from the recommendations for this lot. Short of water, too hot and too wet are worked out from NASA POWER data for {period} with FAO-56 crop water use and the crop's temperature range. The El Niño line is from the latest PAGASA advisory and the NOAA Oceanic Niño Index.",
@@ -226,7 +226,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     what: "A relative soil-health line for each plan over three years, if the plan's year repeats: it rises with soil-building crops and falls with bare soil in heavy rain.",
     source:
       "Worked out in this app from each plan's Builds soil and Protects from washout scores. Those come from the crop library (legumes, residue) and the bare months against NASA POWER rain for {period}, with the RUSLE slope factor when the slope is known.",
-    sources: ["power", "srtm", "rusle", "crop-library"],
+    sources: ["shi", "power", "srtm", "rusle", "crop-library"],
     read: "Compare the lines with each other. A line above the start means the plan builds soil; below it means it loses soil.",
     limits: [
       "It is a relative indicator from this model, not a soil test.",

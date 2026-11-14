@@ -67,6 +67,7 @@ export function LotDataCard({ data, extra = [], info }: { data: LotData; extra?:
         {ex.button}
       </View>
       {ex.box}
+      {ex.chips}
       {rows.map((r) => (
         <View key={r.name} style={styles.row}>
           <Text style={text.bodyStrong}>{r.name}</Text>
