@@ -33,18 +33,44 @@ type Props = {
 
 const shortName = (name: string) => name.replace(/\s*\(.*\)\s*$/, "").trim();
 
-function YearRow({ label, strip, cropById }: { label: string; strip: (string | null)[]; cropById: (id: string) => Crop | undefined }) {
+/**
+ * The 12 months from this month on (2026-11-15): the strip starts at "Now" and runs into next year,
+ * so the farmer reads it as what comes next. Each plan repeats every year, so the year after looks
+ * the same; there are no past years to show (the app keeps no record of past plantings).
+ */
+function rollingMonths(today: Date): { month: number; year: number }[] {
+  const start = today.getMonth();
+  return Array.from({ length: 12 }, (_, i) => ({ month: (start + i) % 12, year: today.getFullYear() + (start + i >= 12 ? 1 : 0) }));
+}
+
+function YearRow({
+  label,
+  strip,
+  order,
+  cropById,
+}: {
+  label: string;
+  strip: (string | null)[];
+  order: { month: number; year: number }[];
+  cropById: (id: string) => Crop | undefined;
+}) {
   return (
     <View style={styles.yearRow}>
       <Text style={[text.small, styles.rowLabel]}>{label}</Text>
       <View style={styles.cells}>
-        {strip.map((id, i) => {
+        {order.map(({ month, year }, i) => {
+          const id = strip[month];
           const style = id ? familyStyle(cropById(id)?.family) : null;
           return (
             <View
               key={i}
-              style={[styles.cell, style ? { backgroundColor: style.fill } : styles.cellEmpty]}
-              accessibilityLabel={`${MONTH_NAMES[i]}: ${id ? shortName(cropById(id)?.name ?? id) : "nothing planted"}`}
+              style={[
+                styles.cell,
+                style ? { backgroundColor: style.fill } : styles.cellEmpty,
+                i === 0 && styles.cellNow,
+                month === 0 && i > 0 && styles.newYear,
+              ]}
+              accessibilityLabel={`${MONTH_NAMES[month]} ${year}${i === 0 ? " (now)" : ""}: ${id ? shortName(cropById(id)?.name ?? id) : "nothing planted"}`}
             />
           );
         })}
@@ -62,6 +88,7 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
   const crops = [...new Set(pick.slots.map((s) => s.crop_id))];
   const yours = a ? [...new Set(a.slots.map((s) => s.crop_id))] : [];
   const legend = [...new Set([...crops, ...(isA ? [] : yours)])];
+  const order = rollingMonths(new Date());
 
   return (
     <View style={styles.card} accessibilityRole="summary">
@@ -85,15 +112,19 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
         <View style={styles.yearRow}>
           <Text style={[text.small, styles.rowLabel]} />
           <View style={styles.cells}>
-            {MONTH_NAMES.map((m) => (
-              <Text key={m} style={styles.month}>
-                {m[0]}
-              </Text>
+            {order.map(({ month, year }, i) => (
+              <View key={i} style={[styles.headCell, month === 0 && i > 0 && styles.newYear]}>
+                {/* The year over the first month and over January. */}
+                <Text style={styles.yearLabel} numberOfLines={1}>
+                  {i === 0 || month === 0 ? String(year) : " "}
+                </Text>
+                <Text style={[styles.month, i === 0 && styles.monthNow]}>{i === 0 ? "Now" : MONTH_NAMES[month][0]}</Text>
+              </View>
             ))}
           </View>
         </View>
-        <YearRow label={isA ? "Your crops" : "Suggestion"} strip={yearStrip(pick)} cropById={cropById} />
-        {!isA && a ? <YearRow label="You now" strip={yearStrip(a)} cropById={cropById} /> : null}
+        <YearRow label={isA ? "Your crops" : "Suggestion"} strip={yearStrip(pick)} order={order} cropById={cropById} />
+        {!isA && a ? <YearRow label="You now" strip={yearStrip(a)} order={order} cropById={cropById} /> : null}
         {longer.map((l) => (
           <Text key={`${l.crop_id}-${l.given}`} style={text.caption}>
             {`You gave ${name(l.crop_id)} ${l.given}. That is shorter than its usual season of ${l.days} days, so the results count ${l.days} days from your planting month.`}
@@ -111,6 +142,7 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
             <Text style={text.caption}>Nothing planted</Text>
           </View>
         </View>
+        <Text style={text.caption}>From this month on. The plan repeats the same way every year.</Text>
       </View>
 
       {reasons.length > 0 ? (
@@ -158,7 +190,12 @@ const styles = StyleSheet.create({
   cells: { flex: 1, flexDirection: "row", gap: 2 },
   cell: { flex: 1, height: 26, borderRadius: 4 },
   cellEmpty: { backgroundColor: colors.bg, borderWidth: 1, borderStyle: "dashed", borderColor: colors.dashed },
-  month: { flex: 1, textAlign: "center", fontSize: 12, lineHeight: 16, color: colors.muted },
+  headCell: { flex: 1, minWidth: 0, overflow: "visible" },
+  month: { textAlign: "center", fontSize: 12, lineHeight: 16, color: colors.muted },
+  monthNow: { color: colors.green, fontWeight: "700", fontSize: 11 },
+  yearLabel: { fontSize: 11, lineHeight: 14, fontWeight: "700", color: colors.ink, width: 40 },
+  cellNow: { borderWidth: 2, borderStyle: "solid", borderColor: colors.ink },
+  newYear: { marginLeft: 4 },
   legend: { flexDirection: "row", flexWrap: "wrap", gap: space.md, marginTop: space.xs },
   legendItem: { flexDirection: "row", alignItems: "center", gap: space.xs },
   swatch: { width: 14, height: 14, borderRadius: 3 },
