@@ -164,13 +164,29 @@ function LotCrops({ lot }: { lot: Lot }) {
         />
       ) : null}
 
-      <YourCrops lotName={lot.name} crops={lot.crops} onRemove={(id) => setCrops(lot.id, toggleCrop(lot.crops, id))} />
+      <YourCrops
+        lotName={lot.name}
+        crops={lot.crops}
+        hasTop={top.length > 0}
+        onRemove={(id) => setCrops(lot.id, toggleCrop(lot.crops, id))}
+      />
     </View>
   );
 }
 
 /** The lot's crop with a ✕ to take it off. A farm saved before D13 changed may show several, until one is chosen. */
-function YourCrops({ lotName, crops, onRemove }: { lotName: string; crops: readonly LotCrop[]; onRemove: (cropId: string) => void }) {
+function YourCrops({
+  lotName,
+  crops,
+  hasTop,
+  onRemove,
+}: {
+  lotName: string;
+  crops: readonly LotCrop[];
+  /** Top crops are shown above, so the empty text can point to them. */
+  hasTop: boolean;
+  onRemove: (cropId: string) => void;
+}) {
   return (
     <View style={styles.yours} accessibilityLiveRegion="polite">
       <Text style={text.bodyStrong} accessibilityRole="header">
@@ -180,7 +196,9 @@ function YourCrops({ lotName, crops, onRemove }: { lotName: string; crops: reado
         <Text style={[text.small, { color: colors.muted }]}>One crop per lot now: the crop you choose next replaces these.</Text>
       ) : null}
       {crops.length === 0 ? (
-        <Text style={[text.small, { color: colors.muted }]}>None yet. Search for a crop above, or tap one of the top crops.</Text>
+        <Text style={[text.small, { color: colors.muted }]}>
+          {hasTop ? "None yet. Search for a crop above, or tap one of the top crops." : "None yet. Search for a crop above."}
+        </Text>
       ) : (
         <View style={styles.chips}>
           {crops.map((c) => {
