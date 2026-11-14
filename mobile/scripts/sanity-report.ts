@@ -1,25 +1,24 @@
 // Prints the numbers for the docs/07 §7 checks that need someone who knows the
 // area (#32), as Markdown. It changes nothing.
-//   npm run sanity                      the Iligan test lot (engine fixture)
-//   npm run sanity -- path/to/lot.json  any LotData file, e.g. the demo farm (#8)
+//   npm run sanity                      the bundled demo farm (#8)
+//   npm run sanity -- path/to/lot.json  any LotData file
 // The checks a test can answer are in src/engine/sanity.test.ts.
 // No `/// <reference types="node" />` here: with it, tsc fails on the fetch
 // types in src/api/client.ts. Node types still load through the test files.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { LotData, LotDetails, SoilFeel } from "../src/types";
-import { parsePowerMonthly } from "../src/data/power";
+import { parsePowerMonthly, roundForPower } from "../src/data/power";
 import { CROP_LIBRARY_FIXTURE as lib } from "../src/engine/__fixtures__/crops.fixture";
-import { ILIGAN_LOT_FIXTURE } from "../src/engine/__fixtures__/iligan-lot.fixture";
 import { plantingWindow, rotations, waterBalance } from "../src/engine/index";
 import { STRESS_WINDOW_DEFICIT_SHARE } from "../src/engine/params";
 import { cropSeasonDays } from "../src/engine/season";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const LIVE_RESPONSE = join(process.cwd(), "src", "data", "__fixtures__", "power-monthly-8.2N-124.2E-2001-2025.json");
+const DEMO_FARM = join(process.cwd(), "assets", "data", "demo", "lanao-norte-demo-1.json");
 
-const path = process.argv[2];
-const lot: LotData = path ? JSON.parse(readFileSync(path, "utf8")) : ILIGAN_LOT_FIXTURE;
+const lot: LotData = JSON.parse(readFileSync(process.argv[2] ?? DEMO_FARM, "utf8"));
 const m = lot.monthly;
 const details: LotDetails = { land_type: "lowland", water: "rain", soil: "loamy" };
 const rice = lib.crops.find((c) => c.id === "lowland-rice");
@@ -104,18 +103,21 @@ for (const o of r.options) {
   row([o.key, crops, n(p50), n(p20), p50 === null || p20 === null ? "–" : n(p50 - p20), n(o.total)]);
 }
 
-// --- Check 8 (partial): the live parser on the saved API response vs this lot -------
-out("\n## Check 8 (partial): live monthly parse vs this lot file\n");
-if (lot.lat === 8.2 && lot.lon === 124.2) {
+// --- Check 8: the live parser on the saved API response vs this lot ------------------
+out("\n## Check 8: live monthly parse vs this lot file\n");
+if (roundForPower(lot.lat) === 8.2 && roundForPower(lot.lon) === 124.2) {
   const live = parsePowerMonthly(JSON.parse(readFileSync(LIVE_RESPONSE, "utf8")), "saved response", "live");
-  out(`power.ts on the saved POWER monthly response (${live.period}) vs this lot (${lot.period}), difference in %:\n`);
+  out(`power.ts on the saved POWER monthly response (${live.period}) minus this lot (${lot.period}):\n`);
   row(["Series", ...MONTHS]);
   row(Array(13).fill("---"));
   const pct = (a: (number | null)[], b: (number | null)[]) =>
-    a.map((v, i) => (v === null || !b[i] ? "–" : `${n((100 * (v - (b[i] ?? 0))) / (b[i] ?? 1), 1)}`));
+    a.map((v, i) => (v === null || !b[i] ? "–" : `${n((100 * (v - (b[i] ?? 0))) / (b[i] ?? 1), 1)}%`));
+  const diff = (a: (number | null)[], b: (number | null)[]) =>
+    a.map((v, i) => (v === null || b[i] === null ? "–" : n(v - (b[i] ?? 0), 1)));
   row(["Rain P50", ...pct(live.monthly.precip_mm.p50, m.precip_mm.p50)]);
   row(["ET0", ...pct(live.monthly.et0_mm, m.et0_mm)]);
-  out("\nThe demo-farm comparison (daily pipeline vs live monthly) needs the demo farm file (#8).");
+  row(["Tmax °C", ...diff(live.monthly.tmax_c, m.tmax_c)]);
+  row(["Tmin °C", ...diff(live.monthly.tmin_c, m.tmin_c)]);
 } else {
-  out("Skipped: the saved POWER response is for 8.2, 124.2 only.");
+  out("Skipped: the saved POWER response covers lots that round to 8.2, 124.2 only.");
 }
