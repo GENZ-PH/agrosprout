@@ -1,0 +1,163 @@
+# 07 — Rotation Engine Specification (v0)
+
+> Goal: a **transparent, explainable** engine that turns NASA-derived lot data plus crop characteristics plus farmer inputs into (1) **crop fit** per lot, (2) **≥3 comparable rotation strategies (including the farmer's current crops)**, and (3) a **"your months vs better months"** planting-window comparison. Every formula here is simple on purpose. **Validity comes from traceability, not complexity.**
+> Implemented in TypeScript (`app/src/engine/`), running **per lot** on the device. Python only prepares crop data and demo farms ([06](06-architecture.md)). UI flow: [11](11-user-flow.md).
+
+## Two stages (matching the team's onboarding flow)
+
+| Stage | Farmer has given | Engine outputs | Screen |
+|---|---|---|---|
+| **1** | Lots + crops per lot (no months) | Crop fit per lot; rotation options where "Your crops" uses the **typical local planting calendar (labeled assumed)** | S3 Dashboard |
+| **2** | + actual planting/harvest months per crop | Planting-window scan (**your months vs better months**) per crop; rotation comparison rebuilt on the **actual** calendar | S5 Side by side |
+
+## 1. Inputs (per lot)
+
+| Input | From | Notes |
+|---|---|---|
+| Monthly P (p20/p50/p80), ET₀, Tmax/Tmin, root-zone wetness | `lot-data/<lotId>` (live NASA POWER monthly 2001–2024) or `demo/<farm>.json` | Same shape for both. Demo farms also carry daily-derived heat days, heavy-rain days, SMAP, NDVI, slope. |
+| Slope / land type | Demo: SRTM. Live lots: farmer's "lowland / upland / sloping" answer | Erosion factor; "unknown" falls back to a moderate default and lowers confidence |
+| Soil feel → total available water (TAW) | Farmer: sandy / loamy / clayey / unknown | Use FAO-56 typical ranges, cited |
+| Water source | Farmer: rain only / some irrigation / full | Some = supplemental mm/month |
+| Crops on the lot | S2 (many per lot) | Defines "Your crops" = **Strategy A** |
+| Planting months (optional) | S4: per crop, 1+ seasons of (plant month → harvest month) | Missing → **typical local calendar** from `crops.json`, labeled *assumed* |
+| Harvest destinations + transport (optional, added after onboarding) | S6: destination pins (market / storage / buyer / co-op), mode per destination, travel time per lot (farmer > road route > estimate), optional load and fare | Drives the **Market access (M)** score and transport explanations (§3c) |
+| Priorities | Chips/sliders (0–100): save water, build soil, extra income, less work | Normalized weights; defaults are all equal |
+| Crop library | `crops.json` | 8–12 crops; every number cited; includes a typical local planting window per crop |
+
+**Candidate crops for the Lanao del Norte demo (team to confirm locally):** lowland rice, corn, mungbean, peanut, soybean, cowpea/string bean, sweet potato, sorghum, one vegetable (e.g. eggplant), and a green manure / cover crop (e.g. *Sesbania*). Cross-check suitability against FAO GAEZ.
+
+## 2. Water balance (per crop × month)
+
+Following FAO-56 (Allen et al., 1998):
+
+- **ET₀** (mm/month): FAO-56 Penman-Monteith from POWER daily Tmax, Tmin, RH2M, WS2M, ALLSKY_SFC_SW_DWN, and site elevation, summed per month (done in the pipeline).
+- **ETc** = Kc(stage) × ET₀, with Kc interpolated across ini → dev → mid → late using the stage lengths.
+- **Effective rain** Peff: the FAO/AGLW monthly rule (Brouwer & Heibloem 1986): `Peff = 0.8P − 25` if P > 75 mm, else `max(0, 0.6P − 10)`. *(Cite it; it's simple, standard, and explainable.)*
+- **Rice adjustment**: ponded rice also loses water to seepage, percolation, and land preparation. Add a cited per-month allowance (parameter `rice_extra_mm`). Ask a local expert for typical values.
+- **Deficit**: `D_m = max(0, ETc_m − Peff_m − Irr_m)`.
+- **Water stress index (WSI)** for a crop instance = Σ D / Σ ETc (0 = no stress, 1 = fully unmet).
+- **Stress window** (chart shading) = months where `D_m > 0.25 × ETc_m`.
+- **Dry-year / wet-year**: repeat with P20 and P80 to get a range.
+
+## 3. Generating candidate rotations
+
+A rotation is a 12-month cycle of `(crop, start_month)` slots, repeated for the 3-year view.
+
+1. Enumerate sequences of 1–3 crops whose durations plus a 10–14 day turnaround between crops fit in 12 months, with start months 1–12.
+2. **Hard filters (reject):** any month outside the crop's [Tmin, Tmax]; WSI > 0.6 in the P50 scenario with no irrigation; a waterlogging-intolerant crop in a month with very high wetness (threshold on rootzone wetness + P, calibrated on the demo site and documented).
+3. Score the survivors (section 4) and keep the top N for each objective.
+4. **Present**: **A = Your crops** (always; on the actual calendar in stage 2, or the assumed typical calendar in stage 1), **B = best for water**, **C = best for soil**, **D = best balanced for the farmer's weights**. De-duplicate so every pair differs by at least one crop or a shift of more than one month. If D duplicates B or C, show the next best. Candidate crops always include the farmer's own crops; alternatives add at most 1–2 new crops, so suggestions stay close to what the farmer already knows.
+
+## 3b. Planting-window scan: "your months vs better months" (stage 2, S5)
+
+For each crop the farmer plants on a lot, for each of their seasons:
+
+1. **Scan start months** 1–12, keeping the crop's season length from `crops.json`, or the farmer's own plant→harvest duration if it's within ±30% of that.
+2. For each start month compute: WSI (P50 and P20), stress months, heat-risk months, waterlogging months (intolerant crops), bare months created on the lot, and **Fit = weighted W + H** (plus E for sloping lots).
+3. **Feasibility constraints**: the shifted season must not collide with the farmer's **other** crops on that lot, unless they're already intercropped (overlapping in the farmer's own calendar). The farmer's other seasons stay fixed unless a joint shift is better (stretch). The crop must stay within its temperature range.
+4. **Better months** = the feasible start month with the highest Fit, shown only if it beats the farmer's month by a meaningful margin (e.g. ≥ 10 points, or one fewer stress month). Otherwise show **"Your timing is already good ✓"**. Prefer the smallest shift that captures most of the gain, so the advice stays easy to act on.
+5. **Explain** with the driving data: "Planting in May instead of June avoids the September dry spell. In 2001–2024, rain covered on average X% vs Y% of rice water need (NASA POWER)." Add confidence: Low if the best month differs between P20 and P50, or if lot details are "unknown".
+6. Output per crop: `{ yours: {start, end, metrics}, better: {start, end, metrics} | null, delta, why, evidence, unknowns, check_locally, confidence }`.
+
+## 3c. Market access & transport (team-defined constraint)
+
+### Travel time per (lot, destination)
+
+Pick the first available source and **always show which one was used**:
+
+| Priority | Source | How | Confidence |
+|---|---|---|---|
+| 1 | **Farmer's own time** | Entered or confirmed in S6 | High |
+| 2 | **Road route** (online, at onboarding) | OSRM route from lot centroid to destination. Profile by mode: `foot` for walking and carabao/cart, `bike` for bicycle, `car` for motor modes. **Time = route distance ÷ mode speed** (+ waiting time for jeepney/bus). | Medium |
+| 3 | **Rough estimate** (offline fallback) | Straight-line (haversine) distance × `circuity` ÷ mode speed | Low |
+
+- **Why not just straight-line:** a test near Iligan (2026-11-14) gave 11.5 km straight-line vs 18.8 km walking route (1.6×) vs **32.1 km car route (2.8×)**. Hilly terrain makes roads wind, so the offline estimate is labeled "rough" and the farmer is asked to confirm it.
+- Mode speeds, waiting time, `circuity`, and loads per trip are **default assumptions** in `params.ts`, each marked *"assumption: validate locally"*. The farmer's own time overrides all of them. **Don't present these defaults as measured facts.**
+- Results are cached per lot on the device, so they work offline after onboarding.
+
+### Crop data needed (`crops.json` additions, cited)
+
+- `perishability`: `high` (days, e.g. leafy vegetables, tomato) · `medium` (1–3 weeks) · `low` (months, e.g. dried rice/corn/mungbean)
+- `storable_if_dried`: true/false
+- **[Should]** `yield_t_per_ha`: typical regional yield (cite PSA / DA, or mark "team estimate")
+
+### Market access score (M, 0–100) per crop on a lot
+
+- Take the travel time `t` to the **best destination for that crop**: perishable crops → nearest market or buyer; storable crops → storage counts too.
+- `M = 100` if `t ≤ t_ok[perishability]`, falling linearly to a floor at `t ≥ t_max[perishability]`. Thresholds are assumptions in `params.ts` (validate with a technician).
+- **[Should] Trip burden:** `harvest_kg = yield_t_per_ha × area_ha × 1000`; `trips = ceil(harvest_kg ÷ load_per_trip[mode])`; `hours = trips × 2 × t`. A high burden lowers M and feeds the "less work" priority.
+- **[Should] Wet-season roads:** in months whose median rain is above `heavy_rain_month_mm` (NASA POWER / IMERG), multiply `t` by `wet_road_factor` (assumption). This applies to the **harvest month**, so the planting-window scan (§3b) can prefer harvests outside the heaviest-rain months, which is also when drying grain is hardest.
+- **[Could] Fare:** if the farmer enters a one-way fare, show transport cost per harvest = trips × 2 × fare. Never guess fares.
+- **Storage bonus:** if the farmer has a storage destination, low/medium perishability crops keep M high even when the market is far, with the explanation "can store and sell when prices are better" (cite as a general practice; actual prices are unknown).
+
+### Explanation hooks
+
+- **Why / Benefits:** "Dried mungbean stores for months, so the 1 h 10 min trip to market isn't a problem."
+- **Check locally:** "Tomato bruises and spoils quickly. Is there a closer buyer? Is the road passable in October?"
+- **Unknowns:** "Travel time is a rough estimate. Please confirm." / "Transport cost not included."
+
+## 4. Component scores (0–100, higher = better)
+
+| Score | Formula (v0) | Farmer-facing label |
+|---|---|---|
+| **Water fit (W)** | `100 × (1 − mean WSI across crops in the rotation)` | "Fits your rain" |
+| **Climate risk (H)** | `100 − k1·(heat days > 35 °C during mid-season stage) − k2·(waterlogging months for intolerant crops)` | "Weather safety" |
+| **Soil building (S)** | `a·(legume months) + b·(cover/residue months) − c·(bare months) + d·(distinct families)`, scaled 0–100 | "Builds soil" |
+| **Erosion protection (E)** | `100 − k3·Σ_m bare_m × heavyRainDays_m × slopeFactor` | "Protects from washout" |
+| **Pest break (B)** | Fewer consecutive same-family crops and more families → higher | "Breaks pest cycles" |
+| **Income (I)** | Team-entered relative market level per crop (L/M/H → 30/60/90), weighted by months. **Flagged "rough; needs local prices".** | "Income potential" |
+| **Market access (M)** | §3c: travel time vs crop perishability (+ trip burden, wet-season roads when available), averaged over the rotation's crops | "Easy to get to market" |
+| **Labor (L)** | Inverse of crop labor level | "Easy to manage" |
+
+**Weights from the sliders:** Save water → W, H · Build soil → S, E, B · Extra income → I, M · Low labor → L, M (trip burden). If no destination was given, M is left out and the weights renormalize. Total = Σ wₖ·scoreₖ, normalized. **All coefficients (a, b, c, d, k1–k3) live in one `engine/params.ts` with a comment and source for each.** Changing a coefficient must not require code changes elsewhere.
+
+### Soil Health Index trajectory (3-year view)
+
+`SHI_year = clamp(SHI_{year−1} + α·S_norm − β·(1 − E_norm), 0, 100)`, starting from 50. **Label it a "relative indicator from this model", not a measured soil property, and never show it as a % improvement in nitrogen or carbon** (see gap F1).
+
+## 5. Explanations (template-driven, deterministic)
+
+Generated for each strategy from the score deltas against **A (Current)** and from the site data:
+
+| Field | Template sketch | Example |
+|---|---|---|
+| **Why this?** | Top 2 components where it beats Current, with the driving data point | "Swaps your second rice crop for mungbean. Feb–Apr rain covers only ~X% of rice water needs at your farm (NASA POWER 2001–2025); mungbean needs about Y% less water." |
+| **Evidence** | Data sources plus the agronomy reference used | "NASA POWER rainfall & ET₀; FAO-56 crop coefficients; FAO GAEZ suitability: suitable" |
+| **Benefits** | Components that improve, with deltas | "Water fit +25 · Builds soil +18 (legume fixes nitrogen) · Bare months 3 → 1" |
+| **Unknowns** | Data gaps that apply | "Rainfall is from a ~50 km grid cell; soil texture is your estimate; no local price data" |
+| **Check locally** | Risks needing human review (by crop) | "Mungbean doesn't tolerate waterlogging: does the field drain after rice? Seed availability? Pod borer pressure in your area?" |
+| **Confidence** | High / Medium / Low | Low if the ranking flips between P20 and P80 or if two or more key inputs are farmer estimates |
+
+Plain-language rules: short sentences, no jargon without a glossary link, numbers rounded, units always shown.
+
+## 6. "SI" / statistical component (challenge consideration: compare approaches)
+
+| Approach | What it does | Tier |
+|---|---|---|
+| **Statistical trend detection**: Mann-Kendall + Sen's slope on annual precip, dry-season deficit, and Tmax (2001–2025) | Detects "long-term water and heat trends" for the site, with significance | **Should** (cheap; pipeline) |
+| **Rule-based season detection**: months with P < ETc are "dry" | Baseline for seasonal transitions / bare periods | **Must** (part of the water balance) |
+| **Unsupervised clustering** (k-means on monthly P, ET₀, wetness, NDVI) | Finds season regimes and transitions from the data; compare against the rule-based result | **Could** (gives a real "compare SI approaches" story) |
+| **SI plain-language summaries** (LLM) | Turns structured scores into farmer-friendly text, optionally in Cebuano | **Could**. Must be **precomputed, reviewed by the team, labeled SI-generated**, and never invent numbers. |
+
+## 7. Validation & sanity checks (do these before building UI on top)
+
+- [ ] Annual ET₀ and rainfall for the demo point are plausible for a humid tropical lowland. Compare with PAGASA climate normals for the nearest station if available.
+- [ ] Wet and dry season months match the local cropping calendar (ask a local farmer or technician, or check PhilRice materials).
+- [ ] **Current rotation (rice–rice–bare) shows a stress window where farmers actually report dry-spell trouble.** If it doesn't, investigate before demoing.
+- [ ] For the demo lot, the farmer's typical rice months vs the engine's "better months" make sense to a local farmer or technician (not, say, planting into the driest month).
+- [ ] Planting-window scan never proposes a shift that collides with another crop on the same lot (unit test).
+- [ ] Travel times for the demo lots look right to someone who knows the area. A farmer-entered time always overrides route and estimate (unit test).
+- [ ] A highly perishable crop gets a lower M than a storable crop at the same travel time (unit test).
+- [ ] Live-fetched lot data and the precomputed demo data agree for the same coordinates (monthly P and ET₀ within a few %).
+- [ ] Changing priorities changes the ranking in the expected direction (unit test).
+- [ ] P20 scenario lowers W for rice-heavy strategies more than for legume strategies (unit test).
+- [ ] Every coefficient in `params.ts` has a source comment.
+
+## 8. Known limitations (state them openly in the app and README)
+
+- Point-scale, coarse-resolution climate. No field-scale hydrology.
+- Monthly time step, so short dry spells within a month are smoothed out.
+- Crop parameters are generic and not variety-specific.
+- Market and labor inputs are rough and need local prices.
+- The soil-health index is a relative model indicator, not a lab test.
+- **It supports decisions and doesn't replace farmer judgment or the agricultural technician.**

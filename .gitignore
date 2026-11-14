@@ -1,0 +1,31 @@
+# Dependencies & builds
+node_modules/
+dist/
+build/
+.vite/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Data downloads (regenerate with pipeline/)
+pipeline/raw/
+
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+.netrc
+_netrc
+*.pem
+*.key
+
+# Claude Code personal settings
+.claude/settings.local.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
