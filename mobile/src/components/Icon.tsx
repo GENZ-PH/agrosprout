@@ -15,6 +15,7 @@ import Minimize2 from "lucide-react-native/icons/minimize-2";
 import Pencil from "lucide-react-native/icons/pencil";
 import Plus from "lucide-react-native/icons/plus";
 import Scan from "lucide-react-native/icons/scan";
+import Search from "lucide-react-native/icons/search";
 import ShoppingBasket from "lucide-react-native/icons/shopping-basket";
 import Spline from "lucide-react-native/icons/spline";
 import Sprout from "lucide-react-native/icons/sprout";
@@ -37,6 +38,8 @@ const ICONS = {
   check: Check,
   chevron: ChevronRight,
   plus: Plus,
+  /** S2 crop search (#152). */
+  search: Search,
   info: Info,
   alert: CircleAlert,
   clock: Clock,

@@ -9,6 +9,7 @@ Never commit credentials or `pipeline/raw/` (the cache of downloaded files).
 | `fetch_srtm.py` | elevation and slope for each demo farm point, used by `build_demo.py` (NASA SRTM v3 via Open Topo Data, cached in `pipeline/raw/`) | #9 |
 | `fetch_psa.py` | `mobile/assets/data/psa/yields.json` | #10 |
 | `fetch_oni.py` | `mobile/assets/data/context.json` | #10 |
+| `build_ecocrop_names.py` | `mobile/assets/data/ecocrop-names.json` (FAO Ecocrop crop names for the S2 search, from the pinned OpenCLIM/ecocrop CSV, cached in `pipeline/raw/`; `--offline` uses the cache only). Add a `MAPPING` row for every new `crops.json` crop, or `test_ecocrop_names.py` fails | #152 |
 | `make_et0_fixture.py` | `fixtures/et0_shared_cases.json`, checked by the Python and TypeScript ET₀ tests | #57 |
 
 ## Re-run the demo farm

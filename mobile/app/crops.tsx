@@ -1,32 +1,35 @@
 import { onlineManager } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
-import { useState, useSyncExternalStore } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useMemo, useSyncExternalStore } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "../src/components/Button";
+import { CropSearch } from "../src/components/CropSearch";
 import { Header } from "../src/components/Header";
 import { Icon } from "../src/components/Icon";
 import { Screen } from "../src/components/Screen";
 import { colors, MIN_TOUCH, radius, space, text } from "../src/components/theme";
-import { CROP_LIBRARY } from "../src/data/crops";
-import {
-  cropShortName,
-  dataLine,
-  isOtherCrop,
-  lotsWithoutCrops,
-  otherCropId,
-  otherCropName,
-  toggleCrop,
-} from "../src/lots/crop-picks";
+import { TopCrops } from "../src/components/TopCrops";
+import { useLotData } from "../src/components/useLotAnalysis";
+import { CROP_LIBRARY, cropById } from "../src/data/crops";
+import { ECOCROP_NAMES } from "../src/data/ecocrop";
+import { chooseCrop, cropShortName, dataLine, isOtherCrop, lotsWithoutCrops, otherCropName, toggleCrop } from "../src/lots/crop-picks";
+import { buildSearchEntries } from "../src/lots/crop-search-core";
+import { safeTopCrops } from "../src/lots/suggest-core";
 import { areaLabel, isPinLot } from "../src/lots/lot-editor";
 import { useFarmStore } from "../src/state/farm-store";
-import type { Lot } from "../src/types";
+import type { Lot, LotCrop } from "../src/types";
 
-// S2 What do you plant on each lot? (#25, docs/11-user-flow.md). Picks are saved
-// in the farm store as they are tapped. The NASA data for each lot keeps loading
-// in the background (lot sync); Next never waits for it. Onboarding ends here.
+// S2 What do you plant on each lot? (#25, #152, docs/11-user-flow.md). One crop per lot (D13, changed by the
+// team 2026-11-14). Per lot: a search over our crop list and the FAO Ecocrop names (first, as the team asked),
+// the top 3 crops for the lot from its NASA data (once the data is on the phone), and the lot's crop. A farm saved earlier may still have
+// several crops on a lot: they all show, and the next crop chosen replaces them. Saved as it is tapped. The NASA data for each lot
+// keeps loading in the background (lot sync); Next never waits for it. Onboarding ends here.
 // /crops?lot=<id> shows one lot only: the lot just added with "+ Add lot" (D32), or
 // a lot whose crops are missing on the dashboard. Next goes back to that lot's results.
+
+/** Built once: our crops plus every Ecocrop species, with their names ready to match. */
+const SEARCH_ENTRIES = buildSearchEntries(CROP_LIBRARY, ECOCROP_NAMES);
 
 const useOnline = () =>
   useSyncExternalStore(
@@ -48,7 +51,7 @@ export default function CropsScreen() {
         <>
           {lots.length > 0 && missing.length > 0 ? (
             <Text style={[text.small, { color: colors.amber }]}>
-              Pick at least one crop for {missing.map((l) => l.name).join(", ")}.
+              Choose a crop for {missing.map((l) => l.name).join(", ")}.
             </Text>
           ) : null}
           {oneLot ? (
@@ -80,8 +83,8 @@ export default function CropsScreen() {
         <>
           <Text style={[text.body, { color: colors.muted }]}>
             {oneLot
-              ? "Tap every crop you grow on this lot, one after another or at the same time. You can change this later."
-              : "Tap every crop you grow on each lot, one after another or at the same time. You can change this later."}
+              ? "Choose the crop you grow on this lot: search for it, or tap one of the top crops. You can change it later."
+              : "Choose the crop you grow on each lot: search for it, or tap one of the top crops. You can change it later."}
           </Text>
           {lots.map((lot) => (
             <LotCrops key={lot.id} lot={lot} />
@@ -96,28 +99,25 @@ function LotCrops({ lot }: { lot: Lot }) {
   const setCrops = useFarmStore((s) => s.setCrops);
   const updateLot = useFarmStore((s) => s.updateLot);
   const online = useOnline();
-  const [otherOpen, setOtherOpen] = useState(false);
-  const [otherText, setOtherText] = useState("");
+  const data = useLotData(lot);
+  const top = useMemo(() => (data ? safeTopCrops(lot.details, data, CROP_LIBRARY) : []), [data, lot.details]);
 
-  const picked = new Set(lot.crops.map((c) => c.crop_id));
-  const others = lot.crops.filter((c) => isOtherCrop(c.crop_id));
+  // One crop per lot: a crop counts as chosen only when it is the lot's only crop.
+  const chosen = lot.crops.length === 1 ? lot.crops[0].crop_id : null;
   const line = dataLine(lot.data_status, online);
-  const toggle = (cropId: string) => setCrops(lot.id, toggleCrop(lot.crops, cropId));
-  const addOther = () => {
-    const id = otherCropId(otherText);
-    if (id && !picked.has(id)) setCrops(lot.id, [...lot.crops, { crop_id: id, seasons: [] }]);
-    setOtherText("");
-    setOtherOpen(false);
-  };
 
   return (
     <View style={styles.section}>
       <View style={styles.sectionHead}>
-        <Text style={text.heading}>{lot.name}</Text>
+        <Text style={text.heading} accessibilityRole="header">
+          {lot.name}
+        </Text>
         <Text style={[text.small, { color: colors.muted }]}>
           {areaLabel({ id: lot.id, name: lot.name, area_ha: lot.area_ha, pin: isPinLot(lot) })}
         </Text>
       </View>
+
+      <CropSearch lotName={lot.name} entries={SEARCH_ENTRIES} chosen={chosen} onPick={(id) => setCrops(lot.id, chooseCrop(lot.crops, id))} />
 
       <View
         style={[styles.dataLine, line.tone === "ready" ? styles.dataReady : line.tone === "error" ? styles.dataError : null]}
@@ -139,100 +139,59 @@ function LotCrops({ lot }: { lot: Lot }) {
         ) : null}
       </View>
 
-      <View style={styles.grid} accessibilityLabel={`Crops on ${lot.name}`}>
-        {CROP_LIBRARY.crops.map((crop) => (
-          <CropChip
-            key={crop.id}
-            label={cropShortName(crop)}
-            sublabel={crop.local_name}
-            selected={picked.has(crop.id)}
-            onPress={() => toggle(crop.id)}
-          />
-        ))}
-        {others.map((c) => (
-          <CropChip
-            key={c.crop_id}
-            label={otherCropName(c.crop_id)}
-            sublabel="Not in our list: no scores"
-            selected
-            onPress={() => toggle(c.crop_id)}
-          />
-        ))}
-        {!otherOpen ? (
-          <Pressable
-            onPress={() => setOtherOpen(true)}
-            accessibilityRole="button"
-            accessibilityLabel={`Add another crop to ${lot.name}`}
-            style={({ pressed }) => [styles.chip, styles.otherChip, pressed && styles.pressed]}
-          >
-            <Icon name="plus" size={18} />
-            <Text style={text.bodyStrong}>Other</Text>
-          </Pressable>
-        ) : null}
-      </View>
-
-      {otherOpen ? (
-        <View style={styles.otherRow}>
-          <TextInput
-            value={otherText}
-            onChangeText={setOtherText}
-            onSubmitEditing={addOther}
-            autoFocus
-            maxLength={40}
-            returnKeyType="done"
-            placeholder="Crop name, e.g. Cassava"
-            placeholderTextColor={colors.muted}
-            accessibilityLabel={`Other crop on ${lot.name}`}
-            style={styles.input}
-          />
-          <Button label="Add" onPress={addOther} disabled={!otherCropId(otherText)} />
-          <Button
-            label="Cancel"
-            variant="quiet"
-            onPress={() => {
-              setOtherText("");
-              setOtherOpen(false);
-            }}
-          />
-        </View>
+      {data ? (
+        <TopCrops
+          lotName={lot.name}
+          top={top}
+          period={data.period}
+          chosen={chosen}
+          onChoose={(id) => setCrops(lot.id, chooseCrop(lot.crops, id))}
+        />
       ) : null}
+
+      <YourCrops lotName={lot.name} crops={lot.crops} onRemove={(id) => setCrops(lot.id, toggleCrop(lot.crops, id))} />
     </View>
   );
 }
 
-function CropChip({
-  label,
-  sublabel,
-  selected,
-  onPress,
-}: {
-  label: string;
-  sublabel: string | null;
-  selected: boolean;
-  onPress: () => void;
-}) {
+/** The lot's crop with a ✕ to take it off. A farm saved before D13 changed may show several, until one is chosen. */
+function YourCrops({ lotName, crops, onRemove }: { lotName: string; crops: readonly LotCrop[]; onRemove: (cropId: string) => void }) {
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="checkbox"
-      accessibilityState={{ checked: selected }}
-      // React Native Web drops accessibilityState.checked; aria-checked reaches the DOM.
-      aria-checked={selected}
-      accessibilityLabel={sublabel ? `${label}, ${sublabel}` : label}
-      style={({ pressed }) => [styles.chip, selected && styles.chipOn, pressed && styles.pressed]}
-    >
-      <View style={styles.flex}>
-        <Text style={text.bodyStrong} numberOfLines={2}>
-          {label}
-        </Text>
-        {sublabel ? (
-          <Text style={[text.caption, selected && { color: colors.ink }]} numberOfLines={1}>
-            {sublabel}
-          </Text>
-        ) : null}
-      </View>
-      {selected ? <Icon name="check" size={18} color={colors.green} /> : null}
-    </Pressable>
+    <View style={styles.yours} accessibilityLiveRegion="polite">
+      <Text style={text.bodyStrong} accessibilityRole="header">
+        {crops.length > 1 ? `Your crops on ${lotName}` : `Your crop on ${lotName}`}
+      </Text>
+      {crops.length > 1 ? (
+        <Text style={[text.small, { color: colors.muted }]}>One crop per lot now: the crop you choose next replaces these.</Text>
+      ) : null}
+      {crops.length === 0 ? (
+        <Text style={[text.small, { color: colors.muted }]}>None yet. Search for a crop above, or tap one of the top crops.</Text>
+      ) : (
+        <View style={styles.chips}>
+          {crops.map((c) => {
+            const other = isOtherCrop(c.crop_id);
+            const crop = other ? undefined : cropById(c.crop_id);
+            const name = other ? otherCropName(c.crop_id) : crop ? cropShortName(crop) : c.crop_id;
+            const sub = other ? "not scored" : (crop?.local_name ?? null);
+            return (
+              <Pressable
+                key={c.crop_id}
+                onPress={() => onRemove(c.crop_id)}
+                accessibilityRole="button"
+                accessibilityLabel={`Remove ${name} from ${lotName}${other ? ". It is not scored" : ""}`}
+                style={({ pressed }) => [styles.chip, pressed && styles.pressed]}
+              >
+                <Text style={text.bodyStrong}>
+                  {name}
+                  {sub ? <Text style={[text.small, { color: colors.muted }]}> · {sub}</Text> : null}
+                </Text>
+                <Icon name="close" size={18} color={colors.muted} />
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -240,7 +199,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   empty: { gap: space.md, paddingVertical: space.lg },
   section: {
-    gap: space.sm,
+    gap: space.md,
     padding: space.md,
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -259,33 +218,19 @@ const styles = StyleSheet.create({
   },
   dataReady: { backgroundColor: colors.greenTint },
   dataError: { backgroundColor: colors.amberTint },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
+  yours: { gap: space.sm },
+  chips: { flexDirection: "row", flexWrap: "wrap", gap: space.sm },
   chip: {
-    flexBasis: "47%",
-    flexGrow: 1,
     flexDirection: "row",
     alignItems: "center",
     gap: space.sm,
-    minHeight: 56,
-    paddingHorizontal: space.md,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    borderRadius: radius.md,
-    backgroundColor: colors.surface,
+    minHeight: MIN_TOUCH,
+    paddingLeft: space.md,
+    paddingRight: space.sm,
+    borderWidth: 2,
+    borderColor: colors.green,
+    borderRadius: radius.pill,
+    backgroundColor: colors.greenTint,
   },
-  chipOn: { borderColor: colors.green, borderWidth: 2, backgroundColor: colors.greenTint },
-  otherChip: { borderStyle: "dashed", borderColor: colors.dashed, justifyContent: "center" },
   pressed: { backgroundColor: colors.pressed },
-  otherRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
-  input: {
-    ...text.body,
-    flex: 1,
-    minHeight: 48,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    borderRadius: radius.sm,
-    paddingHorizontal: space.md,
-    backgroundColor: colors.surface,
-  },
 });
