@@ -3,7 +3,7 @@ import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { Disclaimer } from "../src/components/Disclaimer";
 import { Header } from "../src/components/Header";
 import { Screen } from "../src/components/Screen";
-import { colors, radius, space, text } from "../src/components/theme";
+import { colors, MIN_TOUCH, radius, space, text } from "../src/components/theme";
 import { CHALLENGE_DATASETS, DATA_SOURCES, fill, LIMITATIONS } from "../src/content/explainers";
 
 // Data & limits (#31): every source with its period and resolution, then the known limits.
@@ -28,6 +28,7 @@ export default function DataScreen() {
                 onPress={() => void Linking.openURL(d.url as string)}
                 accessibilityRole="link"
                 accessibilityLabel={`Open ${d.name}`}
+                style={styles.linkRow}
               >
                 <Text style={styles.link}>{d.url}</Text>
               </Pressable>
@@ -76,4 +77,6 @@ const styles = StyleSheet.create({
   bullet: { flexDirection: "row", gap: space.sm },
   flex: { flex: 1 },
   link: { fontSize: 14, lineHeight: 20, color: colors.blue, textDecorationLine: "underline" },
+  // 44 px tall to tap (#45); the link text keeps its size.
+  linkRow: { minHeight: MIN_TOUCH, justifyContent: "center" },
 });

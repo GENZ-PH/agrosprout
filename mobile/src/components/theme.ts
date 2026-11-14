@@ -20,7 +20,11 @@ export const colors = {
   danger: "#9A2B1F",
   dangerPressed: "#7A2118",
   border: "#D9D7CE",
-  borderStrong: "#C9C7BD",
+  /**
+   * Outline of controls (inputs, chips, month cells, tabs, quiet buttons): #8C8A80 is 3.5:1 on
+   * surface and 3.2:1 on bg, so the edge of a control is visible (WCAG 1.4.11 asks 3:1, #45).
+   */
+  borderStrong: "#8C8A80",
   dashed: "#8C8A80",
   disabledBg: "#D9D7CE",
   mapBg: "#3F4A30",
