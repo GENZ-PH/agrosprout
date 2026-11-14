@@ -4,7 +4,7 @@ import type { PriorityKey } from "../engine/scores";
 import type { Priorities } from "../types";
 import { Icon } from "./Icon";
 import { InfoCard } from "./InfoCard";
-import { chipList, isPicked, pickedButNotScored, PRIORITY_CHIPS } from "./priorities-core";
+import { isPicked, notScoredNote, pickedButNotScored, PRIORITY_CHIPS } from "./priorities-core";
 import { colors, radius, space, text } from "./theme";
 
 // "What matters to you?" (#40, D14): four chips that re-weight the scores. The farm store
@@ -22,13 +22,14 @@ type Props = {
 // (docs/07), so it would almost always name D. The scores on the options below move instead.
 export function PrioritiesCard({ priorities, onToggle, notScored, period }: Props) {
   const missing = pickedButNotScored(priorities, notScored);
+  const note = notScoredNote(notScored);
 
   return (
     <InfoCard
       title="What matters to you?"
       explainer="priorities"
       period={period}
-      subtitle="Tap what matters most. The options below re-rank on your phone. Tap again to undo."
+      subtitle="Tap what matters most. The scores below are worked out again on your phone. Tap again to undo."
     >
       <View style={styles.row}>
         {PRIORITY_CHIPS.map((c) => {
@@ -51,10 +52,9 @@ export function PrioritiesCard({ priorities, onToggle, notScored, period }: Prop
         })}
       </View>
 
-      {missing.length > 0 ? (
-        <Text style={[text.small, { color: colors.amber }]} accessibilityLiveRegion="polite">
-          {chipList(missing)} can&apos;t change the ranking yet: {missing.length > 1 ? "they need" : "it needs"} a place
-          where you sell or store your harvest.
+      {note ? (
+        <Text style={[text.small, { color: missing.length > 0 ? colors.amber : colors.muted }]} accessibilityLiveRegion="polite">
+          {note}
         </Text>
       ) : null}
     </InfoCard>

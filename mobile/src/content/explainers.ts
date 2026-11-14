@@ -169,10 +169,10 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     id: "priorities",
     sources: ["farmer"],
     title: "What matters to you",
-    what: "Four choices: save water, build soil, extra income and less work. Tapping them re-ranks the options straight away, on your phone.",
+    what: "Four choices: save water, build soil, extra income and less work. Tapping them changes how each option scores, straight away, on your phone.",
     source: "Your own answers. The choices only change how much each score counts; they do not change the data.",
-    read: "All four start equal. Tap the ones that matter most to you: they count twice as much as the others. See which option moves to the top, and tap again to undo.",
-    limits: ["A priority can only count when the data behind it exists; for example income and market access need crop and destination information."],
+    read: "All four start equal. Tap the ones that matter most to you: they count twice as much as the others. See which option now scores highest, and tap again to undo.",
+    limits: ["A priority only counts when the data behind it exists. Extra income and less work need local prices and labor needs, which the crop list does not have yet, and the trip to market, which counts once you add a place where you sell or store your harvest."],
   },
   "months-compare": {
     id: "months-compare",
@@ -180,7 +180,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     title: "Your months vs better months",
     what: "For each crop and season, your planting months next to the best nearby months we found, with the same crop and season length.",
     source: "The same water balance and temperature checks as the recommendations, run for each of the 12 possible planting months, using NASA POWER data for {period}.",
-    read: "A better month is shown only when it clearly beats yours and does not clash with your other crops on the same lot. If a clearly better month would clash with another crop of yours, the card says so and names that crop: it is a trade-off to weigh with your technician, not a move to make. Only when nothing beats your month, even on a lot with nothing else on it, does the card say your timing is already good.",
+    read: "A better month is shown only when it clearly beats yours and does not clash with your other crops on the same lot. If a clearly better month would clash with another crop of yours, the card says so and names that crop: it is a trade-off to weigh with your technician, not a move to make. When nothing beats your month, even on a lot with nothing else on it, the card says your timing is already good, or, if your months still have dry-stress or heat-risk months, that no better month was found and which months to plan for.",
     limits: [
       "It cannot see things we have no data for, such as when seed or labor are available.",
       "The confidence is lower if the best month changes between a dry and a typical year.",
