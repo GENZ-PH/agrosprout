@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import demoLanaoNorte1 from "../../assets/data/demo/lanao-norte-demo-1.json";
 import { CROP_LIBRARY } from "../data/crops";
 import { asyncStorageLotDataStore } from "../data/lotdata-store";
+import type { Scenario } from "../engine/scenario";
 import type { Farm, Lot, LotData } from "../types";
 import { lotView, readLotData, type DemoFarms, type LotView } from "./lot-analysis-core";
 
@@ -15,7 +16,15 @@ const DEMO_FARMS: DemoFarms = { "lanao-norte-demo-1": demoLanaoNorte1 as LotData
 /** `LotView` from lot-analysis-core, plus `loading` while the saved data is being read. */
 export type DashboardLotView = LotView | { kind: "loading" };
 
-export function useLotAnalysis(farm: Pick<Farm, "destinations" | "priorities">, lot: Lot): DashboardLotView {
+/**
+ * `scenario` is the what-if slider's value (#47). Keep the object stable between renders (state, or `useMemo`),
+ * because a new object each render runs the engine again.
+ */
+export function useLotAnalysis(
+  farm: Pick<Farm, "destinations" | "priorities">,
+  lot: Lot,
+  scenario: Scenario | null = null,
+): DashboardLotView {
   // Read again when the data could have changed: a new download (status) or a moved lot.
   const readKey = `${lot.data_ref}|${lot.data_status}|${lot.centroid.join(",")}`;
   const [read, setRead] = useState<{ key: string; data: LotData | null } | null>(null);
@@ -34,8 +43,8 @@ export function useLotAnalysis(farm: Pick<Farm, "destinations" | "priorities">, 
   const { destinations, priorities } = farm;
   return useMemo<DashboardLotView>(() => {
     if (data === undefined && lot.crops.length > 0) return { kind: "loading" };
-    const view = lotView({ farm: { destinations, priorities }, lot, data: data ?? null, library: CROP_LIBRARY });
+    const view = lotView({ farm: { destinations, priorities }, lot, data: data ?? null, library: CROP_LIBRARY, scenario });
     if (view.kind === "failed") console.warn(`[dashboard] ${lot.id}: ${view.message}`);
     return view;
-  }, [data, destinations, priorities, lot]);
+  }, [data, destinations, priorities, lot, scenario]);
 }
