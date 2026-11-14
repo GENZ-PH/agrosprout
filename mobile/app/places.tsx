@@ -260,7 +260,7 @@ function PlaceCard({
       {changingMode ? (
         <ChoiceGroup
           title="How do you usually get there?"
-          hint="If you change this, check the times below again."
+          hint="If you change this, the times below are worked out again for the new way of travelling, and the times you typed for the old one are removed."
           options={MODE_OPTIONS}
           value={d.mode}
           onChange={(mode) => {
