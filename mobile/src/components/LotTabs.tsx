@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-
 
 import type { Lot } from "../types";
 import { Icon } from "./Icon";
-import { colors, MIN_TOUCH, radius, space, text } from "./theme";
+import { colors, MIN_TOUCH, radius, space } from "./theme";
 
 type Props = {
   lots: readonly Pick<Lot, "id" | "name">[];
@@ -75,7 +75,7 @@ export function LotTabs({ lots, selectedId, onSelect, onAdd, onRename }: Props) 
                     accessibilityLabel="Lot name"
                     placeholder="Lot name"
                     placeholderTextColor={colors.greenTint}
-                    style={[text.bodyStrong, styles.input]}
+                    style={[styles.chipText, styles.input]}
                   />
                   <Icon name="check" size={18} color={colors.white} />
                 </View>
@@ -90,10 +90,10 @@ export function LotTabs({ lots, selectedId, onSelect, onAdd, onRename }: Props) 
                 accessibilityHint={selected && onRename ? "Tap to rename this lot" : undefined}
                 style={({ pressed }) => [styles.tab, selected && styles.selected, pressed && styles.pressed]}
               >
-                <Text style={[text.bodyStrong, selected ? styles.selectedLabel : styles.label]} numberOfLines={1}>
+                <Text style={[styles.chipText, selected ? styles.selectedLabel : styles.label]} numberOfLines={1}>
                   {l.name}
                 </Text>
-                {selected && onRename ? <Icon name="pencil" size={16} color={colors.white} /> : null}
+                {selected && onRename ? <Icon name="pencil" size={14} color={colors.white} /> : null}
               </Pressable>
             );
           })}
@@ -104,8 +104,8 @@ export function LotTabs({ lots, selectedId, onSelect, onAdd, onRename }: Props) 
               accessibilityLabel="Add a lot"
               style={({ pressed }) => [styles.tab, styles.add, pressed && styles.pressed]}
             >
-              <Icon name="plus" size={18} color={colors.green} />
-              <Text style={[text.bodyStrong, styles.addLabel]}>Add lot</Text>
+              <Icon name="plus" size={16} color={colors.green} />
+              <Text style={[styles.chipText, styles.addLabel]}>Add lot</Text>
             </Pressable>
           ) : null}
         </ScrollView>
@@ -125,8 +125,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: space.xs,
-    minHeight: MIN_TOUCH + 4,
-    paddingHorizontal: space.md,
+    minHeight: MIN_TOUCH,
+    paddingHorizontal: 14,
     borderRadius: radius.pill,
     borderWidth: 1.5,
     borderColor: colors.borderStrong,
@@ -134,6 +134,7 @@ const styles = StyleSheet.create({
   },
   selected: { backgroundColor: colors.green, borderColor: colors.green },
   pressed: { backgroundColor: colors.pressed },
+  chipText: { fontSize: 15, lineHeight: 20, fontWeight: "600" },
   label: { color: colors.ink },
   selectedLabel: { color: colors.white },
   add: { borderStyle: "dashed", borderColor: colors.green, backgroundColor: "transparent" },

@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text } from "react-native";
 
 import { Icon } from "./Icon";
 import { getInspector, subscribeInspector, toggleOverview } from "./inspector-store";
-import { colors, MIN_TOUCH, radius, space } from "./theme";
+import { colors, radius, space } from "./theme";
 
 /** The dashboard header's "NASA data" button (#165): opens or closes the NASA data panel. */
 export function NasaDataButton() {
@@ -16,7 +16,7 @@ export function NasaDataButton() {
       accessibilityState={{ expanded: open }}
       style={({ pressed }) => [styles.pill, open && styles.open, pressed && styles.pressed]}
     >
-      <Icon name="info" size={18} color={open ? colors.surface : colors.green} />
+      <Icon name="info" size={16} color={open ? colors.surface : colors.green} />
       <Text style={[styles.label, open && styles.labelOpen]}>NASA data</Text>
     </Pressable>
   );
@@ -27,8 +27,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: space.xs,
-    minHeight: MIN_TOUCH,
-    paddingHorizontal: space.md,
+    minHeight: 40,
+    paddingHorizontal: 12,
     borderRadius: radius.pill,
     borderWidth: 1.5,
     borderColor: colors.green,
@@ -36,6 +36,6 @@ const styles = StyleSheet.create({
   },
   open: { backgroundColor: colors.green },
   pressed: { opacity: 0.85 },
-  label: { fontSize: 15, fontWeight: "700", color: colors.green },
+  label: { fontSize: 14, fontWeight: "700", color: colors.green },
   labelOpen: { color: colors.surface },
 });

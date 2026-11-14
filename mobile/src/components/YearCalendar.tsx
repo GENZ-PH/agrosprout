@@ -43,8 +43,9 @@ export function YearCalendar({ options, lotName, cropById, period, initialKey }:
   const states = useMemo(() => monthStates(selected), [selected]);
   const name = (id: string) => cropById(id)?.name.replace(/\s*\(.*\)\s*$/, "").trim() || id;
   const lines = yearCalendarLines(states[picked - 1], name);
-  // Phone: open the strip on this month, with the month before it still in sight.
-  const showNow = () => stripRef.current?.scrollTo({ x: Math.max(0, (nowMonth - 2) * (TILE_W + 6)), animated: false });
+  // The tiles start at this month and run 12 months on (like the suggestion's strip), so the
+  // month the farmer is in comes first on a phone, with no scrolling to find it.
+  const ordered = useMemo(() => Array.from({ length: 12 }, (_, i) => states[(nowMonth - 1 + i) % 12]), [states, nowMonth]);
 
   return (
     <View style={styles.block}>
@@ -86,11 +87,10 @@ export function YearCalendar({ options, lotName, cropById, period, initialKey }:
       <ScrollView
         ref={stripRef}
         horizontal={!wide}
-        onLayout={wide ? undefined : showNow}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={[styles.strip, wide && styles.stripWide]}
       >
-        {states.map((s) => {
+        {ordered.map((s) => {
           const on = s.month === picked;
           const isNow = s.month === nowMonth;
           return (
