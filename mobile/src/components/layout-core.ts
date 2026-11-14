@@ -17,3 +17,18 @@ export function rowsOf<T>(items: readonly T[], n: number): T[][] {
   for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
   return out;
 }
+
+/** Width of the NASA data panel when it docks beside the page (#144, #165). */
+export const DOCK_WIDTH = 400;
+
+/**
+ * Dock the panel only when the page keeps at least the expanded width (840) beside it; a
+ * narrower window gets the sheet from the bottom instead.
+ */
+export const canDock = (windowWidth: number): boolean => windowWidth >= BREAKPOINTS.expanded + DOCK_WIDTH;
+
+/**
+ * Two dashboard columns need about 1000 dp of page once the panel takes its share, so each
+ * card stays readable (#165). Without the panel the usual expanded size class (840) applies.
+ */
+export const TWO_COLUMN_MIN_WITH_DOCK = 1000;

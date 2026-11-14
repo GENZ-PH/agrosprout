@@ -3,7 +3,8 @@ import type { ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Icon } from "./Icon";
-import { colors, MIN_TOUCH, text } from "./theme";
+import { OfflineBadge } from "./OfflineBadge";
+import { colors, MIN_TOUCH, space, text } from "./theme";
 
 type Props = {
   title: string;
@@ -18,27 +19,32 @@ type Props = {
 export function Header({ title, leading = "back", fallbackHref = "/", right }: Props) {
   const goBack = () => (router.canGoBack() ? router.back() : router.replace(fallbackHref));
   return (
-    <View style={styles.row}>
-      {leading ? (
-        <Pressable
-          onPress={goBack}
-          accessibilityRole="button"
-          accessibilityLabel={leading === "close" ? "Close" : "Back"}
-          hitSlop={4}
-          style={({ pressed }) => [styles.lead, pressed && styles.pressed]}
-        >
-          <Icon name={leading} />
-        </Pressable>
-      ) : null}
-      <Text style={styles.title} accessibilityRole="header" numberOfLines={2}>
-        {title}
-      </Text>
-      {typeof right === "string" ? <Text style={styles.right}>{right}</Text> : right}
+    <View style={styles.wrap}>
+      <View style={styles.row}>
+        {leading ? (
+          <Pressable
+            onPress={goBack}
+            accessibilityRole="button"
+            accessibilityLabel={leading === "close" ? "Close" : "Back"}
+            hitSlop={4}
+            style={({ pressed }) => [styles.lead, pressed && styles.pressed]}
+          >
+            <Icon name={leading} />
+          </Pressable>
+        ) : null}
+        <Text style={styles.title} accessibilityRole="header" numberOfLines={2}>
+          {title}
+        </Text>
+        {typeof right === "string" ? <Text style={styles.right}>{right}</Text> : right}
+      </View>
+      {/* Only while the phone has no signal (#36). */}
+      <OfflineBadge />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrap: { gap: space.sm },
   row: { flexDirection: "row", alignItems: "center", gap: 4, minHeight: 48 },
   lead: {
     width: MIN_TOUCH,

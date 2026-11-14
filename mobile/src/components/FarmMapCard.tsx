@@ -10,7 +10,8 @@ import { colors, radius, space, text } from "./theme";
 
 // "Your lots on the map" (#124): the dashboard's overview of the whole farm. Every lot is filled
 // with its crop-fit color (farm-map-core.ts) and labeled with its name, area and result in words.
-// Read-only: the map moves and zooms, and a tap on a lot selects it like the lot tabs do. Drawing
+// Read-only: the map moves and zooms, and a tap on a lot selects it like the lot tabs do (the
+// dashboard also opens the lot comparison dialog, #171). Drawing
 // and moving points stay on S1 (/lots).
 
 type Props = {
@@ -52,12 +53,13 @@ export function FarmMapCard({ lots, views, selectedId, onSelect, wide }: Props) 
       title="Your lots on the map"
       explainer="farm-map"
       period={period}
-      subtitle="Each lot colored by how well it suits its crops. Tap a lot to see its results."
+      subtitle="Each lot colored by how well it suits its crops. Tap a lot to compare its crops with the best other option."
     >
       <View style={[styles.map, { height }]}>
         <MapView
           lots={mapLots}
           mode="view"
+          inPage
           activeLotId={selectedId}
           inset={wide ? MAP_INSET.wide : MAP_INSET.phone}
           onMessage={onMessage}

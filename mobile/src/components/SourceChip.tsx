@@ -26,7 +26,7 @@ export function SourceChip({ k, period = "" }: { k: SourceKey; period?: string }
       onPress={() => openInspector(k, period)}
       accessibilityRole="button"
       accessibilityLabel={`${s.name}: how this NASA data is used`}
-      hitSlop={6}
+      hitSlop={8}
       style={({ pressed, hovered }: { pressed: boolean; hovered?: boolean }) => [styles.chip, styles.nasa, (pressed || hovered) && styles.active]}
     >
       <Text style={[styles.label, s.nasa && styles.nasaLabel]} numberOfLines={1}>

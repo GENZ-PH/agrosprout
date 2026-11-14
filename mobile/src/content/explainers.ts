@@ -124,11 +124,11 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   "lot-cutout": {
     id: "lot-cutout",
     sources: ["power", "fao56", "ecocrop", "crop-library", "farmer"],
-    title: "Now vs best option",
-    what: "The shape of the lot you drew, shown twice: on the left with your crops now, on the right with the best other option for this lot (the one with the highest total score). Each shape is filled with one color for the kind of data you pick: Soil health, Crop fit, Root-zone wetness or Rain in a dry year. The number or words on the shape is its value.",
+    title: "Lot comparison",
+    what: "The shape of the lot you drew, shown twice: on the left with your crops now, on the right with the best other option for this lot. \"Best\" means the highest total score over all your priorities, so on one kind of data your current crops can still do better. Each shape is filled with one color for the kind of data you pick: Soil health, Crop fit, Root-zone wetness or Rain in a dry year. The number or words on the shape is its value.",
     source:
       "Soil health is the 3-year Soil Health Index from this app's rotation model. Crop fit is the same check as \"Your crops here\" (FAO-56 crop water use, FAO Ecocrop temperature ranges). Root-zone wetness is NASA POWER GWETROOT (0 dry, 1 saturated) and rain is NASA POWER PRECTOTCORR in a dry year (the 20th percentile), both over the months a crop is in the field. Years used: {period}.",
-    read: "Compare the two shapes. Soil health: green goes up from the start, gray stays level, orange goes down. Crop fit: the same colors as \"Your crops here\". Wetness and rain: darker blue means wetter, or more of the year's rain falling while a crop is in the field. Gray with \"No data\" means a value is missing.",
+    read: "Compare the two shapes. Soil health: green goes up from the start, gray stays level, orange goes down. Crop fit: the same colors as \"Your crops here\". Wetness and rain: darker blue means wetter, or more of the year's rain falling while a crop is in the field. An empty shape with a dashed outline and \"No data\" means a value is missing. The row under the shapes gives both values and the difference, and says which one does better when that has a meaning.",
     limits: [
       "One color per lot: the data has one value for the whole lot, so nothing here shows differences inside your field.",
       "Soil health is a relative indicator from this model, not a soil test. It does not show carbon or nitrogen.",
@@ -180,7 +180,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     title: "Your months vs better months",
     what: "For each crop and season, your planting months next to the best nearby months we found, with the same crop and season length.",
     source: "The same water balance and temperature checks as the recommendations, run for each of the 12 possible planting months, using NASA POWER data for {period}.",
-    read: "A better month is shown only when it clearly beats yours and does not clash with your other crops on the same lot. If a clearly better month would clash with another crop of yours, the card says so and names that crop: it is a trade-off to weigh with your technician, not a move to make. When nothing beats your month, even on a lot with nothing else on it, the card says your timing is already good, or, if your months still have dry-stress or heat-risk months, that no better month was found and which months to plan for.",
+    read: "A better month is shown only when it clearly beats yours and does not clash with your other crops on the same lot. If a clearly better month would clash with another crop of yours, the card says so and names that crop: it is a trade-off to weigh with your technician, not a move to make. When nothing beats your month, even on a lot with nothing else on it, the card says your timing is already good, or, if your months still have dry or hot months, that no better month was found and which months to plan for.",
     limits: [
       "It cannot see things we have no data for, such as when seed or labor are available.",
       "The confidence is lower if the best month changes between a dry and a typical year.",
@@ -429,7 +429,9 @@ export const CHALLENGE_DATASETS: readonly DatasetStatus[] = [
   { name: "SMAP (soil moisture)", status: "Demo farm only", note: "SMAP L4 (SPL4SMGP v8, 9 km, 2015-2025) is shown for the sample farm in Satellite checks, as a check. The scores use NASA POWER soil wetness." },
   { name: "GPM IMERG (rainfall)", status: "Demo farm only", note: "IMERG Final V07 monthly rain (0.1°, 2001 to 2025-09) is shown for the sample farm beside NASA POWER rain in Satellite checks. The scores use NASA POWER rain." },
   { name: "MODIS, Landsat (vegetation)", status: "Not used", note: "Vegetation stress is not measured." },
-  { name: "ECOSTRESS, GRACE and GRACE-FO", status: "Not used", note: "Not needed for the lot-level questions this app answers." },
+  { name: "ECOSTRESS (evaporation)", status: "Not used", note: "Not in the app yet. Evaporation is worked out from NASA POWER with the FAO-56 method." },
+  { name: "GRACE and GRACE-FO (water storage)", status: "Not used", note: "They measure water stored over large regions, far coarser than a farm lot." },
+  { name: "GEDI (forest structure)", status: "Not used", note: "It measures the height and structure of forests and other vegetation, not field crops." },
 ];
 
 /** Known limitations to state openly (docs/07 §8), plus the ones found while building. */
@@ -456,3 +458,14 @@ export const LIMITATIONS: readonly string[] = [
 export function fill(text: string, vars: Readonly<Record<string, string>>): string {
   return text.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? vars[k] : m));
 }
+
+/**
+ * One line under the lot comparison's layer switch (#171): what the selected layer measures.
+ * Keys match `CutoutLayer` in components/lot-cutout-core.ts.
+ */
+export const CUTOUT_LAYER_ABOUT = {
+  soil: "A relative soil health index from this app's model after 3 years of the plan, starting at 50. Higher is better. Not a soil test.",
+  fit: "How well the crops suit this lot's water and temperature. The weakest crop sets the level.",
+  wetness: "How wet the root zone is in the months a crop is in the field, from 0 (dry) to 1 (saturated).",
+  rain: "Rain that falls in the months a crop is in the field, in a dry year (1 year in 5 is this dry or drier).",
+} as const;

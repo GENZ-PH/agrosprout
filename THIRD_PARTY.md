@@ -134,7 +134,7 @@ Python 3.11+ standard library only (`urllib`, `json`, `csv`, `unittest`, …). N
 
 ## Images, icons, and fonts
 
-- **UI icons:** drawn by the team as SVG paths in `mobile/src/components/Icon.tsx`. No icon font, no emoji.
+- **UI icons:** Lucide (`lucide-react-native`, ISC license), used through `mobile/src/components/Icon.tsx` since #147. No icon font, no emoji.
 - **Fonts:** the system font of each platform. No font files are bundled.
 - **App icon, Android adaptive icon, splash, and favicon** (`mobile/assets/*.png`): these are still the **Expo project template's default images** (the Expo logo), added with the scaffold (#55). Replace them with the team's own icon before the final build (#50); then update this line.
 - **Crop pictures** (`mobile/assets/crops/*.webp`, #169): square crops of free-license photos from Wikimedia Commons, resized to 160 px, so each is a modified copy (changes: cropped and resized; the photographer's license applies to our copy). Shown in the app and credited on the Data and limits page. The team should confirm the choice of pictures.

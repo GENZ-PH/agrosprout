@@ -13,6 +13,7 @@ import {
   deltaText,
   optionCropsText,
   optionSummary,
+  sameCropsAs,
   scoreRows,
   shortCropName,
   type ScoreRow,
@@ -46,6 +47,7 @@ export function RecommendationsCard({ options, explanations, componentsLeftOut, 
     return ex ? [{ o, ex }] : [];
   });
   const grid = columns > 1;
+  const sameAs = sameCropsAs(options);
   // Which options have their details open. Kept here, not per option, so a grid row knows when to
   // stop matching heights: closed rows line up, an open option keeps its neighbour at its own height.
   const [open, setOpen] = useState<Partial<Record<OptionKey, boolean>>>({});
@@ -68,6 +70,7 @@ export function RecommendationsCard({ options, explanations, componentsLeftOut, 
                     option={o}
                     a={a}
                     explanation={ex}
+                    sameAs={sameAs[o.key]}
                     componentsLeftOut={componentsLeftOut}
                     cropName={cropName}
                     open={!!open[o.key]}
@@ -90,6 +93,8 @@ type ItemProps = {
   option: RotationOption;
   a: RotationOption | undefined;
   explanation: Explanation;
+  /** An earlier option with the same crops in other months (#165), e.g. "C" for D. */
+  sameAs?: OptionKey;
   componentsLeftOut: readonly ComponentKey[];
   cropName: (id: string) => string;
   open: boolean;
@@ -98,7 +103,7 @@ type ItemProps = {
   fill?: boolean;
 };
 
-function OptionItem({ option: o, a, explanation: ex, componentsLeftOut, cropName, open, onToggle, fill = false }: ItemProps) {
+function OptionItem({ option: o, a, explanation: ex, sameAs, componentsLeftOut, cropName, open, onToggle, fill = false }: ItemProps) {
   const title = OPTION_LABELS[o.key];
   const crops = optionCropsText(o, cropName);
   const color = optionColors[o.key];
@@ -125,6 +130,7 @@ function OptionItem({ option: o, a, explanation: ex, componentsLeftOut, cropName
         {o.top_total ? <Tag label="Top score" tone="good" /> : null}
         <ConfidenceTag level={ex.confidence.level} />
         {o.assumed_calendar ? <Tag label="Typical months, assumed" tone="warn" /> : null}
+        {sameAs ? <Tag label={`Same crops as ${sameAs}, other months`} tone="plain" /> : null}
         {newCrops.length > 0 ? <Tag label={`New on your lot: ${newCrops.join(", ")}`} tone="plain" /> : null}
       </View>
 
@@ -132,7 +138,8 @@ function OptionItem({ option: o, a, explanation: ex, componentsLeftOut, cropName
       <Text style={text.small}>{crops}</Text>
 
       <Section title="Why this option">
-        <Bullets lines={ex.why.map((l) => l.text)} />
+        {/* Progressive disclosure (#165): the main reason; the rest opens with the details. */}
+        <Bullets lines={(open ? ex.why : ex.why.slice(0, 1)).map((l) => l.text)} />
       </Section>
 
       <Pressable
@@ -142,7 +149,7 @@ function OptionItem({ option: o, a, explanation: ex, componentsLeftOut, cropName
         accessibilityState={{ expanded: open }}
         style={({ pressed }) => [styles.toggle, pressed && styles.pressed]}
       >
-        <Text style={[text.bodyStrong, styles.toggleText]}>{open ? "Hide details" : "Scores, evidence and checks"}</Text>
+        <Text style={[text.bodyStrong, styles.toggleText]}>{open ? "Hide details" : "More reasons, scores and checks"}</Text>
         <View style={open ? styles.chevronOpen : styles.chevron}>
           <Icon name="chevron" size={20} color={colors.green} />
         </View>
@@ -302,7 +309,7 @@ const TAG = {
   plain: { bg: colors.surface, fg: colors.muted, border: colors.border },
 } as const;
 
-function Tag({ label, tone }: { label: string; tone: keyof typeof TAG }) {
+export function Tag({ label, tone }: { label: string; tone: keyof typeof TAG }) {
   const t = TAG[tone];
   return (
     <View style={[styles.tag, { backgroundColor: t.bg, borderColor: t.border }]}>
@@ -311,10 +318,17 @@ function Tag({ label, tone }: { label: string; tone: keyof typeof TAG }) {
   );
 }
 
+/** The confidence tag in plain words (#165); the details still say "Confidence: High/Medium/Low" and why. */
+const SURE_LABELS: Record<ConfidenceLevel, string> = {
+  high: "Confidence: high, fairly sure",
+  medium: "Confidence: medium, check locally",
+  low: "Confidence: low, check first",
+};
+
 const CONFIDENCE_TONE: Record<ConfidenceLevel, keyof typeof TAG> = { high: "good", medium: "plain", low: "warn" };
 
-function ConfidenceTag({ level }: { level: ConfidenceLevel }) {
-  return <Tag label={`Confidence: ${CONFIDENCE_LABELS[level]}`} tone={CONFIDENCE_TONE[level]} />;
+export function ConfidenceTag({ level }: { level: ConfidenceLevel }) {
+  return <Tag label={SURE_LABELS[level]} tone={CONFIDENCE_TONE[level]} />;
 }
 
 const styles = StyleSheet.create({

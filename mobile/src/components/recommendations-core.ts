@@ -204,3 +204,27 @@ export function optionSummary(o: {
   const total = o.total === null ? "no total score" : `total score ${Math.round(o.total)} out of 100`;
   return `Option ${o.key}, ${o.title}${o.top ? ", top score" : ""}: ${total}, confidence ${CONFIDENCE_LABELS[o.confidence]}. ${o.crops}.`;
 }
+
+/**
+ * The option the dashboard leads with (#165): the one with the top total, the first if tied.
+ * It can be A when the farmer's own crops score highest. Null when no option has a total.
+ */
+export function topPick<T extends Pick<RotationOption, "key" | "top_total">>(options: readonly T[]): T | null {
+  return options.find((o) => o.top_total) ?? null;
+}
+
+/**
+ * Options that grow the same crops as an earlier option, only in other months, so the farmer can
+ * tell them apart (e.g. D Balanced = C Best for soil, shifted). Maps the later key to the earlier one.
+ */
+export function sameCropsAs(
+  options: readonly Pick<RotationOption, "key" | "slots">[],
+): Partial<Record<OptionKey, OptionKey>> {
+  const cropSet = (o: Pick<RotationOption, "slots">) => [...new Set(o.slots.map((s) => s.crop_id))].sort().join("|");
+  const out: Partial<Record<OptionKey, OptionKey>> = {};
+  options.forEach((o, i) => {
+    const earlier = options.slice(0, i).find((e) => cropSet(e) === cropSet(o));
+    if (earlier && o.slots.length > 0) out[o.key] = earlier.key;
+  });
+  return out;
+}

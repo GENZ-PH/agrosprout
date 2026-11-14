@@ -1,7 +1,10 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { type ReactNode, useCallback, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
+import { describeScenario } from "../src/components/what-if-core";
+import { AdjustButton, AdjustSheet } from "../src/components/AdjustControls";
+import { adjustSummary } from "../src/components/adjust-core";
 import { Button } from "../src/components/Button";
 import { CropFitCard } from "../src/components/CropFitCard";
 import { Disclaimer } from "../src/components/Disclaimer";
@@ -9,6 +12,10 @@ import { FarmMapCard } from "../src/components/FarmMapCard";
 import { FooterLinks } from "../src/components/FooterLinks";
 import { Header } from "../src/components/Header";
 import { HarvestCard } from "../src/components/HarvestCard";
+import { NasaDataButton } from "../src/components/NasaDataButton";
+import { openOverview, setPanelContext } from "../src/components/inspector-store";
+import { canDock } from "../src/components/SourceInspector";
+import type { SourceKey } from "../src/content/sources";
 import { WhatIfCard } from "../src/components/WhatIfCard";
 import { DataTracePanel } from "../src/components/DataTracePanel";
 import { ElNinoNotice } from "../src/components/ElNinoNotice";
@@ -16,16 +23,17 @@ import { SatelliteCard } from "../src/components/SatelliteCard";
 import { DemoDataContext } from "../src/components/SourceChip";
 import { YearCalendar } from "../src/components/YearCalendar";
 import type { Scenario } from "../src/engine/scenario";
-import { LotCutoutCard } from "../src/components/LotCutoutCard";
+import { LotCompareModal } from "../src/components/LotCompareModal";
 import { LotTabs } from "../src/components/LotTabs";
 import { Notice } from "../src/components/Notice";
 import { PrioritiesCard } from "../src/components/PrioritiesCard";
 import { togglePriority } from "../src/components/priorities-core";
 import { RecommendationsCard } from "../src/components/RecommendationsCard";
-import { shortCropName } from "../src/components/recommendations-core";
+import { shortCropName, topPick } from "../src/components/recommendations-core";
 import { Screen } from "../src/components/Screen";
 import { MonthsCompareList } from "../src/components/SeasonCompareCard";
 import { SoilHealthChart } from "../src/components/SoilHealthChart";
+import { TopPickCard } from "../src/components/TopPickCard";
 import { colors, MAX_CONTENT_WIDTH, radius, space, text } from "../src/components/theme";
 import { useLayout } from "../src/components/useLayout";
 import { useFarmLotViews, useLotAnalysis } from "../src/components/useLotAnalysis";
@@ -52,48 +60,80 @@ import type { Farm, Lot } from "../src/types";
 // Farm map (#124): "Your lots on the map" sits above the lot tabs as the whole-farm overview.
 // Each lot is colored by its crop fit; tapping a lot selects it like its tab.
 //
-// Lot cutout (#134): right below the farm map on every screen size, the
-// selected lot's own shape drawn twice, now vs the best other option, colored by one data layer.
+// Lot comparison (#134, #171): tapping a lot on the farm map selects it and opens a dialog with
+// the lot's own shape drawn twice, now vs the best other option, colored by one data layer. A
+// "Compare" button under the map opens it too (screen readers and keyboards can't tap the map).
 // It uses the same no-scenario results as the map, so the what-if slider doesn't change it.
+//
+// Answer first (#165): the lot tabs, then "Best plan for this lot" (TopPickCard), then
+// priorities and Recommendations. The farm map moved below the results (the lot comparison opens
+// from it in a dialog, #171), and
+// the footer links scroll with the page instead of taking a pinned strip of a phone screen.
 
 const cropName = (id: string) => cropById(id)?.name ?? id;
+/** The panel opened by itself once this visit (wide windows only). */
+let panelShown = false;
 
 export default function DashboardScreen() {
   const farm = useFarm();
   const { lot: lotParam } = useLocalSearchParams<{ lot?: string }>();
   const lot = farm.lots.find((l) => l.id === lotParam) ?? farm.lots[0];
   const views = useFarmLotViews(farm);
-  const { wide } = useLayout();
+  const { wide, width } = useLayout();
+  // On a big window (mostly judges and technicians), the NASA data panel starts open once per
+  // visit; on a phone it waits for the header button. Leaving the dashboard clears its lot.
+  useEffect(() => {
+    if (canDock(width) && !panelShown) {
+      panelShown = true;
+      openOverview();
+    }
+  }, [width]);
+  useEffect(() => () => setPanelContext(null), []);
   const selectLot = useCallback((id: string) => router.setParams({ lot: id }), []);
+  // The lot comparison dialog (#171) is open for this lot id; null = closed.
+  const [compareId, setCompareId] = useState<string | null>(null);
+  const openLot = useCallback(
+    (id: string) => {
+      selectLot(id);
+      setCompareId(id);
+    },
+    [selectLot],
+  );
+  const lotView = lot ? views[lot.id] : undefined;
+  const compareLot = farm.lots.find((l) => l.id === compareId);
+  const compareView = compareLot ? views[compareLot.id] : undefined;
   // Soft warning from the land map (Natural Earth): NASA's coarse cells read inner seas and lakes as land. Shown
   // first under the tabs, because it is about this lot and asks for action; the no-soil note (sea or ice) wins.
   const onWater = useMemo(() => (lot ? lotLooksLikeWater(LAND_WATER, lot) : false), [lot]);
+  // Floating controls (#165): the what-if belongs to each lot (null = today's climate), and the
+  // sheet with every control opens from the "Adjust results" button that stays on screen.
+  const [scenarios, setScenarios] = useState<Record<string, Scenario | null>>({});
+  const [adjustOpen, setAdjustOpen] = useState(false);
+  const scenario = lot ? (scenarios[lot.id] ?? null) : null;
+  const setScenario = useCallback(
+    (s: Scenario | null) => {
+      if (lot) setScenarios((all) => ({ ...all, [lot.id]: s }));
+    },
+    [lot],
+  );
 
   // The sample farm's numbers come from NASA POWER daily: its source chips say so (#144).
   return (
     <DemoDataContext.Provider value={lot?.data_ref.startsWith("demo/") ?? false}>
-    <Screen width="wide" footer={
-        <>
-          <FooterLinks />
-          <Disclaimer />
-        </>
-      }>
-      <Header title="Your farm" />
+    <Screen
+      width="wide"
+      overlay={
+        lot && views[lot.id]?.kind === "ready" ? (
+          <AdjustButton onPress={() => setAdjustOpen(true)} summary={adjustSummary(farm.priorities, scenario)} />
+        ) : null
+      }
+    >
+      <Header
+        title="Your farm"
+        right={<NasaDataButton />}
+      />
       {lot ? (
         <>
-          <FarmMapCard
-            lots={farm.lots}
-            views={views}
-            selectedId={lot.id}
-            onSelect={selectLot}
-            wide={wide}
-          />
-          {(() => {
-            const v = views[lot.id];
-            return v?.kind === "ready" ? (
-              <LotCutoutCard lot={lot} analysis={v.analysis} library={CROP_LIBRARY} cropName={cropName} period={v.period} />
-            ) : null;
-          })()}
           <LotTabs
             lots={farm.lots}
             selectedId={lot.id}
@@ -109,8 +149,39 @@ export default function DashboardScreen() {
               <Button label={`Move ${lot.name} on the map`} variant="secondary" href={{ pathname: "/lots", params: { lot: lot.id } }} />
             </Narrow>
           ) : null}
-          <ElNinoNotice />
-          <LotResults key={lot.id} farm={farm} lot={lot} />
+          <LotResults
+            key={lot.id}
+            farm={farm}
+            lot={lot}
+            scenario={scenario}
+            setScenario={setScenario}
+            adjustOpen={adjustOpen}
+            closeAdjust={() => setAdjustOpen(false)}
+            overview={
+              <>
+                <FarmMapCard lots={farm.lots} views={views} selectedId={lot.id} onSelect={openLot} wide={wide} />
+                {lotView?.kind === "ready" ? (
+                  <Button
+                    label={`Compare ${lot.name} with the best option`}
+                    variant="secondary"
+                    icon="shape"
+                    onPress={() => setCompareId(lot.id)}
+                    style={styles.compareButton}
+                  />
+                ) : null}
+              </>
+            }
+          />
+          {compareLot && compareView?.kind === "ready" ? (
+            <LotCompareModal
+              lot={compareLot}
+              analysis={compareView.analysis}
+              library={CROP_LIBRARY}
+              cropName={cropName}
+              period={compareView.period}
+              onClose={() => setCompareId(null)}
+            />
+          ) : null}
         </>
       ) : (
         <Narrow>
@@ -118,25 +189,45 @@ export default function DashboardScreen() {
           <Button label="Draw your lots" href="/lots" />
         </Narrow>
       )}
+      <View style={styles.footer}>
+        <FooterLinks />
+        <Disclaimer />
+      </View>
     </Screen>
     </DemoDataContext.Provider>
   );
 }
 
-function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
-  // The what-if scenario (#47) belongs to the lot being looked at; null = today's climate.
-  const [scenario, setScenario] = useState<Scenario | null>(null);
+type LotResultsProps = {
+  farm: Farm;
+  lot: Lot;
+  overview: ReactNode;
+  scenario: Scenario | null;
+  setScenario: (s: Scenario | null) => void;
+  adjustOpen: boolean;
+  closeAdjust: () => void;
+};
+
+function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, closeAdjust }: LotResultsProps) {
   const view = useLotAnalysis(farm, lot, scenario);
   const updateLot = useFarmStore((s) => s.updateLot);
   const setPriorities = useFarmStore((s) => s.setPriorities);
   const { wide } = useLayout();
 
+  // The farm map stays on the page while a lot is loading or has no results yet.
+  const withOverview = (node: ReactNode) => (
+    <>
+      {node}
+      {overview}
+    </>
+  );
+
   switch (view.kind) {
     case "loading":
-      return <Text style={text.caption}>Loading {lot.name}...</Text>;
+      return withOverview(<Text style={text.caption}>Loading {lot.name}...</Text>);
     case "no-soil":
       // NASA has no soil wetness for the spot in any month: sea or ice (hasNoSoilData), so no crop is rated.
-      return (
+      return withOverview(
         <Narrow>
           <Notice tone="warn">
             NASA has no soil moisture data for {lot.name}. This spot looks like sea or ice, not farmland, so there are no
@@ -146,7 +237,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
         </Narrow>
       );
     case "no-crops":
-      return (
+      return withOverview(
         <Narrow>
           <Notice tone="warn">Pick the crops you grow on {lot.name} to see its results.</Notice>
           <Button label="Pick crops" href={{ pathname: "/crops", params: { lot: lot.id } }} />
@@ -154,7 +245,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
       );
     case "no-data":
       // The lot sync downloads pending lots by itself when the phone has signal.
-      return (
+      return withOverview(
         <Narrow>
           {view.status === "pending" ? (
             <Notice icon="clock">Getting NASA climate data for {lot.name}. It downloads by itself when the phone has signal.</Notice>
@@ -167,7 +258,7 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
         </Narrow>
       );
     case "failed":
-      return (
+      return withOverview(
         <Narrow>
           <Notice tone="warn">Something went wrong while working out the results for {lot.name}.</Notice>
         </Narrow>
@@ -222,52 +313,71 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
       const satellite =
         data.kind === "demo" ? <SatelliteCard farmId={data.id} lotName={lot.name} info={{ id: "satellite-checks", period }} /> : null;
       const trace = <DataTracePanel data={data} />;
+      const a = analysis.rotations.options.find((o) => o.key === "A");
+      const pick = topPick(analysis.rotations.options);
+      const topCard = pick ? (
+        <TopPickCard
+            lotName={lot.name}
+            pick={pick}
+            a={a}
+            explanation={analysis.explanations.find((e) => e.option_key === pick.key)}
+            cropName={cropName}
+          monthsHref={analysis.stage === 1 ? { pathname: "/months", params: { lot: lot.id } } : undefined}
+          wide={wide}
+        />
+      ) : null;
+      const monthsHref = { pathname: "/months", params: { lot: lot.id } } as const;
       return (
         <>
-          {analysis.stage === 1 ? (
+          {scenario ? (
             <Narrow>
-              <Notice tone="warn">
-                Option A (Your crops) uses typical planting months for now, so it is an assumption. You can give your own
-                months.
+              <Notice tone="warn" icon="alert">
+                {`What-if on: ${describeScenario(scenario)}. The results below are for this what-if, not a forecast.`}
               </Notice>
-              <Button
-                label="Give your planting months"
-                variant="link"
-                href={{ pathname: "/months", params: { lot: lot.id } }}
-              />
+              <Button label="Back to today's climate" variant="secondary" onPress={() => setScenario(null)} />
             </Narrow>
           ) : null}
-          {wide ? (
-            <>
-              <View style={styles.row}>
-                <View style={styles.col}>{fit}</View>
-                <View style={styles.col}>{soil}</View>
-              </View>
-              {priorities}
-              {recommendations}
-              {yearCalendar}
-              {monthsCompare}
-              {satellite}
-              {harvestCard}
-              {whatIf}
-              {trace}
-              <MonthsPrompt lot={lot} stage={analysis.stage} />
-            </>
-          ) : (
-            <>
-              {fit}
-              {priorities}
-              {recommendations}
-              {yearCalendar}
-              {monthsCompare}
-              {harvestCard}
-              {whatIf}
-              {soil}
-              {satellite}
-              {trace}
-              <MonthsPrompt lot={lot} stage={analysis.stage} />
-            </>
-          )}
+          {topCard}
+          <ElNinoNotice />
+          {recommendations}
+          {yearCalendar}
+          {monthsCompare}
+          {fit}
+          {soil}
+          {overview}
+          {harvestCard}
+          <MonthsPrompt lot={lot} stage={analysis.stage} />
+          <AdjustSheet visible={adjustOpen} onClose={closeAdjust}>
+            {priorities}
+            {whatIf}
+            <View style={styles.sheetLinks}>
+              <Button
+                label={analysis.stage === 1 ? "Give your planting months" : "Change your planting months"}
+                variant="secondary"
+                onPress={() => {
+                  closeAdjust();
+                  router.push(monthsHref);
+                }}
+              />
+              <Button label="Add a place where you sell or store your harvest" variant="secondary"
+                onPress={() => {
+                  closeAdjust();
+                  router.push("/places");
+                }}
+              />
+            </View>
+          </AdjustSheet>
+          <PanelLot
+            lotName={lot.name}
+            period={period}
+            demo={data.kind === "demo"}
+            extra={
+              <>
+                {satellite}
+                {trace}
+              </>
+            }
+          />
         </>
       );
     }
@@ -326,6 +436,18 @@ function MonthsPrompt({ lot, stage }: { lot: Lot; stage: 1 | 2 }) {
   );
 }
 
+/**
+ * Tells the NASA data panel (#165) which lot the dashboard shows, and hands it the cards that
+ * live there (satellite checks, NASA requests). Renders nothing itself.
+ */
+function PanelLot({ lotName, period, demo, extra }: { lotName: string; period: string; demo: boolean; extra: ReactNode }) {
+  useEffect(() => {
+    const sources: SourceKey[] = demo ? ["power-daily", "srtm", "imerg", "smap"] : ["power"];
+    setPanelContext({ lotName, period, demo, sources, extra });
+  });
+  return null;
+}
+
 /** Keeps messages and buttons at reading width on a wide screen. */
 function Narrow({ children }: { children: ReactNode }) {
   return <View style={styles.narrow}>{children}</View>;
@@ -334,6 +456,7 @@ function Narrow({ children }: { children: ReactNode }) {
 const styles = StyleSheet.create({
   // Each card keeps its own height, so a short card doesn't get an empty stretched bottom.
   row: { flexDirection: "row", alignItems: "flex-start", gap: space.lg },
+  compareButton: { alignSelf: "flex-start" },
   col: { flex: 1, minWidth: 0 },
   section: { gap: space.lg },
   narrow: { width: "100%", maxWidth: MAX_CONTENT_WIDTH, gap: space.lg },
@@ -347,4 +470,6 @@ const styles = StyleSheet.create({
   },
   promptRow: { flexDirection: "row", gap: space.sm },
   promptCol: { gap: space.sm },
+  sheetLinks: { gap: space.sm },
+  footer: { gap: space.xs, marginTop: space.lg },
 });
