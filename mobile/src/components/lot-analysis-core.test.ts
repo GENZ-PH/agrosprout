@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ILIGAN_LOT_FIXTURE } from "../engine/__fixtures__/iligan-lot.fixture";
 import type { CropLibrary, Lot, LotCrop, LotData } from "../types";
-import { lotView, monthsCompare, readLotData, type DemoFarms } from "./lot-analysis-core";
+import { hasNoSoilData, lotView, monthsCompare, readLotData, type DemoFarms } from "./lot-analysis-core";
 
 // Read from disk: Node's test runner can't import JSON without import attributes.
 const readJson = <T>(...path: string[]) => JSON.parse(readFileSync(join(process.cwd(), ...path), "utf8")) as T;
@@ -133,4 +133,25 @@ test("months compare (S5 on the dashboard): a crop with no months uses its usual
   const given = monthsCompare({ details, crops: [{ crop_id: "lowland-rice", seasons: [{ plant_month: 11, harvest_month: 3 }] }] }, demo, library);
   assert.deepEqual(given.assumed, []);
   assert.deepEqual(given.planting.seasons.map((s) => s.yours.plant_month), [11]);
+});
+
+/** The lot's data with root-zone soil wetness replaced, as NASA POWER returns it over sea or land ice. */
+const withWetness = (wetness: (number | null)[]): LotData => ({
+  ...ILIGAN_LOT_FIXTURE,
+  monthly: { ...ILIGAN_LOT_FIXTURE.monthly, rootzone_wetness: wetness },
+});
+const NO_SOIL = withWetness(Array(12).fill(null));
+
+test("hasNoSoilData: true only when root-zone soil wetness is missing in every month (sea or land ice)", () => {
+  assert.equal(hasNoSoilData(NO_SOIL), true);
+  assert.equal(hasNoSoilData(ILIGAN_LOT_FIXTURE), false);
+  assert.equal(hasNoSoilData(demo), false, "the sample farm has soil data");
+  const oneMonth = Array<number | null>(12).fill(null);
+  oneMonth[6] = 0.8;
+  assert.equal(hasNoSoilData(withWetness(oneMonth)), false, "a land lot with a few missing months is not flagged");
+});
+
+test("lotView: no soil data shows no results, before asking for crops", () => {
+  assert.deepEqual(lotView({ farm, lot: lot([rice]), data: NO_SOIL, library }), { kind: "no-soil" });
+  assert.deepEqual(lotView({ farm, lot: lot([]), data: NO_SOIL, library }), { kind: "no-soil" });
 });

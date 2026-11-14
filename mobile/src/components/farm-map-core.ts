@@ -48,6 +48,8 @@ export function farmMapLotStatus(view: MapLotView): FarmMapLotStatus {
       const level = lotFitLevel(view.analysis.crop_fits);
       return { level, color: FIT_COLORS[level], status: FIT_LABELS[level] };
     }
+    case "no-soil":
+      return { level: null, color: NO_RESULT_COLOR, status: "No soil data" };
     case "no-crops":
       return { level: null, color: NO_RESULT_COLOR, status: "Pick crops" };
     case "no-data":

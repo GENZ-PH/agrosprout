@@ -22,7 +22,22 @@ export async function readLotData(dataRef: string, store: Pick<LotDataStore, "ge
   return null;
 }
 
+/**
+ * True when the lot's root-zone soil wetness (NASA POWER GWETROOT) is missing in every month: the spot is sea or
+ * land ice, not farmland. Checked on the POWER monthly API on 2026-11-14 (2001-2025): open sea (12.0 N, 130.0 E)
+ * and the Greenland (72.0 N, 40.0 W) and Antarctic (80.0 S, 0.0) ice returned -999 in all 300 months; land points
+ * (near Iligan, Iligan Bay's land-and-sea cell, the Sahara) had a value every month. Water near the shore shares a
+ * grid cell with land, so it is not caught here.
+ */
+export function hasNoSoilData(data: Pick<LotData, "monthly">): boolean {
+  // Badly saved data is not "sea": it goes on to the engine, whose error the dashboard shows.
+  const wetness: unknown = data.monthly?.rootzone_wetness;
+  return Array.isArray(wetness) && wetness.length > 0 && wetness.every((v) => typeof v !== "number" || !Number.isFinite(v));
+}
+
 export type LotView =
+  /** NASA has no soil data for the spot (`hasNoSoilData`): sea or ice. No results; the farmer moves the lot. */
+  | { kind: "no-soil" }
   /** The farmer has not picked crops for this lot yet (S2). */
   | { kind: "no-crops" }
   /**
@@ -72,6 +87,8 @@ export function monthsCompare(lot: Pick<Lot, "crops" | "details">, data: LotData
 }
 
 export function lotView({ farm, lot, data, library, scenario }: LotViewInput): LotView {
+  // Before "no crops": choosing crops for the sea is pointless.
+  if (data && hasNoSoilData(data)) return { kind: "no-soil" };
   if (lot.crops.length === 0) return { kind: "no-crops" };
   if (!data) return { kind: "no-data", status: lot.data_status };
   try {
