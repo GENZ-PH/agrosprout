@@ -120,6 +120,17 @@ function LotResults({ farm, lot }: { farm: Farm; lot: Lot }) {
   switch (view.kind) {
     case "loading":
       return <Text style={text.caption}>Loading {lot.name}...</Text>;
+    case "no-soil":
+      // NASA has no soil wetness for the spot in any month: sea or ice (hasNoSoilData), so no crop is rated.
+      return (
+        <Narrow>
+          <Notice tone="warn">
+            NASA has no soil data for {lot.name}. This spot looks like sea or ice, not farmland, so there are no results. Move the
+            lot onto your farm.
+          </Notice>
+          <Button label={`Move ${lot.name} on the map`} href={{ pathname: "/lots", params: { lot: lot.id } }} />
+        </Narrow>
+      );
     case "no-crops":
       return (
         <Narrow>

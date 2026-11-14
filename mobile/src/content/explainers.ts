@@ -107,10 +107,10 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     id: "top-crops",
     title: "Top 3 for this lot",
     sources: ["power", "fao56", "ecocrop", "crop-library", "farmer"],
-    what: "The 3 crops from our crop list that suit this lot best, and the planting months when each one does best. Tap one to choose it as the lot's crop, or search for any other crop you grow.",
+    what: "Up to 3 crops from our crop list that suit this lot best, and the planting months when each one does best. Tap one to choose it as the lot's crop, or search for any other crop you grow.",
     source:
       "Rain, temperature and soil wetness from NASA POWER at this lot ({period}). Crop water use from FAO-56 (Allen and others, 1998) and temperature ranges from the FAO Ecocrop database, each cited in the crop library (crops.json). It is the same check as \"Your crops here\", and your answer about the lot's water is used. Crop names in the search: FAO Ecocrop © FAO, via OpenCLIM/ecocrop.",
-    read: "Each crop is tried as one season planted in each month of the year. Crops that are a Good fit in some month come first, then Watch out, then Poor fit. Among crops with the same result, the one with more planting months at that result comes first. \"If planted in\" gives those months. A Watch out or Poor fit crop also says its main problem.",
+    read: "Each crop is tried as one season planted in each month of the year. Crops that are a Good fit in some month come first, then Watch out. Poor fit crops are not listed: when every crop is a Poor fit in every month, it says that none grow well here. Among crops with the same result, the one with more planting months at that result comes first. \"If planted in\" gives those months. A Watch out or Poor fit crop also says its main problem.",
     limits: [
       "The order among equally good crops is a team assumption: a crop with more good planting months ranks higher.",
       "Each crop is checked as one season on its own.",

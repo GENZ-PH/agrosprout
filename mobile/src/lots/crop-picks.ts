@@ -43,7 +43,9 @@ export const lotsWithoutCrops = (lots: Pick<Lot, "name" | "crops">[]) => lots.fi
 export type DataLine = { text: string; tone: "waiting" | "ready" | "error" };
 
 /** The per-lot progress line for the lot's NASA data (driven by `data_status`). */
-export function dataLine(status: DataStatus, online: boolean): DataLine {
+/** `noSoil` = the lot's data is on the phone but has no soil wetness in any month (`hasNoSoilData`): sea or ice. */
+export function dataLine(status: DataStatus, online: boolean, noSoil = false): DataLine {
+  if (noSoil) return { text: "No NASA soil data here. This spot looks like sea or ice, not farmland.", tone: "error" };
   if (status === "ready") return { text: "NASA climate data ready", tone: "ready" };
   if (status === "error") return { text: "Couldn't load the NASA climate data.", tone: "error" };
   return online

@@ -10,12 +10,13 @@ import { Icon } from "../src/components/Icon";
 import { Screen } from "../src/components/Screen";
 import { colors, MIN_TOUCH, radius, space, text } from "../src/components/theme";
 import { TopCrops } from "../src/components/TopCrops";
+import { hasNoSoilData } from "../src/components/lot-analysis-core";
 import { useLotData } from "../src/components/useLotAnalysis";
 import { CROP_LIBRARY, cropById } from "../src/data/crops";
 import { ECOCROP_NAMES } from "../src/data/ecocrop";
 import { chooseCrop, cropShortName, dataLine, isOtherCrop, lotsWithoutCrops, otherCropName, toggleCrop } from "../src/lots/crop-picks";
 import { buildSearchEntries } from "../src/lots/crop-search-core";
-import { safeTopCrops } from "../src/lots/suggest-core";
+import { safeLotTop } from "../src/lots/suggest-core";
 import { areaLabel, isPinLot } from "../src/lots/lot-editor";
 import { useFarmStore } from "../src/state/farm-store";
 import type { Lot, LotCrop } from "../src/types";
@@ -25,11 +26,13 @@ import type { Lot, LotCrop } from "../src/types";
 // the top 3 crops for the lot from its NASA data (once the data is on the phone), and the lot's crop. A farm saved earlier may still have
 // several crops on a lot: they all show, and the next crop chosen replaces them. Saved as it is tapped. The NASA data for each lot
 // keeps loading in the background (lot sync); Next never waits for it. Onboarding ends here.
+// A lot with no NASA soil data (sea or ice, `hasNoSoilData`) gets no top crops and a "Move lot" button instead.
 // /crops?lot=<id> shows one lot only: the lot just added with "+ Add lot" (D32), or
 // a lot whose crops are missing on the dashboard. Next goes back to that lot's results.
 
 /** Built once: our crops plus every Ecocrop species, with their names ready to match. */
 const SEARCH_ENTRIES = buildSearchEntries(CROP_LIBRARY, ECOCROP_NAMES);
+const NO_TOP: ReturnType<typeof safeLotTop> = { top: [], noFit: null };
 
 const useOnline = () =>
   useSyncExternalStore(
@@ -100,11 +103,15 @@ function LotCrops({ lot }: { lot: Lot }) {
   const updateLot = useFarmStore((s) => s.updateLot);
   const online = useOnline();
   const data = useLotData(lot);
-  const top = useMemo(() => (data ? safeTopCrops(lot.details, data, CROP_LIBRARY) : []), [data, lot.details]);
+  const noSoil = data ? hasNoSoilData(data) : false;
+  const { top, noFit } = useMemo(
+    () => (data && !noSoil ? safeLotTop(lot.details, data, CROP_LIBRARY) : NO_TOP),
+    [data, noSoil, lot.details],
+  );
 
   // One crop per lot: a crop counts as chosen only when it is the lot's only crop.
   const chosen = lot.crops.length === 1 ? lot.crops[0].crop_id : null;
-  const line = dataLine(lot.data_status, online);
+  const line = dataLine(lot.data_status, online, noSoil);
 
   return (
     <View style={styles.section}>
@@ -129,7 +136,14 @@ function LotCrops({ lot }: { lot: Lot }) {
           color={line.tone === "ready" ? colors.green : line.tone === "error" ? colors.amber : colors.muted}
         />
         <Text style={[text.small, styles.flex]}>{line.text}</Text>
-        {line.tone === "error" ? (
+        {noSoil ? (
+          <Button
+            label="Move lot"
+            variant="quiet"
+            href={{ pathname: "/lots", params: { lot: lot.id } }}
+            accessibilityLabel={`Move ${lot.name} on the map`}
+          />
+        ) : line.tone === "error" ? (
           <Button
             label="Try again"
             variant="quiet"
@@ -139,10 +153,11 @@ function LotCrops({ lot }: { lot: Lot }) {
         ) : null}
       </View>
 
-      {data ? (
+      {data && !noSoil ? (
         <TopCrops
           lotName={lot.name}
           top={top}
+          noFit={noFit}
           period={data.period}
           chosen={chosen}
           onChoose={(id) => setCrops(lot.id, chooseCrop(lot.crops, id))}

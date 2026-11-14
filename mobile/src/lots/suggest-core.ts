@@ -1,4 +1,4 @@
-import { cropFit, type CropFit, type FitLevel, type FitReason } from "../engine/cropFit";
+import { cropFit, type CropFit, type FitLevel, type FitReason, type FitReasonCode } from "../engine/cropFit";
 import { cropSeasonDays, harvestMonthOf } from "../engine/season";
 import type { CropLibrary, LotData, LotDetails } from "../types";
 import { fitReasonText } from "../components/recommendations-core";
@@ -57,25 +57,61 @@ export function lotSuggestions(details: LotDetails, data: Pick<LotData, "monthly
 }
 
 /**
- * The `n` crops that suit the lot best: best level first (Good, Watch out, Poor; unknown never), then more
- * planting months at that level (a team assumption: a wider window is more forgiving), then library order.
+ * The `n` crops that suit the lot best: best level first (Good, then Watch out), then more planting months at
+ * that level (a team assumption: a wider window is more forgiving), then library order. Poor fit and unknown
+ * crops are never listed: a "top" crop that grows poorly in every month would mislead (`noCropFits` covers that).
  */
 export function topCrops(s: LotSuggestions, n = 3): CropSuggestion[] {
   return s.crops
     .map((c, i) => ({ c, i }))
-    .filter(({ c }) => c.level !== "unknown")
+    .filter(({ c }) => c.level === "good" || c.level === "watch")
     .sort((a, b) => RANK[a.c.level] - RANK[b.c.level] || b.c.best_months.length - a.c.best_months.length || a.i - b.i)
     .slice(0, n)
     .map(({ c }) => c);
 }
 
-/** `topCrops(lotSuggestions(...))` that never throws: bad saved data gives no top crops, not a blank S2 screen. */
-export function safeTopCrops(details: LotDetails, data: Pick<LotData, "monthly">, library: CropLibrary, n?: number): CropSuggestion[] {
+/** The lot's trouble in plain words, from a crop's main reason. */
+export type NoFitTrouble = "too dry" | "too cold" | "too hot" | "too wet";
+const TROUBLE: Partial<Record<FitReasonCode, NoFitTrouble>> = {
+  water: "too dry",
+  "dry-year": "too dry",
+  "too-cold": "too cold",
+  cool: "too cold",
+  "too-hot": "too hot",
+  warm: "too hot",
+  waterlogging: "too wet",
+};
+
+/**
+ * Set when every crop that can be rated is a Poor fit in every planting month (e.g. a desert lot): S2 says none of
+ * our crops grow well here instead of listing Poor crops. `why` is the trouble of more than half of those crops'
+ * main reasons, or null when they differ. Null when some crop fits, or when no crop can be rated at all.
+ */
+export function noCropFits(s: LotSuggestions): { why: NoFitTrouble | null } | null {
+  const rated = s.crops.filter((c) => c.level !== "unknown");
+  if (rated.length === 0 || rated.some((c) => c.level !== "poor")) return null;
+  const counts = new Map<NoFitTrouble, number>();
+  for (const c of rated) {
+    const t = c.reasons[0] ? TROUBLE[c.reasons[0].code] : undefined;
+    if (t) counts.set(t, (counts.get(t) ?? 0) + 1);
+  }
+  const [why] = [...counts].find(([, n]) => n > rated.length / 2) ?? [null];
+  return { why };
+}
+
+/** S2's top block for a lot: `topCrops` and `noCropFits`. Never throws: bad saved data gives an empty block. */
+export function safeLotTop(
+  details: LotDetails,
+  data: Pick<LotData, "monthly">,
+  library: CropLibrary,
+  n?: number,
+): { top: CropSuggestion[]; noFit: { why: NoFitTrouble | null } | null } {
   try {
-    return topCrops(lotSuggestions(details, data, library), n);
+    const s = lotSuggestions(details, data, library);
+    return { top: topCrops(s, n), noFit: noCropFits(s) };
   } catch (e) {
     console.warn(`[crops] top crops skipped: ${e instanceof Error ? e.message : String(e)}`);
-    return [];
+    return { top: [], noFit: null };
   }
 }
 
