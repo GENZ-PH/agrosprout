@@ -42,12 +42,19 @@ Cited in the code where they're used (`mobile/src/engine/params.ts`, `mobile/src
 
 ## Online services the app calls
 
-Free public services, light use only. None needs an account or a key.
+Free public services, light use only, none needing an account or a key; except the optional Claude API call, which our API Worker makes with a paid key.
 
 ### NASA POWER (climate per lot)
 
 - Monthly point API, called once per lot with the centroid rounded to 0.1°.
 - Source and terms: https://power.larc.nasa.gov/docs/services/api/
+
+### Anthropic Claude API ("Explain this plan with SI", optional, D33)
+
+- Called only by our API Worker (`api/src/routes/explain.ts`), never from the phone directly, and only when the farmer taps **Explain this plan with SI**. Model `claude-opus-5-5`.
+- Sent: the engine's results for the plan on screen (crop names, scores, the engine's own why, trade-off and check-locally lines, confidence). Not sent: location, lot shape, lot or farm names. Nothing is stored by us; identical requests are answered from the Cloudflare edge cache for a day.
+- The answer is shown as "SI-generated", and the Worker drops it if it contains a number that is not in the engine results.
+- Needs a paid API key, kept as a Worker secret (`ANTHROPIC_API_KEY`). Terms: Anthropic Commercial Terms and Usage Policy (https://www.anthropic.com/legal/commercial-terms, https://www.anthropic.com/legal/aup), not yet checked line by line.
 
 ### Wikipedia and Wikimedia Commons (pictures of search-only crops)
 

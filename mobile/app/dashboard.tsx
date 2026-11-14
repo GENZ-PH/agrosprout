@@ -324,6 +324,7 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
             cropName={cropName}
           monthsHref={analysis.stage === 1 ? { pathname: "/months", params: { lot: lot.id } } : undefined}
           wide={wide}
+          componentsLeftOut={analysis.rotations.components_left_out}
         />
       ) : null;
       const monthsHref = { pathname: "/months", params: { lot: lot.id } } as const;
