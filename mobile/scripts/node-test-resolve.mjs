@@ -8,8 +8,16 @@ import { registerHooks } from "node:module";
 const RELATIVE = /^\.{1,2}\//;
 const HAS_EXT = /\.[cm]?[jt]sx?$|\.json$/;
 
+// Metro and tsc import JSON files without `with { type: "json" }`; Node needs that attribute,
+// so it is added here for .json files (the app code stays as it is).
+const JSON_FILE = /\.json$/;
+
 registerHooks({
   resolve(specifier, context, nextResolve) {
+    if (JSON_FILE.test(specifier) && !context.importAttributes?.type) {
+      const r = nextResolve(specifier, { ...context, importAttributes: { ...context.importAttributes, type: "json" } });
+      return { ...r, importAttributes: { ...r.importAttributes, type: "json" } };
+    }
     try {
       return nextResolve(specifier, context);
     } catch (err) {

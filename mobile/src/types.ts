@@ -314,6 +314,14 @@ export interface TawRange {
   fao_texture_class?: string;
 }
 
+/** FAO Ecocrop crop names for the S2 search (#152), built by `pipeline/build_ecocrop_names.py`. Names only, never scored. */
+export interface EcocropNames {
+  meta: { source: string; url: string; commit: string; retrieved: string; licence: string; credit: string; species_count: number };
+  /** Names of the Ecocrop species behind each library crop, by `crop_id` (those species are not in `species`). */
+  library: Record<string, { sci: string; names: string[] }>;
+  species: { code: string; sci: string; names: string[] }[];
+}
+
 export interface CropLibrary {
   meta: Record<string, unknown>;
   /** Average ponded-rice percolation + seepage, mm per month. */

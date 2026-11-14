@@ -23,7 +23,8 @@ export type ExplainerId =
   | "year-calendar"
   | "what-if"
   | "farm-map"
-  | "lot-cutout";
+  | "lot-cutout"
+  | "top-crops";
 
 export interface Explainer {
   id: ExplainerId;
@@ -92,6 +93,23 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
       "The numbers describe a NASA grid cell, roughly 50 km across, not your exact field, so lots close together will often share a color.",
       "The cut-offs between Good fit, Watch out and Poor fit are team assumptions that still need a local check.",
       "Without signal the photo under your lots may not load; the lots and their colors still show.",
+    ],
+  },
+  "top-crops": {
+    id: "top-crops",
+    title: "Top 3 for this lot",
+    what: "The 3 crops from our crop list that suit this lot best, and the planting months when each one does best. Tap one to choose it as the lot's crop, or search for any other crop you grow.",
+    source:
+      "Rain, temperature and soil wetness from NASA POWER at this lot ({period}). Crop water use from FAO-56 (Allen and others, 1998) and temperature ranges from the FAO Ecocrop database, each cited in the crop library (crops.json). It is the same check as \"Your crops here\", and your answer about the lot's water is used. Crop names in the search: FAO Ecocrop © FAO, via OpenCLIM/ecocrop.",
+    read: "Each crop is tried as one season planted in each month of the year. Crops that are a Good fit in some month come first, then Watch out, then Poor fit. Among crops with the same result, the one with more planting months at that result comes first. \"If planted in\" gives those months. A Watch out or Poor fit crop also says its main problem.",
+    limits: [
+      "The order among equally good crops is a team assumption: a crop with more good planting months ranks higher.",
+      "Each crop is checked as one season on its own.",
+      "\"Your crops here\" on your results checks your own months, or the usual months if you gave none, so it can say something different.",
+      "Climate is for a coarse grid cell, not your field alone.",
+      "Soil type and elevation are not part of this check.",
+      "Crops found only by search are not scored.",
+      "Please check with your agricultural technician before you change crops.",
     ],
   },
   "lot-cutout": {
@@ -309,9 +327,11 @@ export const DATA_SOURCES: readonly DataSource[] = [
   },
   {
     name: "FAO Ecocrop database",
-    used_for: "The temperature range each crop tolerates.",
+    used_for:
+      "The temperature range each crop tolerates, and the crop names you can search for when you pick crops. Crop names: FAO Ecocrop © FAO, via OpenCLIM/ecocrop.",
     period: "Database values",
     resolution: "Per crop, not per place",
+    url: "https://github.com/OpenCLIM/ecocrop",
   },
   {
     name: "Crop library (crops.json)",
@@ -328,17 +348,24 @@ export const DATA_SOURCES: readonly DataSource[] = [
   },
   {
     name: "PSA OpenSTAT",
-    used_for: "Typical yields for palay and corn by province.",
-    period: "Latest full year in the file",
-    resolution: "Province, yearly",
+    used_for: "Typical yield per hectare for each crop with a PSA figure (palay, corn, mungbean, peanut, soybean, string bean, sweet potato, eggplant), used to estimate how many trips a harvest needs. Cited per crop in crops.json.",
+    period: "2022-2024",
+    resolution: "Lanao del Norte, yearly (soybean: Northern Mindanao)",
     url: "https://openstat.psa.gov.ph/",
   },
   {
     name: "NOAA Climate Prediction Center, Oceanic Niño Index",
-    used_for: "Context on El Niño and La Niña for the current season.",
-    period: "Latest season in the file",
+    used_for: "This season's El Niño context, shown on the dashboard next to the PAGASA advisory. Not used in any score.",
+    period: "Latest season in the file (ASO 2026)",
     resolution: "Ocean-wide, three-month averages",
     url: "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
+  },
+  {
+    name: "DOST-PAGASA El Niño advisory",
+    used_for: "This season's El Niño context, shown on the dashboard. Not used in any score.",
+    period: "Issued 2026-11-04",
+    resolution: "Whole country",
+    url: "https://pagasa.dost.gov.ph/press-release/233",
   },
 ];
 
