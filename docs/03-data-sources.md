@@ -18,6 +18,56 @@ Example query (reuse in the pipeline):
 https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M,T2M_MAX,T2M_MIN,PRECTOTCORR,GWETROOT,GWETTOP,RH2M,ALLSKY_SFC_SW_DWN,WS2M&community=AG&longitude=124.24&latitude=8.23&start=20010101&end=20251231&format=JSON
 ```
 
+## Extra API checks (2026-11-14, run from the team network with `curl`)
+
+Quick reachability and CORS tests of sources beyond POWER. "CORS" = browser can call it directly with no proxy.
+
+| Source | Result | Verdict |
+|---|---|---|
+| **NASA GIBS WMTS** (`gibs.earthdata.nasa.gov/wmts/epsg3857/best/...`) | HTTP 200 for an `IMERG_Precipitation_Rate` tile; `access-control-allow-origin: *`; capabilities XML lists `IMERG_Precipitation_Rate`, `MODIS_Terra_NDVI_8Day`, `MODIS_Terra_L3_NDVI_Monthly`, `VIIRS_*_NDVI_*` | ✅ No auth, CORS open. **Optional map overlay** (imagery only, no numbers for the engine). My one NDVI tile request returned 404, so check the exact layer/date/tile matrix before use. |
+| **Open-Meteo Elevation** (`api.open-meteo.com/v1/elevation`) | HTTP 200 in ~1 s, returned 6 m at 8.23°N, 124.24°E (matches OpenTopoData SRTM). One earlier call timed out. | ⚠️ Works. Not a NASA source, so check its terms and cite it. |
+| **Open-Meteo ERA5 archive** (`archive-api.open-meteo.com/v1/archive`) | HTTP 200 in ~1 s, `access-control-allow-origin: *`. | ✅ Possible no-account ERA5 cross-check, replacing the CDS account. Check the non-commercial terms first. |
+| **OpenTopoData SRTM 30 m** (`api.opentopodata.org/v1/srtm30m`) | HTTP 200 in ~0.4 s, 6 m at the same point, but **no CORS header returned**. | ❌ Don't call from the browser. Use it in `pipeline/` only. See the SRTM notes below. |
+| **ISRIC SoilGrids REST** (`rest.isric.org`) | Timed out twice (20-25 s, 0 bytes). | ❌ Unreliable now. Keep the farmer-picks-soil-texture fallback. |
+| **AppEEARS** (SMAP, MODIS, ECOSTRESS) | Not tested. Needs an Earthdata login. | Pipeline only, as planned above. |
+
+Elevation caveat: both elevation APIs agree on 6 m, so the Iligan coastal point is low. The POWER cell-vs-lowland caveat above is still unresolved.
+
+**SRTM via Open Topo Data** (from https://www.opentopodata.org/datasets/srtm/, read 2026-11-14):
+- **Citation wording:** "NASA SRTM v3 (1 arc-second, ~30 m), served via Open Topo Data". The public API uses SRTM Version 3 at both `srtm30m` and `srtm90m`. The files originate from USGS/Earthdata.
+- **Coverage:** −60° to 60° latitude, so the Philippines is covered.
+- **Ocean caveat:** ocean areas inside a tile read **0 m**, and points outside any tile return `null`. Sanity-check coastal lot points (handle `null`, and flag a 0 m result near the shoreline).
+- **Self-hosting:** possible, but the tiles need an Earthdata login to download. Not worth it for 40 hours.
+- **Not documented on that page:** CORS and rate limits. Our test saw no CORS header, so use it in `pipeline/` only (pre-bake the demo farm).
+
+## Philippine sources (researched 2026-11-14)
+
+Found by a research pass over PSA, DA-BSWM, PhilRice, PAGASA, NOAA and community hazard archives. "Verified" means the team's `curl` test succeeded today. Everything else is from the research pass and still needs a manual check.
+
+| Source | What | Status | Our use |
+|---|---|---|---|
+| **PSA OpenSTAT, crop production and area** (`openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS`) | Palay and corn production (`0012E4EVCP0`) and area harvested (`0022E4EAHC0`) by province, quarterly. Lanao del Norte = Geolocation code `80`. Other tables cover fruit, vegetable, root and industrial crops. | ✅ Verified. CORS `*`. A Lanao del Norte query returned values for Q1 2023 to Q4 2025. | **Enrich, near-Core for "local yield".** Yield = production ÷ area. Cite as "PSA OpenSTAT, Lanao del Norte, 2023-2025". |
+| **PSA OpenSTAT, farmgate prices** (`.../DB/2M/FG`) | 11 tables by province. Lanao del Norte is present. | ⚠️ Verified, but **every table ends in 2020** (cutflowers start in 2006, others 1990). | Use only as a labelled historical price, "last available 2020". The quarterly table `0032M4AFN03` (found in the research pass) is not yet checked. |
+| **NOAA CPC ONI** (`cpc.ncep.noaa.gov/data/indices/oni.ascii.txt`) | Oceanic Niño Index, monthly, 1950 onward | ✅ Verified, plain text. CORS not tested (the server sent no CORS header on the test request). | Bundle in the pipeline as an El Niño / La Niña context line, cited. |
+| **PAGASA El Niño advisories** (`pagasa.dost.gov.ph/climate/el-nino-la-nina/advisories`) | Advisory No. 6 issued 2026-11-03 (per the research pass) | PDF only. | Cite and summarize by hand. Don't fetch in the app. |
+| **open-hazards-ph** (`s3.amazonaws.com/open-hazards-ph/lipad/`) | Archived NOAH/LiPAD flood hazard layers for Iligan at 5, 25 and 100 years (10 m) | ✅ File exists (805 KB zip). Files date from 2018. Licence to check before shipping. | Stretch: simplify to a flood-risk class per lot. Label the 2018 vintage. |
+| **PhilRice seed database** (`dbmp.philrice.gov.ph/seeds/...`) | Rice variety maturity days and yield | HTML only, unverified by us. | Pre-bake crop-cycle values for rice, with citation. |
+| **BSWM Lanao del Norte suitability maps** (`bswm.da.gov.ph/wp-content/uploads/Lanao-del-Norte_SUITABILITY-rice.pdf`) | Rice, fertility, pH and cassava suitability maps (2016 project) | PDF only, no GIS layer found. | Reference or manual digitizing only. |
+| **BSWM FertMap** (`nshp.bswm.da.gov.ph/fertmap/`) | Soil pH, N, P, K, texture by barangay | Web app, no API found. | Link out. Don't scrape. |
+| **Geofabrik OSM extract** · **ESA WorldCover 10 m** | Roads and land use · land cover | Not tested. ODbL · CC-BY 4.0. | Pre-bake only, with attribution. |
+
+**Pipeline gotchas found in testing (PSA):**
+- The PSA API sits behind Cloudflare. Python's default `urllib` user agent got **403**. Set a normal `User-Agent` header.
+- Request `"format": "json"` or `"csv"`. The `json-stat2` format returned a single placeholder value (`1.0`) instead of the data.
+- With `"format": "csv"`, quarterly, semester and annual periods all return data for Lanao del Norte (annual palay 2024 = 200,017.97 t in the test).
+
+**Gaps (no structured source found):**
+- Planting months or crop calendars for Lanao del Norte. Keep default windows labelled as assumptions (rule 3) until one is found.
+- Current farmgate prices after 2020. DA price monitoring is PDF-only and Metro Manila-focused.
+- Lanao del Norte climate type is reported inconsistently (Type III vs Type IV). Resolve it with the PAGASA map before using it.
+
+**Dead ends:** GeoRiskPH and HazardHunter (login or data agreement), PRiSM detailed data (by request), PAGASA seasonal forecast and normals (PDF or image only), HDX and RKB (not opened).
+
 ## Tiering
 
 - **Core**: the MVP can't work without it. Must be reliable and need no auth, or only quick auth.
