@@ -14,7 +14,7 @@
 `TBD` (public link; ≤7 slides or ≤30-second video; tested in incognito ☐)
 
 ## Link to Final Project
-`TBD` (deployed app URL + GitHub repo; tested in incognito ☐)
+`TBD` (web build URL + Android APK link + public GitHub repo; tested in incognito ☐)
 
 ## Detailed Project Description
 - What exactly does it do?
@@ -41,7 +41,7 @@
 
 - *(e.g. ESA Copernicus Sentinel-2, if used)*
 - FAO-56 (Allen et al., 1998), crop coefficients and Penman-Monteith method
-- *(libraries: React, Vite, Chart.js/Recharts, Workbox, pandas…)*
+- *(libraries: Expo / React Native, expo-router, react-native-webview, Leaflet, Terra Draw, Turf.js, AsyncStorage, chart library, pandas…)*
 - *(images, fonts, icons with licenses)*
 
 ## Final checks

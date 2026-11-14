@@ -1,13 +1,13 @@
 # 04 — Gap Analysis: Initial Proposal vs. Challenge & Rubric
 
 > Compares `docs/reference/initial-proposal.md` (the team's AgriResilience concept) with the official challenge text ([01](01-challenge-brief.md)) and the judging rubric ([02](02-submission-and-judging.md)).
-> The concept itself (offline-first PWA, color-coded rotation calendar, NASA-driven, cloud processing with a light client) is **kept**. This doc only lists what to add, fix, or cut.
+> The concept itself (offline-first app, color-coded rotation calendar, NASA-driven, cloud processing with a light client) is **kept**. This doc only lists what to add, fix, or cut. *(Later the team chose Expo React Native, Android + web, instead of a PWA; see D4.)*
 
 ## What the proposal already does well
 
 | Strength | Rubric criterion it serves |
 |---|---|
-| Offline-first PWA for low-connectivity fields: a real "last mile" angle | Impact, Creativity |
+| Offline-first app for low-connectivity fields: a real "last mile" angle | Impact, Creativity |
 | Fuses several NASA layers (SMAP, GPM/POWER, MODIS/VIIRS) with soil and crop characteristics | Relevance |
 | Rule example "legume after heavy N feeder" shows agronomic grounding | Validity |
 | Rice → mungbean is a realistic Philippine rotation, a good demo anchor | Impact, Validity |

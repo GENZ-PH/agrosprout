@@ -7,12 +7,21 @@
 
 | Track | Owns | Merge rule |
 |---|---|---|
-| **Data lead** | `pipeline/`, site JSON, crop library + citations, AppEEARS/Sentinel-2 extracts, `03-data-sources.md` | With 3 people: Data + Engine |
-| **Engine lead** | `app/src/engine/`, params + tests, explanation templates, `07-rotation-engine.md` | With 2 people: Data + Engine and Frontend + Story |
-| **Frontend/UX lead** | App shell, screens, charts, PWA/offline, deploy | — |
-| **Story lead** | Persona, copy and microcopy, Learn page, demo deck, README, submission fields, `si-usage-log.md` | Everyone reviews the final deck |
+| **Data lead** | `pipeline/`, `mobile/assets/data/`, `mobile/src/data/` (POWER fetch, ET₀, routing, storage), crop library + citations, AppEEARS/Sentinel-2 extracts, `03-data-sources.md` | With 3 people: Data + Engine |
+| **Engine lead** | `mobile/src/engine/` (pure TS), params + tests, explanation templates, `07-rotation-engine.md` | With 2 people: Data + Engine and Frontend + Story |
+| **Frontend/UX lead** | `mobile/app/` screens, `mobile/map-src/` + `mobile/src/map/` (Leaflet + Terra Draw WebView), `mobile/src/components/` (charts, cards), Expo config, Android (EAS) + web builds | — |
+| **Story lead** | `docs/`, persona, copy and microcopy, Learn page text, demo deck, README, submission fields, `si-usage-log.md` | Everyone reviews the final deck |
 
 Team member names → fill in `docs/README.md` (they're needed on the demo slides).
+
+## Repo workflow (D22)
+
+- **Folder ownership:** each track owns the folders above (full map in [06](06-architecture.md#repository-layout-and-folder-ownership-d22)). Change another track's folder only with a heads-up to its owner.
+- **Short-lived branches:** `data/…`, `engine/…`, `fe/…`, `docs/…`. Open a PR and **merge to `main` within ~2 hours**. Small PRs; the owner of the touched folder approves (a quick look is enough).
+- **`main` always works:** the app must start in Expo Go and the web build must export. Broken `main` is everyone's first priority.
+- **Shared files, change by PR only:** `mobile/src/types.ts` (data contracts, Engine + Data), `mobile/src/map/bridge.ts` (map messages, Frontend), `mobile/package.json` and `app.json` (Frontend). Announce dependency additions in chat to avoid lockfile conflicts.
+- **Pull before you start, and pull before every PR.** Rebase small branches instead of merge commits when possible.
+- **SI-assisted commits** get a `Co-Authored-By:` trailer (see `si-usage-log.md`).
 
 ## Timeline
 
@@ -45,10 +54,10 @@ gantt
   Planting-window scan, confidence          :e3, 2026-11-14 21:00, 4h
 
   section Frontend
-  Repo, scaffold, first deploy              :f0, 2026-11-14 08:00, 1h
-  S0, S1 sketch to plot, S2 crops           :f1, 2026-11-14 09:00, 4h
+  Expo scaffold, runs in Expo Go            :f0, 2026-11-14 08:00, 1h
+  Map WebView, S0, S1 sketch, S2 crops      :f1, 2026-11-14 09:00, 4h
   S3 dashboard and S6 places                :f2, 2026-11-14 14:00, 6h
-  S4 months, S5 side by side, offline       :f3, 2026-11-14 21:00, 4h
+  S4, S5, offline, first APK build          :f3, 2026-11-14 21:00, 4h
 
   section Story
   Local Lead check, SI log                  :s0, 2026-11-14 08:00, 1h
@@ -71,13 +80,13 @@ gantt
 
 | Time | Block | Data | Engine | Frontend/UX | Story | Exit criteria |
 |---|---|---|---|---|---|---|
-| **08:00–09:00** | Kickoff | Make Earthdata accounts. **Submit the AppEEARS request.** Pick the demo farm point. | Read 07, set up the TS engine skeleton | Create git repo + GitHub, Vite PWA scaffold, deploy "hello" page | Read 01/02, message the Local Lead, start `si-usage-log.md` | **Decisions D1–D10 confirmed** (decision log). Repo is public. Deploy pipeline works. |
+| **08:00–09:00** | Kickoff | Make Earthdata accounts. **Submit the AppEEARS request.** Pick the demo farm points (D1). Draft crop list (D24). | Read 07, set up the pure-TS engine skeleton + test runner | Repo access for all; **Expo scaffold** (TS + expo-router), runs in **Expo Go** on a phone and as web; create Expo account (D29) | Read 01/02, message the Local Lead, find a local expert (D28), start `si-usage-log.md` | **Tier 1 decisions settled** (decision log). App runs on a phone via Expo Go. |
 | 09:00 | — | — | — | — | — | *Submission opens. Create the project page and fill the Project Name early.* |
-| **09:00–13:00** | Build 1 | **`app/src/data/power.ts`** (live monthly POWER fetch + parse, mm/day→mm, skip `13`, handle `-999`) + **`et0.ts`** (FAO-56 monthly) · Python `build_demo.py` for 1 demo farm | Water balance + crop fit on mock lot data, unit tests | **S0 Welcome + S1 map**: **freehand sketch → clean plot → draggable points**, tap-corners, pin fallback, multi-lot, live area + **S2 crops per lot**; IndexedDB store | Persona (2 lots), wireframes S0–S5, list of ⓘ explainers needed, slide template | **13:00 Checkpoint 1: data contracts frozen**; drawing a lot on a phone works; live fetch returns real data |
+| **09:00–13:00** | Build 1 | **`mobile/src/data/power.ts`** (live monthly POWER fetch + parse, mm/day→mm, skip `13`, handle `-999`) + **`et0.ts`** (FAO-56 monthly) + `store.ts` (AsyncStorage) · Python `build_demo.py` for 1 demo farm | Water balance + crop fit on mock lot data, unit tests | **Map WebView first:** Leaflet + Terra Draw page in `map-src/`, **verify freehand on touch + draggable points (hour 1)**, bridge messages; then **S0 Welcome + S1** (sketch → clean plot → drag points, tap-corners, pin fallback, multi-lot, live area) + **S2 crops per lot**; pick chart lib (D30) | Persona (2 lots), wireframes S0–S5, list of ⓘ explainers needed, slide template | **13:00 Checkpoint 1: data contracts frozen** (`types.ts`, `bridge.ts`); sketching a lot works **on a real phone and on web**; live fetch returns real data |
 | 13:00–14:00 | Lunch + sync | | | | | Agree what's cut if behind |
 | **14:00–20:00** | Build 2 | Crop library (8–12 crops, cited) **+ typical local planting calendar + perishability per crop**; demo farm enrichment (SRTM, trends); `routing.ts` (OSRM + offline estimate) | Scores, weights, A/B/C/D rotation options, **Market access (`access.ts`)**, explanation templates | **S6 destinations (add-anytime, from dashboard card / Edit farm) + transport + travel-time confirm**; **S3 Dashboard** per lot (incl. "Getting your harvest out" card); wired to engine + live data | **ⓘ explainer texts** for every dashboard card (incl. travel time); Learn + Data & Limits pages; disclaimers | **20:00 Checkpoint 2: S0→S3 end-to-end with real data** (ugly is OK) |
 | 20:00–21:00 | Dinner + **sanity review** | Run the 07 §7 checks as a group | | | | Results believable? If not, fix the data before the UI |
-| **21:00–01:00** | Build 3 | AppEEARS SMAP/NDVI into demo farm (if ready); Sentinel-2 image | **Planting-window scan** (07 §3b), confidence (P20/P80) | **S4 months picker + S5 side-by-side**; offline/PWA precache, mobile layout | S5 explainer texts, README v1, Detailed Description draft | S0→S5 works; dashboard opens offline on a phone |
+| **21:00–01:00** | Build 3 | AppEEARS SMAP/NDVI into demo farm (if ready); Sentinel-2 image | **Planting-window scan** (07 §3b), confidence (P20/P80) | **S4 months picker + S5 side-by-side**; offline behavior; **first EAS Android APK build** + web export test | S5 explainer texts, README v1, Detailed Description draft | S0→S5 works; **APK installs and the dashboard opens in airplane mode**; web export runs |
 | 01:00–07:00 | **Sleep in shifts** | At least 4–5 h each. Tired teams ship bugs. | | | | |
 
 ### Sunday Nov 15
@@ -86,9 +95,9 @@ gantt
 |---|---|---|---|
 | **07:00–12:00** | Build 4 / Polish | Should-haves (SMAP vs POWER chart, NDVI bare-period view), accessibility (contrast, font size, tap targets), microcopy pass, bug bash | All Must + chosen Should items done |
 | **12:00** | 🧊 **FEATURE FREEZE** | Only bug fixes after this | |
-| 12:00–16:00 | Demo build | Screenshots or recording from the **deployed** app, 7-slide deck ([09](09-demo-plan.md)), final README, THIRD_PARTY.md | Deck reviewed by the whole team |
-| 16:00–19:00 | Submission drafting | Fill every form field from `docs/submission/fields.md`; SI disclosure; NASA + partner data lists | Every link tested in incognito |
-| 19:00–21:00 | Final QA + **Submit** | Final phone test offline; confirm all members registered at Iligan City; **click "Submit for Judging"** | ✅ **Submitted by 21:00** |
+| 12:00–16:00 | Demo build | **Final APK build** + **deployed web build** (hosting D8); screenshots or recording from the real app; 7-slide deck ([09](09-demo-plan.md)); final README (web link + APK link + how to run); THIRD_PARTY.md | Deck reviewed by the whole team |
+| 16:00–19:00 | Submission drafting | Fill every form field from `docs/submission/fields.md`; SI disclosure; NASA + partner data lists; **make the repo public** (D11) | Every link (web, APK, repo, demo) tested in incognito |
+| 19:00–21:00 | Final QA + **Submit** | Final test: APK on a phone in airplane mode + web link on a laptop; confirm all members registered at Iligan City; **click "Submit for Judging"** | ✅ **Submitted by 21:00** |
 | 21:00–23:59 | Buffer | Emergencies only. Edits still count until 23:59, but don't risk a broken state. | |
 
 ## Checkpoint protocol (5 minutes each)

@@ -8,7 +8,7 @@
 | Check | Result (2026-11-14) |
 |---|---|
 | NASA POWER API reachable from our network, **no login** | ✅ HTTP 200 in ~1.8 s. Daily point query at 8.23°N, 124.24°E returned `T2M, T2M_MAX, T2M_MIN, PRECTOTCORR, GWETROOT, GWETTOP, RH2M, ALLSKY_SFC_SW_DWN, WS2M` (sources: MERRA-2, SYN1DEG, POWER) |
-| NASA POWER **CORS** (browser calls with no proxy) | ✅ `access-control-allow-origin: *` |
+| NASA POWER **CORS** (needed for the web build; the Android app's native fetch doesn't need it) | ✅ `access-control-allow-origin: *` |
 | NASA POWER **monthly** endpoint, 2001–2024, 7 params | ✅ HTTP 200, ~33 KB, ~1.5 s. ⚠️ Monthly `PRECTOTCORR` is **mm/day** (× days in month); key `YYYY13` = annual value; `-999` = missing. The 2024 sample shows a clear Mar–Apr dry spell at the Iligan cell (0.75–1.2 mm/day; root-zone wetness down to 0.63). |
 | `spaceappschallenge.org` via curl/WebFetch | ❌ TLS "untrusted root" on this network. Works in a normal browser. *(GitHub and NASA POWER work fine.)* |
 | POWER grid-cell caveat | ⚠️ Early Jan 2024 T2M ≈ 23 °C at the Iligan cell, cooler than lowland coastal normals. The ~0.5° × 0.625° MERRA-2 cell likely includes highland terrain (Lanao plateau). **Pick a lowland farm point and/or correct with SRTM elevation, and state this limitation.** |

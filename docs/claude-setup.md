@@ -36,7 +36,7 @@ In Claude Code: *"Use the research-analyst agent to find FAO-56 Kc values for mu
 | Agent (catalog path) | Why |
 |---|---|
 | `python-pro` (02) or `data-engineer` (05) | `pipeline/` scripts |
-| `typescript-pro` (02) / `react-specialist` (02) / `frontend-developer` (01) | App and engine |
+| `mobile-developer` (01) / `typescript-pro` (02) / `react-specialist` (02) | Expo React Native app (Android + web), pure-TS engine, WebView map bridge |
 | `ui-designer` (01) | Visual polish |
 | `accessibility-tester` (04) | Contrast, tap targets, readability on low-end phones |
 | `qa-expert` / `test-automator` (04) | Engine unit tests, offline test plan |

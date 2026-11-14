@@ -4,7 +4,7 @@
 
 ## Principles
 
-- **No login, no account, no sign-up.** The farmer opens the link and starts. All farm data **stays on the phone** (IndexedDB). Nothing personal goes to a server.
+- **No login, no account, no sign-up.** The farmer opens the app and starts. All farm data **stays on the phone** (app storage). Nothing personal goes to a server.
 - **Onboarding needs a connection once** (map + NASA data fetch). After that, **the dashboard and comparisons work offline**.
 - Every chart and number carries a **"ⓘ What am I looking at?"** explainer: what the data is, where it comes from (which satellite or model), how to read it, and its limits.
 - Plain language, big tap targets, icons and local crop names. The tool **supports and doesn't replace** the farmer's judgment and the agricultural technician.
@@ -126,7 +126,7 @@ Per lot, per crop:
 | Doc | Change |
 |---|---|
 | 05 MVP scope | Flow and MoSCoW updated to match this |
-| 06 Architecture | Live NASA POWER fetch per lot from the browser (CORS verified), lots + destinations stored as GeoJSON on the device, map drawing library, optional OSRM routing (CORS verified) |
+| 06 Architecture | Live NASA POWER fetch per lot by the app, lots + destinations stored as GeoJSON on the device, map drawing library, optional OSRM routing (CORS verified) |
 | 07 Rotation engine | Per-lot inputs; two stages (assumed calendar → actual months); planting-window analysis; **market access & transport (§3c)** |
 | 08 Schedule | Map/lot drawing and live fetch moved early (highest UI risk); S6 + travel module in Build 2 |
 | 09 Demo | Demo walks through S1 → S5 |
