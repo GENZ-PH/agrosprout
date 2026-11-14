@@ -1,6 +1,7 @@
 // NASA satellite side files for demo farms, written by the pipeline (pipeline/fetch_imerg.py,
 // fetch_smap.py, fetch_ndvi.py). Bundled, read only by the "Satellite checks" card; they do not
 // feed the engine. A file that has not been produced yet is simply absent (null).
+import imerg1 from "../../assets/data/demo/lanao-norte-demo-1-imerg.json";
 import smap1 from "../../assets/data/demo/lanao-norte-demo-1-smap.json";
 
 type Stat = { mean: number | null; p20: number | null; p80: number | null; n: number };
@@ -23,5 +24,5 @@ export interface NdviFile {
 }
 
 export const SATELLITE: Record<string, { imerg: ImergFile | null; smap: SmapFile | null; ndvi: NdviFile | null }> = {
-  "lanao-norte-demo-1": { imerg: null, smap: smap1 as SmapFile, ndvi: null },
+  "lanao-norte-demo-1": { imerg: imerg1 as ImergFile, smap: smap1 as SmapFile, ndvi: null },
 };

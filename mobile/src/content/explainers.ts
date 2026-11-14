@@ -428,8 +428,8 @@ export const CHALLENGE_DATASETS: readonly DatasetStatus[] = [
     status: "Used",
     note: "Every lot gets its field elevation and slope from SRTM (lots you draw: the lot centre rounded to about 110 m is sent once, with a signal). The elevation sets the air pressure in the evaporation sum. The erosion score uses the slope with the RUSLE slope-steepness factor (USDA). On land you mark as lowland paddy, and when the slope could not be loaded, it uses the land type you give.",
   },
-  { name: "SMAP (soil moisture)", status: "Not used", note: "Soil wetness comes from NASA POWER, a model estimate, not from the SMAP satellite." },
-  { name: "GPM (rainfall)", status: "Not used", note: "Rainfall comes from NASA POWER." },
+  { name: "SMAP (soil moisture)", status: "Demo farm only", note: "SMAP L4 (SPL4SMGP v8, 9 km, 2015-2025) is shown for the sample farm in Satellite checks, as a check. The scores use NASA POWER soil wetness." },
+  { name: "GPM IMERG (rainfall)", status: "Demo farm only", note: "IMERG Final V07 monthly rain (0.1°, 2001 to 2025-09) is shown for the sample farm beside NASA POWER rain in Satellite checks. The scores use NASA POWER rain." },
   { name: "MODIS, Landsat (vegetation)", status: "Not used", note: "Vegetation stress is not measured." },
   { name: "ECOSTRESS, GRACE and GRACE-FO", status: "Not used", note: "Not needed for the lot-level questions this app answers." },
 ];
