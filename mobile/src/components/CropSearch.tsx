@@ -1,4 +1,4 @@
-import { type ComponentRef, useMemo, useRef, useState } from "react";
+import { type ComponentRef, type Ref, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { otherCropId } from "../lots/crop-picks";
@@ -17,6 +17,8 @@ type Props = {
   /** The lot's crop, or null when it has none, or several (a farm saved before D13 changed). */
   chosen: string | null;
   onPick: (cropId: string) => void;
+  /** Lets the screen put the cursor in the search box (the "None yet" box under it). */
+  searchRef?: Ref<{ focus: () => void }>;
 };
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -24,10 +26,11 @@ const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 /** The crop id a result is saved as. */
 const pickId = (r: SearchResult) => (r.entry.kind === "library" ? r.entry.crop_id : otherCropId(r.title)!);
 
-export function CropSearch({ lotName, entries, chosen, onPick }: Props) {
+export function CropSearch({ lotName, entries, chosen, onPick, searchRef }: Props) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const input = useRef<ComponentRef<typeof TextInput>>(null);
+  useImperativeHandle(searchRef, () => ({ focus: () => input.current?.focus() }), []);
   const out = useMemo(() => searchCrops(entries, query), [entries, query]);
   const moreCount = useMemo(() => entries.filter((e) => e.kind === "ecocrop").length, [entries]);
   const addName = out.add ? capitalize(out.add) : null;
@@ -57,7 +60,7 @@ export function CropSearch({ lotName, entries, chosen, onPick }: Props) {
 
   return (
     <View style={styles.block}>
-      <Text style={text.bodyStrong}>Search for a crop</Text>
+      <Text style={text.heading}>Search for a crop</Text>
       <View style={[styles.field, showing && styles.fieldOpen]}>
         <Icon name="search" size={20} color={colors.muted} />
         <TextInput

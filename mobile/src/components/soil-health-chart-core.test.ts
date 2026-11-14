@@ -13,6 +13,10 @@ import {
   chartSummary,
   cropList,
   monthCells,
+  optionNames,
+  signed,
+  soilHealthSummary,
+  stepLabel,
   movesText,
   OPTION_LABELS,
   shiAxis,
@@ -176,4 +180,51 @@ test("vs text: above, below and the same", () => {
   assert.equal(rows[2].vs_text, "12 above your crops");
   assert.equal(rows[3].vs_text, "Same as your crops");
   assert.equal(rows[1].crops, "No crops");
+});
+
+test("summary names the highest last-year value and keeps ties", () => {
+  const rows = [
+    { key: "A" as const, end: 63 },
+    { key: "B" as const, end: 53 },
+    { key: "C" as const, end: 63 },
+    { key: "D" as const, end: 62 },
+  ];
+  const s = soilHealthSummary({ start: 50 }, rows);
+  assert.deepEqual(s, { start: 50, best: 63, best_keys: ["A", "C"], change: 13 });
+  assert.equal(optionNames(s.best_keys), "Your crops and Best for soil");
+});
+
+test("summary skips options with no line and is empty when none has one", () => {
+  const s = soilHealthSummary({ start: 50 }, [
+    { key: "A" as const, end: null },
+    { key: "B" as const, end: 48 },
+  ]);
+  assert.deepEqual(s, { start: 50, best: 48, best_keys: ["B"], change: -2 });
+  assert.deepEqual(soilHealthSummary({ start: 50 }, [{ key: "A" as const, end: null }]), {
+    start: 50,
+    best: null,
+    best_keys: [],
+    change: null,
+  });
+});
+
+test("summary uses the engine's real output, not sample numbers", () => {
+  const opts = riceRiceBare().options;
+  const result = soilHealth(opts);
+  const rows = soilHealthRows(result, opts);
+  const s = soilHealthSummary(result, rows);
+  assert.equal(s.start, SHI_START);
+  const ends = rows.map((r) => r.end).filter((e): e is number => e !== null);
+  assert.equal(s.best, Math.max(...ends));
+  for (const k of s.best_keys) assert.equal(rows.find((r) => r.key === k)?.end, s.best);
+});
+
+test("signed change, option names and step labels", () => {
+  assert.equal(signed(13), "+13");
+  assert.equal(signed(-2), "−2");
+  assert.equal(signed(0), "0");
+  assert.equal(optionNames(["C"]), "Best for soil");
+  assert.equal(optionNames(["A", "C", "D"]), "Your crops, Best for soil and Balanced");
+  assert.equal(stepLabel(0), "Start");
+  assert.equal(stepLabel(SHI_YEARS), `Year ${SHI_YEARS}`);
 });

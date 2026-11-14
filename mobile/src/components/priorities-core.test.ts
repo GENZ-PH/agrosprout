@@ -5,7 +5,7 @@ import { test } from "node:test";
 import { COMPONENT_KEYS, priorityWeights, type ComponentKey } from "../engine/scores";
 import { DEFAULT_PRIORITIES } from "../state/farm-core";
 import type { Priorities } from "../types";
-import { chipList, isPicked, pickedButNotScored, PRIORITY_CHIPS, togglePriority } from "./priorities-core";
+import { chipList, isPicked, notScoredNote, pickedButNotScored, PRIORITY_CHIPS, togglePriority } from "./priorities-core";
 
 const equal: Priorities = { ...DEFAULT_PRIORITIES };
 
@@ -43,4 +43,14 @@ test("chip lists read as plain English", () => {
   assert.equal(chipList([]), "");
   assert.equal(chipList([{ label: "Extra income" }]), "Extra income");
   assert.equal(chipList([{ label: "Extra income" }, { label: "Less work" }]), "Extra income and Less work");
+});
+
+test("the note under the chips names the priorities that can't count yet and why", () => {
+  assert.equal(notScoredNote([]), null);
+  assert.equal(
+    notScoredNote(["income", "labor"]),
+    "Extra income and Less work don't change the scores yet: the crop list has no local prices or labor needs yet. " +
+      "Add a place where you sell or store your harvest and they count how easy the trip to market is.",
+  );
+  assert.match(notScoredNote(["income"]) ?? "", /^Extra income doesn't change .* and it counts /);
 });
