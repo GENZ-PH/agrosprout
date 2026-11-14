@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { BackHandler, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 
 import { Button } from "../src/components/Button";
-import { Icon } from "../src/components/Icon";
+import { Icon, type IconName } from "../src/components/Icon";
 import { Screen } from "../src/components/Screen";
 import { colors, MIN_TOUCH, radius, space, text } from "../src/components/theme";
 import { isPinLot, parseHectares, pinShape } from "../src/lots/lot-editor";
@@ -24,8 +24,16 @@ const MODE_HINT: Partial<Record<MapMode, (lot: string) => string>> = {
   pin: (lot) => `Tap the map where ${lot} is.`,
 };
 
-const START_HINT = "Move the map to your farm, then draw around your lot.";
+const START_HINT = "Move the map to your farm and zoom in until you can see the edges of your lot.";
+const SAVED_HINT = "Your lot is saved. To fix its edges, tap Adjust.";
 const ADJUST_HINT = "Drag the white dots to fit your lot. Tap a yellow dot to add a corner. Press and hold a dot to remove it.";
+
+// Zoom check before drawing (UI choice, not a sourced number). Web Mercator ground
+// resolution is 156,543 m × cos(latitude) / 2^zoom per pixel: at Iligan (8.2° N) about
+// 19 m/px at zoom 13, 2.4 m/px at 16 and 1.2 m/px at 17. So a 100 m × 100 m (1 ha)
+// lot is ~5 px wide at 13 (too small to trace), ~42 px at 16 and ~85 px at 17.
+const MIN_DRAW_ZOOM = 16;
+const DRAW_ZOOM = 17;
 
 /** Wider than this, the panel becomes a card in the lower right corner. */
 const WIDE = 768;
@@ -56,14 +64,17 @@ export default function LotsScreen() {
   const saved = lots.find((l) => l.id === lot?.id);
   const name = lot?.name ?? "your lot";
 
-  const [mode, setMode] = useState<MapMode>("select");
+  const [mode, setMode] = useState<MapMode>("view");
+  const zoom = useRef<number | null>(null);
   const [panel, setPanel] = useState<"pin" | "rename" | null>(null);
   const [areaText, setAreaText] = useState("");
   const [nameText, setNameText] = useState("");
   const [editingHa, setEditingHa] = useState<number | null>(null);
-  const [status, setStatus] = useState(() => (lots.length > 0 ? ADJUST_HINT : START_HINT));
+  const [status, setStatus] = useState(() => (lots.length > 0 ? SAVED_HINT : START_HINT));
 
   const drawing = mode === "sketch" || mode === "corners" || mode === "pin";
+  /** The lot's points are showing (map "select" mode). */
+  const adjusting = mode === "select";
   const typedArea = parseHectares(areaText);
 
   // Only this lot is on the map: an outline, or a pin for a pin lot.
@@ -77,24 +88,44 @@ export default function LotsScreen() {
   );
 
   const start = (next: "sketch" | "corners" | "pin") => {
-    setMode(next);
     setPanel(null);
     setEditingHa(null);
+    // Too far out to see the lot's edges: zoom in first, and let the farmer line the lot up.
+    if (next !== "pin" && zoom.current !== null && zoom.current < MIN_DRAW_ZOOM) {
+      setMode("view");
+      mapRef.current?.send({ type: "zoomIn", zoom: DRAW_ZOOM });
+      const button = next === "corners" ? "Tap corners" : saved ? "Redraw" : "Draw with your finger";
+      setStatus(`We zoomed in so you can see the edges of your lot. Move the map so your lot is in the middle, then tap ${button} again.`);
+      return;
+    }
+    setMode(next);
     setStatus(MODE_HINT[next]?.(name) ?? "");
   };
 
   const cancel = () => {
+    setMode("view");
+    setStatus(saved ? SAVED_HINT : START_HINT);
+  };
+
+  const adjust = () => {
     setMode("select");
-    setStatus(saved ? ADJUST_HINT : START_HINT);
+    setStatus(ADJUST_HINT);
+  };
+
+  const done = () => {
+    setMode("view");
+    setEditingHa(null);
+    setStatus(SAVED_HINT);
   };
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace("/"));
 
-  // Android Back stops drawing instead of leaving the screen.
+  // Android Back stops drawing or adjusting instead of leaving the screen.
   useEffect(() => {
-    if (!drawing) return;
+    if (!drawing && !adjusting) return;
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
-      cancel();
+      if (adjusting) done();
+      else cancel();
       return true;
     });
     return () => sub.remove();
@@ -112,9 +143,9 @@ export default function LotsScreen() {
         setEditingHa(null);
         // The area is shown big in the panel, so the hint doesn't repeat it.
         if (!drawn) setStatus("Saved.");
-        else if (msg.fix === "unkinked") setStatus("Your lines crossed, so we kept the biggest part. Check the corners.");
-        else if (msg.fix === "hull") setStatus("We made a simple outline from your sketch. Drag the corners to match your lot.");
-        else setStatus(ADJUST_HINT);
+        else if (msg.fix === "unkinked") setStatus("Your lines crossed, so we kept the biggest part. Tap Adjust to check the corners.");
+        else if (msg.fix === "hull") setStatus("We made a simple outline from your sketch. Tap Adjust to match the corners to your lot.");
+        else setStatus(SAVED_HINT);
         break;
       }
       case "lotEditing":
@@ -130,12 +161,15 @@ export default function LotsScreen() {
       case "modeChanged":
         setMode(msg.mode);
         break;
+      case "zoomChanged":
+        zoom.current = msg.zoom;
+        break;
       case "pinPlaced": {
         if (mode !== "pin" || !lot || typedArea === null) return;
         setSavedId(setShape(lot.id, pinShape(msg.point, typedArea)));
         setStatus("Pin placed. Tap Redraw if you can trace the lot later.");
         setAreaText("");
-        setMode("select");
+        setMode("view");
         break;
       }
       case "error":
@@ -168,6 +202,11 @@ export default function LotsScreen() {
   const area = editingHa ?? lot?.area_ha ?? null;
   const typedPin = !!lot?.pin && editingHa === null;
   const areaShown = area === null ? "" : typedPin ? `${area} ha` : `${area.toFixed(2)} ha`;
+
+  const undoLast = () => {
+    setEditingHa(null);
+    setStatus(undo() ? "Undid the last change." : "Nothing to undo.");
+  };
 
   const saveName = () => {
     if (lot && nameText.trim()) rename(lot.id, nameText);
@@ -294,7 +333,7 @@ export default function LotsScreen() {
             </>
           ) : saved ? (
             <>
-              {step}
+              {adjusting ? null : step}
               <View style={styles.titleRow}>
                 <Pressable
                   onPress={() => {
@@ -316,21 +355,24 @@ export default function LotsScreen() {
                 </View>
               </View>
               {hint}
-              <View style={styles.row}>
-                <Button
-                  label="Undo"
-                  icon="undo"
-                  variant="quiet"
-                  onPress={() => {
-                    setEditingHa(null);
-                    setMode("select");
-                    setStatus(undo() ? "Undid the last change." : "Nothing to undo.");
-                  }}
-                  style={styles.flex}
-                />
-                <Button label="Redraw" icon="draw" variant="secondary" onPress={() => start("sketch")} style={styles.flex} />
-              </View>
-              <Button label="Next: your crops" iconAfter="chevron" href="/crops" size="lg" />
+              {adjusting ? (
+                <View style={styles.row}>
+                  <Button label="Undo" icon="undo" variant="quiet" onPress={undoLast} style={styles.flex} />
+                  <Button label="Done" icon="check" onPress={done} style={styles.flex} />
+                </View>
+              ) : (
+                <>
+                  <View style={styles.row}>
+                    <Tool icon="undo" label="Undo" onPress={undoLast} />
+                    {/* A pin lot has no corners to adjust. */}
+                    {lot?.pin ? null : (
+                      <Tool icon="shape" label="Adjust" accessibilityLabel="Adjust the corners" onPress={adjust} />
+                    )}
+                    <Tool icon="draw" label="Redraw" onPress={() => start("sketch")} />
+                  </View>
+                  <Button label="Next: your crops" iconAfter="chevron" href="/crops" size="lg" />
+                </>
+              )}
             </>
           ) : (
             <>
@@ -362,6 +404,31 @@ export default function LotsScreen() {
         </View>
       </View>
     </Screen>
+  );
+}
+
+/** A square-ish tool button: icon above a short label, for the lot's tools. */
+function Tool({
+  icon,
+  label,
+  onPress,
+  accessibilityLabel,
+}: {
+  icon: IconName;
+  label: string;
+  onPress: () => void;
+  accessibilityLabel?: string;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+      style={({ pressed }) => [styles.tool, pressed && { backgroundColor: colors.greenTint }]}
+    >
+      <Icon name={icon} color={colors.green} />
+      <Text style={styles.toolLabel}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -426,4 +493,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   areaInput: { width: 120 },
+  tool: {
+    flex: 1,
+    minHeight: 68,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: space.xs,
+    borderWidth: 1.5,
+    borderColor: colors.borderStrong,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+  },
+  toolLabel: { ...text.small, fontWeight: "600" },
 });

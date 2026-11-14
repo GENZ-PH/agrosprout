@@ -15,7 +15,9 @@ export type MapMode =
   | "sketch"
   /** Tap each corner, then tap the first point to close. */
   | "corners"
-  /** One finger moves the map. Tap a lot to show its points: drag a point, tap an edge dot to add one, long-press to remove one. */
+  /** One finger moves the map. Lots show as clean outlines, without points. Tapping does nothing. */
+  | "view"
+  /** Adjust the active lot: its points show. Drag a point, tap an edge dot to add one, long-press to remove one. */
   | "select"
   /** Tap once to drop a pin (S1 fallback, S6 places). */
   | "pin";
@@ -64,7 +66,9 @@ export type AppToMap =
   | { type: "gps"; lat: number; lon: number; accuracy_m?: number }
   | { type: "fitLots" }
   /** The app's panels changed size. Used by the next fit; the view doesn't move. */
-  | { type: "setInset"; inset: MapInset };
+  | { type: "setInset"; inset: MapInset }
+  /** Zoom in to at least this level, keeping the centre (the S1 zoom check before drawing). */
+  | { type: "zoomIn"; zoom: number };
 
 export type SketchRejectReason =
   /** The stroke was too short to be a lot outline. */
@@ -84,8 +88,10 @@ export type MapToApp =
   | { type: "lotEditing"; id: string; area_ha: number }
   | { type: "sketchRejected"; reason: SketchRejectReason }
   | { type: "pinPlaced"; point: LonLat }
-  /** The map switched mode by itself (e.g. to "select" after a lot is drawn). */
+  /** The map switched mode by itself (e.g. to "view" after a lot is drawn). */
   | { type: "modeChanged"; mode: MapMode }
+  /** After every zoom, and once after `init`. The app uses it to check the map is close enough to draw. */
+  | { type: "zoomChanged"; zoom: number }
   | { type: "error"; message: string };
 
 /** Envelope tags so each side ignores unrelated window messages (web only). */

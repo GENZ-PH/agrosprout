@@ -77,6 +77,17 @@ const ICONS = {
       <Circle cx={12} cy={9} r={2.5} />
     </>
   ),
+  /** A lot outline with corner points: "Adjust the corners". */
+  shape: (
+    <>
+      <Path d="M6 7l9-2.5 4.5 8-6 7L4.5 16z" />
+      <Circle cx={6} cy={7} r={1.8} />
+      <Circle cx={15} cy={4.5} r={1.8} />
+      <Circle cx={19.5} cy={12.5} r={1.8} />
+      <Circle cx={13.5} cy={19.5} r={1.8} />
+      <Circle cx={4.5} cy={16} r={1.8} />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof ICONS;
