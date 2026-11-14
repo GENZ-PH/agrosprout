@@ -72,15 +72,42 @@ We want a farmer to see, before planting, which season on each lot is likely to 
 | NASA POWER monthly point API (Agroclimatology), fetched per lot by the app | T2M, T2M_RANGE, PRECTOTCORR, RH2M, WS2M, ALLSKY_SFC_SW_DWN, GWETROOT | 2001–2025 | ET₀, water balance, stress months, crop temperature fit, waterlogging risk |
 | NASA POWER daily point API (Agroclimatology), bundled demo farm | T2M_MAX, T2M_MIN, PRECTOTCORR, RH2M, WS2M, ALLSKY_SFC_SW_DWN, GWETROOT | 2001–2025 | Same, plus days above 35 °C, days above 50 mm of rain, long-term trends |
 | SRTM Global 1 arc-second v3 (SRTMGL1, NASA JPL via LP DAAC, https://doi.org/10.5067/MEASURES/SRTM/SRTMGL1.003), served by Open Topo Data, bundled demo farm | Elevation, slope | Feb 2000 | Elevation sets the air pressure in the demo farm's ET₀; slope saved with the farm, not yet used in the scores |
-| *(add SMAP, SRTM, MODIS, IMERG… only if actually used)* | | | |
+
+> Add a row only for data that ships in the final build. Not used as of Sat 14:00: SMAP and MODIS through AppEEARS (#5). Full details and terms: [THIRD_PARTY.md](../../THIRD_PARTY.md#nasa-data).
 
 ## Space Agency Partner Data & Other References
 *List ALL data, resources, and tools, open source included.*
 
-- *(e.g. ESA Copernicus Sentinel-2, if used)*
-- FAO-56 (Allen et al., 1998), crop coefficients and Penman-Monteith method
-- *(libraries: Expo / React Native, expo-router, react-native-webview, Leaflet, Terra Draw, Turf.js, AsyncStorage, chart library, pandas…)*
-- *(images, fonts, icons with licenses)*
+> **Draft (#52, Sat Nov 14).** Built from what is on `main`; [THIRD_PARTY.md](../../THIRD_PARTY.md) has versions, licenses, and terms. Before pasting, drop anything that didn't ship and fill the three open items: basemap (D25), chart library (D30), and the `crops.json` citations (#11).
+
+**Space agency partner data**
+- None so far. If the basemap (D25) is EOX Sentinel-2 cloudless, or the Sentinel-2 NDVI view (#13) ships, add: ESA Copernicus Sentinel-2.
+
+**Other data**
+- PSA OpenSTAT (Philippine Statistics Authority): palay and corn production and area harvested by province, https://openstat.psa.gov.ph/ *(only if a screen shows it)*
+- NOAA Climate Prediction Center, Oceanic Niño Index, https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt *(only if a screen shows it)*
+- OpenStreetMap data (ODbL) through the FOSSGIS routing server (OSRM), https://routing.openstreetmap.de, for road travel time
+- Basemap tiles: *(D25 pick)*; Esri World Imagery is the placeholder today
+
+**Methods and references**
+- Allen, R.G., Pereira, L.S., Raes, D., Smith, M. (1998). Crop evapotranspiration: guidelines for computing crop water requirements. FAO Irrigation and Drainage Paper 56. Penman-Monteith ET₀, crop coefficients, growth stages, rooting depth.
+- Brouwer, C., Heibloem, M. (1986). Irrigation Water Management Training Manual No. 3: Irrigation Water Needs. FAO. Effective rainfall and paddy rice water needs.
+- FAO Ecocrop: crop temperature ranges.
+- Kader (1993) perishability classes, where `crops.json` cites them.
+- *(crops.json sources from #11: one line per source it actually cites)*
+
+**Software and tools (all open source unless noted)**
+- TypeScript, Python 3.11+ (standard library only)
+- Expo SDK 58, expo-router, React Native 0.88, React 19, React Native Web, react-native-webview, react-native-svg, react-native-screens, react-native-safe-area-context, AsyncStorage, NetInfo, TanStack Query, Zustand, Hono, Zod
+- Leaflet, Terra Draw, Turf.js (offline map page), bundled with esbuild
+- *(chart library, D30)*
+- Workbox (installable web app), ESLint, Node.js test runner
+- EAS Build (Android APK), Cloudflare Pages and Workers (hosting), GitHub
+- Claude Code (Anthropic), SI assistant, see "Use of SI"
+
+**Images, icons, and fonts**
+- UI icons drawn by the team (SVG); system fonts; screenshots from the app itself.
+- *(App icon: replace the Expo template default before the final build, #50, then name its source here.)*
 
 ## Final checks
 - [ ] All members confirmed at the Iligan City Local Event
