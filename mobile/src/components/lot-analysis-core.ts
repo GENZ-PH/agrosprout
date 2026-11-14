@@ -3,6 +3,7 @@
 // to AsyncStorage, the bundled demo farms and crops.json.
 import { readStored, type LotDataStore } from "../data/power";
 import { analyzeLot, type LotAnalysis } from "../engine/analyze";
+import type { Scenario } from "../engine/scenario";
 import type { CropLibrary, DataStatus, Farm, Lot, LotData } from "../types";
 
 /** Bundled demo farms by id (`demo/<id>` in `Lot.data_ref`). */
@@ -36,13 +37,15 @@ export interface LotViewInput {
   lot: Lot;
   data: LotData | null;
   library: CropLibrary;
+  /** What-if rainfall and temperature change (#47). `null` or omitted = today's climate. */
+  scenario?: Scenario | null;
 }
 
-export function lotView({ farm, lot, data, library }: LotViewInput): LotView {
+export function lotView({ farm, lot, data, library, scenario }: LotViewInput): LotView {
   if (lot.crops.length === 0) return { kind: "no-crops" };
   if (!data) return { kind: "no-data", status: lot.data_status };
   try {
-    return { kind: "ready", analysis: analyzeLot({ farm, lot, data, library }), period: data.period };
+    return { kind: "ready", analysis: analyzeLot({ farm, lot, data, library, scenario }), period: data.period };
   } catch (e) {
     return { kind: "failed", message: e instanceof Error ? e.message : String(e) };
   }

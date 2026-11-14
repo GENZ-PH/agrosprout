@@ -95,6 +95,20 @@ test("lotView: on the Iligan test lot with crops.json, the Soil Health card gets
   assert.ok(soil_health.options.every((o) => o.trajectory !== null && o.trajectory.points.length === soil_health.years + 1));
 });
 
+test("lotView: a what-if scenario reaches the analysis and changes the climate it used (#47)", () => {
+  const before = JSON.stringify(ILIGAN_LOT_FIXTURE);
+  const today = lotView({ farm, lot: lot([rice]), data: ILIGAN_LOT_FIXTURE, library });
+  const drier = lotView({ farm, lot: lot([rice]), data: ILIGAN_LOT_FIXTURE, library, scenario: { rain_pct: -30, temp_c: 2 } });
+  assert.equal(today.kind, "ready");
+  assert.equal(drier.kind, "ready");
+  if (today.kind !== "ready" || drier.kind !== "ready") return;
+  assert.equal(today.analysis.scenario, null);
+  assert.ok(drier.analysis.scenario?.notes.some((n) => /not a forecast/i.test(n)));
+  const p50 = (a: typeof today) => a.analysis.monthly.precip_mm.p50.reduce<number>((t, v) => t + (v ?? 0), 0);
+  assert.ok(Math.abs(p50(drier) / p50(today) - 0.7) < 1e-9, "rain is 30% lower in every month");
+  assert.equal(JSON.stringify(ILIGAN_LOT_FIXTURE), before, "the saved climate data is not changed");
+});
+
 test("lotView: the bundled demo farm works the same way as live data", () => {
   const v = lotView({ farm, lot: lot([rice], { data_ref: "demo/lanao-norte-demo-1" }), data: demo, library });
   assert.equal(v.kind, "ready");
