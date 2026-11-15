@@ -1,7 +1,8 @@
-import { StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
 import { MONTH_LONG } from "../lots/months-core";
-import { type ImergFile, type MonthPct, SATELLITE } from "../data/satellite";
+import type { LiveSatellite } from "../data/live-satellite";
+import { type ImergFile, type MonthPct, SATELLITE, type SatelliteFiles } from "../data/satellite";
 import { type InfoRef, useExplainer } from "./InfoToggle";
 import { MonthChart } from "./MonthChart";
 import { SourceChip } from "./SourceChip";
@@ -18,11 +19,25 @@ const GREEN = "#3F7D4E";
 const GREEN2 = "#8DBF6A";
 const RUNOFF = "#8A6A2F";
 
-export function SatelliteCard({ farmId, lotName, info }: { farmId: string; lotName: string; info?: InfoRef }) {
+export function SatelliteCard({
+  farmId,
+  lotName,
+  info,
+  files,
+  live,
+}: {
+  farmId: string;
+  lotName: string;
+  info?: InfoRef;
+  /** Live lots (2026-11-15): the files fetched through our API Worker instead of the bundled ones. */
+  files?: SatelliteFiles;
+  live?: LiveSatellite;
+}) {
   const title = "Satellite checks";
   const ex = useExplainer(info, title);
-  const sat = SATELLITE[farmId];
-  if (!sat || (!sat.imerg && !sat.smap && !sat.ndvi && !sat.hls && !sat.ecostress && !sat.fldas)) return null;
+  const sat = files ?? SATELLITE[farmId];
+  const any = sat && (sat.imerg || sat.smap || sat.ndvi || sat.hls || sat.ecostress || sat.fldas);
+  if (!sat || (!any && !live)) return null;
   const { imerg, smap, ndvi, hls, ecostress, fldas } = sat;
 
   return (
@@ -37,6 +52,24 @@ export function SatelliteCard({ farmId, lotName, info }: { farmId: string; lotNa
       <Text style={[text.small, styles.muted]}>
         A check on the NASA POWER numbers. Not used in the scores.
       </Text>
+      {live ? (
+        <View style={styles.block}>
+          {live.srtm?.elevation_m != null ? (
+            <Text style={text.small}>
+              {`Elevation (NASA SRTM): about ${Math.round(live.srtm.elevation_m)} m${live.srtm.slope_deg != null ? `, slope about ${live.srtm.slope_deg.toFixed(1)} degrees` : ""}.`}
+            </Text>
+          ) : null}
+          {live.waiting.length > 0 ? (
+            <View style={styles.wait}>
+              <ActivityIndicator size="small" color={colors.green} />
+              <Text style={[text.caption, styles.flex]}>{`Getting from NASA for ${lotName}: ${live.waiting.join(", ")}.`}</Text>
+            </View>
+          ) : null}
+          {live.failed.length > 0 ? (
+            <Text style={[text.caption, styles.muted]}>{`Could not get now: ${live.failed.join(", ")}. The results still use NASA POWER.`}</Text>
+          ) : null}
+        </View>
+      ) : null}
 
       {imerg ? (
         <View style={styles.block}>
@@ -169,6 +202,7 @@ function rainLine(imerg: ImergFile): string {
 }
 
 const styles = StyleSheet.create({
+  wait: { flexDirection: "row", alignItems: "center", gap: space.sm },
   card: { backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: space.lg, gap: space.md },
   titleRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
   flex: { flex: 1, minWidth: 0 },
