@@ -20,9 +20,11 @@ type Props = {
    * Wikimedia Commons), and the screen must show `CropPhotoCredit` for the same name. Offline or not found: the placeholder.
    */
   sci?: string | null;
+  /** A coloured frame, e.g. the crop's colour in the year strip, so picture and strip match. */
+  borderColor?: string;
 };
 
-export function CropImage({ cropId, size = 48, sci = null }: Props) {
+export function CropImage({ cropId, size = 48, sci = null, borderColor }: Props) {
   const bundled = cropImage(cropId);
   const photo = useCropPhoto(bundled ? null : sci);
   const [failed, setFailed] = useState<string | null>(null);
@@ -31,7 +33,7 @@ export function CropImage({ cropId, size = 48, sci = null }: Props) {
   const box = { width: size, height: size, borderRadius: radius.sm };
   return (
     <View
-      style={[styles.box, box]}
+      style={[styles.box, box, borderColor ? { borderWidth: 3, borderColor } : null]}
       accessible={false}
       importantForAccessibility="no-hide-descendants"
       aria-hidden
