@@ -28,7 +28,7 @@ Tip for judges, also on the start screen: tap **See a sample farm** to see full 
 
 **What exactly does it do?**
 
-AgroSprout is a decision-support app for smallholder farmers and the agricultural technicians who advise them, starting in Lanao del Norte, Philippines. It answers the "Field Shift" question for one farm at a time: which crop rotation and which planting months fit this lot's water and weather, and what does the farmer gain or risk by changing.
+AgroSprout is a decision-support app for smallholder farmers and the agricultural technicians who advise them, starting with farmers in Bukidnon, Northern Mindanao, Philippines. The place search covers Bukidnon's towns and the NASA data is fetched for each lot the farmer draws; the built-in sample farm is in neighbouring Lanao del Norte. It answers the "Field Shift" question for one farm at a time: which crop rotation and which planting months fit this lot's water and weather, and what does the farmer gain or risk by changing.
 
 1. **Draw your lots.** The farmer finds their barangay or town in the search box, then draws each lot on a satellite map with a finger, taps its corners, or drops a pin and types the area. The app cleans the outline and measures the area.
 2. **Pick the main crop on each lot.** The app suggests the top 3 crops for that lot from its NASA climate data, with the planting months where each fits best, or the farmer searches any crop. The library has 22 crops, each value cited. For crops grown year-round, the app asks when the farmer usually plants and marks the months that suit the lot.
@@ -64,12 +64,12 @@ Privacy: no login and no account. Farm data stays on the phone. The only locatio
 
 **Who it is for**
 
-Smallholder farmers and municipal agricultural technicians, starting in Lanao del Norte. The Philippine Statistics Authority's 2022 Census of Agriculture and Fisheries "recorded a total of 7.73 million farms", and "55.8 percent (4,312 thousand farms) had size of less than 0.5 hectares" (PSA, 2022 CAF Agricultural Farm and Parcel Characteristics, Final Results, released 6 July 2026: https://psa.gov.ph/content/2022-census-agriculture-and-fisheries-agricultural-farm-and-parcel-characteristics-final).
+Smallholder farmers and municipal agricultural technicians, starting in Bukidnon, Northern Mindanao. The Philippine Statistics Authority's 2022 Census of Agriculture and Fisheries "recorded a total of 7.73 million farms", and "55.8 percent (4,312 thousand farms) had size of less than 0.5 hectares" (PSA, 2022 CAF Agricultural Farm and Parcel Characteristics, Final Results, released 6 July 2026: https://psa.gov.ph/content/2022-census-agriculture-and-fisheries-agricultural-farm-and-parcel-characteristics-final).
 
 **What do you hope to achieve?**
 
 That a farmer sees, before planting, which season on each lot is likely to run short of water this El Niño year, and which crop or planting month fits the rain better. Next steps:
-- test the results with farmers and municipal agricultural technicians in Lanao del Norte, and have native speakers check the Tagalog and Bisaya;
+- test the results with farmers and municipal agricultural technicians in Bukidnon, add Bukidnon PSA yields (the app now uses Lanao del Norte yields), and have native speakers check the Tagalog and Bisaya;
 - add local planting calendars, prices and labor to the crop library, so income and work can be scored;
 - replace the team's assumed score weights with values validated locally;
 - a view for technicians and cooperatives that covers several farms;
