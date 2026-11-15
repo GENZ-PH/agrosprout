@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { FooterBar } from "./FooterLinks";
 import { colors, MAX_CONTENT_WIDTH, MAX_WIDE_WIDTH, space } from "./theme";
 
 type Props = {
@@ -22,10 +23,12 @@ type Props = {
   overlay?: ReactNode;
   /** Stays at the top while the body scrolls, e.g. the dashboard's title and lot tabs. */
   header?: ReactNode;
+  /** true = the footer links and the rule 6 line, pinned at the very bottom (FooterBar). */
+  links?: boolean;
 };
 
 /** Page frame for every screen: safe area, scrolling body, optional pinned footer. */
-export function Screen({ children, footer, scrollEnabled = true, edgeToEdge = false, width = "narrow", overlay, header }: Props) {
+export function Screen({ children, footer, scrollEnabled = true, edgeToEdge = false, width = "narrow", overlay, header, links = false }: Props) {
   const max = width === "wide" ? styles.wide : null;
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom", "left", "right"]}>
@@ -34,6 +37,8 @@ export function Screen({ children, footer, scrollEnabled = true, edgeToEdge = fa
           <View style={[styles.headerInner, max]}>{header}</View>
         </View>
       ) : null}
+      {/* The overlay floats over the scrolling body only, so it sits above the pinned footers. */}
+      <View style={styles.body}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={edgeToEdge ? styles.edge : [styles.content, max, overlay ? styles.underOverlay : null]}
@@ -42,8 +47,10 @@ export function Screen({ children, footer, scrollEnabled = true, edgeToEdge = fa
       >
         {children}
       </ScrollView>
-      {footer ? <View style={[styles.footer, max]}>{footer}</View> : null}
       {overlay}
+      </View>
+      {footer ? <View style={[styles.footer, max]}>{footer}</View> : null}
+      {links ? <FooterBar /> : null}
     </SafeAreaView>
   );
 }
@@ -57,6 +64,7 @@ const column = {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
+  body: { flex: 1 },
   scroll: { flex: 1 },
   content: { ...column, flexGrow: 1, gap: space.lg, paddingTop: space.sm, paddingBottom: space.xl },
   /** Room under the last card so a floating button (e.g. Adjust results) never covers it. */

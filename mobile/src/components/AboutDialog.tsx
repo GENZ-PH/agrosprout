@@ -60,6 +60,14 @@ export function AboutDialog({ visible, onClose }: { visible: boolean; onClose: (
                   <Text style={[text.small, styles.flex]}>{h}</Text>
                 </View>
               ))}
+              <Button
+                label="See every crop and how it is matched"
+                variant="secondary"
+                onPress={() => {
+                  onClose();
+                  router.push("/crop-library");
+                }}
+              />
             </Section>
 
             <Section title="Technology">
