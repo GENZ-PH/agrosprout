@@ -33,6 +33,12 @@ export const TL_EXTRA: Dict = {
   "EDIT LOT": "BAGUHIN ANG LOTE",
   "NEW LOT": "BAGONG LOTE",
   "(this month)": "(ngayong buwan)",
+  "When do you usually plant {crop}?": "Kailan mo karaniwang itinatanim ang {crop}?",
+  "{crop} can be planted at different times of the year, so tell us your month. The results compare every plan with it.": "Maaaring itanim ang {crop} sa iba't ibang panahon ng taon, kaya sabihin sa amin ang iyong buwan. Ihahambing dito ng mga resulta ang bawat plano.",
+  "Choose when you plant {crop}.": "Piliin kung kailan mo itinatanim ang {crop}.",
+  "Planted in {m}, harvested around {h} (the crop's usual season length). You can change it later.": "Itinanim sa {m}, inaani bandang {h} (karaniwang haba ng panahon ng pananim). Mababago mo ito mamaya.",
+  "Tell us when you plant {crop}": "Sabihin kung kailan mo itinatanim ang {crop}",
+  "We don't know when you plant {crop} on {lot}, so \"You now\" is empty and the plans are not compared with your crop yet. {crop2} can be planted at different times of the year.": "Hindi namin alam kung kailan mo itinatanim ang {crop} sa {lot}, kaya walang laman ang \"Ikaw ngayon\" at hindi pa naihahambing ang mga plano sa iyong pananim. Maaaring itanim ang {crop2} sa iba't ibang panahon ng taon.",
 };
 
 export const CEB_EXTRA: Dict = {
@@ -61,4 +67,10 @@ export const CEB_EXTRA: Dict = {
   "EDIT LOT": "USBA ANG LOTE",
   "NEW LOT": "BAG-ONG LOTE",
   "(this month)": "(karong bulana)",
+  "When do you usually plant {crop}?": "Kanus-a ka kasagaran magtanom og {crop}?",
+  "{crop} can be planted at different times of the year, so tell us your month. The results compare every plan with it.": "Matanom ang {crop} sa lain-laing panahon sa tuig, busa isulti kanamo ang imong bulan. Itandi niini sa mga resulta ang matag plano.",
+  "Choose when you plant {crop}.": "Pilia kanus-a ka magtanom og {crop}.",
+  "Planted in {m}, harvested around {h} (the crop's usual season length). You can change it later.": "Gitanom sa {m}, anihon mga {h} (ang naandang gitas-on sa panahon sa tanom). Mausab nimo kini unya.",
+  "Tell us when you plant {crop}": "Isulti kanus-a ka magtanom og {crop}",
+  "We don't know when you plant {crop} on {lot}, so \"You now\" is empty and the plans are not compared with your crop yet. {crop2} can be planted at different times of the year.": "Wala mi kahibalo kanus-a ka magtanom og {crop} sa {lot}, busa walay sulod ang \"Ikaw karon\" ug wala pa itandi ang mga plano sa imong tanom. Matanom ang {crop2} sa lain-laing panahon sa tuig.",
 };

@@ -53,6 +53,9 @@ function part(lang: "tl" | "ceb", v: string, depth: number): string {
     const viaPattern = matchPattern(lang, v, depth + 1);
     if (viaPattern) return viaPattern;
   }
+  // "Eggplant on Lot 1" in a list of crops still to set.
+  const on = /^(.+) on (Lot \d+.*)$/.exec(v);
+  if (on) return `${part(lang, on[1], depth)} sa ${part(lang, on[2], depth)}`;
   return v.replace(/[A-Z][a-z]+/g, (w) => DICT[lang][w] ?? w).replace(/\band\b/g, DICT[lang]["and"] ?? "and");
 }
 
@@ -69,5 +72,9 @@ function matchPattern(lang: "tl" | "ceb", en: string, depth = 0): string | null 
 
 export function translate(lang: Lang, en: string, vars?: Record<string, string | number>): string {
   const out = lang === "en" ? en : (DICT[lang][en] ?? (vars ? en : (matchPattern(lang, en) ?? en)));
-  return vars ? fill(out, vars) : out;
+  if (!vars) return out;
+  // A lot name or month passed in ("Lot 1") is shown in the same language.
+  if (lang === "en") return fill(out, vars);
+  const local = Object.fromEntries(Object.entries(vars).map(([k, v]) => [k, typeof v === "string" ? part(lang, v, 1) : v]));
+  return fill(out, local);
 }
