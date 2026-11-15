@@ -67,11 +67,22 @@ export function YearStrip({ pick, a, isA, name, cropById, monthly, whatIf }: Pro
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const x = useRef(0);
   const [active, setActive] = useState(BACK);
+  // Where the strip is, so each arrow dims at its end and both hide when every month already fits
+  // (a wide window shows most of the 36 months, and the arrows then looked broken).
+  const [view, setView] = useState({ x: 0, w: 0, content: 0 });
+  const maxX = Math.max(0, view.content - view.w);
+  const fits = view.w > 0 && maxX < STEP;
+  const atStart = view.x <= 2;
+  const atEnd = view.x >= maxX - 2;
   const rows: { label: string; strip: (string | null)[] }[] = [
     { label: isA ? "Your crops" : "Suggestion", strip: yearStrip(pick) },
     ...(!isA && a ? [{ label: "You now", strip: yearStrip(a) }] : []),
   ];
-  const by = (dx: number) => scroll.current?.scrollTo({ x: Math.max(0, x.current + dx * STEP), animated: true });
+  // One page at a time: the visible months less one, so a month stays for orientation.
+  const by = (dir: -1 | 1) => {
+    const page = Math.max(STEP, Math.floor(view.w / STEP - 1) * STEP);
+    scroll.current?.scrollTo({ x: Math.min(maxX, Math.max(0, x.current + dir * page)), animated: true });
+  };
 
   return (
     <View style={styles.wrap}>
@@ -89,8 +100,17 @@ export function YearStrip({ pick, a, isA, name, cropById, monthly, whatIf }: Pro
           ref={scroll}
           horizontal
           showsHorizontalScrollIndicator
-          onLayout={() => scroll.current?.scrollTo({ x: (BACK - 1) * STEP, animated: false })}
-          onScroll={(e) => (x.current = e.nativeEvent.contentOffset.x)}
+          onLayout={(e) => {
+            const w = e.nativeEvent.layout.width;
+            setView((v) => ({ ...v, w }));
+            scroll.current?.scrollTo({ x: (BACK - 1) * STEP, animated: false });
+          }}
+          onContentSizeChange={(content) => setView((v) => ({ ...v, content }))}
+          onScroll={(e) => {
+            x.current = e.nativeEvent.contentOffset.x;
+            const nx = x.current;
+            setView((v) => (Math.abs(v.x - nx) < 1 ? v : { ...v, x: nx }));
+          }}
           scrollEventThrottle={32}
           style={styles.flex}
           contentContainerStyle={styles.cols}
@@ -100,17 +120,35 @@ export function YearStrip({ pick, a, isA, name, cropById, monthly, whatIf }: Pro
           ))}
         </ScrollView>
       </View>
-      <View style={styles.nav}>
-        <Pressable onPress={() => by(-6)} accessibilityRole="button" accessibilityLabel="Earlier months" style={styles.navBtn}>
-          <Icon name="back" size={18} color={colors.green} />
-          <Text style={styles.navText}>Earlier</Text>
-        </Pressable>
-        <Text style={[text.caption, styles.flex, styles.center]}>Drag or use the arrows. The plan repeats every year.</Text>
-        <Pressable onPress={() => by(6)} accessibilityRole="button" accessibilityLabel="Later months" style={styles.navBtn}>
-          <Text style={styles.navText}>Later</Text>
-          <Icon name="chevron" size={18} color={colors.green} />
-        </Pressable>
-      </View>
+      {fits ? (
+        <Text style={text.caption}>The plan repeats every year.</Text>
+      ) : (
+        <View style={styles.nav}>
+          <Pressable
+            onPress={() => by(-1)}
+            disabled={atStart}
+            accessibilityRole="button"
+            accessibilityLabel="Earlier months"
+            accessibilityState={{ disabled: atStart }}
+            style={[styles.navBtn, atStart && styles.navOff]}
+          >
+            <Icon name="back" size={18} color={colors.green} />
+            <Text style={styles.navText}>Earlier</Text>
+          </Pressable>
+          <Text style={[text.caption, styles.flex, styles.center]}>Drag or use the arrows. The plan repeats every year.</Text>
+          <Pressable
+            onPress={() => by(1)}
+            disabled={atEnd}
+            accessibilityRole="button"
+            accessibilityLabel="Later months"
+            accessibilityState={{ disabled: atEnd }}
+            style={[styles.navBtn, atEnd && styles.navOff]}
+          >
+            <Text style={styles.navText}>Later</Text>
+            <Icon name="chevron" size={18} color={colors.green} />
+          </Pressable>
+        </View>
+      )}
       <MonthNote m={months[active]} pick={pick} a={isA ? undefined : a} name={name} monthly={monthly} whatIf={whatIf} />
     </View>
   );
@@ -250,6 +288,7 @@ const styles = StyleSheet.create({
   cellOn: { transform: [{ scaleY: 1.08 }] },
   nav: { flexDirection: "row", alignItems: "center", gap: space.sm },
   navBtn: { flexDirection: "row", alignItems: "center", gap: 2, minHeight: 40, paddingHorizontal: space.xs },
+  navOff: { opacity: 0.35 },
   navText: { fontSize: 14, fontWeight: "700", color: colors.green },
   note: { gap: space.xs, padding: space.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   noteLabel: { fontWeight: "700" },
