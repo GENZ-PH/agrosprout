@@ -7,7 +7,7 @@ The lots map (S1, `/lots`) starts at Iligan. Anyone not standing on their farm (
 
 ## Goals, non-goals, anti-goals
 - **Goals:** find any Philippine city or municipality by name in one tap, on Android and web, offline.
-- **Non-goals (this PR):** barangays, streets, landmarks. Barangays are a follow-up PR (GeoNames has 19,168 `ADM4` barangays, under half of the country's, so coverage needs a closer look first).
+- **Non-goals (this PR):** barangays, streets, landmarks. Barangays are a follow-up PR (GeoNames has 19,168 `ADM4` barangays, under half of the country's, so coverage needs a closer look first). Done in the follow-up: see the addendum at the end.
 - **Anti-goals:** sending what the farmer types to any service (rule 8, PR #140); covering the lot while drawing; a box that breaks the layout at 320 px.
 
 ## Constraints
@@ -31,3 +31,11 @@ johnrald1 picked 1, towns and cities now, barangays later.
 
 ## Left to the builder
 Exact pixel offsets, the label's fade time, how the places file is loaded (lazy on first focus if the bundler allows it cleanly, otherwise a normal import; it is about 100 KB).
+
+## Addendum: barangays (follow-up PR, 2026-11-15)
+- **Coverage:** GeoNames `ADM4` rows are mostly not linked to a town (2,595 of 19,168 have an admin3 code), but `PPL` rows (populated places; in the Philippines mostly barangays, some sitios) are: 40,585 of 42,222. The pipeline keeps every `ADM4` and `PPL` row, once per town (linked rows first, `ADM4` before `PPL`), skips rows named like their own town, and writes them as `barangays: [name, town index, lat, lon]`: 51,091 rows.
+- **Rows without a town (10,508):** they get the town of the nearest place whose town is known (a town centre or a linked row), only within their own province (GeoNames admin1 + admin2), and a fifth field `1`. The app then shows "near Iligan City, Lanao del Norte". Tested by hiding the town of 3,000 linked places and guessing it the same way: right 92% of the time, hence "near". Without this step most of Iligan's barangays (Tibanga, Acmac, Bonbonon, ...) were missing; with it, 41 of Iligan's 44 are found (38 by name alone, Poblacion, San Miguel and San Roque by adding "ili"). Still missing: Kalilangan (GeoNames puts it in another town), Tomas L. Cabili, Upper Tominobo (GeoNames: "Tominobo Upper").
+- **Positions** are GeoNames' points, not barangay centres; Tibanga's sits on the shore, for example.
+- **Search:** towns always come before barangays; the result's second line is "Town, Province". A barangay also matches its town's name from the start of a word, so "abuno ili" finds Abuno, Iligan City. The map flies to zoom 15 for a barangay (13 for a town).
+- **Size and speed:** the file grows to about 1.73 MB (526 KB gzipped). It is read on the first search, with a head start when the box gets focus (`getPlaces()` in `src/data/places.ts`), not when the app opens. On a laptop (52,737 entries), building the list takes about 35 ms and each keystroke about 3 to 4 ms.
+- **Placeholder:** "Search a town or barangay" ("Search a place" under 360 px). Credit: "Place names and positions: GeoNames (CC BY 4.0)".

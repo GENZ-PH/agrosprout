@@ -1,13 +1,13 @@
 import { useMemo, useRef, useState, type ComponentRef } from "react";
 import { Keyboard, Platform, Pressable, StyleSheet, Text, TextInput, type TextStyle, useWindowDimensions, View } from "react-native";
 
-import { PLACES } from "../data/places";
+import { getPlaces } from "../data/places";
 import { searchPlaces, type PlaceHit } from "../map/place-search-core";
 import { Icon } from "./Icon";
 import { colors, MIN_TOUCH, space, text } from "./theme";
 
 // S1 place search (#196): a box at the top left of the lots map, between the back and Find me buttons. It searches
-// the bundled town list on the phone; nothing typed is sent anywhere (rule 8). Picking a result moves the map.
+// the bundled town and barangay list on the phone; nothing typed is sent anywhere (rule 8). Picking a result moves the map.
 
 type Props = {
   /** Wide window: a fixed-width box instead of filling the gap between the two round buttons. */
@@ -32,7 +32,8 @@ export function PlaceSearch({ wide, onPick }: Props) {
   const [open, setOpen] = useState(false);
   const [focused, setFocused] = useState(false);
   const [active, setActive] = useState(0);
-  const hits = useMemo(() => searchPlaces(PLACES, query), [query]);
+  // The list loads on the first letter typed (getPlaces is lazy), so opening S1 stays quick.
+  const hits = useMemo(() => (query.trim() ? searchPlaces(getPlaces(), query) : []), [query]);
   const typed = query.trim().length > 0;
   // A list only once there is something to match: under 2 letters `searchPlaces` gives nothing to show.
   const showing = open && (hits.length > 0 || query.trim().length >= 2);
@@ -74,6 +75,8 @@ export function PlaceSearch({ wide, onPick }: Props) {
           onFocus={() => {
             setFocused(true);
             setOpen(true);
+            // Read the place list while the farmer starts typing, so the first letter doesn't wait for it.
+            setTimeout(getPlaces, 0);
           }}
           onBlur={() => setFocused(false)}
           onSubmitEditing={() => pick(hits[active] ?? hits[0])}
@@ -81,7 +84,7 @@ export function PlaceSearch({ wide, onPick }: Props) {
           returnKeyType="search"
           autoCorrect={false}
           autoCapitalize="none"
-          placeholder={width < 360 ? "Search a place" : "Search a town or city"}
+          placeholder={width < 360 ? "Search a place" : "Search a town or barangay"}
           placeholderTextColor={colors.muted}
           accessibilityLabel="Search a place on the map"
           style={styles.input}

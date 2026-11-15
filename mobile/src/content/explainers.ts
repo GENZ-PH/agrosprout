@@ -376,11 +376,11 @@ export const DATA_SOURCES: readonly DataSource[] = [
     url: "https://www.naturalearthdata.com/",
   },
   {
-    name: "GeoNames Philippines (cities and municipalities)",
+    name: "GeoNames Philippines (towns, cities and barangays)",
     used_for:
-      "The place search on the lots map: town and city names and positions, kept on your phone, so nothing you type is sent. Town names and positions: GeoNames (CC BY 4.0).",
+      "The place search on the lots map: town, city and barangay names and positions, kept on your phone, so nothing you type is sent. Place names and positions: GeoNames (CC BY 4.0).",
     period: "Retrieved 2026-11-15",
-    resolution: "1,646 cities and municipalities; positions rounded to about 100 m",
+    resolution: "1,646 cities and municipalities and 51,091 barangays and villages (10,508 shown as \"near\" a town: GeoNames gives no town, so the nearest one in the province is used); positions rounded to about 100 m",
     url: "https://www.geonames.org/",
   },
   {

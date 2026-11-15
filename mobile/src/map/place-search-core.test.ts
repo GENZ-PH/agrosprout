@@ -4,11 +4,14 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 
-import { COORDS_ZOOM, MAX_HITS, TOWN_ZOOM, parseCoords, searchPlaces, toPlaces, type PlaceRow } from "./place-search-core";
+import { BARANGAY_ZOOM, COORDS_ZOOM, MAX_HITS, TOWN_ZOOM, parseCoords, searchPlaces, toPlaces, type BarangayRow, type PlaceRow } from "./place-search-core";
 
 // The real bundled town list (pipeline/build_places.py), so the tests check what the farmer will see.
-const FILE = JSON.parse(readFileSync(join(process.cwd(), "assets", "data", "places-ph.json"), "utf8")) as { places: PlaceRow[] };
-const P = toPlaces(FILE.places);
+const FILE = JSON.parse(readFileSync(join(process.cwd(), "assets", "data", "places-ph.json"), "utf8")) as {
+  places: PlaceRow[];
+  barangays: BarangayRow[];
+};
+const P = toPlaces(FILE.places, FILE.barangays);
 const titles = (q: string) => searchPlaces(P, q).map((h) => h.title);
 
 test("core name first: a city whose name is the typed word comes first", () => {
@@ -29,10 +32,40 @@ test("accents: with or without ñ finds Peñaranda", () => {
   assert.equal(titles("Peñaranda")[0], "Peñaranda");
 });
 
-test("same name in two provinces: each result says its province", () => {
+test("same name in two provinces: each result says where it is", () => {
   const hits = searchPlaces(P, "tubod").filter((h) => h.title === "Tubod");
   assert.ok(hits.length >= 2);
   assert.equal(new Set(hits.map((h) => h.detail)).size, hits.length);
+});
+
+test("barangays: found by name, say their town and province, and open closer than a town", () => {
+  const [first] = searchPlaces(P, "dalipuga");
+  assert.equal(first.title, "Dalipuga");
+  assert.equal(first.detail, "Iligan City, Lanao del Norte");
+  assert.equal(first.zoom, BARANGAY_ZOOM);
+});
+
+test("barangay then town: typing part of the town picks the right barangay", () => {
+  const [first] = searchPlaces(P, "abuno ili");
+  assert.equal(first.title, "Abuno");
+  assert.match(first.detail, /^Iligan City, /);
+});
+
+test("a barangay whose town GeoNames doesn't give says near the nearest town", () => {
+  const [first] = searchPlaces(P, "bonbonon ili");
+  assert.equal(first.title, "Bonbonon");
+  assert.equal(first.detail, "near Iligan City, Lanao del Norte");
+  const near = toPlaces([["Iligan City", "Lanao del Norte", 8.231, 124.261]], [["Tibanga", 0, 8.24, 124.24, 1]]);
+  assert.equal(searchPlaces(near, "tibanga")[0].detail, "near Iligan City, Lanao del Norte");
+  assert.equal(searchPlaces(near, "tibanga ili")[0].title, "Tibanga");
+});
+
+test("towns before barangays with the same name", () => {
+  const hits = searchPlaces(P, "tubod");
+  const firstBarangay = hits.findIndex((h) => h.zoom === BARANGAY_ZOOM);
+  assert.ok(firstBarangay > 0, "a barangay is listed, after the towns");
+  assert.ok(hits.slice(0, firstBarangay).every((h) => h.zoom === TOWN_ZOOM));
+  assert.ok(hits.slice(firstBarangay).every((h) => h.zoom === BARANGAY_ZOOM));
 });
 
 test("limits: nothing under 2 letters, at most 6 results", () => {
