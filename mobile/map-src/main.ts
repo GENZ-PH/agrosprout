@@ -210,6 +210,11 @@ const lastRing = new Map<string, string>();
 const labels = new Map<string, L.Tooltip>();
 const placesLayer = L.layerGroup().addTo(map);
 let gpsLayer: L.LayerGroup | null = null;
+/** The name of the last searched place (#196), shown for SEARCH_LABEL_MS at its spot. */
+let searchLabel: L.Tooltip | null = null;
+let searchLabelTimer: ReturnType<typeof setTimeout> | undefined;
+const SEARCH_LABEL_MS = 4000;
+const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
 const ringOf = (id: string): LonLat[] | null => {
   const f = draw.getSnapshotFeature(id);
@@ -512,6 +517,25 @@ function receive(msg: AppToMap) {
     case "zoomIn":
       if (map.getZoom() < msg.zoom) map.setZoom(msg.zoom);
       break;
+    case "flyTo": {
+      const at: [number, number] = [msg.lat, msg.lon];
+      if (reducedMotion()) map.setView(at, msg.zoom);
+      else map.flyTo(at, msg.zoom, { duration: 1.2 });
+      clearTimeout(searchLabelTimer);
+      searchLabel?.remove();
+      searchLabel = null;
+      if (msg.label) {
+        searchLabel = L.tooltip({ permanent: true, direction: "top", interactive: false })
+          .setLatLng(at)
+          .setContent(msg.label)
+          .addTo(map);
+        searchLabelTimer = setTimeout(() => {
+          searchLabel?.remove();
+          searchLabel = null;
+        }, SEARCH_LABEL_MS);
+      }
+      break;
+    }
     case "gps": {
       gpsLayer?.remove();
       const at: [number, number] = [msg.lat, msg.lon];

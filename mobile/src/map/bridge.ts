@@ -85,7 +85,9 @@ export type AppToMap =
   /** The app's panels changed size. Used by the next fit; the view doesn't move. */
   | { type: "setInset"; inset: MapInset }
   /** Zoom in to at least this level, keeping the centre (the S1 zoom check before drawing). */
-  | { type: "zoomIn"; zoom: number };
+  | { type: "zoomIn"; zoom: number }
+  /** Move to a place the farmer searched for (#196). `label` shows on the map for a few seconds. */
+  | { type: "flyTo"; lat: number; lon: number; zoom: number; label?: string };
 
 export type SketchRejectReason =
   /** The stroke was too short to be a lot outline. */
