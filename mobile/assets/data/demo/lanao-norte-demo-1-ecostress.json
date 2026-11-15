@@ -1,0 +1,242 @@
+{
+  "id": "lanao-norte-demo-1",
+  "product": "ECOSTRESS Tiled L4 Evaporative Stress Index PT-JPL (ECO_L4T_ESI) and L3 Evapotranspiration (ECO_L3T_JET)",
+  "version": "002",
+  "native_res": "70 m pixel, irregular ISS overpass times",
+  "point": {
+    "lat": 8.0,
+    "lon": 123.8
+  },
+  "qa_rule": "keep a value only if the product's own cloud layer == 0, water layer == 0 and the value is finite (ESI within 0..1, ETdaily >= 0)",
+  "statistic": "mean of the valid samples in each year-month, then p20, p50, p80 across years per calendar month (linear-interpolated percentiles)",
+  "provenance": [
+    {
+      "source": "NASA LP DAAC ECO_L4T_ESI v002 (ESI, cloud, water)",
+      "doi": "10.5067/ECOSTRESS/ECO_L4T_ESI.002",
+      "native_res": "70 m",
+      "period": "2018-09-29 to 2026-09-20",
+      "access": "NASA AppEEARS point task unknown",
+      "retrieved": "2026-11-14"
+    },
+    {
+      "source": "NASA LP DAAC ECO_L3T_JET v002 (ETdaily, cloud, water)",
+      "doi": "10.5067/ECOSTRESS/ECO_L3T_JET.002",
+      "native_res": "70 m",
+      "period": "2018-09-29 to 2026-09-20",
+      "access": "NASA AppEEARS point task unknown",
+      "retrieved": "2026-11-14"
+    }
+  ],
+  "esi": {
+    "units": "ratio (0 = high stress, 1 = no stress)",
+    "period": "2018-09-29 to 2026-09-20",
+    "observations_seen": 54,
+    "valid_samples": 54,
+    "monthly": [
+      {
+        "month": 1,
+        "p20": 0.8,
+        "p50": 0.817,
+        "p80": 0.848,
+        "n_years": 3,
+        "n_samples": 5
+      },
+      {
+        "month": 2,
+        "p20": null,
+        "p50": null,
+        "p80": null,
+        "n_years": 0,
+        "n_samples": 0
+      },
+      {
+        "month": 3,
+        "p20": 0.598,
+        "p50": 0.645,
+        "p80": 0.692,
+        "n_years": 2,
+        "n_samples": 3
+      },
+      {
+        "month": 4,
+        "p20": 0.648,
+        "p50": 0.821,
+        "p80": 0.967,
+        "n_years": 4,
+        "n_samples": 6
+      },
+      {
+        "month": 5,
+        "p20": 0.772,
+        "p50": 0.84,
+        "p80": 0.896,
+        "n_years": 4,
+        "n_samples": 8
+      },
+      {
+        "month": 6,
+        "p20": 0.763,
+        "p50": 0.868,
+        "p80": 0.943,
+        "n_years": 4,
+        "n_samples": 5
+      },
+      {
+        "month": 7,
+        "p20": 0.787,
+        "p50": 0.829,
+        "p80": 0.871,
+        "n_years": 2,
+        "n_samples": 4
+      },
+      {
+        "month": 8,
+        "p20": 0.879,
+        "p50": 0.879,
+        "p80": 0.879,
+        "n_years": 1,
+        "n_samples": 1
+      },
+      {
+        "month": 9,
+        "p20": 0.851,
+        "p50": 0.857,
+        "p80": 0.86,
+        "n_years": 3,
+        "n_samples": 4
+      },
+      {
+        "month": 10,
+        "p20": 0.89,
+        "p50": 0.908,
+        "p80": 0.921,
+        "n_years": 3,
+        "n_samples": 8
+      },
+      {
+        "month": 11,
+        "p20": 0.815,
+        "p50": 0.869,
+        "p80": 0.946,
+        "n_years": 3,
+        "n_samples": 4
+      },
+      {
+        "month": 12,
+        "p20": 0.858,
+        "p50": 0.867,
+        "p80": 0.881,
+        "n_years": 6,
+        "n_samples": 6
+      }
+    ]
+  },
+  "et_daily": {
+    "units": "mm/day, integrated from sunrise to sunset. Source: ECOSTRESS L1C-4 Grid/Tile User Guide V2, L3T JET section text ('a daily ET estimate in millimeters per day ... recorded in the L3T JET product as ETdaily'). The same guide's Table 10 and AppEEARS list W m-2; values of 1.7 to 4.6 only make sense as mm/day",
+    "period": "2018-09-29 to 2026-09-20",
+    "observations_seen": 54,
+    "valid_samples": 54,
+    "monthly": [
+      {
+        "month": 1,
+        "p20": 3.2,
+        "p50": 3.44,
+        "p80": 3.54,
+        "n_years": 3,
+        "n_samples": 5
+      },
+      {
+        "month": 2,
+        "p20": null,
+        "p50": null,
+        "p80": null,
+        "n_years": 0,
+        "n_samples": 0
+      },
+      {
+        "month": 3,
+        "p20": 2.98,
+        "p50": 3.35,
+        "p80": 3.73,
+        "n_years": 2,
+        "n_samples": 3
+      },
+      {
+        "month": 4,
+        "p20": 1.18,
+        "p50": 1.7,
+        "p80": 2.19,
+        "n_years": 4,
+        "n_samples": 6
+      },
+      {
+        "month": 5,
+        "p20": 1.57,
+        "p50": 2.4,
+        "p80": 3.24,
+        "n_years": 4,
+        "n_samples": 8
+      },
+      {
+        "month": 6,
+        "p20": 2.18,
+        "p50": 3.32,
+        "p80": 3.79,
+        "n_years": 4,
+        "n_samples": 5
+      },
+      {
+        "month": 7,
+        "p20": 2.52,
+        "p50": 2.97,
+        "p80": 3.41,
+        "n_years": 2,
+        "n_samples": 4
+      },
+      {
+        "month": 8,
+        "p20": 4.58,
+        "p50": 4.58,
+        "p80": 4.58,
+        "n_years": 1,
+        "n_samples": 1
+      },
+      {
+        "month": 9,
+        "p20": 2.92,
+        "p50": 3.53,
+        "p80": 4.14,
+        "n_years": 3,
+        "n_samples": 4
+      },
+      {
+        "month": 10,
+        "p20": 2.86,
+        "p50": 3.66,
+        "p80": 3.95,
+        "n_years": 3,
+        "n_samples": 8
+      },
+      {
+        "month": 11,
+        "p20": 2.06,
+        "p50": 3.62,
+        "p80": 3.9,
+        "n_years": 3,
+        "n_samples": 4
+      },
+      {
+        "month": 12,
+        "p20": 2.85,
+        "p50": 3.15,
+        "p80": 3.7,
+        "n_years": 6,
+        "n_samples": 6
+      }
+    ]
+  },
+  "caveats": [
+    "ECOSTRESS flies on the ISS, so overpass times vary and a month can have zero, one or many clear samples.",
+    "ESI and ET are snapshots on clear-sky overpasses; cloudy (often rainy) days are missing, which biases the sample toward dry, sunny days."
+  ]
+}

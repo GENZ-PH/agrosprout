@@ -1,0 +1,143 @@
+{
+  "id": "lanao-norte-demo-1",
+  "product": "Harmonized Landsat Sentinel-2 Vegetation Indices (HLSL30_VI, HLSS30_VI)",
+  "version": "v2.0 (020)",
+  "native_res": "30 m pixel, every Landsat 8/9 and Sentinel-2 overpass",
+  "period": "2013-05-22 to 2026-10-27",
+  "point": {
+    "lat": 8.0,
+    "lon": 123.8
+  },
+  "units": "NDVI (unitless, -1..1)",
+  "sampling": {
+    "per_product": {
+      "HLSL30_VI.020": {
+        "observations_seen": 405,
+        "valid_samples": 136,
+        "period": "2013-05-22 to 2026-10-09"
+      },
+      "HLSS30_VI.020": {
+        "observations_seen": 613,
+        "valid_samples": 252,
+        "period": "2015-12-04 to 2026-10-27"
+      }
+    },
+    "valid_samples": 388,
+    "qa_rule": "keep an observation only if the HLS Fmask (from HLSL30.020 / HLSS30.020, joined on date) has bits 1 cloud, 2 adjacent cloud/shadow, 3 cloud shadow and 4 snow/ice all 0, and NDVI is within -1..1. Water (bit 5) is kept, since a flooded paddy is a real field state",
+    "statistic": "Landsat and Sentinel-2 samples pooled; mean per year-month, then p20, p50, p80 across years per calendar month (linear-interpolated percentiles)"
+  },
+  "monthly": [
+    {
+      "month": 1,
+      "p20": 0.78,
+      "p50": 0.803,
+      "p80": 0.826,
+      "n_years": 9,
+      "n_samples": 19
+    },
+    {
+      "month": 2,
+      "p20": 0.79,
+      "p50": 0.796,
+      "p80": 0.808,
+      "n_years": 12,
+      "n_samples": 32
+    },
+    {
+      "month": 3,
+      "p20": 0.741,
+      "p50": 0.771,
+      "p80": 0.796,
+      "n_years": 12,
+      "n_samples": 44
+    },
+    {
+      "month": 4,
+      "p20": 0.633,
+      "p50": 0.733,
+      "p80": 0.796,
+      "n_years": 12,
+      "n_samples": 39
+    },
+    {
+      "month": 5,
+      "p20": 0.75,
+      "p50": 0.79,
+      "p80": 0.813,
+      "n_years": 12,
+      "n_samples": 38
+    },
+    {
+      "month": 6,
+      "p20": 0.776,
+      "p50": 0.81,
+      "p80": 0.824,
+      "n_years": 10,
+      "n_samples": 27
+    },
+    {
+      "month": 7,
+      "p20": 0.787,
+      "p50": 0.812,
+      "p80": 0.82,
+      "n_years": 12,
+      "n_samples": 33
+    },
+    {
+      "month": 8,
+      "p20": 0.762,
+      "p50": 0.797,
+      "p80": 0.807,
+      "n_years": 11,
+      "n_samples": 35
+    },
+    {
+      "month": 9,
+      "p20": 0.795,
+      "p50": 0.804,
+      "p80": 0.818,
+      "n_years": 13,
+      "n_samples": 24
+    },
+    {
+      "month": 10,
+      "p20": 0.789,
+      "p50": 0.807,
+      "p80": 0.814,
+      "n_years": 11,
+      "n_samples": 31
+    },
+    {
+      "month": 11,
+      "p20": 0.804,
+      "p50": 0.824,
+      "p80": 0.834,
+      "n_years": 12,
+      "n_samples": 34
+    },
+    {
+      "month": 12,
+      "p20": 0.792,
+      "p50": 0.823,
+      "p80": 0.844,
+      "n_years": 12,
+      "n_samples": 32
+    }
+  ],
+  "low_ndvi_months": [],
+  "low_ndvi_rule": "calendar months whose p50 NDVI is below 0.4. A simple threshold for 'little green cover' (bare, flooded or just planted), not a crop calendar",
+  "provenance": {
+    "source": "NASA LP DAAC HLSL30_VI v2.0 and HLSS30_VI v2.0 (NDVI), Fmask from HLSL30 v2.0 and HLSS30 v2.0",
+    "doi": [
+      "10.5067/HLS/HLSL30_VI.002",
+      "10.5067/HLS/HLSS30_VI.002",
+      "10.5067/HLS/HLSL30.002",
+      "10.5067/HLS/HLSS30.002"
+    ],
+    "native_res": "30 m, irregular revisit (about 2 to 3 days combined, fewer clear days)",
+    "period": "2013-05-22 to 2026-10-27",
+    "access": "NASA AppEEARS point task unknown (https://appeears.earthdatacloud.nasa.gov/api)",
+    "retrieved": "2026-11-14",
+    "note": "Early years have fewer overpasses (Sentinel-2 from late 2015, Landsat 9 from late 2021), so n_samples per month varies."
+  }
+}

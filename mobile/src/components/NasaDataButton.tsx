@@ -5,19 +5,19 @@ import { Icon } from "./Icon";
 import { getInspector, subscribeInspector, toggleOverview } from "./inspector-store";
 import { colors, radius, space } from "./theme";
 
-/** The dashboard header's "NASA data" button (#165): opens or closes the NASA data panel. */
+/** The dashboard header's "Technical data" button (#165): opens or closes the panel (renamed 2026-11-15). */
 export function NasaDataButton() {
   const open = useSyncExternalStore(subscribeInspector, getInspector, getInspector) !== null;
   return (
     <Pressable
       onPress={toggleOverview}
       accessibilityRole="button"
-      accessibilityLabel={open ? "Close the NASA data panel" : "Open the NASA data panel"}
+      accessibilityLabel={open ? "Close the technical data panel" : "Open the technical data panel"}
       accessibilityState={{ expanded: open }}
       style={({ pressed }) => [styles.pill, open && styles.open, pressed && styles.pressed]}
     >
       <Icon name="info" size={16} color={open ? colors.surface : colors.green} />
-      <Text style={[styles.label, open && styles.labelOpen]}>NASA data</Text>
+      <Text style={[styles.label, open && styles.labelOpen]}>Technical data</Text>
     </Pressable>
   );
 }
