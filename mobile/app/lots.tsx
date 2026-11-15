@@ -444,7 +444,7 @@ export default function LotsScreen() {
                     <Button label="Done" icon="check" onPress={goBack} size="lg" />
                   ) : (
                     <Button
-                      label={adding ? `Next: crops for ${name}` : "Next: your crops"}
+                      label={adding ? `Next: main crop for ${name}` : "Next: main crop per lot"}
                       iconAfter="chevron"
                       href={nextHref}
                       size="lg"
