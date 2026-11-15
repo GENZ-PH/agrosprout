@@ -182,6 +182,7 @@ Rules:
 - Use only the facts and numbers given. Never add a number, a price, a yield or a fact that is not in the data.
 - The screen already lists what happens on the field this month. Do not repeat it. Say WHY in everyday words: is this month wet or dry for the crops, and what can go wrong (a dry year, a very wet year, bare soil washing away).
 - At most one number (rain in mm), only if it helps.
+- The plan lines are the engine's result from the same NASA data. Never contradict them. If a month says "Short of water", "Too hot" or "Too wet" for a plan, your note must agree and say why (for example: rice needs more water than the usual rain that month gives), even if the month is rainy.
 - Say which plan a crop belongs to. A crop that is only in the farmer's current crops is "your current crops" (e.g. "your current mungbean"), never just the crop name, so it is not mistaken for the suggested plan.
 - If satellite checks are given, you may use one of them when it helps explain the month (for example the satellites also see a dry month, or see more rain than NASA POWER). Name the source in plain words, e.g. "rain satellites" or "soil moisture satellite".
 - 2 short sentences, under 40 words in total.
@@ -199,7 +200,7 @@ export const explainMonth = new Hono<{ Bindings: Env }>().post("/", validate("js
   }
   const body = c.req.valid("json");
   const cache = caches.default;
-  const bytes = new TextEncoder().encode(MODEL + "\nmonth-v4\n" + JSON.stringify(body));
+  const bytes = new TextEncoder().encode(MODEL + "\nmonth-v5\n" + JSON.stringify(body));
   const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map((x) => x.toString(16).padStart(2, "0")).join("");
   const key = new Request(`https://si-explain-month.cache/${hash}`);
   const hit = await cache.match(key);
@@ -257,7 +258,7 @@ export const explainYear = new Hono<{ Bindings: Env }>().post("/", validate("jso
   }
   const body = c.req.valid("json");
   const cache = caches.default;
-  const bytes = new TextEncoder().encode(MODEL + "\nyear-v3\n" + JSON.stringify(body));
+  const bytes = new TextEncoder().encode(MODEL + "\nyear-v4\n" + JSON.stringify(body));
   const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map((x) => x.toString(16).padStart(2, "0")).join("");
   const key = new Request(`https://si-explain-year.cache/${hash}`);
   const hit = await cache.match(key);
