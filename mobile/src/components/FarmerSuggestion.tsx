@@ -55,7 +55,7 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
       <View style={styles.pics}>
         {crops.map((id) => (
           <View key={id} style={styles.pic}>
-            <CropImage cropId={id} size={56} />
+            <CropImage cropId={id} size={56} borderColor={familyStyle(cropById(id)?.family).fill} />
             <Text style={text.small} numberOfLines={1}>
               {name(id)}
             </Text>
