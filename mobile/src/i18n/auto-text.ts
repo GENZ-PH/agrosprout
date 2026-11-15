@@ -15,7 +15,11 @@ function one(s: string): string {
 
 function translateChildren(children: unknown): unknown {
   if (typeof children === "string") return one(children);
-  if (Array.isArray(children)) return children.map((c) => (typeof c === "string" ? one(c) : c));
+  if (Array.isArray(children)) {
+    // "{n} out of 100 with this plan" arrives as pieces; text and numbers only are read as one sentence.
+    if (children.every((c) => typeof c === "string" || typeof c === "number")) return one(children.join(""));
+    return children.map((c) => (typeof c === "string" ? one(c) : c));
+  }
   return children;
 }
 

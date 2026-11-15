@@ -1,6 +1,10 @@
 // Tagalog (tl) and Bisaya/Cebuano (ceb) for the farmer's main screens, keyed by the English text.
 // Written with SI (Claude), 2026-11-15; to be checked by a team member who speaks each language.
 // {lot}, {name} etc. are filled in by the app.
+import ceb_auto from "./ceb.json";
+import { CEB_EXTRA, TL_EXTRA } from "./extra";
+import tl_auto from "./tl.json";
+
 type Dict = Record<string, string>;
 
 const tl: Dict = {
@@ -219,4 +223,8 @@ const ceb: Dict = {
   "Hide the advisory": "Itago ang pahibalo",
 };
 
-export const DICT: Record<"tl" | "ceb", Dict> = { tl, ceb };
+// The longer lists (tl.json, ceb.json) were translated with SI from the app texts; the words above win.
+export const DICT: Record<"tl" | "ceb", Dict> = {
+  tl: { ...(tl_auto as Dict), ...TL_EXTRA, ...tl },
+  ceb: { ...(ceb_auto as Dict), ...CEB_EXTRA, ...ceb },
+};
