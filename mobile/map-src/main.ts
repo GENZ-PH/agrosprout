@@ -519,8 +519,11 @@ function receive(msg: AppToMap) {
       break;
     case "flyTo": {
       const at: [number, number] = [msg.lat, msg.lon];
-      if (reducedMotion()) map.setView(at, msg.zoom);
-      else map.flyTo(at, msg.zoom, { duration: 1.2 });
+      // Centre the place in the part of the map the app's panels leave visible, not behind them.
+      const shift = L.point((inset.right - inset.left) / 2, (inset.bottom - inset.top) / 2);
+      const centre = map.unproject(map.project(at, msg.zoom).add(shift), msg.zoom);
+      if (reducedMotion()) map.setView(centre, msg.zoom);
+      else map.flyTo(centre, msg.zoom, { duration: 1.2 });
       clearTimeout(searchLabelTimer);
       searchLabel?.remove();
       searchLabel = null;
