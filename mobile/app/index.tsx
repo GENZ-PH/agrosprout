@@ -1,4 +1,5 @@
 import { Redirect, router } from "expo-router";
+import { LanguageSwitch } from "../src/components/LanguageSwitch";
 import { tr } from "../src/i18n/lang-store";
 import { Image, StyleSheet, Text, View } from "react-native";
 
@@ -52,6 +53,8 @@ export default function WelcomeScreen() {
           accessibilityRole="image"
           accessibilityLabel="AgroSprout"
         />
+        <View style={styles.flex} />
+        <LanguageSwitch />
       </View>
 
       <View style={styles.middle}>
@@ -71,7 +74,8 @@ export default function WelcomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  brand: { flexDirection: "row", alignItems: "center", gap: 10, paddingTop: space.xl },
+  brand: { flexDirection: "row", alignItems: "center", gap: 10, paddingTop: space.xl, zIndex: 20 },
+  flex: { flex: 1 },
   logo: { width: 220, height: 220 * (320 / 1400) },
   middle: { flexGrow: 1, justifyContent: "center", gap: 20, paddingVertical: space.xl },
   lead: { fontSize: 18, lineHeight: 27, color: colors.muted },
