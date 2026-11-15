@@ -135,4 +135,4 @@ Third-party services, data, and libraries, with their licenses and terms: [THIRD
 
 Code: [MIT](LICENSE), Copyright (c) 2026 Team Jeoleecation. Crop photos, NASA and other data, OpenStreetMap map data, fonts and icons keep their own licenses and terms; see [THIRD_PARTY.md](THIRD_PARTY.md).
 
-Team Jeoleecation: RomartM, DMNCLDLPRT, johrald1, earnieacts.
+Team Jeoleecation: RomartM, DMNCDLPRT, johnrald1, earnieacts.
