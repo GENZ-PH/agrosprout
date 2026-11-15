@@ -40,6 +40,23 @@ const RULES: Rule[] = [
     purpose: "Daily NASA POWER values (not requested by the phone on this branch; the sample farm's daily data is bundled).",
     keep: ["parameters", "latitude", "longitude", "start", "end", "community"],
   },
+  // Satellite checks for a drawn lot (D35): our API Worker calls NASA for the rounded lot centre.
+  ...(
+    [
+      ["imerg", "imerg", "GPM IMERG monthly rain for the lot centre (rounded to 0.1°), through our server."],
+      ["smap", "smap", "SMAP L4 soil moisture for the lot centre (rounded to 0.1°), through our server."],
+      ["fldas", "fldas", "FLDAS land model water balance for the lot centre (rounded to 0.1°), through our server."],
+      ["srtm", "srtm", "SRTM elevation and slope for the lot centre (rounded to 0.1°), through our server."],
+      ["appeears", "modis", "MODIS and HLS greenness and ECOSTRESS water stress (NASA AppEEARS) for the lot centre (rounded to 0.1°), through our server."],
+    ] as const
+  ).map(
+    ([path, source, purpose]): Rule => ({
+      test: (u) => new RegExp(`/v1/nasa/${path}(/|$)`).test(u.pathname),
+      source,
+      purpose,
+      keep: ["lat", "lon"],
+    }),
+  ),
   {
     test: (u) => u.hostname === "routing.openstreetmap.de",
     source: "osm",

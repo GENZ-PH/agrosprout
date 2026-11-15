@@ -3,6 +3,8 @@ import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { SOURCES, type SourceKey } from "../content/sources";
 import { type CallRecord, getCalls, subscribeCalls } from "../net/call-log";
+import { useLiveSatellite } from "../data/live-satellite";
+import { SATELLITE } from "../data/satellite";
 import type { LotData, Provenance } from "../types";
 import { Icon } from "./Icon";
 import { SourceChip } from "./SourceChip";
@@ -59,7 +61,25 @@ export function DataTracePanel({ data }: { data?: LotData }) {
   const pending = calls.some((c) => c.status === "pending");
   const nasaCalls = calls.filter((c) => SOURCES[c.source].nasa).length;
   const reqs = `${nasaCalls} NASA ${nasaCalls === 1 ? "request" : "requests"} since the app opened`;
-  const summary = data ? `${held.length} NASA ${held.length === 1 ? "dataset" : "datasets"} behind this lot, ${reqs}` : reqs;
+  // The satellite checks (D35): bundled for the sample farm, fetched through our server for a drawn
+  // lot. Shares the query cache with the Satellite checks card, so this asks NASA for nothing more.
+  const live = useLiveSatellite(data);
+  const files = data?.kind === "demo" ? SATELLITE[data.id] : live?.files;
+  const checks: { key: SourceKey; label: string; ready: boolean }[] = data
+    ? [
+        { key: "imerg", label: "GPM IMERG rain", ready: !!files?.imerg },
+        { key: "smap", label: "SMAP soil moisture", ready: !!files?.smap },
+        { key: "fldas", label: "FLDAS land model", ready: !!files?.fldas },
+        { key: "modis", label: "MODIS greenness", ready: !!files?.ndvi },
+        { key: "hls", label: "HLS greenness (Landsat and Sentinel-2)", ready: !!files?.hls },
+        { key: "ecostress", label: "ECOSTRESS plant water stress", ready: !!files?.ecostress },
+        ...(data.kind === "live" ? [{ key: "srtm" as SourceKey, label: "SRTM elevation and slope", ready: !!live?.srtm }] : []),
+      ]
+    : [];
+  const ready = checks.filter((c) => c.ready).length;
+  const summary = data
+    ? `${held.length} NASA ${held.length === 1 ? "dataset" : "datasets"} in the results, ${ready} more as checks, ${reqs}`
+    : reqs;
 
   return (
     <View style={styles.card}>
@@ -115,8 +135,26 @@ export function DataTracePanel({ data }: { data?: LotData }) {
               ))}
             </>
           ) : null}
+          {checks.length > 0 ? (
+            <>
+              <Text style={styles.section}>NASA data set beside the results as checks (not in the scores)</Text>
+              {checks.map((c) => (
+                <View key={c.key} style={styles.row}>
+                  <View style={styles.rowHead}>
+                    <View style={styles.flex}>
+                      <SourceChip k={c.key} />
+                    </View>
+                    <Text style={styles.tag}>
+                      {c.ready ? (data?.kind === "demo" ? "Bundled" : "Received") : live?.failed.some((f) => f.includes(c.label.split(" ")[0])) ? "Not available now" : "Loading"}
+                    </Text>
+                  </View>
+                  <Text style={[text.caption, styles.muted]}>{c.label}</Text>
+                </View>
+              ))}
+            </>
+          ) : null}
           <Text style={[text.caption, styles.muted]}>
-            This list stays on your phone. The lot centre is sent to NASA POWER rounded to 0.1° (about 11 km).
+            This list stays on your phone. The lot centre is sent to NASA POWER, and to our server for the satellite checks, rounded to 0.1° (about 11 km).
           </Text>
         </View>
       ) : null}
