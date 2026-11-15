@@ -16,7 +16,10 @@ export type SourceKey =
   | "shi"
   | "imerg"
   | "smap"
-  | "modis";
+  | "modis"
+  | "hls"
+  | "ecostress"
+  | "fldas";
 
 export interface SourceTag {
   /** Short name, the same everywhere in the app. */
@@ -116,9 +119,33 @@ export const SOURCES: Readonly<Record<SourceKey, SourceTag>> = {
   modis: {
     name: "NASA MODIS NDVI",
     by: "NASA LP DAAC (MOD13Q1 v061)",
-    gives: "How green the ground is, every 16 days",
-    scale: "About 250 m pixel",
-    years: "No data file bundled yet",
+    gives: "How green the ground is (NDVI), from 16-day composites, by month",
+    scale: "250 m pixel",
+    years: "2001-01 to 2025-12",
+    nasa: true,
+  },
+  hls: {
+    name: "NASA HLS NDVI",
+    by: "NASA LP DAAC (Harmonized Landsat Sentinel-2, HLSL30_VI and HLSS30_VI v2.0)",
+    gives: "How green the ground is (NDVI) from Landsat 8/9 and Sentinel-2, by month",
+    scale: "30 m pixel",
+    years: "2013-05 to 2026-10",
+    nasa: true,
+  },
+  ecostress: {
+    name: "NASA ECOSTRESS",
+    by: "NASA LP DAAC (ECO_L4T_ESI and ECO_L3T_JET, v002)",
+    gives: "Plant water stress (Evaporative Stress Index) and daily evapotranspiration on clear-sky passes",
+    scale: "70 m pixel",
+    years: "2018-09 to 2026-09",
+    nasa: true,
+  },
+  fldas: {
+    name: "NASA FLDAS",
+    by: "NASA GES DISC (FLDAS Noah land surface model, FLDAS_NOAH01_C_GL_M v001)",
+    gives: "Modelled soil moisture, evapotranspiration, rain and runoff, monthly",
+    scale: "0.1° cell, about 11 km",
+    years: "2001-01 to 2025-12",
     nasa: true,
   },
   shi: {

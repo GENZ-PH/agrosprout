@@ -2,7 +2,8 @@
 // the formulas exactly as the code computes them. Every line points at code that exists:
 // data/power.ts, data/et0.ts, engine/waterBalance.ts, engine/params.ts, engine/scores.ts,
 // engine/cropFit.ts, engine/soilHealth.ts, and for the sample farm pipeline/build_demo.py,
-// pipeline/aggregate.py, pipeline/fetch_srtm.py, pipeline/fetch_imerg.py, pipeline/fetch_smap.py.
+// pipeline/aggregate.py, pipeline/fetch_srtm.py, pipeline/fetch_imerg.py, pipeline/fetch_smap.py,
+// pipeline/fetch_appeears.py (MODIS, HLS, ECOSTRESS), pipeline/fetch_fldas.py.
 // If a formula changes in the code, change it here too.
 
 import type { SourceKey } from "./sources";
@@ -159,6 +160,69 @@ export const SOURCE_DETAILS: Readonly<Partial<Record<SourceKey, SourceDetail>>> 
     formulas: [{ name: "Per calendar month", lines: ["month value = mean of the samples in that year-month", "shown = mean, P20 and P80 of those values across years"] }],
     cite: "Reichle, R. et al. (2025). SMAP L4 Global 3-hourly 9 km EASE-Grid Surface and Root Zone Soil Moisture Geophysical Data (SPL4SMGP, Version 8). NASA NSIDC DAAC, doi:10.5067/T5RUATAQREF8.",
     url: "https://nsidc.org/data/spl4smgp/versions/8",
+  },
+  modis: {
+    variables: [
+      { code: "_250m_16_days_NDVI", meaning: "Vegetation index, -0.2 to 1; higher means greener" },
+      { code: "_250m_16_days_pixel_reliability", meaning: "Quality: 0 good, 1 marginal, 2 snow or ice, 3 cloudy" },
+      { code: "_250m_16_days_composite_day_of_the_year", meaning: "Day the pixel was seen" },
+    ],
+    how: [
+      "A check, not an input: the scores do not use it. Fetched once by the team's pipeline through NASA AppEEARS for the sample farm point and bundled with the app.",
+      "Only composites with pixel reliability 0 (good) are kept; 353 of the 575 composites from 2001 to 2025 pass. Each one counts in the month it was seen.",
+      "A 250 m pixel mixes the lot with its neighbours; a small lot may differ.",
+    ],
+    formulas: [{ name: "Per calendar month", lines: ["month value = mean of the good composites in that year-month", "shown = P20, P50 and P80 of those values across years"] }],
+    cite: "MODIS/Terra Vegetation Indices 16-Day L3 Global 250m SIN Grid, MOD13Q1 Collection 6.1 (061). NASA LP DAAC, doi:10.5067/MODIS/MOD13Q1.061. Accessed through NASA AppEEARS, 2026-11-14.",
+    url: "https://doi.org/10.5067/MODIS/MOD13Q1.061",
+  },
+  hls: {
+    variables: [
+      { code: "NDVI", meaning: "Vegetation index from HLSL30_VI (Landsat) and HLSS30_VI (Sentinel-2), -1 to 1" },
+      { code: "Fmask", meaning: "Cloud, cloud shadow and snow flags from HLSL30 and HLSS30" },
+    ],
+    how: [
+      "A check, not an input: the scores do not use it. Fetched once by the team's pipeline through NASA AppEEARS for the sample farm point and bundled with the app.",
+      "An overpass is kept only when Fmask shows no cloud, adjacent cloud or shadow, cloud shadow or snow. Water is kept, since a flooded paddy is a real field state. 388 of 1,018 overpasses pass.",
+      "Landsat and Sentinel-2 are pooled. Early years have fewer overpasses (Sentinel-2 from late 2015, Landsat 9 from late 2021).",
+    ],
+    formulas: [{ name: "Per calendar month", lines: ["month value = mean of the clear overpasses in that year-month", "shown = P20, P50 and P80 of those values across years"] }],
+    cite: "Harmonized Landsat Sentinel-2 Vegetation Indices HLSL30_VI and HLSS30_VI v2.0, with Fmask from HLSL30 and HLSS30 v2.0. NASA LP DAAC, doi:10.5067/HLS/HLSL30_VI.002, doi:10.5067/HLS/HLSS30_VI.002, doi:10.5067/HLS/HLSL30.002, doi:10.5067/HLS/HLSS30.002. Accessed through NASA AppEEARS, 2026-11-14.",
+    url: "https://doi.org/10.5067/HLS/HLSL30_VI.002",
+  },
+  ecostress: {
+    variables: [
+      { code: "ESI", meaning: "Evaporative Stress Index (ECO_L4T_ESI), 0 high stress to 1 no stress" },
+      { code: "ETdaily", meaning: "Daily evapotranspiration (ECO_L3T_JET), mm/day, sunrise to sunset" },
+    ],
+    how: [
+      "A check, not an input: the scores work out evaporation from NASA POWER with FAO-56. Fetched once by the team's pipeline through NASA AppEEARS for the sample farm point and bundled with the app.",
+      "A value is kept only when the product's own cloud and water layers are 0. ECOSTRESS flies on the space station, so overpass times vary and a month can have no clear sample: 54 samples from 2018-09 to 2026-09, none in February.",
+      "Cloudy (often rainy) days are missing, so the samples lean toward dry, sunny days.",
+    ],
+    formulas: [{ name: "Per calendar month", lines: ["month value = mean of the clear samples in that year-month", "shown = P20, P50 and P80 of those values across years"] }],
+    cite: "ECOSTRESS Tiled L4 Evaporative Stress Index PT-JPL (ECO_L4T_ESI, v002), doi:10.5067/ECOSTRESS/ECO_L4T_ESI.002, and ECOSTRESS Tiled L3 Evapotranspiration (ECO_L3T_JET, v002), doi:10.5067/ECOSTRESS/ECO_L3T_JET.002. NASA LP DAAC. Accessed through NASA AppEEARS, 2026-11-14.",
+    url: "https://doi.org/10.5067/ECOSTRESS/ECO_L4T_ESI.002",
+  },
+  fldas: {
+    variables: [
+      { code: "SoilMoi00_10cm_tavg", meaning: "Soil water, 0-10 cm, m³/m³" },
+      { code: "SoilMoi10_40cm_tavg", meaning: "Soil water, 10-40 cm, m³/m³" },
+      { code: "Evap_tavg", meaning: "Evapotranspiration, kg m⁻² s⁻¹" },
+      { code: "Rainf_f_tavg", meaning: "Rain (CHIRPS forcing), kg m⁻² s⁻¹" },
+      { code: "Qs_tavg, Qsb_tavg", meaning: "Surface and subsurface runoff, kg m⁻² s⁻¹" },
+    ],
+    how: [
+      "A check, not an input: the scores do not use it. A land surface model run (Noah 3.6.1, forced by MERRA-2 weather and CHIRPS rain), not a measurement. Fetched once by the team's pipeline and bundled for the sample farm.",
+      "The farm point sits on a cell corner, so each month is the mean of the 3 touching cells that have values in every month.",
+      "Its rain is the CHIRPS forcing, so it will not match NASA POWER or GPM IMERG exactly.",
+    ],
+    formulas: [
+      { name: "Water per month", lines: ["mm = rate (kg m⁻² s⁻¹) × 86400 × days in that month", "runoff = surface + subsurface"] },
+      { name: "Dry, typical and wet year", lines: ["P20, P50, P80 = percentiles across 2001-2025 for each calendar month"] },
+    ],
+    cite: "Amy McNally, NASA/GSFC/HSL (2018), FLDAS Noah Land Surface Model L4 Global Monthly 0.1 x 0.1 degree (MERRA-2 and CHIRPS), Greenbelt, MD, USA, Goddard Earth Sciences Data and Information Services Center (GES DISC), Accessed 2026-11-14, 10.5067/5NHC22T9375G",
+    url: "https://disc.gsfc.nasa.gov/datacollection/FLDAS_NOAH01_C_GL_M_001.html",
   },
   shi: {
     variables: [{ code: "Scores", meaning: "Builds soil (S) and Protects from washout (E), 0-100" }],
