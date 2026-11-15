@@ -21,7 +21,8 @@ import { LAND_WATER } from "../src/data/land-water";
 import { chooseCrop, cropNeedingMonth, cropShortName, dataLine, isOtherCrop, lotsWithoutCrops, otherCropName, seasonFromPlantMonth, toggleCrop } from "../src/lots/crop-picks";
 import { buildSearchEntries } from "../src/lots/crop-search-core";
 import { lotLooksLikeWater } from "../src/lots/land-water-core";
-import { safeLotTop } from "../src/lots/suggest-core";
+import { FIT_LABELS, fitReasonText } from "../src/components/recommendations-core";
+import { goodMonthsText, lotSuggestions, safeLotTop, type CropSuggestion } from "../src/lots/suggest-core";
 import { areaLabel, isPinLot } from "../src/lots/lot-editor";
 import { useFarmStore } from "../src/state/farm-store";
 import type { Crop, Lot, LotCrop } from "../src/types";
@@ -123,19 +124,39 @@ const MONTHS_LONG = ["January", "February", "March", "April", "May", "June", "Ju
  * the crop library (the DA guides say several are grown year-round). The farmer's month is saved
  * as the crop's season, so "You now" and every comparison on the results use it. Nothing invented.
  */
-function PlantMonthAsk({ lot }: { lot: Lot }) {
+function PlantMonthAsk({ lot, fit }: { lot: Lot; fit: CropSuggestion | null }) {
   const setSeasons = useFarmStore((s) => s.setSeasons);
   const lc = lot.crops.length === 1 ? lot.crops[0] : null;
   const crop: Crop | undefined = lc ? cropById(lc.crop_id) : undefined;
   if (!lc || !crop || crop.typical_calendar.length > 0) return null;
   const picked = lc.seasons[0]?.plant_month ?? null;
   const name = cropShortName(crop);
+  // The same check as the top 3 crops: the planting months where this crop fits the lot best.
+  // Dots only when some months are better than others; the same rating in all 12 is said in words.
+  const rated = fit && fit.level !== "unknown" ? fit : null;
+  const everyMonth = rated !== null && rated.best_months.length === 12;
+  const best = new Set(rated && !everyMonth && (rated.level === "good" || rated.level === "watch") ? rated.best_months : []);
+  const why = rated && rated.reasons[0] ? fitReasonText(rated.reasons[0]) : null;
   return (
     <View style={styles.monthAsk} accessibilityRole="radiogroup" accessibilityLabel={`When do you usually plant ${name} on ${lot.name}?`}>
       <Text style={text.heading}>When do you usually plant {name}?</Text>
       <Text style={[text.small, { color: colors.muted }]}>
         {name} can be planted at different times of the year, so tell us your month. The results compare every plan with it.
       </Text>
+      {rated && best.size > 0 ? (
+        <Text style={[text.small, styles.bestLine]}>
+          {tr("Best on this lot from NASA data: {level} if planted in {months}. Marked with a dot.", {
+            level: FIT_LABELS[rated.level],
+            months: goodMonthsText(rated.best_months),
+          })}
+        </Text>
+      ) : null}
+      {rated && everyMonth ? (
+        <Text style={[text.small, styles.bestLine]}>
+          {tr("From NASA data, {level} in every planting month on this lot, so no month is better.", { level: FIT_LABELS[rated.level] })}
+          {why ? ` ${tr(why)}` : ""}
+        </Text>
+      ) : null}
       <View style={styles.monthRow}>
         {MONTHS.map((m, i) => {
           const on = picked === i + 1;
@@ -148,10 +169,11 @@ function PlantMonthAsk({ lot }: { lot: Lot }) {
               }}
               accessibilityRole="radio"
               accessibilityState={{ checked: on }}
-              accessibilityLabel={MONTHS_LONG[i]}
-              style={({ pressed }) => [styles.monthChip, on && styles.monthChipOn, pressed && { opacity: 0.7 }]}
+              accessibilityLabel={best.has(i + 1) ? `${MONTHS_LONG[i]}, ${fit ? FIT_LABELS[fit.level] : ""}` : MONTHS_LONG[i]}
+              style={({ pressed }) => [styles.monthChip, best.has(i + 1) && styles.monthChipBest, on && styles.monthChipOn, pressed && { opacity: 0.7 }]}
             >
               <Text style={[styles.monthText, on && styles.monthTextOn]}>{m}</Text>
+              {best.has(i + 1) ? <View style={[styles.bestDot, on && { backgroundColor: colors.surface }]} /> : null}
             </Pressable>
           );
         })}
@@ -180,6 +202,14 @@ function LotCrops({ lot }: { lot: Lot }) {
 
   // One crop per lot: a crop counts as chosen only when it is the lot's only crop.
   const chosen = lot.crops.length === 1 ? lot.crops[0].crop_id : null;
+  const chosenFit = useMemo(() => {
+    if (!data || seaData || !chosen) return null;
+    try {
+      return lotSuggestions(lot.details, data, CROP_LIBRARY).crops.find((c) => c.crop_id === chosen) ?? null;
+    } catch {
+      return null;
+    }
+  }, [data, seaData, lot.details, chosen]);
   const line = dataLine(lot.data_status, online, noSoil);
   const search = useRef<{ focus: () => void }>(null);
   // Soft: NASA's coarse cells read inner seas and lakes as land, so the lot is also checked against a land map.
@@ -212,7 +242,7 @@ function LotCrops({ lot }: { lot: Lot }) {
         onSearch={() => search.current?.focus()}
       />
 
-      <PlantMonthAsk lot={lot} />
+      <PlantMonthAsk lot={lot} fit={chosenFit} />
 
       <View
         style={line.tone === "ready" ? styles.dataQuiet : [styles.dataLine, line.tone === "error" ? styles.dataError : null]}
@@ -351,6 +381,9 @@ const styles = StyleSheet.create({
   monthChipOn: { backgroundColor: colors.green, borderColor: colors.green },
   monthText: { fontSize: 15, fontWeight: "600", color: colors.ink },
   monthTextOn: { color: colors.surface },
+  monthChipBest: { borderColor: colors.green, borderWidth: 2 },
+  bestDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.green, marginTop: 2 },
+  bestLine: { color: colors.green, fontWeight: "600" },
   flex: { flex: 1 },
   creditsLink: { minHeight: MIN_TOUCH, justifyContent: "center", alignSelf: "flex-start" },
   creditsText: { color: colors.blue, textDecorationLine: "underline" },
