@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ComponentRef } from "react";
+import { useContext, useMemo, useRef, useState, type ComponentRef } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import type { RotationOption } from "../engine/rotations";
@@ -12,6 +12,8 @@ import { OPTION_LABELS } from "./soil-health-chart-core";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 import { useLayout } from "./useLayout";
 import { MonthSI, yearRequests } from "./YearStrip";
+import { satelliteMonthFacts } from "./satellite-facts";
+import { SatelliteContext } from "./SourceChip";
 import { type LineTone, tileLabel, yearCalendarLines } from "./year-calendar-core";
 
 // "Your year on Lot 1": the plan as a wall calendar, one tile per month (what is planted or
@@ -49,7 +51,8 @@ export function YearCalendar({ options, lotName, cropById, period, initialKey, m
   // The tiles start at this month and run 12 months on (like the suggestion's strip), so the
   // month the farmer is in comes first on a phone, with no scrolling to find it.
   const yours = options.find((o) => o.key === "A");
-  const siYear = yearRequests({ pick: selected, a: selected.key === "A" ? undefined : yours, monthly, name });
+  const sat = useContext(SatelliteContext);
+  const siYear = yearRequests({ pick: selected, a: selected.key === "A" ? undefined : yours, monthly, name, satellite: (m) => satelliteMonthFacts(sat, m) });
   // The crops of this plan, for the legend under the tiles.
   const planCrops = [...new Set(selected.slots.map((x) => x.crop_id))];
   // Earlier and later years (2026-11-15): the window is 12 months from this month, moved a year at a
