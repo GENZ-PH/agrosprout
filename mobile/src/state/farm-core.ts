@@ -126,13 +126,13 @@ export function farmStateCreator(deps: FarmDeps): StateCreator<FarmState, [["zus
         mapLot(id, (l) => {
           const name = patch.name !== undefined ? patch.name.trim() || l.name : l.name;
           // A moved lot may need new climate data: mark it pending; the lot sync checks it
-          // (no download when the rounded POWER point is unchanged).
+          // (no download when the rounded POWER point is unchanged). A sample-farm lot moved
+          // somewhere else gets its own live data too, instead of keeping the sample's climate.
           const moved =
-            patch.centroid !== undefined &&
-            (patch.centroid[0] !== l.centroid[0] || patch.centroid[1] !== l.centroid[1]) &&
-            l.data_ref.startsWith("lotdata:");
+            patch.centroid !== undefined && (patch.centroid[0] !== l.centroid[0] || patch.centroid[1] !== l.centroid[1]);
+          const data_ref = moved && !l.data_ref.startsWith("lotdata:") ? lotDataKey(l.id) : l.data_ref;
           const data_status = moved && patch.data_status === undefined ? "pending" : (patch.data_status ?? l.data_status);
-          return { ...l, ...patch, name, data_status, id: l.id, data_ref: l.data_ref };
+          return { ...l, ...patch, name, data_status, id: l.id, data_ref };
         }),
 
       deleteLot: (id) => {
