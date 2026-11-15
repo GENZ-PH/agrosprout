@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
+import { tr } from "../i18n/lang-store";
 
 import type { CropFit, FitLevel } from "../engine";
 import { FIT_COLORS } from "./farm-map-core";
@@ -61,7 +62,7 @@ export function FitBadge({ level }: { level: FitLevel }) {
   const b = BADGE[level];
   return (
     <View style={[styles.badge, { backgroundColor: b.bg, borderColor: b.border }]}>
-      <Text style={[styles.badgeText, { color: b.fg }]}>{FIT_LABELS[level]}</Text>
+      <Text style={[styles.badgeText, { color: b.fg }]}>{tr(FIT_LABELS[level])}</Text>
     </View>
   );
 }

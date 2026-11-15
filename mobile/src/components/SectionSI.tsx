@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import type { Lang } from "../i18n/core";
+import { useLang } from "../i18n/lang-store";
 import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
 import { hc } from "hono/client";
 
@@ -41,16 +43,16 @@ const write = (key: string, value: string) => {
   }
 };
 
-function askAll(sections: PanelSection[]): Promise<(string | null)[]> {
-  const key = JSON.stringify(sections);
+function askAll(sections: PanelSection[], lang: Lang): Promise<(string | null)[]> {
+  const key = lang + JSON.stringify(sections);
   let p = inFlight.get(key);
   if (!p) {
     const idx = sections.flatMap((s, i) => (s.facts.length ? [i] : []));
-    p = unwrap(api.v1["explain-sections"].$post({ json: { sections: idx.map((i) => sections[i]) } })).then((d) => {
+    p = unwrap(api.v1["explain-sections"].$post({ json: { sections: idx.map((i) => sections[i]), ...(lang !== "en" ? { lang } : {}) } })).then((d) => {
       const notes: (string | null)[] = sections.map(() => null);
       d.notes.forEach((t, k) => {
         notes[idx[k]] = t;
-        if (t) write(JSON.stringify(sections[idx[k]]), t);
+        if (t) write(lang + JSON.stringify(sections[idx[k]]), t);
       });
       return notes;
     });
@@ -63,15 +65,16 @@ function askAll(sections: PanelSection[]): Promise<(string | null)[]> {
 /** The insight for `sections[index]`. Shows nothing offline, during a what-if, or if SI has nothing. */
 export function SectionSI({ sections, index, whatIf }: { sections: PanelSection[]; index: number; whatIf: boolean }) {
   const online = useOnline();
-  const allKey = JSON.stringify(sections);
-  const saved = read(JSON.stringify(sections[index]));
+  const lang = useLang();
+  const allKey = lang + JSON.stringify(sections);
+  const saved = read(lang + JSON.stringify(sections[index]));
   const [got, setGot] = useState<{ key: string; notes: (string | null)[] | null }>({ key: "", notes: null });
   const wanted = !whatIf && online && !saved && sections[index].facts.length > 0;
 
   useEffect(() => {
     if (!wanted) return;
     let live = true;
-    askAll(sections).then(
+    askAll(sections, lang).then(
       (notes) => live && setGot({ key: allKey, notes }),
       () => live && setGot({ key: allKey, notes: null }),
     );

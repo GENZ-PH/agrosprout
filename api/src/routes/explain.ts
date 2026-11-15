@@ -18,6 +18,12 @@ const MODEL = "claude-opus-5-5";
 const CACHE_SECONDS = 24 * 60 * 60;
 
 const line = z.string().trim().min(1).max(400);
+/** The app language (2026-11-15): the SI writes its note in it. English when left out. */
+const lang = z.enum(["en", "tl", "ceb"]).optional();
+const LANG_NAME = { en: "English", tl: "Tagalog (Filipino)", ceb: "Cebuano (Bisaya)" } as const;
+/** One more rule for the system prompt when the farmer reads the app in Tagalog or Bisaya. */
+const inLang = (l: "en" | "tl" | "ceb" | undefined) =>
+  !l || l === "en" ? "" : `\n- Write the note in ${LANG_NAME[l]}, in simple everyday words a farmer uses. Keep crop names as given, or use their common local name. Keep every number exactly as given.`;
 const lines = z.array(line).max(8);
 
 export const explainBody = z.object({
@@ -40,6 +46,7 @@ export const explainBody = z.object({
   audience: z.enum(["farmer", "technician"]).optional(),
   /** NASA satellite and model checks for the lot (IMERG, SMAP, MODIS, FLDAS); they do not change the scores. */
   satellite: lines.optional(),
+  lang,
 });
 export type ExplainBody = z.infer<typeof explainBody>;
 
@@ -121,7 +128,7 @@ export const explain = new Hono<{ Bindings: Env }>().post("/", validate("json", 
     const res = await client.beta.messages.create({
       model: MODEL,
       max_tokens: 4000,
-      system: body.audience === "technician" ? TECH_SYSTEM : SYSTEM,
+      system: (body.audience === "technician" ? TECH_SYSTEM : SYSTEM) + inLang(body.lang),
       output_config: { effort: "low" },
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
@@ -172,6 +179,7 @@ export const explainMonthBody = z.object({
   climate: z.string().trim().min(1).max(300),
   /** NASA satellite and model lines for the same month (IMERG rain, SMAP soil moisture, MODIS greenness, FLDAS run-off). */
   satellite: lines.optional(),
+  lang,
 });
 export type ExplainMonthBody = z.infer<typeof explainMonthBody>;
 
@@ -215,7 +223,7 @@ export const explainMonth = new Hono<{ Bindings: Env }>().post("/", validate("js
     const res = await client.beta.messages.create({
       model: MODEL,
       max_tokens: 2000,
-      system: MONTH_SYSTEM,
+      system: MONTH_SYSTEM + inLang(body.lang),
       output_config: { effort: "low" },
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
@@ -273,7 +281,7 @@ export const explainYear = new Hono<{ Bindings: Env }>().post("/", validate("jso
     const res = await client.beta.messages.create({
       model: MODEL,
       max_tokens: 6000,
-      system: YEAR_SYSTEM,
+      system: YEAR_SYSTEM + inLang(body.months[0]?.lang),
       output_config: { effort: "low" },
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
@@ -324,6 +332,7 @@ export const explainSectionsBody = z.object({
     )
     .min(1)
     .max(6),
+  lang,
 });
 export type ExplainSectionsBody = z.infer<typeof explainSectionsBody>;
 
@@ -359,7 +368,7 @@ export const explainSections = new Hono<{ Bindings: Env }>().post("/", validate(
     const res = await client.beta.messages.create({
       model: MODEL,
       max_tokens: 4000,
-      system: SECTIONS_SYSTEM,
+      system: SECTIONS_SYSTEM + inLang(body.lang),
       output_config: { effort: "low" },
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",

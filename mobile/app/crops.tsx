@@ -1,4 +1,5 @@
 import { onlineManager } from "@tanstack/react-query";
+import { tr } from "../src/i18n/lang-store";
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useRef, useSyncExternalStore } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -59,12 +60,12 @@ export default function CropsScreen() {
         <>
           {lots.length > 0 && missing.length > 0 ? (
             <Text style={[text.small, { color: colors.amber }]}>
-              Choose a crop for {missing.map((l) => l.name).join(", ")}.
+              {tr("Choose a crop for {names}.", { names: missing.map((l) => l.name).join(", ") })}
             </Text>
           ) : null}
           {oneLot ? (
             <Button
-              label={`Next: see ${oneLot.name}`}
+              label={tr("Next: see {name}", { name: oneLot.name })}
               iconAfter="chevron"
               size="lg"
               disabled={!ready}
@@ -72,33 +73,33 @@ export default function CropsScreen() {
               onPress={() => router.dismissTo({ pathname: "/dashboard", params: { lot: oneLot.id } })}
             />
           ) : (
-            <Button label="Next: see your results" href="/dashboard" size="lg" disabled={!ready} />
+            <Button label={tr("Next: see your results")} href="/dashboard" size="lg" disabled={!ready} />
           )}
         </>
       }
     >
       <Header
-        title={oneLot ? `Main crop on ${oneLot.name}` : "Main crop on each lot"}
-        right={oneLot ? undefined : "Step 2 of 2"}
+        title={oneLot ? tr("Main crop on {name}", { name: oneLot.name }) : tr("Main crop on each lot")}
+        right={oneLot ? undefined : tr("Step 2 of 2")}
         fallbackHref={oneLot ? "/dashboard" : "/lots"}
       />
       {lots.length === 0 ? (
         <View style={styles.empty}>
           <Text style={text.body}>Plot a lot on the map first, then choose its main crop here.</Text>
-          <Button label="Plot your lots" href="/lots" variant="secondary" />
+          <Button label={tr("Plot your lots")} href="/lots" variant="secondary" />
         </View>
       ) : (
         <>
           <Text style={[text.body, { color: colors.muted }]}>
             {oneLot
-              ? "Choose one crop, the main one you grow on this lot: search for it, or tap one of the top crops. Choosing another crop replaces it, and you can change it later."
-              : "Choose one crop for each lot, the main one you grow there: search for it, or tap one of the top crops. Choosing another crop replaces it, and you can change it later."}
+              ? tr("Choose one crop, the main one you grow on this lot: search for it, or tap one of the top crops. Choosing another crop replaces it, and you can change it later.")
+              : tr("Choose one crop for each lot, the main one you grow there: search for it, or tap one of the top crops. Choosing another crop replaces it, and you can change it later.")}
           </Text>
           {lots.map((lot) => (
             <LotCrops key={lot.id} lot={lot} />
           ))}
           <Pressable onPress={() => router.push("/credits")} accessibilityRole="link" style={styles.creditsLink}>
-            <Text style={[text.small, styles.creditsText]}>Photo credits</Text>
+            <Text style={[text.small, styles.creditsText]}>{tr("Photo credits")}</Text>
           </Pressable>
         </>
       )}
@@ -162,17 +163,17 @@ function LotCrops({ lot }: { lot: Lot }) {
           size={18}
           color={line.tone === "ready" ? colors.green : line.tone === "error" ? colors.amber : colors.muted}
         />
-        <Text style={[text.small, styles.flex, line.tone === "ready" && { color: colors.muted }]}>{line.text}</Text>
+        <Text style={[text.small, styles.flex, line.tone === "ready" && { color: colors.muted }]}>{tr(line.text)}</Text>
         {noSoil ? (
           <Button
-            label="Move lot"
+            label={tr("Move lot")}
             variant="quiet"
             href={{ pathname: "/lots", params: { lot: lot.id } }}
             accessibilityLabel={`Move ${lot.name} on the map`}
           />
         ) : line.tone === "error" ? (
           <Button
-            label="Try again"
+            label={tr("Try again")}
             variant="quiet"
             onPress={() => updateLot(lot.id, { data_status: "pending" })}
             accessibilityLabel={`Try loading the NASA data for ${lot.name} again`}
@@ -187,7 +188,7 @@ function LotCrops({ lot }: { lot: Lot }) {
             {lot.name} looks like it is on water (sea or lake) on our map. If this is your farm, go on. If not, move it.
           </Text>
           <Button
-            label="Move lot"
+            label={tr("Move lot")}
             variant="quiet"
             href={{ pathname: "/lots", params: { lot: lot.id } }}
             accessibilityLabel={`Move ${lot.name} on the map`}
@@ -232,7 +233,7 @@ function YourCrops({
   return (
     <View style={styles.yours} accessibilityLiveRegion="polite">
       <Text style={text.heading} accessibilityRole="header">
-        {crops.length > 1 ? `Your crops on ${lotName}` : `Main crop on ${lotName}`}
+        {crops.length > 1 ? `Your crops on ${lotName}` : tr("Main crop on {name}", { name: lotName })}
       </Text>
       {crops.length > 1 ? (
         <Text style={[text.small, { color: colors.muted }]}>One crop per lot now: the crop you choose next replaces these.</Text>
@@ -245,7 +246,7 @@ function YourCrops({
           style={({ pressed }) => [styles.emptyCrop, pressed && styles.pressed]}
         >
           <Text style={[text.body, { color: colors.muted }]}>
-            {hasTop ? "None yet. Search for a crop above, or tap one of the top crops below." : "None yet. Search for a crop above."}
+            {hasTop ? tr("None yet. Search for a crop above, or tap one of the top crops below.") : tr("None yet. Search for a crop above.")}
           </Text>
         </Pressable>
       ) : (

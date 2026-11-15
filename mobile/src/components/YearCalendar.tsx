@@ -1,4 +1,5 @@
 import { useContext, useMemo, useRef, useState, type ComponentRef } from "react";
+import { tr, useLang } from "../i18n/lang-store";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import type { RotationOption } from "../engine/rotations";
@@ -52,7 +53,8 @@ export function YearCalendar({ options, lotName, cropById, period, initialKey, m
   // month the farmer is in comes first on a phone, with no scrolling to find it.
   const yours = options.find((o) => o.key === "A");
   const sat = useContext(SatelliteContext);
-  const siYear = yearRequests({ pick: selected, a: selected.key === "A" ? undefined : yours, monthly, name, satellite: (m) => satelliteMonthFacts(sat, m) });
+  const lang = useLang();
+  const siYear = yearRequests({ pick: selected, a: selected.key === "A" ? undefined : yours, monthly, name, satellite: (m) => satelliteMonthFacts(sat, m), lang });
   // The crops of this plan, for the legend under the tiles.
   const planCrops = [...new Set(selected.slots.map((x) => x.crop_id))];
   // Earlier and later years (2026-11-15): the window is 12 months from this month, moved a year at a
@@ -75,7 +77,7 @@ export function YearCalendar({ options, lotName, cropById, period, initialKey, m
     <View style={styles.block}>
       <View style={styles.titleRow}>
         <Text style={[styles.blockTitle, styles.flex]} accessibilityRole="header">
-          {`Your year on ${lotName}`}
+          {tr("Your year on {name}", { name: lotName })}
         </Text>
         <Pressable
           onPress={() => setInfo((v) => !v)}
@@ -89,7 +91,7 @@ export function YearCalendar({ options, lotName, cropById, period, initialKey, m
       </View>
       {info ? <ExplainerBox id="year-calendar" period={period} /> : null}
       <View style={styles.plans} accessibilityRole="radiogroup" accessibilityLabel="Plan to show">
-        <Text style={[text.small, styles.muted]}>Plan</Text>
+        <Text style={[text.small, styles.muted]}>{tr("Plan")}</Text>
         {options.map((o) => {
           const on = o.key === selected.key;
           return (
@@ -106,7 +108,7 @@ export function YearCalendar({ options, lotName, cropById, period, initialKey, m
           );
         })}
       </View>
-      <Text style={[text.small, styles.muted]}>Tap a month to see what to do, and why.</Text>
+      <Text style={[text.small, styles.muted]}>{tr("Tap a month to see what to do, and why.")}</Text>
 
       <View style={styles.nav}>
         <Pressable
@@ -117,13 +119,13 @@ export function YearCalendar({ options, lotName, cropById, period, initialKey, m
           style={[styles.navBtn, shift <= -5 && styles.navOff]}
         >
           <Icon name="back" size={18} color={colors.green} />
-          <Text style={styles.navText}>Earlier</Text>
+          <Text style={styles.navText}>{tr("Earlier")}</Text>
         </Pressable>
         <View style={[styles.flex, styles.navMid]}>
           <Text style={[text.small, styles.navRange]}>{range}</Text>
           {shift !== 0 ? (
             <Pressable onPress={() => setShift(0)} accessibilityRole="button" accessibilityLabel="Back to this year">
-              <Text style={styles.navText}>Back to now</Text>
+              <Text style={styles.navText}>{tr("Back to now")}</Text>
             </Pressable>
           ) : null}
         </View>
@@ -134,7 +136,7 @@ export function YearCalendar({ options, lotName, cropById, period, initialKey, m
           accessibilityLabel="Later year"
           style={[styles.navBtn, shift >= 5 && styles.navOff]}
         >
-          <Text style={styles.navText}>Later</Text>
+          <Text style={styles.navText}>{tr("Later")}</Text>
           <Icon name="chevron" size={18} color={colors.green} />
         </Pressable>
       </View>
@@ -190,23 +192,23 @@ export function YearCalendar({ options, lotName, cropById, period, initialKey, m
         ))}
         <View style={styles.legendItem}>
           <Icon name="sprout" size={14} color={colors.muted} />
-          <Text style={text.caption}>Plant</Text>
+          <Text style={text.caption}>{tr("Plant")}</Text>
         </View>
         <View style={styles.legendItem}>
           <Icon name="basket" size={14} color={colors.muted} />
-          <Text style={text.caption}>Harvest</Text>
+          <Text style={text.caption}>{tr("Harvest")}</Text>
         </View>
         <View style={styles.legendItem}>
           <Icon name="sun" size={14} color={RISK_COLOR.dry} />
-          <Text style={text.caption}>Short of water</Text>
+          <Text style={text.caption}>{tr("Short of water")}</Text>
         </View>
         <View style={styles.legendItem}>
           <Icon name="heat" size={14} color={RISK_COLOR.hot} />
-          <Text style={text.caption}>Too hot</Text>
+          <Text style={text.caption}>{tr("Too hot")}</Text>
         </View>
         <View style={styles.legendItem}>
           <Icon name="drop" size={14} color={RISK_COLOR.wet} />
-          <Text style={text.caption}>Too wet</Text>
+          <Text style={text.caption}>{tr("Too wet")}</Text>
         </View>
       </View>
 

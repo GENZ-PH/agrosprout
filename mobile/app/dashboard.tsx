@@ -1,4 +1,5 @@
 import { Redirect, router, useLocalSearchParams } from "expo-router";
+import { tr } from "../src/i18n/lang-store";
 import { type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -177,10 +178,10 @@ export default function DashboardScreen() {
             />
           ) : null;
           return oneRowHeader ? (
-            <Header logo title="Your farm" middle={tabs} right={<NasaDataButton />} onBack={() => setLeaving(true)} />
+            <Header logo title={tr("Your farm")} middle={tabs} right={<NasaDataButton />} onBack={() => setLeaving(true)} />
           ) : (
             <>
-              <Header logo title={contentWidth >= 520 ? "Your farm" : ""} right={<NasaDataButton />} onBack={() => setLeaving(true)} />
+              <Header logo title={contentWidth >= 520 ? tr("Your farm") : ""} right={<NasaDataButton />} onBack={() => setLeaving(true)} />
               {tabs}
             </>
           );
@@ -306,7 +307,7 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
           ) : (
             <>
               <Notice tone="warn">We couldn&apos;t get NASA climate data for {lot.name}.</Notice>
-              <Button label="Try again" variant="secondary" onPress={() => updateLot(lot.id, { data_status: "pending" })} />
+              <Button label={tr("Try again")} variant="secondary" onPress={() => updateLot(lot.id, { data_status: "pending" })} />
             </>
           )}
         </Narrow>
@@ -414,7 +415,7 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
               <Notice tone="warn" icon="alert">
                 {`What-if on: ${describeScenario(scenario)}. The results below are for this what-if, not a forecast.`}
               </Notice>
-              <Button label="Back to today's climate" variant="secondary" onPress={() => setScenario(null)} />
+              <Button label={tr("Back to today's climate")} variant="secondary" onPress={() => setScenario(null)} />
             </Narrow>
           ) : null}
           {/* Farmer first (dashboard audit 2026-11-15): the answer, the year, then what the farmer can do.
@@ -528,7 +529,7 @@ function NextSteps({ lot, stage, hasPlaces }: { lot: Lot; stage: 1 | 2; hasPlace
   return (
     <View style={styles.steps}>
       <Text style={[text.heading, styles.stepsTitle]} accessibilityRole="header">
-        Next steps
+        {tr("Next steps")}
       </Text>
       {rows.map((r, i) => (
         <Pressable

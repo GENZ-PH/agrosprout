@@ -23,7 +23,7 @@ export const MONTH_LONG = [
 ] as const;
 
 /** Matches `explainMonthBody` in api/src/routes/explain.ts. */
-export type ExplainMonthRequest = { month: string; suggestion: string[]; yours: string[]; climate: string; satellite?: string[] };
+export type ExplainMonthRequest = { month: string; suggestion: string[]; yours: string[]; climate: string; satellite?: string[]; lang?: "tl" | "ceb" };
 
 /** One month of the strip: its calendar month (0-11), year, and whether it is past, now or ahead. */
 export interface StripMonth {
@@ -68,6 +68,8 @@ export function explainMonthRequest(args: {
   name: (id: string) => string;
   /** NASA satellite lines for this month (`satelliteMonthFacts`); left out when there are none. */
   satellite?: (month: number) => string[];
+  /** Tagalog or Bisaya; left out for English. */
+  lang?: "en" | "tl" | "ceb";
 }): ExplainMonthRequest {
   const { month, pick, a, monthly, name } = args;
   const sat = args.satellite?.(month).slice(0, 8) ?? [];
@@ -77,6 +79,7 @@ export function explainMonthRequest(args: {
     yours: a ? monthLines(a, month, name).slice(0, 8) : [],
     climate: monthClimate(monthly, month).slice(0, 300),
     ...(sat.length ? { satellite: sat.map((l) => l.slice(0, 400)) } : {}),
+    ...(args.lang && args.lang !== "en" ? { lang: args.lang } : {}),
   };
 }
 

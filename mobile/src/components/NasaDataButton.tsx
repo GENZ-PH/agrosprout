@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { tr } from "../i18n/lang-store";
 import { Pressable, StyleSheet, Text } from "react-native";
 
 import { Icon } from "./Icon";
@@ -17,7 +18,7 @@ export function NasaDataButton() {
       style={({ pressed }) => [styles.pill, open && styles.open, pressed && styles.pressed]}
     >
       <Icon name="info" size={16} color={open ? colors.surface : colors.green} />
-      <Text style={[styles.label, open && styles.labelOpen]}>Technical data</Text>
+      <Text style={[styles.label, open && styles.labelOpen]}>{tr("Technical data")}</Text>
     </Pressable>
   );
 }

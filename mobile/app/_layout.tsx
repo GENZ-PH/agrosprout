@@ -14,6 +14,7 @@ import {
   queryPersister,
   shouldPersistQuery,
 } from "../src/state/query-client";
+import { useLang } from "../src/i18n/lang-store";
 import "../src/state/stores"; // starts loading every persisted store at launch
 
 // Root providers only. Screens and navigation design belong to the Frontend track.
@@ -22,6 +23,8 @@ export default function RootLayout() {
   // Saved farm data loads asynchronously. Showing screens earlier would let them read defaults
   // or write over saved data, so nothing renders until every store has loaded (usually a few ms).
   const storesReady = useStoresReady();
+  // A new language redraws every screen in it (the route stays the same).
+  const lang = useLang();
   // Fetch NASA data for lots saved while offline, once the farm has loaded (06-architecture).
   useEffect(() => (storesReady ? startLotSync() : undefined), [storesReady]);
   // Fill each lot's travel time to each harvest place: a labelled estimate offline, a road route online (#12).
@@ -38,7 +41,7 @@ export default function RootLayout() {
     >
       {storesReady ? (
         // The NASA source inspector docks beside the screens on a wide window and pushes them over (#144).
-        <View style={{ flex: 1, flexDirection: "row" }}>
+        <View key={lang} style={{ flex: 1, flexDirection: "row" }}>
           <View style={{ flex: 1, minWidth: 0 }}>
             <Stack screenOptions={{ headerShown: false }} />
           </View>

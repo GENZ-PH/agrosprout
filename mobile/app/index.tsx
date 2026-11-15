@@ -1,4 +1,5 @@
 import { Redirect, router } from "expo-router";
+import { tr } from "../src/i18n/lang-store";
 import { Image, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "../src/components/Button";
@@ -36,8 +37,8 @@ export default function WelcomeScreen() {
     <Screen
       footer={
         <>
-          <Button label="Start" onPress={start} size="lg" />
-          {demoAllowed ? <Button label="See a sample farm" variant="secondary" onPress={openSample} /> : null}
+          <Button label={tr("Start")} onPress={start} size="lg" />
+          {demoAllowed ? <Button label={tr("See a sample farm")} variant="secondary" onPress={openSample} /> : null}
           <Disclaimer />
         </>
       }
@@ -55,15 +56,14 @@ export default function WelcomeScreen() {
 
       <View style={styles.middle}>
         <Text style={text.display} accessibilityRole="header">
-          Plan your crops with NASA climate data
+          {tr("Plan your crops with NASA climate data")}
         </Text>
         <Text style={[text.body, styles.lead]}>
-          Draw your lots, tell us what you plant, and compare crop plans for each lot.
+          {tr("Draw your lots, tell us what you plant, and compare crop plans for each lot.")}
         </Text>
-        <Notice icon="lock" small>Your farm information stays on this phone. No sign-up, no account.</Notice>
+        <Notice icon="lock" small>{tr("Your farm information stays on this phone. No sign-up, no account.")}</Notice>
         <Text style={[text.caption, { color: colors.muted }]}>
-          You need signal to load the map and the climate data. Your saved results work offline. The sample farm is
-          made up and needs no signal.
+          {tr("You need signal to load the map and the climate data. Your saved results work offline. The sample farm is made up and needs no signal.")}
         </Text>
       </View>
     </Screen>
