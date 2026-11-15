@@ -63,7 +63,7 @@ python3 pipeline/fetch_appeears.py --write-request # write raw/appeears/request.
 ```
 
 Login: AppEEARS `/login` needs the Earthdata Login username and password (HTTP Basic). They are read at run
-time from the netrc at `EARTHDATA_NETRC` (default `~/infrastructure/.secrets/earthdata.netrc`). The
+time from the netrc at `EARTHDATA_NETRC` (default `~/.netrc`). The
 EDL user token used by IMERG/SMAP is not accepted by AppEEARS (403). If the API login fails, upload
 `request.json` in the AppEEARS web UI (Point Sample, "Copy a previous request" / upload JSON), download the
 `*-results.csv` files into `pipeline/raw/appeears/`, and run `--offline`.
