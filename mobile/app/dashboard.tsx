@@ -33,6 +33,7 @@ import { fitFacts, monthsFacts, recommendationFacts, section, soilFacts } from "
 import type { Scenario } from "../src/engine/scenario";
 import { LotCompareModal } from "../src/components/LotCompareModal";
 import { LotTabs } from "../src/components/LotTabs";
+import { LandCard, LandSheet, detailsSummary, unknownDetails } from "../src/components/LandQuestions";
 import { Notice } from "../src/components/Notice";
 import { PrioritiesCard } from "../src/components/PrioritiesCard";
 import { togglePriority } from "../src/components/priorities-core";
@@ -268,6 +269,8 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
   const satFiles = useContext(SatelliteContext);
   const updateLot = useFarmStore((s) => s.updateLot);
   const setPriorities = useFarmStore((s) => s.setPriorities);
+  // Land type, water and soil (2026-11-15): asked on the dashboard so lots don't stay at "I don't know".
+  const [landOpen, setLandOpen] = useState(false);
 
   // The farm map stays on the page while a lot is loading or has no results yet.
   const withOverview = (node: ReactNode) => (
@@ -438,12 +441,24 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
           ) : null}
           {topCard}
           {yearCalendar}
+          {unknownDetails(lot.details) > 0 ? (
+            <Narrow>
+              <LandCard lotName={lot.name} details={lot.details} onOpen={() => setLandOpen(true)} />
+            </Narrow>
+          ) : null}
           {overview}
           <ElNinoNotice />
           {/* With a place added, the travel times are worth a card; without one, it is a next step. */}
           {farm.destinations.length > 0 ? harvestCard : null}
-          <NextSteps lot={lot} stage={analysis.stage} hasPlaces={farm.destinations.length > 0} />
+          <NextSteps lot={lot} stage={analysis.stage} hasPlaces={farm.destinations.length > 0} onLand={() => setLandOpen(true)} />
           </FadeIn>
+          <LandSheet
+            visible={landOpen}
+            onClose={() => setLandOpen(false)}
+            lotName={lot.name}
+            details={lot.details}
+            onChange={(details) => updateLot(lot.id, { details })}
+          />
           <AdjustSheet visible={adjustOpen} onClose={closeAdjust}>
             {priorities}
             {whatIf}
@@ -500,7 +515,9 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
  * place of separate cards of different sizes. Planting months (docs/11-user-flow.md S3 → S4), a
  * place to sell (S6, only until one is added), and the details for their technician.
  */
-function NextSteps({ lot, stage, hasPlaces }: { lot: Lot; stage: 1 | 2; hasPlaces: boolean }) {
+function NextSteps({ lot, stage, hasPlaces, onLand }: { lot: Lot; stage: 1 | 2; hasPlaces: boolean; onLand: () => void }) {
+  const unknown = unknownDetails(lot.details);
+  const summary = detailsSummary(lot.details);
   const listed = lot.crops.filter((c) => !isOtherCrop(c.crop_id));
   const given = listed.filter((c) => c.seasons.length > 0);
   const short = (id: string) => shortCropName(cropName(id));
@@ -520,6 +537,16 @@ function NextSteps({ lot, stage, hasPlaces }: { lot: Lot; stage: 1 | 2; hasPlace
           body: given.map((c) => `${short(c.crop_id)} ${seasonsText(c.seasons)}`).join("; ") + ". Tap to change.",
           onPress: () => router.push({ pathname: "/months", params: { lot: lot.id } }),
         },
+    {
+      key: "land",
+      icon: "sprout",
+      title: unknown > 0 ? "Tell us about your land" : "Your land, water and soil",
+      body:
+        unknown > 0
+          ? `Land type, water and soil on ${lot.name}: ${unknown} of 3 not given yet, so the results are less certain.`
+          : `${summary ?? ""}. Tap to change.`,
+      onPress: onLand,
+    },
     ...(hasPlaces
       ? []
       : [

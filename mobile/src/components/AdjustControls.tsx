@@ -33,7 +33,19 @@ export function AdjustButton({ onPress, summary }: { onPress: () => void; summar
 }
 
 /** The sheet with the controls. Children = the control cards; `actions` = links to other screens. */
-export function AdjustSheet({ visible, onClose, children }: { visible: boolean; onClose: () => void; children: ReactNode }) {
+export function AdjustSheet({
+  visible,
+  onClose,
+  children,
+  title = "Adjust the results",
+  subtitle = "The results update as you tap. Close to see them.",
+}: {
+  visible: boolean;
+  onClose: () => void;
+  children: ReactNode;
+  title?: string;
+  subtitle?: string;
+}) {
   return (
     <Modal transparent animationType="slide" visible={visible} onRequestClose={onClose}>
       <Pressable style={styles.scrim} onPress={onClose} accessibilityLabel="Close" />
@@ -42,9 +54,9 @@ export function AdjustSheet({ visible, onClose, children }: { visible: boolean; 
           <View style={styles.head}>
             <View style={styles.flex}>
               <Text style={text.heading} accessibilityRole="header">
-                Adjust the results
+                {title}
               </Text>
-              <Text style={[text.small, styles.muted]}>The results update as you tap. Close to see them.</Text>
+              <Text style={[text.small, styles.muted]}>{subtitle}</Text>
             </View>
             <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
               <Icon name="close" size={22} color={colors.ink} />
