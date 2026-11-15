@@ -53,7 +53,7 @@ export const getNotice = () => notice;
 
 /** Opens the overview from a link on the page, and says so on the panel. */
 export function showOverview(): void {
-  notice = { text: state?.view === "overview" ? "The NASA data is open here, on the right." : "NASA data is now open here, on the right.", at: Date.now() };
+  notice = { text: state?.view === "overview" ? "The technical data is open here, on the right." : "Technical data is now open here, on the right.", at: Date.now() };
   if (state?.view === "overview") emit();
   else openOverview();
 }
