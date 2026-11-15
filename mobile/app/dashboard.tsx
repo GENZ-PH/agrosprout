@@ -35,6 +35,7 @@ import { Screen } from "../src/components/Screen";
 import { MonthsCompareList } from "../src/components/SeasonCompareCard";
 import { SoilHealthChart } from "../src/components/SoilHealthChart";
 import { FarmerSuggestion } from "../src/components/FarmerSuggestion";
+import { FadeIn, LotSkeleton } from "../src/components/Skeleton";
 import { longerSeasons } from "../src/components/farmer-core";
 import { colors, MAX_CONTENT_WIDTH, radius, space, text } from "../src/components/theme";
 import { useLayout } from "../src/components/useLayout";
@@ -246,7 +247,7 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
 
   switch (view.kind) {
     case "loading":
-      return withOverview(<Text style={text.caption}>Loading {lot.name}...</Text>);
+      return withOverview(<LotSkeleton lotName={lot.name} />);
     case "no-soil":
       // NASA has no soil wetness for the spot in any month: sea or ice (hasNoSoilData), so no crop is rated.
       return withOverview(
@@ -356,6 +357,7 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
           componentsLeftOut={analysis.rotations.components_left_out}
           longer={longerSeasons(lot, cropById)}
           whatIf={scenario !== null}
+          monthly={data.monthly}
         />
       ) : null;
       const monthsHref = { pathname: "/months", params: { lot: lot.id } } as const;
@@ -372,12 +374,14 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
           {/* Farmer first (dashboard audit 2026-11-15): the answer, the year, then what the farmer can do.
               The other plans, scores, evidence, charts and the farm map live in the NASA data panel
               ("Details for your technician"), docked beside the page on a big window. */}
+          <FadeIn>
           {topCard}
           {yearCalendar}
           <ElNinoNotice />
           {/* With a place added, the travel times are worth a card; without one, it is a next step. */}
           {farm.destinations.length > 0 ? harvestCard : null}
           <NextSteps lot={lot} stage={analysis.stage} hasPlaces={farm.destinations.length > 0} />
+          </FadeIn>
           <AdjustSheet visible={adjustOpen} onClose={closeAdjust}>
             {priorities}
             {whatIf}
