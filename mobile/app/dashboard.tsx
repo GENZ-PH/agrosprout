@@ -21,6 +21,8 @@ import { WhatIfCard } from "../src/components/WhatIfCard";
 import { DataTracePanel } from "../src/components/DataTracePanel";
 import { ElNinoNotice } from "../src/components/ElNinoNotice";
 import { SatelliteCard } from "../src/components/SatelliteCard";
+import { useLiveSatellite } from "../src/data/live-satellite";
+import type { LotData } from "../src/types";
 import { DemoDataContext } from "../src/components/SourceChip";
 import { YearCalendar } from "../src/components/YearCalendar";
 import { SectionSI } from "../src/components/SectionSI";
@@ -346,9 +348,14 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
       const whatIf = (
         <WhatIfCard scenario={scenario} onChange={setScenario} notes={analysis.scenario?.notes ?? []} period={period} />
       );
-      // NASA satellite checks (IMERG rain, SMAP soil moisture, MODIS and HLS NDVI, ECOSTRESS, FLDAS) are bundled for the sample farm only (#144).
+      // NASA satellite checks (IMERG rain, SMAP soil moisture, MODIS and HLS NDVI, ECOSTRESS, FLDAS): bundled for the sample farm (#144), fetched live through the API Worker for drawn lots.
+      // Live lots (2026-11-15): the same checks, fetched through our API Worker for the rounded point.
       const satellite =
-        data.kind === "demo" ? <SatelliteCard farmId={data.id} lotName={lot.name} info={{ id: "satellite-checks", period }} /> : null;
+        data.kind === "demo" ? (
+          <SatelliteCard farmId={data.id} lotName={lot.name} info={{ id: "satellite-checks", period }} />
+        ) : (
+          <LiveSatelliteCard data={data} lotName={lot.name} period={period} />
+        );
       const trace = <DataTracePanel data={data} />;
       const a = analysis.rotations.options.find((o) => o.key === "A");
       const pick = topPick(analysis.rotations.options);
@@ -522,7 +529,9 @@ function NextSteps({ lot, stage, hasPlaces }: { lot: Lot; stage: 1 | 2; hasPlace
  */
 function PanelLot({ lotName, period, demo, extra, details }: { lotName: string; period: string; demo: boolean; extra: ReactNode; details: ReactNode }) {
   useEffect(() => {
-    const sources: SourceKey[] = demo ? ["power-daily", "srtm", "imerg", "smap", "modis", "hls", "ecostress", "fldas"] : ["power"];
+    const sources: SourceKey[] = demo
+      ? ["power-daily", "srtm", "imerg", "smap", "modis", "hls", "ecostress", "fldas"]
+      : ["power", "srtm", "imerg", "smap", "modis", "hls", "ecostress", "fldas"];
     setPanelContext({ lotName, period, demo, sources, extra, details });
   });
   return null;
@@ -548,3 +557,10 @@ const styles = StyleSheet.create({
   stepPressed: { backgroundColor: colors.pressed },
   stepIcon: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: colors.greenTint },
 });
+
+/** Satellite checks for a drawn lot, fetched through our API Worker (2026-11-15). */
+function LiveSatelliteCard({ data, lotName, period }: { data: LotData; lotName: string; period: string }) {
+  const live = useLiveSatellite(data);
+  if (!live) return null;
+  return <SatelliteCard farmId={data.id} lotName={lotName} info={{ id: "satellite-checks", period }} files={live.files} live={live} />;
+}

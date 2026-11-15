@@ -60,8 +60,8 @@ export default function WelcomeScreen() {
         <Text style={[text.body, styles.lead]}>
           Draw your lots, tell us what you plant, and compare crop plans for each lot.
         </Text>
-        <Notice icon="lock">Your farm information stays on this phone. No sign-up, no account.</Notice>
-        <Text style={[text.small, { color: colors.muted }]}>
+        <Notice icon="lock" small>Your farm information stays on this phone. No sign-up, no account.</Notice>
+        <Text style={[text.caption, { color: colors.muted }]}>
           You need signal to load the map and the climate data. Your saved results work offline. The sample farm is
           made up and needs no signal.
         </Text>
