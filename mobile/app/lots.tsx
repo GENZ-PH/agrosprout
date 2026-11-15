@@ -6,6 +6,7 @@ import { BackHandler, Pressable, ScrollView, StyleSheet, Text, TextInput, useWin
 import { Button } from "../src/components/Button";
 import { Icon, type IconName } from "../src/components/Icon";
 import { LotDetailsForm } from "../src/components/LotDetailsForm";
+import { PlaceSearch } from "../src/components/PlaceSearch";
 import { Screen } from "../src/components/Screen";
 import { colors, MIN_TOUCH, radius, space, text } from "../src/components/theme";
 import { LAND_WATER } from "../src/data/land-water";
@@ -480,6 +481,14 @@ export default function LotsScreen() {
             </>
           )}
         </View>
+
+        {/* Top left, after the panel so its results float above it. Hidden while drawing (#196). */}
+        {drawing ? null : (
+          <PlaceSearch
+            wide={wide}
+            onPick={(h) => mapRef.current?.send({ type: "flyTo", lat: h.lat, lon: h.lon, zoom: h.zoom, label: h.title })}
+          />
+        )}
       </View>
     </Screen>
   );
