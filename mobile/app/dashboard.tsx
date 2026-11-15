@@ -1,5 +1,5 @@
 import { Redirect, router, useLocalSearchParams } from "expo-router";
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { describeScenario } from "../src/components/what-if-core";
@@ -547,11 +547,20 @@ function NextSteps({ lot, stage, hasPlaces }: { lot: Lot; stage: 1 | 2; hasPlace
  * live there (satellite checks, NASA requests). Renders nothing itself.
  */
 function PanelLot({ lotName, period, demo, extra, details }: { lotName: string; period: string; demo: boolean; extra: ReactNode; details: ReactNode }) {
+  // The panel renders outside this screen's tree, so hand it the same chip contexts (the sample
+  // farm's "daily" chips and the "Checked against" datasets) around what it shows.
+  const isDemo = useContext(DemoDataContext);
+  const checked = useContext(CheckedAgainstContext);
+  const wrap = (node: ReactNode) => (
+    <DemoDataContext.Provider value={isDemo}>
+      <CheckedAgainstContext.Provider value={checked}>{node}</CheckedAgainstContext.Provider>
+    </DemoDataContext.Provider>
+  );
   useEffect(() => {
     const sources: SourceKey[] = demo
       ? ["power-daily", "srtm", "imerg", "smap", "modis", "hls", "ecostress", "fldas"]
       : ["power", "srtm", "imerg", "smap", "modis", "hls", "ecostress", "fldas"];
-    setPanelContext({ lotName, period, demo, sources, extra, details });
+    setPanelContext({ lotName, period, demo, sources, extra: wrap(extra), details: wrap(details) });
   });
   return null;
 }
