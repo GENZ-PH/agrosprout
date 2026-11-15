@@ -28,6 +28,7 @@ import {
   type MapToApp,
   type ShapeFix,
 } from "../src/map/bridge";
+import { GIBS_OVERLAYS, gibsTileUrl, type OverlayId } from "../src/map/gibs-layers";
 import type { LonLat } from "../src/types";
 import { cleanSketch, closeRing, corners, CLEANUP, isSimpleRing, pointInRing, ringAreaM2 } from "./cleanup";
 
@@ -109,6 +110,24 @@ function setBasemap(id: BasemapId) {
   // Tiles load as the farmer looks around. No bulk caching (D25 terms); offline, the
   // lots still draw on the plain background.
   tiles = L.tileLayer(b.url, { attribution: b.attribution, maxNativeZoom: b.maxNativeZoom, maxZoom: 20 }).addTo(map);
+}
+
+// NASA GIBS overlay (dashboard farm map): one layer at a time, between the basemap and the lots.
+// Offline or on a failed tile, Leaflet leaves that tile empty and the lots still draw.
+let overlay: L.TileLayer | null = null;
+function setOverlay(id: OverlayId | null) {
+  overlay?.remove();
+  overlay = null;
+  if (!id) return;
+  const o = GIBS_OVERLAYS[id];
+  overlay = L.tileLayer(gibsTileUrl(o), {
+    attribution: `<a href="https://nasa-gibs.github.io/gibs-api-docs/">NASA GIBS</a>: ${o.product}, ${o.date}`,
+    maxNativeZoom: o.maxNativeZoom,
+    maxZoom: 20,
+    opacity: 0.6,
+    // Over the basemap (tilePane z 200), under the lots (overlayPane 400).
+    zIndex: 10,
+  }).addTo(map);
 }
 
 // ---------------------------------------------------------------------------
@@ -489,6 +508,7 @@ function receive(msg: AppToMap) {
   switch (msg.type) {
     case "init": {
       setBasemap(msg.basemap ?? DEFAULT_BASEMAP);
+      setOverlay(msg.overlay ?? null);
       if (msg.inset) inset = msg.inset;
       inPage = msg.inPage === true;
       setLots(msg.lots);
@@ -513,6 +533,9 @@ function receive(msg: AppToMap) {
       break;
     case "setInset":
       inset = msg.inset;
+      break;
+    case "overlay":
+      setOverlay(msg.id);
       break;
     case "zoomIn":
       if (map.getZoom() < msg.zoom) map.setZoom(msg.zoom);

@@ -411,11 +411,13 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
             </Narrow>
           ) : null}
           {/* Farmer first (dashboard audit 2026-11-15): the answer, the year, then what the farmer can do.
-              The other plans, scores, evidence, charts and the farm map live in the NASA data panel
-              ("Details for your technician"), docked beside the page on a big window. */}
+              The other plans, scores, evidence and charts live in the NASA data panel
+              ("Details for your technician"), docked beside the page on a big window. The farm map
+              with its NASA layer switcher stays in the main column (2026-11-15). */}
           <FadeIn>
           {topCard}
           {yearCalendar}
+          {overview}
           <ElNinoNotice />
           {/* With a place added, the travel times are worth a card; without one, it is a next step. */}
           {farm.destinations.length > 0 ? harvestCard : null}
@@ -456,7 +458,6 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
                 {fit}
                 <SectionSI sections={panelSections} index={3} whatIf={scenario !== null} />
                 {soil}
-                {overview}
               </>
             }
             extra={

@@ -5,6 +5,9 @@
 // Keep this file free of React Native imports: the map page bundle imports it too.
 
 import type { LonLat, Lot } from "../types";
+import type { OverlayId } from "./gibs-layers";
+
+export type { OverlayId } from "./gibs-layers";
 
 /** A lot outline: one closed ring in GeoJSON order, same shape as `Lot.geometry`. */
 export type LotPolygon = Lot["geometry"];
@@ -74,6 +77,8 @@ export type AppToMap =
        * wheel and, on a phone, one finger scroll the page instead of the map; + and - still zoom.
        */
       inPage?: boolean;
+      /** NASA GIBS overlay over the lots (gibs-layers.ts), or none. */
+      overlay?: OverlayId | null;
     }
   | { type: "setMode"; mode: MapMode; activeLotId?: string }
   /** Replace all lots (after add, rename, delete, undo). The map keeps unchanged shapes as they are. */
@@ -87,6 +92,8 @@ export type AppToMap =
   /** Zoom in to at least this level, keeping the centre (the S1 zoom check before drawing). */
   | { type: "zoomIn"; zoom: number }
   /** Move to a place the farmer searched for (#196). `label` shows on the map for a few seconds. */
+  /** Show one NASA GIBS overlay over the lots (the dashboard's farm map), or none with `null`. */
+  | { type: "overlay"; id: OverlayId | null }
   | { type: "flyTo"; lat: number; lon: number; zoom: number; label?: string };
 
 export type SketchRejectReason =
