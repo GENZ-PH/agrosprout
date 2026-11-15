@@ -21,7 +21,7 @@ import { LAND_WATER } from "../src/data/land-water";
 import { chooseCrop, cropNeedingMonth, cropShortName, dataLine, isOtherCrop, lotsWithoutCrops, otherCropName, seasonFromPlantMonth, toggleCrop } from "../src/lots/crop-picks";
 import { buildSearchEntries } from "../src/lots/crop-search-core";
 import { lotLooksLikeWater } from "../src/lots/land-water-core";
-import { FIT_LABELS } from "../src/components/recommendations-core";
+import { FIT_LABELS, fitReasonText } from "../src/components/recommendations-core";
 import { goodMonthsText, lotSuggestions, safeLotTop, type CropSuggestion } from "../src/lots/suggest-core";
 import { areaLabel, isPinLot } from "../src/lots/lot-editor";
 import { useFarmStore } from "../src/state/farm-store";
@@ -132,19 +132,29 @@ function PlantMonthAsk({ lot, fit }: { lot: Lot; fit: CropSuggestion | null }) {
   const picked = lc.seasons[0]?.plant_month ?? null;
   const name = cropShortName(crop);
   // The same check as the top 3 crops: the planting months where this crop fits the lot best.
-  const best = new Set(fit && (fit.level === "good" || fit.level === "watch") ? fit.best_months : []);
+  // Dots only when some months are better than others; the same rating in all 12 is said in words.
+  const rated = fit && fit.level !== "unknown" ? fit : null;
+  const everyMonth = rated !== null && rated.best_months.length === 12;
+  const best = new Set(rated && !everyMonth && (rated.level === "good" || rated.level === "watch") ? rated.best_months : []);
+  const why = rated && rated.reasons[0] ? fitReasonText(rated.reasons[0]) : null;
   return (
     <View style={styles.monthAsk} accessibilityRole="radiogroup" accessibilityLabel={`When do you usually plant ${name} on ${lot.name}?`}>
       <Text style={text.heading}>When do you usually plant {name}?</Text>
       <Text style={[text.small, { color: colors.muted }]}>
         {name} can be planted at different times of the year, so tell us your month. The results compare every plan with it.
       </Text>
-      {best.size > 0 && fit ? (
+      {rated && best.size > 0 ? (
         <Text style={[text.small, styles.bestLine]}>
           {tr("Best on this lot from NASA data: {level} if planted in {months}. Marked with a dot.", {
-            level: FIT_LABELS[fit.level],
-            months: goodMonthsText(fit.best_months),
+            level: FIT_LABELS[rated.level],
+            months: goodMonthsText(rated.best_months),
           })}
+        </Text>
+      ) : null}
+      {rated && everyMonth ? (
+        <Text style={[text.small, styles.bestLine]}>
+          {tr("From NASA data, {level} in every planting month on this lot, so no month is better.", { level: FIT_LABELS[rated.level] })}
+          {why ? ` ${tr(why)}` : ""}
         </Text>
       ) : null}
       <View style={styles.monthRow}>
