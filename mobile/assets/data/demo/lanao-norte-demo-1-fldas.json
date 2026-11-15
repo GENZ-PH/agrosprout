@@ -1,0 +1,718 @@
+{
+  "id": "lanao-norte-demo-1",
+  "product": "FLDAS Noah Land Surface Model L4 Global Monthly 0.1 x 0.1 degree (MERRA-2 and CHIRPS) (FLDAS_NOAH01_C_GL_M)",
+  "version": "001",
+  "native_res": "0.1 x 0.1 degree grid cell (about 11 x 11 km here), monthly",
+  "period": "2001-01 to 2025-12",
+  "point": {
+    "lat": 8.0,
+    "lon": 123.8
+  },
+  "grid_cell": {
+    "rule": "mean of the cells that touch the point and have usable values in every month",
+    "block_y_index": [
+      678,
+      681
+    ],
+    "block_x_index": [
+      3036,
+      3039
+    ],
+    "touching_cells": [
+      {
+        "lat": 7.95,
+        "lon": 123.75,
+        "used": true,
+        "reason": "values in every month"
+      },
+      {
+        "lat": 7.95,
+        "lon": 123.85,
+        "used": true,
+        "reason": "values in every month"
+      },
+      {
+        "lat": 8.05,
+        "lon": 123.75,
+        "used": false,
+        "reason": "dropped: missing values (water mask) or rainfall forcing zero in every month"
+      },
+      {
+        "lat": 8.05,
+        "lon": 123.85,
+        "used": true,
+        "reason": "values in every month"
+      }
+    ],
+    "cells_used": [
+      {
+        "lat": 7.95,
+        "lon": 123.75
+      },
+      {
+        "lat": 7.95,
+        "lon": 123.85
+      },
+      {
+        "lat": 8.05,
+        "lon": 123.85
+      }
+    ]
+  },
+  "units": {
+    "soil_moisture_0_10cm_m3m3": {
+      "file_variable": "SoilMoi00_10cm_tavg",
+      "unit": "m3/m3 (volumetric water content, as in the file: m^3 m-3)"
+    },
+    "soil_moisture_10_40cm_m3m3": {
+      "file_variable": "SoilMoi10_40cm_tavg",
+      "unit": "m3/m3 (volumetric water content, as in the file: m^3 m-3)"
+    },
+    "evapotranspiration_mm": {
+      "file_variable": "Evap_tavg",
+      "unit": "mm per month (file: kg m-2 s-1 monthly mean, x 86400 x days in month)"
+    },
+    "rainfall_mm": {
+      "file_variable": "Rainf_f_tavg",
+      "unit": "mm per month (file: kg m-2 s-1 monthly mean, x 86400 x days in month); CHIRPS forcing"
+    },
+    "surface_runoff_mm": {
+      "file_variable": "Qs_tavg",
+      "unit": "mm per month (file: kg m-2 s-1 monthly mean, x 86400 x days in month)"
+    },
+    "subsurface_runoff_mm": {
+      "file_variable": "Qsb_tavg",
+      "unit": "mm per month (file: kg m-2 s-1 monthly mean, x 86400 x days in month)"
+    },
+    "total_runoff_mm": {
+      "file_variable": "Qs_tavg + Qsb_tavg",
+      "unit": "mm per month (sum of the two converted runoff terms, same year and month)"
+    }
+  },
+  "monthly": {
+    "soil_moisture_0_10cm_m3m3": [
+      {
+        "month": 1,
+        "p20": 0.406,
+        "p50": 0.421,
+        "p80": 0.429,
+        "n_years": 25
+      },
+      {
+        "month": 2,
+        "p20": 0.38,
+        "p50": 0.411,
+        "p80": 0.422,
+        "n_years": 25
+      },
+      {
+        "month": 3,
+        "p20": 0.333,
+        "p50": 0.408,
+        "p80": 0.417,
+        "n_years": 25
+      },
+      {
+        "month": 4,
+        "p20": 0.306,
+        "p50": 0.398,
+        "p80": 0.417,
+        "n_years": 25
+      },
+      {
+        "month": 5,
+        "p20": 0.349,
+        "p50": 0.407,
+        "p80": 0.423,
+        "n_years": 25
+      },
+      {
+        "month": 6,
+        "p20": 0.413,
+        "p50": 0.427,
+        "p80": 0.429,
+        "n_years": 25
+      },
+      {
+        "month": 7,
+        "p20": 0.425,
+        "p50": 0.428,
+        "p80": 0.431,
+        "n_years": 25
+      },
+      {
+        "month": 8,
+        "p20": 0.422,
+        "p50": 0.426,
+        "p80": 0.429,
+        "n_years": 25
+      },
+      {
+        "month": 9,
+        "p20": 0.426,
+        "p50": 0.428,
+        "p80": 0.43,
+        "n_years": 25
+      },
+      {
+        "month": 10,
+        "p20": 0.424,
+        "p50": 0.428,
+        "p80": 0.43,
+        "n_years": 25
+      },
+      {
+        "month": 11,
+        "p20": 0.423,
+        "p50": 0.426,
+        "p80": 0.429,
+        "n_years": 25
+      },
+      {
+        "month": 12,
+        "p20": 0.415,
+        "p50": 0.424,
+        "p80": 0.427,
+        "n_years": 25
+      }
+    ],
+    "soil_moisture_10_40cm_m3m3": [
+      {
+        "month": 1,
+        "p20": 0.411,
+        "p50": 0.424,
+        "p80": 0.432,
+        "n_years": 25
+      },
+      {
+        "month": 2,
+        "p20": 0.386,
+        "p50": 0.414,
+        "p80": 0.425,
+        "n_years": 25
+      },
+      {
+        "month": 3,
+        "p20": 0.356,
+        "p50": 0.412,
+        "p80": 0.421,
+        "n_years": 25
+      },
+      {
+        "month": 4,
+        "p20": 0.333,
+        "p50": 0.401,
+        "p80": 0.421,
+        "n_years": 25
+      },
+      {
+        "month": 5,
+        "p20": 0.348,
+        "p50": 0.407,
+        "p80": 0.426,
+        "n_years": 25
+      },
+      {
+        "month": 6,
+        "p20": 0.41,
+        "p50": 0.43,
+        "p80": 0.432,
+        "n_years": 25
+      },
+      {
+        "month": 7,
+        "p20": 0.427,
+        "p50": 0.431,
+        "p80": 0.434,
+        "n_years": 25
+      },
+      {
+        "month": 8,
+        "p20": 0.425,
+        "p50": 0.429,
+        "p80": 0.432,
+        "n_years": 25
+      },
+      {
+        "month": 9,
+        "p20": 0.429,
+        "p50": 0.431,
+        "p80": 0.433,
+        "n_years": 25
+      },
+      {
+        "month": 10,
+        "p20": 0.427,
+        "p50": 0.431,
+        "p80": 0.433,
+        "n_years": 25
+      },
+      {
+        "month": 11,
+        "p20": 0.427,
+        "p50": 0.43,
+        "p80": 0.432,
+        "n_years": 25
+      },
+      {
+        "month": 12,
+        "p20": 0.418,
+        "p50": 0.428,
+        "p80": 0.431,
+        "n_years": 25
+      }
+    ],
+    "evapotranspiration_mm": [
+      {
+        "month": 1,
+        "p20": 138.1,
+        "p50": 147.3,
+        "p80": 158.2,
+        "n_years": 25
+      },
+      {
+        "month": 2,
+        "p20": 139.7,
+        "p50": 145.5,
+        "p80": 152.9,
+        "n_years": 25
+      },
+      {
+        "month": 3,
+        "p20": 153.2,
+        "p50": 164.9,
+        "p80": 171.1,
+        "n_years": 25
+      },
+      {
+        "month": 4,
+        "p20": 122.8,
+        "p50": 145.4,
+        "p80": 155.2,
+        "n_years": 25
+      },
+      {
+        "month": 5,
+        "p20": 113.6,
+        "p50": 130.9,
+        "p80": 139.8,
+        "n_years": 25
+      },
+      {
+        "month": 6,
+        "p20": 124.9,
+        "p50": 133.7,
+        "p80": 143.9,
+        "n_years": 25
+      },
+      {
+        "month": 7,
+        "p20": 136.8,
+        "p50": 142.7,
+        "p80": 150.5,
+        "n_years": 25
+      },
+      {
+        "month": 8,
+        "p20": 138.5,
+        "p50": 146.0,
+        "p80": 155.0,
+        "n_years": 25
+      },
+      {
+        "month": 9,
+        "p20": 128.0,
+        "p50": 136.1,
+        "p80": 143.3,
+        "n_years": 25
+      },
+      {
+        "month": 10,
+        "p20": 131.1,
+        "p50": 136.0,
+        "p80": 142.8,
+        "n_years": 25
+      },
+      {
+        "month": 11,
+        "p20": 128.6,
+        "p50": 132.6,
+        "p80": 142.8,
+        "n_years": 25
+      },
+      {
+        "month": 12,
+        "p20": 134.8,
+        "p50": 138.9,
+        "p80": 150.7,
+        "n_years": 25
+      }
+    ],
+    "rainfall_mm": [
+      {
+        "month": 1,
+        "p20": 149.9,
+        "p50": 296.4,
+        "p80": 450.6,
+        "n_years": 25
+      },
+      {
+        "month": 2,
+        "p20": 111.4,
+        "p50": 181.6,
+        "p80": 305.1,
+        "n_years": 25
+      },
+      {
+        "month": 3,
+        "p20": 87.5,
+        "p50": 184.3,
+        "p80": 310.2,
+        "n_years": 25
+      },
+      {
+        "month": 4,
+        "p20": 57.1,
+        "p50": 113.5,
+        "p80": 215.5,
+        "n_years": 25
+      },
+      {
+        "month": 5,
+        "p20": 179.4,
+        "p50": 201.6,
+        "p80": 259.2,
+        "n_years": 25
+      },
+      {
+        "month": 6,
+        "p20": 303.6,
+        "p50": 355.0,
+        "p80": 431.3,
+        "n_years": 25
+      },
+      {
+        "month": 7,
+        "p20": 281.7,
+        "p50": 328.6,
+        "p80": 397.3,
+        "n_years": 25
+      },
+      {
+        "month": 8,
+        "p20": 241.3,
+        "p50": 301.1,
+        "p80": 397.3,
+        "n_years": 25
+      },
+      {
+        "month": 9,
+        "p20": 281.2,
+        "p50": 313.7,
+        "p80": 387.6,
+        "n_years": 25
+      },
+      {
+        "month": 10,
+        "p20": 267.6,
+        "p50": 321.2,
+        "p80": 377.2,
+        "n_years": 25
+      },
+      {
+        "month": 11,
+        "p20": 242.1,
+        "p50": 334.3,
+        "p80": 424.5,
+        "n_years": 25
+      },
+      {
+        "month": 12,
+        "p20": 226.5,
+        "p50": 336.1,
+        "p80": 446.5,
+        "n_years": 25
+      }
+    ],
+    "surface_runoff_mm": [
+      {
+        "month": 1,
+        "p20": 23.1,
+        "p50": 53.3,
+        "p80": 149.2,
+        "n_years": 25
+      },
+      {
+        "month": 2,
+        "p20": 14.0,
+        "p50": 28.6,
+        "p80": 79.3,
+        "n_years": 25
+      },
+      {
+        "month": 3,
+        "p20": 7.0,
+        "p50": 20.8,
+        "p80": 81.6,
+        "n_years": 25
+      },
+      {
+        "month": 4,
+        "p20": 1.1,
+        "p50": 7.0,
+        "p80": 33.8,
+        "n_years": 25
+      },
+      {
+        "month": 5,
+        "p20": 4.6,
+        "p50": 12.3,
+        "p80": 32.6,
+        "n_years": 25
+      },
+      {
+        "month": 6,
+        "p20": 31.9,
+        "p50": 61.0,
+        "p80": 79.1,
+        "n_years": 25
+      },
+      {
+        "month": 7,
+        "p20": 46.8,
+        "p50": 64.7,
+        "p80": 86.2,
+        "n_years": 25
+      },
+      {
+        "month": 8,
+        "p20": 31.8,
+        "p50": 53.2,
+        "p80": 78.3,
+        "n_years": 25
+      },
+      {
+        "month": 9,
+        "p20": 41.7,
+        "p50": 63.9,
+        "p80": 97.5,
+        "n_years": 25
+      },
+      {
+        "month": 10,
+        "p20": 44.0,
+        "p50": 78.1,
+        "p80": 91.3,
+        "n_years": 25
+      },
+      {
+        "month": 11,
+        "p20": 48.5,
+        "p50": 93.5,
+        "p80": 131.7,
+        "n_years": 25
+      },
+      {
+        "month": 12,
+        "p20": 44.6,
+        "p50": 105.9,
+        "p80": 178.9,
+        "n_years": 25
+      }
+    ],
+    "subsurface_runoff_mm": [
+      {
+        "month": 1,
+        "p20": 14.9,
+        "p50": 73.1,
+        "p80": 152.5,
+        "n_years": 25
+      },
+      {
+        "month": 2,
+        "p20": 1.2,
+        "p50": 23.0,
+        "p80": 66.0,
+        "n_years": 25
+      },
+      {
+        "month": 3,
+        "p20": 0.2,
+        "p50": 12.4,
+        "p80": 34.6,
+        "n_years": 25
+      },
+      {
+        "month": 4,
+        "p20": 0.0,
+        "p50": 4.9,
+        "p80": 26.1,
+        "n_years": 25
+      },
+      {
+        "month": 5,
+        "p20": 0.0,
+        "p50": 5.2,
+        "p80": 78.1,
+        "n_years": 25
+      },
+      {
+        "month": 6,
+        "p20": 2.4,
+        "p50": 93.1,
+        "p80": 126.9,
+        "n_years": 25
+      },
+      {
+        "month": 7,
+        "p20": 72.7,
+        "p50": 123.1,
+        "p80": 171.7,
+        "n_years": 25
+      },
+      {
+        "month": 8,
+        "p20": 52.6,
+        "p50": 97.7,
+        "p80": 146.6,
+        "n_years": 25
+      },
+      {
+        "month": 9,
+        "p20": 90.0,
+        "p50": 115.8,
+        "p80": 149.4,
+        "n_years": 25
+      },
+      {
+        "month": 10,
+        "p20": 85.7,
+        "p50": 112.7,
+        "p80": 146.4,
+        "n_years": 25
+      },
+      {
+        "month": 11,
+        "p20": 76.6,
+        "p50": 110.4,
+        "p80": 143.3,
+        "n_years": 25
+      },
+      {
+        "month": 12,
+        "p20": 19.4,
+        "p50": 99.7,
+        "p80": 138.7,
+        "n_years": 25
+      }
+    ],
+    "total_runoff_mm": [
+      {
+        "month": 1,
+        "p20": 33.3,
+        "p50": 126.4,
+        "p80": 313.8,
+        "n_years": 25
+      },
+      {
+        "month": 2,
+        "p20": 19.0,
+        "p50": 70.5,
+        "p80": 132.8,
+        "n_years": 25
+      },
+      {
+        "month": 3,
+        "p20": 7.2,
+        "p50": 31.6,
+        "p80": 124.9,
+        "n_years": 25
+      },
+      {
+        "month": 4,
+        "p20": 1.2,
+        "p50": 12.5,
+        "p80": 54.3,
+        "n_years": 25
+      },
+      {
+        "month": 5,
+        "p20": 4.6,
+        "p50": 17.9,
+        "p80": 103.7,
+        "n_years": 25
+      },
+      {
+        "month": 6,
+        "p20": 38.6,
+        "p50": 152.1,
+        "p80": 200.7,
+        "n_years": 25
+      },
+      {
+        "month": 7,
+        "p20": 136.1,
+        "p50": 194.1,
+        "p80": 259.6,
+        "n_years": 25
+      },
+      {
+        "month": 8,
+        "p20": 91.0,
+        "p50": 162.6,
+        "p80": 229.7,
+        "n_years": 25
+      },
+      {
+        "month": 9,
+        "p20": 131.7,
+        "p50": 173.6,
+        "p80": 247.3,
+        "n_years": 25
+      },
+      {
+        "month": 10,
+        "p20": 143.7,
+        "p50": 194.5,
+        "p80": 232.6,
+        "n_years": 25
+      },
+      {
+        "month": 11,
+        "p20": 149.9,
+        "p50": 180.7,
+        "p80": 288.1,
+        "n_years": 25
+      },
+      {
+        "month": 12,
+        "p20": 63.8,
+        "p50": 209.5,
+        "p80": 297.9,
+        "n_years": 25
+      }
+    ]
+  },
+  "provenance": [
+    {
+      "source": "NASA GES DISC, FLDAS_NOAH01_C_GL_M V001 (FLDAS, Noah 3.6.1, forced by MERRA-2 and CHIRPS), variables SoilMoi00_10cm_tavg, SoilMoi10_40cm_tavg, Evap_tavg, Rainf_f_tavg, Qs_tavg, Qsb_tavg",
+      "short_name": "FLDAS_NOAH01_C_GL_M",
+      "version": "001",
+      "doi": "10.5067/5NHC22T9375G",
+      "native_res": "0.1 degree, monthly",
+      "period": "2001-01 to 2025-12",
+      "citation": "Amy McNally, NASA/GSFC/HSL (2018), FLDAS Noah Land Surface Model L4 Global Monthly 0.1 x 0.1 degree (MERRA-2 and CHIRPS), Greenbelt, MD, USA, Goddard Earth Sciences Data and Information Services Center (GES DISC), Accessed 2026-11-14, 10.5067/5NHC22T9375G",
+      "url": "https://disc.gsfc.nasa.gov/datacollection/FLDAS_NOAH01_C_GL_M_001.html",
+      "units_reference": "README_FLDAS.pdf Table 5a and the granule DMR: https://docserver.gesdisc.eosdis.nasa.gov/public/project/hydrology/README_FLDAS.pdf",
+      "unit_conversion": "kg m-2 s-1 (= mm/s of water) x 86400 x days in month -> mm per month; soil moisture kept in m3/m3",
+      "access": "NASA Earthdata cloud OPeNDAP (https://opendap.earthdata.nasa.gov), DAP4 CSV subset; granule list from CMR",
+      "retrieved": "2026-11-14"
+    }
+  ],
+  "caveats": [
+    "FLDAS is a land surface model run (Noah 3.6.1), not a measurement: soil moisture, evapotranspiration and runoff are modelled from weather inputs (MERRA-2) and CHIRPS rainfall.",
+    "Values are for a 0.1 degree cell (about 11 km), not for one plot; soil type and slope at the farm can differ.",
+    "Percentiles are across years for each calendar month: p20 is a dry year, p80 a wet year, p50 the middle.",
+    "Rainfall here is the CHIRPS forcing on the FLDAS grid; it will not match NASA POWER or GPM IMERG exactly."
+  ]
+}
