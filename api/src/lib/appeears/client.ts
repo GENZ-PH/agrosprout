@@ -7,7 +7,7 @@ export const MAX_FETCHES = 45;
 const TOKEN_KEY = "https://cache.agrosprout/appeears/v1/token";
 /** AppEEARS tokens last about 48 h (pipeline/fetch_appeears.py, AppEEARS API docs); keep ours for 12 h. */
 const TOKEN_TTL_S = 12 * 60 * 60;
-const LOGIN_BLOCK_KEY = "https://cache.agrosprout/appeears/v1/login-failed";
+const LOGIN_BLOCK_KEY = "https://cache.agrosprout/appeears/v2/login-failed";
 /**
  * After a rejected login, do not try again for 15 min: Earthdata Login locks the account for 10 min
  * after too many failed attempts (its own error text, seen 2026-11-15), and app users poll every 30 s.
