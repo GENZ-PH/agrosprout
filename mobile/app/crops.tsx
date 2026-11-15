@@ -78,21 +78,21 @@ export default function CropsScreen() {
       }
     >
       <Header
-        title={oneLot ? `What do you plant on ${oneLot.name}?` : "What do you plant?"}
+        title={oneLot ? `Main crop on ${oneLot.name}` : "Main crop on each lot"}
         right={oneLot ? undefined : "Step 2 of 2"}
         fallbackHref={oneLot ? "/dashboard" : "/lots"}
       />
       {lots.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={text.body}>Plot a lot on the map first, then pick its crops here.</Text>
+          <Text style={text.body}>Plot a lot on the map first, then choose its main crop here.</Text>
           <Button label="Plot your lots" href="/lots" variant="secondary" />
         </View>
       ) : (
         <>
           <Text style={[text.body, { color: colors.muted }]}>
             {oneLot
-              ? "Choose the crop you grow on this lot: search for it, or tap one of the top crops. You can change it later."
-              : "Choose the crop you grow on each lot: search for it, or tap one of the top crops. You can change it later."}
+              ? "Choose one crop, the main one you grow on this lot: search for it, or tap one of the top crops. Choosing another crop replaces it, and you can change it later."
+              : "Choose one crop for each lot, the main one you grow there: search for it, or tap one of the top crops. Choosing another crop replaces it, and you can change it later."}
           </Text>
           {lots.map((lot) => (
             <LotCrops key={lot.id} lot={lot} />
@@ -232,7 +232,7 @@ function YourCrops({
   return (
     <View style={styles.yours} accessibilityLiveRegion="polite">
       <Text style={text.heading} accessibilityRole="header">
-        {crops.length > 1 ? `Your crops on ${lotName}` : `Your crop on ${lotName}`}
+        {crops.length > 1 ? `Your crops on ${lotName}` : `Main crop on ${lotName}`}
       </Text>
       {crops.length > 1 ? (
         <Text style={[text.small, { color: colors.muted }]}>One crop per lot now: the crop you choose next replaces these.</Text>
