@@ -17,7 +17,7 @@
 |---|---|---|
 | 0:00-0:02 | Title card: team name and members | "Team Jeoleecation, Iligan City: [member names]" |
 | 0:02-0:05 | Start screen, then the El Niño notice on the dashboard | "Field Shift: a very strong El Niño is here. What should a farmer plant, and when?" |
-| 0:05-0:10 | Start screen with the app name, tap **See a sample farm**, the map with two lots | "AgriResilience: NASA data for your own lots. No account; saved results work offline." |
+| 0:05-0:10 | Start screen with the app name, tap **See a sample farm**, the map with two lots | "AgroSprout: NASA data for your own lots. No account; saved results work offline." |
 | 0:10-0:14 | Recommendations: option A "Your crops" vs B, C, D with scores; tap **Save water** | "Compare your crop with 3 other plans, scored by what matters to you." |
 | 0:14-0:18 | Tap a **NASA POWER** source chip: the panel with dataset, variables, years, formula | "The climate behind every score is NASA POWER: 25 years of rain, heat and soil wetness." |
 | 0:18-0:21 | Satellite checks: GPM IMERG rain beside NASA POWER rain; SMAP soil moisture | "Checked against NASA satellites: GPM IMERG rain, SMAP soil moisture." |

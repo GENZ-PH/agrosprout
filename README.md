@@ -1,4 +1,4 @@
-# AgriResilience (working name)
+# AgroSprout
 
 **NASA Space Apps Challenge 2026 · "Field Shift: Adapting Farms with NASA Data"**
 Team **Jeoleecation** · Local Event: Iligan City, Philippines
@@ -23,7 +23,7 @@ An offline-first app that helps smallholder farmers compare crop-rotation strate
 
 Farmers are dealing with shifting temperatures, less predictable rain, water shortages, and declining soil health. A rotation that helps the soil in one place can use too much water, have no nearby market, or miss the growing season somewhere else. The challenge asks for a decision-support tool that combines NASA Earth observations with local soil information, crop characteristics, and farmer priorities ([challenge brief](docs/01-challenge-brief.md)).
 
-NASA POWER data on rain, heat, and evaporation is global and free to use, but it rarely reaches the person deciding what to plant next month. AgriResilience turns it into a side-by-side comparison on the farmer's phone, for the farmer's own lots and crops, and keeps working without a signal.
+NASA POWER data on rain, heat, and evaporation is global and free to use, but it rarely reaches the person deciding what to plant next month. AgroSprout turns it into a side-by-side comparison on the farmer's phone, for the farmer's own lots and crops, and keeps working without a signal.
 
 ## What it does
 

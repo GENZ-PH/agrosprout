@@ -5,7 +5,7 @@
 
 ## Story spine (one sentence)
 
-> *NASA satellites already know when Mang Rodel's second rice crop will run short of water. AgriResilience puts that knowledge in his pocket, offline, and lets him compare safer rotations against the one he already plants.*
+> *NASA satellites already know when Mang Rodel's second rice crop will run short of water. AgroSprout puts that knowledge in his pocket, offline, and lets him compare safer rotations against the one he already plants.*
 
 ## Slide outline (7 max)
 
@@ -34,7 +34,7 @@
 |---|---|
 | 0:00–0:02 | "We're team Jeoleecation from Iligan City." |
 | 0:02–0:05 | Challenge: farmers picking rotations under changing rain and heat |
-| 0:05–0:10 | "AgriResilience: a NASA-powered rotation planner that works offline." |
+| 0:05–0:10 | "AgroSprout: a NASA-powered rotation planner that works offline." |
 | 0:10–0:20 | Screen capture: draw a lot → pick crops → dashboard → your months vs better months; caption naming NASA POWER, SMAP, SRTM, Sentinel-2 |
 | 0:20–0:30 | The future: every smallholder plans with satellite insight, with or without signal |
 
