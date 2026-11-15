@@ -23,6 +23,18 @@ export const CROP_IMAGES: Readonly<Record<string, ImageSourcePropType | null>> =
   sorghum: require("../../assets/crops/sorghum.webp"),
   eggplant: require("../../assets/crops/eggplant.webp"),
   "sesbania-rostrata": require("../../assets/crops/sesbania-rostrata.webp"),
+  cabbage: require("../../assets/crops/cabbage.webp"),
+  potato: require("../../assets/crops/potato.webp"),
+  carrot: require("../../assets/crops/carrot.webp"),
+  onion: require("../../assets/crops/onion.webp"),
+  tomato: require("../../assets/crops/tomato.webp"),
+  "hot-pepper": require("../../assets/crops/hot-pepper.webp"),
+  cassava: require("../../assets/crops/cassava.webp"),
+  cowpea: require("../../assets/crops/cowpea.webp"),
+  squash: require("../../assets/crops/squash.webp"),
+  cucumber: require("../../assets/crops/cucumber.webp"),
+  watermelon: require("../../assets/crops/watermelon.webp"),
+  lettuce: require("../../assets/crops/lettuce.webp"),
 };
 
 /** The picture for a crop id, or null when it has none yet (or is not in the library). */

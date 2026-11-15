@@ -45,13 +45,9 @@ test("kamote and camote find Sweet potato from our list, once", () => {
   assert.equal(searchCrops(ENTRIES, "kamote").results[0].matched, null, "Kamote is the local name, shown already");
 });
 
-test("cassava finds Ecocrop Manihot esculenta titled Cassava", () => {
+test("cassava finds our library's Cassava first (added 2026-11-15)", () => {
   const out = searchCrops(ENTRIES, "cassava");
-  const hit = out.results.find((r) => sci(r) === "Manihot esculenta");
-  assert.ok(hit, "Manihot esculenta in the results");
-  assert.equal(hit.entry.kind, "ecocrop");
-  assert.equal(hit.title, "Cassava");
-  assert.equal(hit.matched, null);
+  assert.equal(libraryId(out.results[0]), "cassava");
   assert.equal(out.add, null);
 });
 
@@ -63,10 +59,9 @@ test("okra shows the matched name, not the first Ecocrop name", () => {
   assert.equal(out.add, null);
 });
 
-test("sili finds Ecocrop's Sili (Capsicum frutescens) first, with no Add", () => {
+test("sili finds our library's hot pepper (local name Sili) first, with no Add", () => {
   const out = searchCrops(ENTRIES, "sili");
-  assert.equal(sci(out.results[0]), "Capsicum frutescens");
-  assert.equal(out.results[0].title, "Sili");
+  assert.equal(libraryId(out.results[0]), "hot-pepper");
   assert.equal(out.add, null);
 });
 
@@ -78,7 +73,7 @@ test("ampalaya, which Ecocrop doesn't list, gives only the Add row", () => {
 
 test("part of a name shows the matches and still offers Add", () => {
   const out = searchCrops(ENTRIES, "toma");
-  assert.ok(out.results.some((r) => sci(r) === "Lycopersicon esculentum" && r.title === "Tomato"));
+  assert.ok(out.results.some((r) => libraryId(r) === "tomato"));
   assert.equal(out.add, "toma");
 });
 
@@ -86,7 +81,7 @@ test("one letter matches the start of main names only", () => {
   const { results } = searchCrops(ENTRIES, "s");
   assert.ok(results.every((r) => r.entry.names.slice(0, r.entry.main).some((n) => normalizeName(n).startsWith("s"))));
   assert.ok(!results.some((r) => libraryId(r) === "corn"), "not Corn by its rare Ecocrop name 'sila'");
-  assert.equal(libraryId(searchCrops(ENTRIES, "k").results[0]), "sweet-potato", "local name Kamote counts as a main name");
+  assert.ok(searchCrops(ENTRIES, "k").results.some((r) => libraryId(r) === "sweet-potato"), "local name Kamote counts as a main name");
   assert.equal(libraryId(searchCrops(ENTRIES, "T").results[0]), "eggplant", "Talong");
 });
 
@@ -144,9 +139,9 @@ test("a species with no common name is found and titled by its scientific name",
 test("with the index disabled only our crops and Add remain", () => {
   const entries = buildSearchEntries(LIBRARY, null);
   assert.equal(entries.length, LIBRARY.crops.length);
-  const out = searchCrops(entries, "cassava");
+  const out = searchCrops(entries, "okra");
   assert.equal(out.results.length, 0);
-  assert.equal(out.add, "cassava");
+  assert.equal(out.add, "okra");
   assert.equal(libraryId(searchCrops(entries, "talong").results[0]), "eggplant");
 });
 
