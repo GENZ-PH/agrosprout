@@ -21,6 +21,8 @@ import { ElNinoNotice } from "../src/components/ElNinoNotice";
 import { SatelliteCard } from "../src/components/SatelliteCard";
 import { DemoDataContext } from "../src/components/SourceChip";
 import { YearCalendar } from "../src/components/YearCalendar";
+import { SectionSI } from "../src/components/SectionSI";
+import { fitFacts, monthsFacts, recommendationFacts, section, soilFacts } from "../src/components/panel-si";
 import type { Scenario } from "../src/engine/scenario";
 import { LotCompareModal } from "../src/components/LotCompareModal";
 import { LotTabs } from "../src/components/LotTabs";
@@ -34,8 +36,6 @@ import { MonthsCompareList } from "../src/components/SeasonCompareCard";
 import { SoilHealthChart } from "../src/components/SoilHealthChart";
 import { FarmerSuggestion } from "../src/components/FarmerSuggestion";
 import { FadeIn, LotSkeleton } from "../src/components/Skeleton";
-import { ExplainWithSI } from "../src/components/ExplainWithSI";
-import { explainRequest } from "../src/components/explain-core";
 import { longerSeasons } from "../src/components/farmer-core";
 import { colors, MAX_CONTENT_WIDTH, radius, space, text } from "../src/components/theme";
 import { useLayout } from "../src/components/useLayout";
@@ -359,15 +359,14 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
           monthly={data.monthly}
         />
       ) : null;
-      const pickExplanation = pick ? analysis.explanations.find((e) => e.option_key === pick.key) : undefined;
-      const techRequest =
-        pick && pickExplanation
-          ? {
-              ...explainRequest({ pick, a, explanation: pickExplanation, cropName, componentsLeftOut: analysis.rotations.components_left_out }),
-              audience: "technician" as const,
-            }
-          : null;
       const monthsHref = { pathname: "/months", params: { lot: lot.id } } as const;
+      const shortName = (id: string) => cropById(id)?.name.replace(/\s*\(.*\)\s*$/, "").trim() || id;
+      const panelSections = [
+        section("plans", "Recommendations: your crops and three other plans", recommendationFacts(analysis.rotations.options, shortName)),
+        section("months", "Your months vs better months", monthsFacts(months.planting.seasons, shortName)),
+        section("fit", "How each of your crops fits this lot", fitFacts(analysis.crop_fits, shortName)),
+        section("soil", "Soil health over the years, by plan", soilFacts(analysis.soil_health)),
+      ];
       return (
         <>
           {scenario ? (
@@ -415,11 +414,14 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
             demo={data.kind === "demo"}
             details={
               <>
-                {/* SI for the technician (2026-11-15): which results drive the suggestion, and what to verify. */}
-                {techRequest ? <ExplainWithSI key={JSON.stringify(techRequest)} request={techRequest} auto={scenario === null} title="What matters most here (SI)" /> : null}
+                {/* SI per section (2026-11-15): one plain insight at the top of each, all from one call. */}
+                <SectionSI sections={panelSections} index={0} whatIf={scenario !== null} />
                 {recommendations}
+                {monthsCompare ? <SectionSI sections={panelSections} index={1} whatIf={scenario !== null} /> : null}
                 {monthsCompare}
+                <SectionSI sections={panelSections} index={2} whatIf={scenario !== null} />
                 {fit}
+                <SectionSI sections={panelSections} index={3} whatIf={scenario !== null} />
                 {soil}
                 {overview}
               </>
