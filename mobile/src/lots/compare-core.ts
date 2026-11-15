@@ -80,7 +80,7 @@ function rows(yours: WindowMetrics, other: WindowMetrics | null, otherFit?: stri
   const out: CompareRow[] = [
     { label: "Months", yours: range(yours), other: other ? range(other) : null },
     { label: "Rain covers the crop's water need (typical year)", yours: rainCovers(yours), other: other ? rainCovers(other) : null },
-    { label: "Dry-stress months", yours: months(yours.stress_months), other: other ? months(other.stress_months) : null },
+    { label: "Dry months (crop short of water)", yours: months(yours.stress_months), other: other ? months(other.stress_months) : null },
     { label: "Heat-risk months", yours: months(yours.heat_months), other: other ? months(other.heat_months) : null },
   ];
   if (yours.waterlog_months.length > 0 || (other?.waterlog_months.length ?? 0) > 0)
@@ -93,7 +93,7 @@ function rows(yours: WindowMetrics, other: WindowMetrics | null, otherFit?: stri
     });
   if (otherFit !== undefined)
     out.push({
-      label: "Lot fit score (water and weather, 0-100)",
+      label: "How well it suits the lot (water and weather, 0-100)",
       yours: yours.fit === null ? "unknown" : String(Math.round(yours.fit)),
       other: other ? otherFit : null,
     });
@@ -103,7 +103,7 @@ function rows(yours: WindowMetrics, other: WindowMetrics | null, otherFit?: stri
 function driverLine(d: WindowDriver, yours: WindowMetrics, other: WindowMetrics): Line {
   switch (d) {
     case "fewer-stress-months":
-      return { code: "window.why.stress", text: `Fewer dry-stress months: ${months(yours.stress_months)} → ${months(other.stress_months)}.` };
+      return { code: "window.why.stress", text: `Fewer dry months (crop short of water): ${months(yours.stress_months)} now, ${months(other.stress_months)} in the other months.` };
     case "better-water-fit":
       return {
         code: "window.why.water",
@@ -204,7 +204,7 @@ export function seasonCompare(w: SeasonWindow, ctx: CompareContext): SeasonCompa
     ]
       .filter(Boolean)
       .join(" and ");
-    const margin = `No other month clearly beats yours: none adds ${WINDOW_MARGIN_POINTS} fit points or more, or has fewer dry-stress months and a higher score, even with nothing else on the lot. (The ${WINDOW_MARGIN_POINTS}-point margin is assumed.)`;
+    const margin = `No other month clearly beats yours: none suits the lot ${WINDOW_MARGIN_POINTS} points better, or has fewer dry months and a higher score, even with nothing else on the lot. (The ${WINDOW_MARGIN_POINTS}-point margin is assumed.)`;
     return {
       status: w.status,
       tone: risky ? "neutral" : "good",

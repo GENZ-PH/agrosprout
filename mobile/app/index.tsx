@@ -1,9 +1,10 @@
 import { Redirect, router } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+import { LanguageSwitch } from "../src/components/LanguageSwitch";
+import { tr } from "../src/i18n/lang-store";
+import { Image, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "../src/components/Button";
 import { Disclaimer } from "../src/components/Disclaimer";
-import { Icon } from "../src/components/Icon";
 import { Notice } from "../src/components/Notice";
 import { Screen } from "../src/components/Screen";
 import { colors, space, text } from "../src/components/theme";
@@ -37,28 +38,35 @@ export default function WelcomeScreen() {
     <Screen
       footer={
         <>
-          <Button label="Start" onPress={start} size="lg" />
-          {demoAllowed ? <Button label="See a sample farm" variant="secondary" onPress={openSample} /> : null}
+          <Button label={tr("Start")} onPress={start} size="lg" />
+          {demoAllowed ? <Button label={tr("See a sample farm")} variant="secondary" onPress={openSample} /> : null}
           <Disclaimer />
         </>
       }
     >
       <View style={styles.brand}>
-        <Icon name="sprout" size={34} color={colors.green} strokeWidth={1.8} />
-        <Text style={styles.brandName}>AgriResilience</Text>
+        {/* Team wordmark (#177), from the team brand folder; aspect 1400 x 320. */}
+        <Image
+          source={require("../assets/images/agrosprout-logo.png")}
+          style={styles.logo}
+          resizeMode="contain"
+          accessibilityRole="image"
+          accessibilityLabel="AgroSprout"
+        />
+        <View style={styles.flex} />
+        <LanguageSwitch />
       </View>
 
       <View style={styles.middle}>
         <Text style={text.display} accessibilityRole="header">
-          Plan your crops with NASA climate data
+          {tr("Plan your crops with NASA climate data")}
         </Text>
         <Text style={[text.body, styles.lead]}>
-          Draw your lots, tell us what you plant, and compare crop plans for each lot.
+          {tr("Draw your lots, tell us what you plant, and compare crop plans for each lot.")}
         </Text>
-        <Notice icon="lock">Your farm information stays on this phone. No sign-up, no account.</Notice>
-        <Text style={[text.small, { color: colors.muted }]}>
-          You need signal to load the map and the climate data. Your saved results work offline. The sample farm is
-          made up and needs no signal.
+        <Notice icon="lock" small>{tr("Your farm information stays on this phone. No sign-up, no account.")}</Notice>
+        <Text style={[text.caption, { color: colors.muted }]}>
+          {tr("You need signal to load the map and the climate data. Your saved results work offline. The sample farm is made up and needs no signal.")}
         </Text>
       </View>
     </Screen>
@@ -66,8 +74,9 @@ export default function WelcomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  brand: { flexDirection: "row", alignItems: "center", gap: 10, paddingTop: space.xl },
-  brandName: { ...text.title, fontSize: 24 },
+  brand: { flexDirection: "row", alignItems: "center", gap: 10, paddingTop: space.xl, zIndex: 20 },
+  flex: { flex: 1 },
+  logo: { width: 220, height: 220 * (320 / 1400) },
   middle: { flexGrow: 1, justifyContent: "center", gap: 20, paddingVertical: space.xl },
   lead: { fontSize: 18, lineHeight: 27, color: colors.muted },
 });

@@ -51,8 +51,8 @@ const cited = (c: Crop) => new Set(c.sources.flatMap((s) => s.field_or_fields.sp
 const isMonth = (m: unknown) => Number.isInteger(m) && (m as number) >= 1 && (m as number) <= 12;
 const positive = (v: unknown) => typeof v === "number" && Number.isFinite(v) && v > 0;
 
-test("the library has 8 to 12 crops with unique ids", () => {
-  assert.ok(lib.crops.length >= 8 && lib.crops.length <= 12, `${lib.crops.length} crops`);
+test("the library has 8 to 40 crops with unique ids", () => {
+  assert.ok(lib.crops.length >= 8 && lib.crops.length <= 40, `${lib.crops.length} crops`);
   const ids = lib.crops.map((c) => c.id);
   assert.equal(new Set(ids).size, ids.length, `duplicate id in ${ids}`);
   assert.ok(ids.every((id) => /^[a-z][a-z-]*$/.test(id)), `ids should be kebab-case: ${ids}`);

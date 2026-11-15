@@ -1,0 +1,128 @@
+{
+  "id": "lanao-norte-demo-1",
+  "product": "MODIS/Terra Vegetation Indices 16-Day L3 Global 250m SIN Grid (MOD13Q1)",
+  "version": "Collection 6.1 (061)",
+  "native_res": "250 m pixel, 16-day composite",
+  "period": "2001-01-03 to 2025-12-06",
+  "point": {
+    "lat": 8.0,
+    "lon": 123.8
+  },
+  "units": "NDVI (unitless, -0.2..1)",
+  "sampling": {
+    "composites_seen": 575,
+    "valid_samples": 353,
+    "qa_rule": "keep a composite only if _250m_16_days_pixel_reliability == 0 (good data); marginal (1), snow/ice (2), cloudy (3) and fill (-1) are dropped",
+    "month_rule": "each composite is assigned to the month of its composite day of the year (the pixel's own acquisition day)",
+    "statistic": "mean of the valid samples in each year-month, then p20, p50, p80 across years per calendar month (linear-interpolated percentiles)"
+  },
+  "monthly": [
+    {
+      "month": 1,
+      "p20": 0.755,
+      "p50": 0.807,
+      "p80": 0.838,
+      "n_years": 21,
+      "n_samples": 31
+    },
+    {
+      "month": 2,
+      "p20": 0.762,
+      "p50": 0.784,
+      "p80": 0.812,
+      "n_years": 23,
+      "n_samples": 31
+    },
+    {
+      "month": 3,
+      "p20": 0.744,
+      "p50": 0.763,
+      "p80": 0.788,
+      "n_years": 25,
+      "n_samples": 42
+    },
+    {
+      "month": 4,
+      "p20": 0.724,
+      "p50": 0.75,
+      "p80": 0.79,
+      "n_years": 21,
+      "n_samples": 38
+    },
+    {
+      "month": 5,
+      "p20": 0.741,
+      "p50": 0.769,
+      "p80": 0.815,
+      "n_years": 18,
+      "n_samples": 28
+    },
+    {
+      "month": 6,
+      "p20": 0.786,
+      "p50": 0.799,
+      "p80": 0.819,
+      "n_years": 22,
+      "n_samples": 32
+    },
+    {
+      "month": 7,
+      "p20": 0.784,
+      "p50": 0.795,
+      "p80": 0.813,
+      "n_years": 14,
+      "n_samples": 16
+    },
+    {
+      "month": 8,
+      "p20": 0.806,
+      "p50": 0.82,
+      "p80": 0.838,
+      "n_years": 16,
+      "n_samples": 21
+    },
+    {
+      "month": 9,
+      "p20": 0.788,
+      "p50": 0.81,
+      "p80": 0.833,
+      "n_years": 20,
+      "n_samples": 23
+    },
+    {
+      "month": 10,
+      "p20": 0.792,
+      "p50": 0.803,
+      "p80": 0.827,
+      "n_years": 21,
+      "n_samples": 27
+    },
+    {
+      "month": 11,
+      "p20": 0.797,
+      "p50": 0.812,
+      "p80": 0.832,
+      "n_years": 22,
+      "n_samples": 35
+    },
+    {
+      "month": 12,
+      "p20": 0.8,
+      "p50": 0.813,
+      "p80": 0.82,
+      "n_years": 21,
+      "n_samples": 29
+    }
+  ],
+  "low_ndvi_months": [],
+  "low_ndvi_rule": "calendar months whose p50 NDVI is below 0.4. A simple threshold for 'little green cover' (bare, flooded or just planted), not a crop calendar",
+  "provenance": {
+    "source": "NASA LP DAAC MOD13Q1 v061 (_250m_16_days_NDVI, _250m_16_days_pixel_reliability, _250m_16_days_composite_day_of_the_year)",
+    "doi": "10.5067/MODIS/MOD13Q1.061",
+    "native_res": "250 m, 16-day",
+    "period": "2001-01-03 to 2025-12-06",
+    "access": "NASA AppEEARS point task unknown (https://appeears.earthdatacloud.nasa.gov/api)",
+    "retrieved": "2026-11-14",
+    "note": "A 250 m pixel mixes this lot with its neighbours; small lots may differ."
+  }
+}

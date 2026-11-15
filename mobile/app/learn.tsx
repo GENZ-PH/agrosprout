@@ -1,6 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { Disclaimer } from "../src/components/Disclaimer";
 import { Header } from "../src/components/Header";
 import { Screen } from "../src/components/Screen";
 import { colors, radius, space, text } from "../src/components/theme";
@@ -9,7 +8,7 @@ import { GLOSSARY } from "../src/content/explainers";
 // Learn (#31): the plain-language glossary. The words come from src/content/explainers.ts.
 export default function LearnScreen() {
   return (
-    <Screen footer={<Disclaimer />}>
+    <Screen links>
       <Header title="Learn" fallbackHref="/dashboard" />
       <Text style={text.body}>The words used in your results, in plain language.</Text>
       <View style={styles.list}>

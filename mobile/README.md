@@ -1,4 +1,4 @@
-# mobile/: AgriResilience app (Expo React Native)
+# mobile/: AgroSprout app (Expo React Native)
 
 One codebase for the **Android app** (farmers) and the **web build** (judges). Expo SDK 58, TypeScript, expo-router.
 

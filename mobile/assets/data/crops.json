@@ -1,9 +1,9 @@
 {
   "meta": {
-    "version": "0.2.0",
-    "generated": "2026-11-14",
+    "version": "0.3.0",
+    "generated": "2026-11-15",
     "status": "Draft crop list: the D24 candidates in docs/decision-log.md. D24 (final list), D26 (Lanao del Norte planting calendars) and D28 (local check) are still open, so the team confirms or trims this list with a local technician. A value with no source is null and listed in that crop's 'unverified'.",
-    "history": "0.1.0 drafted 2026-11-14 on the app-mvp branch (app/public/data/crops.json). 0.2.0 moved here for #11 with every value unchanged; the only addition is a source entry for n_fixing on crops outside the legume family, labelled as a team rule (see method).",
+    "history": "0.1.0 drafted 2026-11-14 on the app-mvp branch (app/public/data/crops.json). 0.2.0 moved here for #11 with every value unchanged; the only addition is a source entry for n_fixing on crops outside the legume family, labelled as a team rule (see method). 0.3.0 (2026-11-15) added 12 crops (cabbage, potato, carrot, onion, tomato, hot pepper, cassava, cowpea, squash, cucumber, watermelon, lettuce) so suggestions can differ by climate (highland, long dry season, dry and poor soil). Same method and sources; every temperature range was re-checked against the Ecocrop table. Cowpea and watermelon have no Philippine season length yet, so the engine does not suggest them. Hot pepper's season length is the Ecocrop cycle midpoint (no Philippine guide gives it); the team should confirm.",
     "method": "Every number was read in this session from the source named in that crop's 'sources' list. Values that could not be checked are null and listed in 'unverified'. stages_days, kc, root_depth_m and p_depletion come from FAO-56 Tables 11, 12 and 22 as printed; stages_days are FAO example rows (none is for the Philippines), so the engine should rescale them to season_days as FAO-56 advises. Kc values are for FAO's standard sub-humid climate (RHmin about 45%, wind about 2 m/s) and should be adjusted for humid Philippine conditions with FAO-56 Eq. 62 and 65. temp_c = FAO Ecocrop TMIN, TOPMN, TOPMX, TMAX. Where a single number was needed from a cited range (season_days), the rounded midpoint was used and this is said in the source text. Waterlogging tolerance uses the crop guide's own words where one exists; otherwise Ecocrop drainage: optimal drainage includes 'poorly drained' = high, range includes it = medium, neither = low (a team-chosen mapping). Drought tolerance uses the crop guide's words, or the FAO-56 Table 24 yield response factor Ky (Ky above 1 = low; below 1 = medium unless a source calls the crop drought tolerant). Yields are PSA OpenSTAT production divided by area for 2022-2024 (sums), Lanao del Norte unless noted. Calendars are national unless noted (no Lanao del Norte calendar was found). labor, market and most cover_value fields are left null for the team to fill from local sources. n_fixing on a crop outside the legume family (Fabaceae) is false by a team rule (an assumption, no source cited): only legumes are taken as nitrogen-fixing, and each crop's family is cited from Ecocrop. The team should confirm this rule or replace it with a citation.",
     "general_sources": [
       {
@@ -1122,6 +1122,1291 @@
         "yield_t_per_ha"
       ],
       "notes": "Sesbania is grown in a wet field for about two months and then plowed in, so it feeds the next rice crop with nitrogen. It is not sold."
+    },
+    {
+      "id": "cabbage",
+      "name": "Cabbage",
+      "local_name": "Repolyo",
+      "family": "Brassicaceae",
+      "season_days": 88,
+      "stages_days": [
+        40,
+        60,
+        50,
+        15
+      ],
+      "kc": [
+        0.7,
+        1.05,
+        0.95
+      ],
+      "root_depth_m": [
+        0.5,
+        0.8
+      ],
+      "p_depletion": 0.45,
+      "temp_c": {
+        "min": 7,
+        "opt_low": 15,
+        "opt_high": 24,
+        "max": 32
+      },
+      "drought_tolerance": "medium",
+      "waterlogging_tolerance": "low",
+      "n_fixing": false,
+      "labor": null,
+      "market": null,
+      "cover_value": null,
+      "perishability": "high",
+      "storable_if_dried": null,
+      "yield_t_per_ha": 3.64,
+      "typical_calendar": [],
+      "sources": [
+        {
+          "field_or_fields": "local_name",
+          "citation": "Wiktionary, 'repolyo', Cebuano section, Noun: 'cabbage (Brassica oleracea var. capitata)'",
+          "url": "https://en.wiktionary.org/wiki/repolyo"
+        },
+        {
+          "field_or_fields": "family, temp_c, waterlogging_tolerance",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv, pinned commit f13577f); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Brassica oleracea var. capitata (EcoPort 554), FAMNAME 'Cruciferae' (modern name Brassicaceae): TMIN 7, TOPMN 15, TOPMX 24, TMAX 32; DRA 'well (dry spells)', DRAR 'well (dry spells)'. Neither includes poorly drained, so waterlogging tolerance is low by the team mapping. DA Region 02 guide gives 15-20 C",
+          "url": "https://raw.githubusercontent.com/OpenCLIM/ecocrop/f13577f4237604b15d85d8e43741714a2d1eb2d4/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "season_days, typical_calendar",
+          "citation": "DA Agricultural Training Institute, Cordillera Administrative Region (BSU Compound, La Trinidad, Benguet), 'Tips in Raising Head Cabbage': 'It can be grown the whole year in any place in Benguet'; 'Harvest the crop when the head is solid and firm. Maturity ranges from 75-100 days' (88 used, the rounded midpoint of 87.5). Year-round planting, so no fixed calendar",
+          "url": "https://ati2.da.gov.ph/ati-car/content/sites/default/files/2022-12/Cabbage_Production.pdf"
+        },
+        {
+          "field_or_fields": "season_days",
+          "citation": "DA Region 02 HVCDP Cabbage Production Guide (June 2017), lowland: 'Cabbage heads are ready for harvesting 55-60 days after transplanting'; 'Its temperature requirements usually range from 150c - 200c'. Lowland figure counts from transplanting only, so the Benguet ATI figure was used",
+          "url": "https://cagayanvalley.da.gov.ph/wp-content/uploads/2018/02/Cabbage.pdf"
+        },
+        {
+          "field_or_fields": "stages_days",
+          "citation": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Table 11 (stage lengths, days); row 'Cabbage, Sept, Calif. Desert, USA' 40/60/50/15 = 165 days (only cabbage row; much longer than the 75-100 day Benguet crop, rescale to season_days)",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "kc",
+          "citation": "Allen et al. 1998, FAO-56 Table 12 (single Kc for non-stressed crops in a sub-humid standard climate, RHmin about 45%, u2 about 2 m/s; Kc mid and Kc end need adjustment for the humid Philippine climate); Cabbage: Kc ini 0.7 (small vegetables group), Kc mid 1.05, Kc end 0.95",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "root_depth_m, p_depletion",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); Cabbage: Zr 0.5-0.8 m, p 0.45",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "drought_tolerance",
+          "citation": "Allen et al. 1998, FAO-56 Table 24 (seasonal yield response factor Ky, from FAO-33); Cabbage Ky 0.95 (below 1, and no source calls cabbage drought tolerant, so medium)",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "perishability",
+          "citation": "Kader 1993 in FAO 'Storage of horticultural crops': cabbage in the 'High' relative perishability class (2-4 weeks even at near optimum cold storage); same page lists 'Cabbage, early 0 C ... 3-6 weeks'. Rated high (as eggplant, also Kader High). Sold as fresh heads, not dried, so storable_if_dried false (judgement)",
+          "url": "https://www.fao.org/4/x5403e/x5403e09.htm"
+        },
+        {
+          "field_or_fields": "yield_t_per_ha",
+          "citation": "PSA OpenSTAT 'Vegetables and Root Crops' volume of production (0082E4EVCP3) and area planted/harvested (0112E4EAHM3), Cabbage, Lanao del Norte, 2022-2024 Annual: production 54.20 + 48.07 + 45.80 = 148.07 t, area 9.07 + 13.64 + 17.96 = 40.67 ha, yield 3.64 t/ha (computed; very small area). National 2022-2024: 384,694.87 t / 24,358.90 ha = 15.79 t/ha",
+          "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0082E4EVCP3.px"
+        },
+        {
+          "field_or_fields": "n_fixing",
+          "citation": "Team rule (assumption, no source cited; see meta.method): family Brassicaceae is not a legume (Fabaceae), so n_fixing is false. The family is cited above."
+        }
+      ],
+      "unverified": [
+        "typical_calendar",
+        "labor",
+        "market",
+        "cover_value",
+        "storable_if_dried"
+      ],
+      "notes": "Cabbage is a cool-weather cash crop that grows year round in the highlands, but the heads must be sold within days to a few weeks."
+    },
+    {
+      "id": "potato",
+      "name": "Potato",
+      "local_name": "Patatas",
+      "family": "Solanaceae",
+      "season_days": 83,
+      "stages_days": [
+        25,
+        30,
+        30,
+        30
+      ],
+      "kc": [
+        0.5,
+        1.15,
+        0.75
+      ],
+      "root_depth_m": [
+        0.4,
+        0.6
+      ],
+      "p_depletion": 0.35,
+      "temp_c": {
+        "min": 7,
+        "opt_low": 15,
+        "opt_high": 25,
+        "max": 30
+      },
+      "drought_tolerance": "low",
+      "waterlogging_tolerance": "low",
+      "n_fixing": false,
+      "labor": null,
+      "market": null,
+      "cover_value": null,
+      "perishability": "low",
+      "storable_if_dried": null,
+      "yield_t_per_ha": 16.14,
+      "typical_calendar": [
+        {
+          "plant_month": 3,
+          "harvest_month": 6
+        },
+        {
+          "plant_month": 10,
+          "harvest_month": 1
+        }
+      ],
+      "sources": [
+        {
+          "field_or_fields": "local_name",
+          "citation": "Wiktionary, 'patatas', Cebuano section, Noun: 'a potato'",
+          "url": "https://en.wiktionary.org/wiki/patatas"
+        },
+        {
+          "field_or_fields": "family, temp_c, waterlogging_tolerance",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv, pinned commit f13577f); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Solanum tuberosum (EcoPort 1971), FAMNAME 'Solanaceae': TMIN 7, TOPMN 15, TOPMX 25, TMAX 30; DRA 'well (dry spells)', DRAR 'well (dry spells), excessive (dry/moderately dry)'. Neither includes poorly drained, so waterlogging tolerance is low by the team mapping. DA Region 02 guide: vegetative growth best at 20-24 C, tuber development favoured at 20 C",
+          "url": "https://raw.githubusercontent.com/OpenCLIM/ecocrop/f13577f4237604b15d85d8e43741714a2d1eb2d4/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "season_days, typical_calendar",
+          "citation": "DA Region 02 HVCDP White Potato Production Guide (June 2017): 'Most potatoes mature at 75-90 days after planting or when 80% of the leaves of the total plant population become yellow' (83 used, the rounded midpoint of 82.5); 'In areas such as Benguet and Bukidnon, March-April and October-November are the best planting time. In the lowlands, the best time to plant is from November to mid-December.' Calendar uses the first month of each highland window; harvest month is plant month plus about 3 months (75-90 days), computed by us",
+          "url": "https://cagayanvalley.da.gov.ph/wp-content/uploads/2018/02/White-Potato-Production-Guide.pdf"
+        },
+        {
+          "field_or_fields": "season_days",
+          "citation": "DA-AMIA CRA Technical Brief, Benguet CAR, Blight-Tolerant Potato: LBR PO3 (Igorota) 'matures in 110 days'; LBR PO4 (Solibao) 'maturity of 90-120 days'. Benguet blight-tolerant varieties run longer than the 75-90 day general figure used",
+          "url": "https://amia.da.gov.ph/wp-content/uploads/2025/02/CRA-Technical-Brief_Benguet_CAR_Blight-Tolerant-Potato.pdf"
+        },
+        {
+          "field_or_fields": "stages_days",
+          "citation": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Table 11 (stage lengths, days); row 'Potato, Jan/Nov, (Semi) Arid Climate' 25/30/30/45/30, total 115/130; the January value (mid 30, total 115) was used as the shortest row. Other rows: May Continental 25/30/45/30 = 130, April Europe 30/35/50/30 = 145, Apr/May Idaho 45/30/70/20 = 165, Dec Calif. Desert 30/35/50/25 = 140. Rescale to season_days",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "kc",
+          "citation": "Allen et al. 1998, FAO-56 Table 12 (single Kc for non-stressed crops in a sub-humid standard climate, RHmin about 45%, u2 about 2 m/s; Kc mid and Kc end need adjustment for the humid Philippine climate); Potato: Kc ini 0.5 (roots and tubers group), Kc mid 1.15, Kc end 0.75 (footnote 4: about 0.40 for long season potatoes with vine kill)",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "root_depth_m, p_depletion",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); Potato: Zr 0.4-0.6 m, p 0.35",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "drought_tolerance",
+          "citation": "Allen et al. 1998, FAO-56 Table 24 (seasonal yield response factor Ky, from FAO-33); Potato Ky 1.1 (above 1, so low)",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "perishability",
+          "citation": "Kader 1993 in FAO 'Storage of horticultural crops': 'potato (mature)' in the 'Low' relative perishability class (8-16 weeks); 'potato (immature)' is Moderate (4-8 weeks); same page lists 'Potatoes, late crop ... 5-10 months'. Rated low for tubers harvested at full maturity as the DA guide advises ('Harvest at full maturity for longer storability'). Stored fresh, not dried, so storable_if_dried false (judgement)",
+          "url": "https://www.fao.org/4/x5403e/x5403e09.htm"
+        },
+        {
+          "field_or_fields": "yield_t_per_ha",
+          "citation": "PSA OpenSTAT 'Vegetables and Root Crops' volume of production (0082E4EVCP3) and area planted/harvested (0112E4EAHM3), Potato, 2022-2024 Annual. Lanao del Norte reports 0.00 t and 0.00 ha in all three years, so the national figure is used: production 107,416.19 + 100,054.60 + 102,790.84 = 310,261.63 t, area 6,621.41 + 6,222.03 + 6,382.55 = 19,225.99 ha, yield 16.14 t/ha (computed, PHILIPPINES)",
+          "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0082E4EVCP3.px"
+        },
+        {
+          "field_or_fields": "n_fixing",
+          "citation": "Team rule (assumption, no source cited; see meta.method): family Solanaceae is not a legume (Fabaceae), so n_fixing is false. The family is cited above."
+        }
+      ],
+      "unverified": [
+        "labor",
+        "market",
+        "cover_value",
+        "storable_if_dried"
+      ],
+      "notes": "Potato is a cool highland root crop planted in March-April or October-November that stores for weeks to months when dug at full maturity."
+    },
+    {
+      "id": "carrot",
+      "name": "Carrot",
+      "local_name": "Sanahorya",
+      "family": "Apiaceae",
+      "season_days": 105,
+      "stages_days": [
+        20,
+        30,
+        30,
+        20
+      ],
+      "kc": [
+        0.7,
+        1.05,
+        0.95
+      ],
+      "root_depth_m": [
+        0.5,
+        1.0
+      ],
+      "p_depletion": 0.35,
+      "temp_c": {
+        "min": 3,
+        "opt_low": 15,
+        "opt_high": 24,
+        "max": 30
+      },
+      "drought_tolerance": null,
+      "waterlogging_tolerance": "low",
+      "n_fixing": false,
+      "labor": null,
+      "market": null,
+      "cover_value": null,
+      "perishability": "medium",
+      "storable_if_dried": null,
+      "yield_t_per_ha": 13.51,
+      "typical_calendar": [],
+      "sources": [
+        {
+          "field_or_fields": "local_name",
+          "citation": "Wiktionary, 'sanahorya', Cebuano section, Noun (tagged dated): 'carrot (Daucus carota subsp. sativus)'. Wiktionary lists 'karot' as Tagalog, not Cebuano",
+          "url": "https://en.wiktionary.org/wiki/sanahorya"
+        },
+        {
+          "field_or_fields": "family, temp_c, waterlogging_tolerance",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv, pinned commit f13577f); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Daucus carota (EcoPort 871; the only Daucus carota row, common names include wild carrot), FAMNAME 'Umbelliferae' (modern name Apiaceae): TMIN 3, TOPMN 15, TOPMX 24, TMAX 30; DRA 'well (dry spells)', DRAR 'well (dry spells)'. Neither includes poorly drained, so waterlogging tolerance is low by the team mapping. DA Region 02 guide: optimal root colour at 15-21 C; 'Temperatures below 10oC and above 30oC reduce quality and yields'",
+          "url": "https://raw.githubusercontent.com/OpenCLIM/ecocrop/f13577f4237604b15d85d8e43741714a2d1eb2d4/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "season_days, typical_calendar",
+          "citation": "DA Region 02 HVCDP Carrot Production Guide (June 2017): 'Carrot can be harvested from 90-120 days after emergence depending on the variety and location' (105 used, the midpoint); 'Carrots grow well in high elevation areas preferably 1,000 m above sea level'; 'In low elevation areas, the best time to plant is from the last week of October up to Febuary ... In the highlands, planting can be done throughout the year.' Highland planting is year-round, so no fixed calendar",
+          "url": "https://cagayanvalley.da.gov.ph/wp-content/uploads/2018/02/Carrot-Prod-Guide.pdf"
+        },
+        {
+          "field_or_fields": "stages_days",
+          "citation": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Table 11 (stage lengths, days); row 'Carrots, Oct/Jan, Arid climate' 20/30/50/30/20, total 100: the mid value is 50 for October and 30 for January, and only 20/30/30/20 adds to the printed 100, so that was used (closest to the 90-120 day Philippine season). Other rows: Feb/Mar Mediterranean 30/40/60/20 = 150, Oct Calif. Desert 30/50/90/30 = 200",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "kc",
+          "citation": "Allen et al. 1998, FAO-56 Table 12 (single Kc for non-stressed crops in a sub-humid standard climate, RHmin about 45%, u2 about 2 m/s; Kc mid and Kc end need adjustment for the humid Philippine climate); Carrots: Kc ini 0.7 (small vegetables group), Kc mid 1.05, Kc end 0.95",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "root_depth_m, p_depletion",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); Carrots: Zr 0.5-1.0 m, p 0.35",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "drought_tolerance",
+          "citation": "No carrot row in FAO-56 Table 24 (Ky), and the DA Region 02 guide gives no tolerance rating, only 'Carrot needs a lot of moisture during the first 30 days of growth. Irregular watering leads to cracking and forking.' Left null",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "perishability",
+          "citation": "Kader 1993 in FAO 'Storage of horticultural crops': carrot in the 'Moderate' relative perishability class (4-8 weeks at near optimum cold storage); same page lists 'Carrots, bunched ... 2 weeks', 'Carrots, mature ... 7-9 months' at 0 C. Rated medium (judgement between the brief's medium and low; farm ambient storage is shorter than cold storage). Sold fresh, not dried, so storable_if_dried false (judgement)",
+          "url": "https://www.fao.org/4/x5403e/x5403e09.htm"
+        },
+        {
+          "field_or_fields": "yield_t_per_ha",
+          "citation": "PSA OpenSTAT 'Vegetables and Root Crops' volume of production (0082E4EVCP3) and area planted/harvested (0112E4EAHM3), Carrot, 2022-2024 Annual. Lanao del Norte reports 0.00 t and 0.00 ha in all three years, so the national figure is used: production 57,976.95 + 59,979.07 + 60,645.75 = 178,601.77 t, area 4,122.33 + 4,637.41 + 4,460.96 = 13,220.70 ha, yield 13.51 t/ha (computed, PHILIPPINES). DA Region 02 guide: 'Yields are usually 20-30 t/ha under favorable conditions'",
+          "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0082E4EVCP3.px"
+        },
+        {
+          "field_or_fields": "n_fixing",
+          "citation": "Team rule (assumption, no source cited; see meta.method): family Apiaceae is not a legume (Fabaceae), so n_fixing is false. The family is cited above."
+        }
+      ],
+      "unverified": [
+        "drought_tolerance",
+        "typical_calendar",
+        "labor",
+        "market",
+        "cover_value",
+        "storable_if_dried"
+      ],
+      "notes": "Carrot is a highland root crop that can be sown any month above about 1,000 m and keeps a few weeks after harvest, but it needs steady watering early on."
+    },
+    {
+      "id": "onion",
+      "name": "Bulb onion",
+      "local_name": "Sibuyas",
+      "family": "Amaryllidaceae",
+      "season_days": 95,
+      "stages_days": [
+        15,
+        25,
+        70,
+        40
+      ],
+      "kc": [
+        0.7,
+        1.05,
+        0.75
+      ],
+      "root_depth_m": [
+        0.3,
+        0.6
+      ],
+      "p_depletion": 0.3,
+      "temp_c": {
+        "min": 4,
+        "opt_low": 12,
+        "opt_high": 25,
+        "max": 30
+      },
+      "drought_tolerance": "low",
+      "waterlogging_tolerance": "low",
+      "n_fixing": false,
+      "labor": null,
+      "market": null,
+      "cover_value": null,
+      "perishability": "low",
+      "storable_if_dried": true,
+      "yield_t_per_ha": 11.77,
+      "typical_calendar": [
+        {
+          "plant_month": 9,
+          "harvest_month": 12
+        },
+        {
+          "plant_month": 10,
+          "harvest_month": 1
+        },
+        {
+          "plant_month": 11,
+          "harvest_month": 2
+        },
+        {
+          "plant_month": 12,
+          "harvest_month": 3
+        },
+        {
+          "plant_month": 1,
+          "harvest_month": 4
+        }
+      ],
+      "sources": [
+        {
+          "field_or_fields": "local_name",
+          "citation": "Wiktionary, 'sibuyas', Cebuano section: '# onion' (alternative form 'sibujas', borrowed from Spanish cebolla)",
+          "url": "https://en.wiktionary.org/wiki/sibuyas"
+        },
+        {
+          "field_or_fields": "family",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv, pinned commit f13577f); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Allium cepa var. cepa (EcoPort 551, 'Onions (bulb)') under 'Liliopsida:Liliidae:Asparagales:Alliaceae'. Modern name: Wikipedia 'Allioideae': 'a subfamily ... in the family Amaryllidaceae ... It was formerly treated as a separate family, Alliaceae'",
+          "url": "https://raw.githubusercontent.com/OpenCLIM/ecocrop/f13577f4237604b15d85d8e43741714a2d1eb2d4/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "season_days",
+          "citation": "PNS/BAFS 108:2013 Code of Good Agricultural Practices for Onion Production, 3.4 Harvesting: 'Usually, onion reaches maturity 70 to 120 days after transplanting' (95 used, the rounded midpoint; field days from transplanting, nursery not included)",
+          "url": "https://ppssd.buplant.da.gov.ph/storage/app/public/LegalReference/PNS_BAFS%20108_2014%20Code%20of%20GAP%20for%20Onion%20Production.pdf"
+        },
+        {
+          "field_or_fields": "typical_calendar",
+          "citation": "DA-HVCDP Philippine Onion Industry Roadmap 2021-2025, p. 55: 'The earliest planting month in the Philippines is September and earliest harvest is early December. Harvesting in all regions is concentrated in the months of February to May.' Figure 28 (Cropping Calendar for Red Onion) shows planting September to January in Ilocos Norte, Ilocos Sur and Nueva Ecija (Nueva Ecija to March) and harvest December to April/May. Pairs are planting months from that window with harvest about 95 days later (season_days), rounded to the month. Luzon provinces, no Mindanao calendar found",
+          "url": "https://hvcdp.da.gov.ph/wp-content/uploads/2023/07/Philippine-Onion-Industry-Roadmap.pdf"
+        },
+        {
+          "field_or_fields": "perishability, storable_if_dried",
+          "citation": "DA-HVCDP Philippine Onion Industry Roadmap 2021-2025, p. 9: 'After harvest, the bulbs are air-dried to extend shelf-life ... in the humid tropics, they need well-ventilated conditions for short-term storage and refrigeration for long-term storage'; 'They have a good shelf life and need no refrigeration if for household consumption. Fresh onion bulbs can last at most six months under refrigerated storage.' storable_if_dried = true refers to cured (air-dried) bulbs",
+          "url": "https://hvcdp.da.gov.ph/wp-content/uploads/2023/07/Philippine-Onion-Industry-Roadmap.pdf"
+        },
+        {
+          "field_or_fields": "perishability",
+          "citation": "Kader 1993 in FAO 'Storage of horticultural crops': 'dry onion' in the 'Low' perishability class (potential storage life 8-16 weeks)",
+          "url": "https://www.fao.org/4/x5403e/x5403e09.htm"
+        },
+        {
+          "field_or_fields": "stages_days",
+          "citation": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Table 11 (stage lengths, days); row 'Onion (dry), April, Mediterranean' 15/25/70/40 = 150 days. The other row is 'Oct; Jan., Arid Region; Calif.' 20/35/110/45 = 210. Both are longer than Philippine practice (70-120 days after transplanting), so rescale to season_days",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "kc",
+          "citation": "Allen et al. 1998, FAO-56 Table 12 (single Kc for non-stressed crops in a sub-humid standard climate, RHmin about 45%, u2 about 2 m/s; Kc mid and Kc end need adjustment for the humid Philippine climate); Onions - dry: Kc ini 0.7 (Small Vegetables group), Kc mid 1.05, Kc end 0.75",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "root_depth_m, p_depletion",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); Onions - dry: Zr 0.3-0.6 m, p 0.30",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "temp_c, waterlogging_tolerance",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv, pinned commit f13577f); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Allium cepa var. cepa (EcoPort 551): TMIN/TOPMN/TOPMX/TMAX 4/12/25/30; DRA 'well (dry spells)', DRAR 'well (dry spells)'. Neither includes 'poorly drained', so waterlogging_tolerance = low by the team mapping. Note TOPMX 25 C is below typical Philippine lowland temperatures, which is why onion is a cool dry-season crop",
+          "url": "https://raw.githubusercontent.com/OpenCLIM/ecocrop/f13577f4237604b15d85d8e43741714a2d1eb2d4/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "drought_tolerance",
+          "citation": "Allen et al. 1998, FAO-56 Table 24 (seasonal yield response factor Ky from FAO-33): 'Onion 1.1'. Ky above 1 = low by the library convention",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "yield_t_per_ha",
+          "citation": "PSA OpenSTAT 'Vegetables and Root Crops' production (0082E4EVCP3) and area planted/harvested (0112E4EAHM3), 'Onion, mature bulb', 2022-2024 Annual. Lanao del Norte reports 0.00 t and 0.00 ha every year, so the national figure is used: production 241,033.06 + 252,487.47 + 264,322.89 = 757,843.42 t; area 19,824.02 + 21,324.94 + 23,248.01 = 64,396.97 ha; yield 11.77 t/ha (computed, PHILIPPINES)",
+          "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0082E4EVCP3.px"
+        },
+        {
+          "field_or_fields": "n_fixing",
+          "citation": "Team rule (assumption, no source cited; see meta.method): family Amaryllidaceae is not a legume (Fabaceae), so n_fixing is false. The family is cited above."
+        }
+      ],
+      "unverified": [
+        "labor",
+        "market",
+        "cover_value"
+      ],
+      "notes": "Bulb onion is a dry-season cash crop planted after the rice harvest; it needs cool, dry months and well-drained soil, and cured bulbs keep for months."
+    },
+    {
+      "id": "tomato",
+      "name": "Tomato",
+      "local_name": "Kamatis",
+      "family": "Solanaceae",
+      "season_days": 100,
+      "stages_days": [
+        30,
+        40,
+        40,
+        25
+      ],
+      "kc": [
+        0.6,
+        1.15,
+        0.8
+      ],
+      "root_depth_m": [
+        0.7,
+        1.5
+      ],
+      "p_depletion": 0.4,
+      "temp_c": {
+        "min": 7,
+        "opt_low": 20,
+        "opt_high": 27,
+        "max": 35
+      },
+      "drought_tolerance": "low",
+      "waterlogging_tolerance": "low",
+      "n_fixing": false,
+      "labor": null,
+      "market": null,
+      "cover_value": null,
+      "perishability": "high",
+      "storable_if_dried": null,
+      "yield_t_per_ha": 7.68,
+      "typical_calendar": [
+        {
+          "plant_month": 11,
+          "harvest_month": 1
+        },
+        {
+          "plant_month": 12,
+          "harvest_month": 2
+        },
+        {
+          "plant_month": 1,
+          "harvest_month": 3
+        },
+        {
+          "plant_month": 2,
+          "harvest_month": 4
+        }
+      ],
+      "sources": [
+        {
+          "field_or_fields": "local_name",
+          "citation": "Wiktionary, 'kamatis', Cebuano section: '# tomato' (alternative form 'tamatis'). The DA-HVCDP Cebuano technoguide 'Giya sa Pagpananum ug mga Gulayon' (Technoguide No. 10-2019) also uses the heading 'KAMATIS'",
+          "url": "https://en.wiktionary.org/wiki/kamatis"
+        },
+        {
+          "field_or_fields": "family",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv, pinned commit f13577f); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Lycopersicon esculentum (EcoPort 1379) under 'Magnoliopsida:Asteridae:Solanales:Solanaceae'",
+          "url": "https://raw.githubusercontent.com/OpenCLIM/ecocrop/f13577f4237604b15d85d8e43741714a2d1eb2d4/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "season_days, typical_calendar, waterlogging_tolerance",
+          "citation": "DA Region 02 HVCDP Tomato Production Guide (February 2017): 'Harvesting of tomato fruits starts at 55-65 DAT or 15-20 days from flowering. Tomato extends its growth to more or less 100 DAT' (100 used; field days from transplanting, seedlings are 25-30 days old at transplanting and not counted); 'usually planted from September to January in hilly areas and from November to February in lowland areas. Grow off-season tomato from May to September'; 'Tomato is very sensitive to flooding' (rated low). Calendar uses the lowland window November to February; harvest_month is the month picking starts (55-65 DAT, about 2 months). Regional guide (Cagayan Valley), no Mindanao calendar found",
+          "url": "https://cagayanvalley.da.gov.ph/wp-content/uploads/2018/02/Tomato.pdf"
+        },
+        {
+          "field_or_fields": "perishability",
+          "citation": "Kader 1993 in FAO 'Storage of horticultural crops': 'tomato (ripe)' in the 'Very high' class (under 2 weeks) and 'tomato (partially ripe)' in the 'High' class; storage table: 'Tomatoes, firm-ripe 13-15 C ... 4-7 days'. Rated high (days at farm ambient)",
+          "url": "https://www.fao.org/4/x5403e/x5403e09.htm"
+        },
+        {
+          "field_or_fields": "stages_days",
+          "citation": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Table 11 (stage lengths, days); row 'Tomato, January, Arid Region' 30/40/40/25 = 135 (the shortest of five rows; others 35/40/50/30 = 155 Apr/May Calif., 25/40/60/30 = 155 Jan Calif. Desert, 35/45/70/30 = 180 Oct/Nov Arid Region, 30/40/45/30 = 145 April/May Mediterranean). No tropical row; rescale to season_days",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "kc",
+          "citation": "Allen et al. 1998, FAO-56 Table 12 (single Kc for non-stressed crops in a sub-humid standard climate, RHmin about 45%, u2 about 2 m/s; Kc mid and Kc end need adjustment for the humid Philippine climate); Tomato: Kc ini 0.6 (Solanaceae group), Kc mid 1.15, Kc end 0.70-0.90 (0.8 used, the midpoint). Footnote 2: for staked tomatoes 1.5 to 2 m tall, 'for tomatoes ... 1.20' can be taken",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "root_depth_m, p_depletion",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); Tomato: Zr 0.7-1.5 m, p 0.40",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "temp_c",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv, pinned commit f13577f); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Lycopersicon esculentum (EcoPort 1379): 7/20/27/35; DRA and DRAR 'well (dry spells)'. The DA Region 02 guide gives an optimum of 21-24 C and says tomato 'requires a relatively cool and dry climate'",
+          "url": "https://raw.githubusercontent.com/OpenCLIM/ecocrop/f13577f4237604b15d85d8e43741714a2d1eb2d4/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "drought_tolerance",
+          "citation": "Allen et al. 1998, FAO-56 Table 24 (seasonal yield response factor Ky from FAO-33): 'Tomato 1.05'. Ky above 1 = low by the library convention",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "yield_t_per_ha",
+          "citation": "PSA OpenSTAT 'Vegetables and Root Crops' production (0082E4EVCP3) and area planted/harvested (0112E4EAHM3), Tomato, Lanao del Norte, 2022-2024 Annual: production 618 + 613 + 611 = 1,842 t; area 73.55 + 83.10 + 83.10 = 239.75 ha; yield 7.68 t/ha (computed). National 646,468.07 t / 44,889.06 ha = 14.40 t/ha",
+          "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0082E4EVCP3.px"
+        },
+        {
+          "field_or_fields": "n_fixing",
+          "citation": "Team rule (assumption, no source cited; see meta.method): family Solanaceae is not a legume (Fabaceae), so n_fixing is false. The family is cited above."
+        }
+      ],
+      "unverified": [
+        "storable_if_dried",
+        "labor",
+        "market",
+        "cover_value"
+      ],
+      "notes": "Tomato does best planted in the cool dry months from November to February on well-drained land, gives several pickings, and the fruit spoils within days."
+    },
+    {
+      "id": "hot-pepper",
+      "name": "Hot pepper (chili)",
+      "local_name": "Sili",
+      "family": "Solanaceae",
+      "season_days": 150,
+      "stages_days": [
+        30,
+        35,
+        40,
+        20
+      ],
+      "kc": [
+        0.6,
+        1.05,
+        0.9
+      ],
+      "root_depth_m": [
+        0.5,
+        1.0
+      ],
+      "p_depletion": 0.3,
+      "temp_c": {
+        "min": 7,
+        "opt_low": 18,
+        "opt_high": 30,
+        "max": 40
+      },
+      "drought_tolerance": "low",
+      "waterlogging_tolerance": "low",
+      "n_fixing": false,
+      "labor": null,
+      "market": null,
+      "cover_value": null,
+      "perishability": "high",
+      "storable_if_dried": true,
+      "yield_t_per_ha": 5.41,
+      "typical_calendar": [
+        {
+          "plant_month": 5,
+          "harvest_month": 7
+        },
+        {
+          "plant_month": 10,
+          "harvest_month": 12
+        }
+      ],
+      "sources": [
+        {
+          "field_or_fields": "local_name",
+          "citation": "Wiktionary, 'sili', Cebuano section: 'the fruit of these plants; a chili pepper or bell pepper'. The DA-HVCDP Cebuano technoguide 'Giya sa Pagpananum ug mga Gulayon' (2019) also writes 'Ang sili o atsal'",
+          "url": "https://en.wiktionary.org/wiki/sili"
+        },
+        {
+          "field_or_fields": "family, sci",
+          "citation": "DA Region 02 HVCDP Pepper Production Guide (February 2017): 'Hot pepper (Capsicum frutescens L.) in particular, is a favorite mix in pinakbet and sinigang'. FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv, pinned commit f13577f); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Capsicum frutescens (EcoPort 621; common names include 'chilli, hot pepper ... Sili') under 'Magnoliopsida:Asteridae:Solanales:Solanaceae'",
+          "url": "https://raw.githubusercontent.com/OpenCLIM/ecocrop/f13577f4237604b15d85d8e43741714a2d1eb2d4/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "temp_c, waterlogging_tolerance, season_days",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv, pinned commit f13577f); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Capsicum frutescens (EcoPort 621): TMIN/TOPMN/TOPMX/TMAX 7/18/30/40; DRA and DRAR 'well (dry spells)', neither includes 'poorly drained', so waterlogging_tolerance = low (team mapping). Growing cycle GMIN-GMAX 120-180 days; season_days 150 is the midpoint. No Philippine guide found states total field duration (DA guides give only the start of harvest), so this Ecocrop crop-cycle figure is used and should be checked by the team. For comparison, Capsicum annuum (EcoPort 618) is 8/17/30/35, cycle 60-180",
+          "url": "https://raw.githubusercontent.com/OpenCLIM/ecocrop/f13577f4237604b15d85d8e43741714a2d1eb2d4/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "typical_calendar, waterlogging_tolerance",
+          "citation": "DA Region 02 HVCDP Pepper Production Guide (February 2017), covering sweet and hot pepper: 'It is usually planted from May to September during the wet season and October to February during the dry season'; 'Harvesting of pepper starts at 60-75 DAT'; 'Plant pepper in ridges or raised beds during the wet season to prevent rotting of seedlings'. Calendar pairs are the start of each planting window with harvest_month = first picking about 2 months later; the crop is picked repeatedly after that. Regional guide (Cagayan Valley), no Mindanao calendar found",
+          "url": "https://cagayanvalley.da.gov.ph/wp-content/uploads/2018/02/Pepper.pdf"
+        },
+        {
+          "field_or_fields": "perishability, storable_if_dried",
+          "citation": "Kader 1993 in FAO 'Storage of horticultural crops': 'pepper' in the 'High' perishability class (2-4 weeks at optimum storage; days at farm ambient, as for eggplant); storage table 'Peppers, Chili (dry) 0-10 C, 60-70% RH, 6 months', so storable_if_dried = true",
+          "url": "https://www.fao.org/4/x5403e/x5403e09.htm"
+        },
+        {
+          "field_or_fields": "stages_days",
+          "citation": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Table 11 (stage lengths, days); no hot pepper row, so the row 'Sweet peppers (bell), April/June, Europe and Medit.' was used: 25/30, 35, 40, 20 = 125. 30 was taken for the initial stage so the stages sum to the printed 125 total. The other row is 'October, Arid Region' 30/40/110/30 = 210. Rescale to season_days",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "kc",
+          "citation": "Allen et al. 1998, FAO-56 Table 12 (single Kc for non-stressed crops in a sub-humid standard climate, RHmin about 45%, u2 about 2 m/s; Kc mid and Kc end need adjustment for the humid Philippine climate); no hot pepper row, so 'Sweet Peppers (bell)' was used: Kc ini 0.6 (Solanaceae group), Kc mid 1.05, Kc end 0.90",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "root_depth_m, p_depletion",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); no hot pepper row, so 'Sweet Peppers (bell)' was used: Zr 0.5-1.0 m, p 0.30",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "drought_tolerance",
+          "citation": "Allen et al. 1998, FAO-56 Table 24 (seasonal yield response factor Ky from FAO-33): 'Pepper 1.1' (not split by type). Ky above 1 = low by the library convention",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "yield_t_per_ha",
+          "citation": "PSA OpenSTAT 'Vegetables and Root Crops' production (0082E4EVCP3) and area planted/harvested (0112E4EAHM3), 'Chili pepper fruit (Siling labuyo)', Lanao del Norte, 2022-2024 Annual: production 160.00 + 159.20 + 192.61 = 511.81 t; area 19.00 + 21.25 + 54.32 = 94.57 ha; yield 5.41 t/ha (computed). National 8,008.38 t / 3,562.17 ha = 2.25 t/ha. PSA also lists 'Pepper, finger' separately (not used)",
+          "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0082E4EVCP3.px"
+        },
+        {
+          "field_or_fields": "n_fixing",
+          "citation": "Team rule (assumption, no source cited; see meta.method): family Solanaceae is not a legume (Fabaceae), so n_fixing is false. The family is cited above."
+        }
+      ],
+      "unverified": [
+        "labor",
+        "market",
+        "cover_value"
+      ],
+      "notes": "Hot pepper is planted from seedlings in either season, is picked many times once fruiting starts, and can be dried for storage."
+    },
+    {
+      "id": "cassava",
+      "name": "Cassava",
+      "local_name": "Balanghoy",
+      "family": "Euphorbiaceae",
+      "season_days": 335,
+      "stages_days": [
+        20,
+        40,
+        90,
+        60
+      ],
+      "kc": [
+        0.3,
+        0.8,
+        0.3
+      ],
+      "root_depth_m": [
+        0.5,
+        0.8
+      ],
+      "p_depletion": 0.35,
+      "temp_c": {
+        "min": 10,
+        "opt_low": 20,
+        "opt_high": 29,
+        "max": 35
+      },
+      "drought_tolerance": "high",
+      "waterlogging_tolerance": "low",
+      "n_fixing": false,
+      "labor": null,
+      "market": null,
+      "cover_value": null,
+      "perishability": "high",
+      "storable_if_dried": true,
+      "yield_t_per_ha": 15.6,
+      "typical_calendar": [],
+      "sources": [
+        {
+          "field_or_fields": "local_name",
+          "citation": "Wiktionary, Cebuano 'balanghoy': cassava (synonyms binggala, kamoteng kahoy)",
+          "url": "https://en.wiktionary.org/wiki/balanghoy"
+        },
+        {
+          "field_or_fields": "family",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Manihot esculenta (EcoPort 1420) under Euphorbiaceae",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "season_days, drought_tolerance, storable_if_dried",
+          "citation": "DA Regional Field Office III (Corn Program), leaflet 'Pag-aalaga ng Cassava (Kamoteng Kahoy)', in Filipino: 'Ang Cassava ay inaani sa loob ng 10 hanggang 12 buwan' (harvested in 10 to 12 months; 335 days used, the rounded midpoint of about 304-365 days); 'Matibay ang cassava sa tagtuyot (drought)' (cassava is hardy in drought, rated high); roots are sun-dried for about two days right after harvest and sold dried and granulated (cost table: 'Ani (Tuyo Granulated @ 40% DMY)' 8,000 kg/ha), so storable when dried. Planting months are not given (only wet-season and dry-season planting methods), so typical_calendar is left empty",
+          "url": "https://rfo3.da.gov.ph/wp-content/uploads/elibrary/km/Cassava.pdf"
+        },
+        {
+          "field_or_fields": "stages_days",
+          "citation": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Table 11 (stage lengths, days); row 'Cassava: year 1, Rainy season, Tropical regions' 20/40/90/60 = 210 days (year 2 row is 150/40/110/60 = 360). Shorter than the Philippine 10-12 month crop, rescale to season_days",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "kc",
+          "citation": "Allen et al. 1998, FAO-56 Table 12 (single Kc for non-stressed crops in a sub-humid standard climate, RHmin about 45%, u2 about 2 m/s; Kc mid and Kc end need adjustment for the humid Philippine climate); Cassava year 1: Kc ini 0.3, Kc mid 0.80, Kc end 0.30 (footnote 3: midseason values assume non-stressed conditions during or following the rainy season; Kc end accounts for dormancy during the dry season)",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "root_depth_m, p_depletion",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); Cassava year 1: Zr 0.5-0.8 m, p 0.35 (year 2: 0.7-1.0 m, p 0.40)",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "temp_c, waterlogging_tolerance",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Manihot esculenta (EcoPort 1420): 10/20/29/35. DRA 'well (dry spells)', DRAR 'well (dry spells), excessive (dry/moderately dry)'; neither includes 'poorly drained', so waterlogging_tolerance is low under the team mapping",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "perishability",
+          "citation": "FAO Expert Consultation 'Post-harvest deterioration of cassava', Chapter 2: 'In cassava roots held at low storage humidity (less than 80 percent RH) ... physiological deterioration generally develops throughout the storage tissue within three to four days after harvest' (days, so high). FAO 'Storage of horticultural crops' table gives only 2-4 weeks even at 5-8 C and 80-90% RH",
+          "url": "https://www.fao.org/4/V4510E/V4510E05.htm"
+        },
+        {
+          "field_or_fields": "yield_t_per_ha",
+          "citation": "PSA OpenSTAT 'Vegetables and Root Crops', Cassava, fresh tubers, Lanao del Norte, 2022-2024: production 24,034 + 23,978 + 23,938 = 71,950 t (table 0082E4EVCP3); area 1,188.5 + 1,705.2 + 1,719.8 = 4,613.5 ha (table 0112E4EAHM3); yield 15.60 t/ha (computed). National 2022-2024: 7,489,075.46 t on 680,244.30 ha, 11.01 t/ha",
+          "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0082E4EVCP3.px"
+        },
+        {
+          "field_or_fields": "n_fixing",
+          "citation": "Team rule (assumption, no source cited; see meta.method): family Euphorbiaceae is not a legume (Fabaceae), so n_fixing is false. The family is cited above."
+        }
+      ],
+      "unverified": [
+        "typical_calendar",
+        "labor",
+        "market",
+        "cover_value"
+      ],
+      "notes": "Cassava is a hardy root crop that stands drought and poor soil and takes most of a year, but the fresh roots spoil within days unless dried."
+    },
+    {
+      "id": "cowpea",
+      "name": "Cowpea (bush sitao)",
+      "local_name": null,
+      "family": "Fabaceae",
+      "season_days": null,
+      "stages_days": [
+        20,
+        30,
+        30,
+        20
+      ],
+      "kc": [
+        0.4,
+        1.05,
+        0.6
+      ],
+      "root_depth_m": [
+        0.6,
+        1.0
+      ],
+      "p_depletion": 0.45,
+      "temp_c": {
+        "min": 15,
+        "opt_low": 25,
+        "opt_high": 35,
+        "max": 40
+      },
+      "drought_tolerance": null,
+      "waterlogging_tolerance": "low",
+      "n_fixing": true,
+      "labor": null,
+      "market": null,
+      "cover_value": null,
+      "perishability": "high",
+      "storable_if_dried": true,
+      "yield_t_per_ha": 3.2,
+      "typical_calendar": [],
+      "sources": [
+        {
+          "field_or_fields": "family",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Vigna unguiculata (EcoPort 2153) under Leguminosae (Fabaceae)",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "typical_calendar, n_fixing, perishability, storable_if_dried, season_days",
+          "citation": "DA Regional Field Office 02 HVCDP, Sitao Production Guide (February 2017), pole and bush types: 'Sitao is a non-seasonal crop that can be grown throughout the year', so no fixed calendar; bush varieties NSIC BS 04 (Amihan) 46 DAP and NSIC BS 05 (Higikhik) 47 DAP maturity, Amihan 'could be grown for both dry and wet seasons'; 'Being a leguminous crop ... nitrogen fixation'; green pods kept refrigerated or in moistened clay jars 'maintain its freshness for about three days' (high); seed harvest: sundry seeds to 10-12% moisture content (storable when dried). The guide gives days to first harvest only, with pods picked twice a week after that, so total field duration and season_days are left null",
+          "url": "https://cagayanvalley.da.gov.ph/wp-content/uploads/2018/02/Sitao.pdf"
+        },
+        {
+          "field_or_fields": "stages_days",
+          "citation": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Table 11 (stage lengths, days); row 'Green gram, cowpeas, March, Mediterranean' 20/30/30/20 = 110 days (same row as mungbean in this library; longer than Philippine bush sitao, rescale to season_days)",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "kc",
+          "citation": "Allen et al. 1998, FAO-56 Table 12 (single Kc for non-stressed crops in a sub-humid standard climate, RHmin about 45%, u2 about 2 m/s; Kc mid and Kc end need adjustment for the humid Philippine climate); Green gram and cowpeas: Kc ini 0.4 (legumes group), Kc mid 1.05, Kc end 0.60-0.35 (footnote 6: first value harvested fresh, second harvested dry). 0.60 used because bush sitao is harvested as fresh green pods (mungbean uses 0.35 for dry grain)",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "root_depth_m, p_depletion",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); Green gram and cowpeas: Zr 0.6-1.0 m, p 0.45",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "temp_c, waterlogging_tolerance",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Vigna unguiculata (EcoPort 2153, species row): 15/25/35/40; DRA 'well (dry spells)', DRAR 'well (dry spells), excessive (dry/moderately dry)'; neither includes 'poorly drained', so waterlogging_tolerance is low under the team mapping. Ecocrop ABITOL for this row lists 'drought' (not used for drought_tolerance, see unverified). Other rows: ssp. sesquipedalis (EcoPort 10834, yard long bean, pole sitao) 14/20/35/38; ssp. unguiculata (EcoPort 10835) 10/20/35/40. The DA Region 02 guide gives an optimum of 20-35 C",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "perishability",
+          "citation": "Kader 1993 in FAO 'Storage of horticultural crops': green beans in the 'High' perishability class; storage table 'Peas, southern' 6-8 days",
+          "url": "https://www.fao.org/4/x5403e/x5403e09.htm"
+        },
+        {
+          "field_or_fields": "yield_t_per_ha",
+          "citation": "PSA OpenSTAT 'Vegetables and Root Crops', Cowpea, green, 2022-2024. Lanao del Norte reports 0.00 t and 0.00 ha of green cowpea (only dry cowpea, 2.56 t on 1.70 ha), so the national figure is used: production 1,748.73 + 1,792.73 + 1,652.01 = 5,193.47 t (table 0082E4EVCP3); area 596.57 + 517.74 + 507.40 = 1,621.71 ha (table 0112E4EAHM3); yield 3.20 t/ha (computed, national). PSA 'Sitao [Stringbeans]' is a separate item and was not used",
+          "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0082E4EVCP3.px"
+        }
+      ],
+      "unverified": [
+        "local_name",
+        "season_days",
+        "drought_tolerance",
+        "typical_calendar",
+        "labor",
+        "market",
+        "cover_value"
+      ],
+      "notes": "Bush sitao is a fast legume that adds nitrogen to the soil and gives green pods to sell within about seven weeks of planting."
+    },
+    {
+      "id": "squash",
+      "name": "Squash",
+      "local_name": "Kalabasa",
+      "family": "Cucurbitaceae",
+      "season_days": 85,
+      "stages_days": [
+        20,
+        30,
+        30,
+        20
+      ],
+      "kc": [
+        0.5,
+        1.0,
+        0.8
+      ],
+      "root_depth_m": [
+        1.0,
+        1.5
+      ],
+      "p_depletion": 0.35,
+      "temp_c": {
+        "min": 10,
+        "opt_low": 20,
+        "opt_high": 30,
+        "max": 40
+      },
+      "drought_tolerance": null,
+      "waterlogging_tolerance": "low",
+      "n_fixing": false,
+      "labor": null,
+      "market": null,
+      "cover_value": null,
+      "perishability": "low",
+      "storable_if_dried": null,
+      "yield_t_per_ha": 6.96,
+      "typical_calendar": [
+        {
+          "plant_month": 10,
+          "harvest_month": 1
+        },
+        {
+          "plant_month": 11,
+          "harvest_month": 2
+        },
+        {
+          "plant_month": 12,
+          "harvest_month": 3
+        }
+      ],
+      "sources": [
+        {
+          "field_or_fields": "local_name",
+          "citation": "StuartXchange (G. Stuart), Philippine Medicinal Plants, Kalabasa: 'Kalabasa (Tag., Ceb.)'; Wiktionary, Cebuano 'kalabasa': a plant and its fruit of five species of the genus Cucurbita; a squash",
+          "url": "https://www.stuartxchange.org/Kalabasa.html"
+        },
+        {
+          "field_or_fields": "family",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Cucurbita moschata (EcoPort 820) under Cucurbitaceae",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "season_days",
+          "citation": "DA-ATI Region VII, Techno Guide on Organic Squash Production: 'Harvest crops after 80-90 days from seeding' (85 used, the midpoint). DA Region 02 guide lists variety Suprema F1 at 85 days after transplanting",
+          "url": "https://ati2.da.gov.ph/ati-7/content/sites/default/files/users/user16/Organic%20Squash%20Production_final.pdf"
+        },
+        {
+          "field_or_fields": "typical_calendar, waterlogging_tolerance",
+          "citation": "DA Regional Field Office 02 HVCDP, Squash Production Guide (February 2017): 'Generally, squash is planted in October to December in the lowland areas and May to July in the highland areas' (lowland months used; this is a Region 02 guide, not national; harvest month = planting month plus about 85 days); 'requires a relatively dry warm climate'; 'Construct drainage canals to prevent water logging during rainy season' and plant on raised beds in the wet season 'to prevent rotting of seeds or seedlings due to flooding'. This guide names the crop Cucurbita maxima",
+          "url": "https://cagayanvalley.da.gov.ph/wp-content/uploads/2018/02/Squash.pdf"
+        },
+        {
+          "field_or_fields": "stages_days",
+          "citation": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Table 11 (stage lengths, days); row 'Pumpkin, Winter squash, Mar, Aug, Mediterranean' 20/30/30/20 = 100 days (the other row is June, Europe 25/35/35/25 = 120). No tropical row; rescale to season_days",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "kc",
+          "citation": "Allen et al. 1998, FAO-56 Table 12 (single Kc for non-stressed crops in a sub-humid standard climate, RHmin about 45%, u2 about 2 m/s; Kc mid and Kc end need adjustment for the humid Philippine climate); Pumpkin, Winter Squash: Kc ini 0.5 (Cucurbitaceae group), Kc mid 1.00, Kc end 0.80",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "root_depth_m, p_depletion",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); Pumpkin, Winter Squash: Zr 1.0-1.5 m, p 0.35",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "temp_c, waterlogging_tolerance",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Cucurbita moschata (EcoPort 820): 10/20/30/40; DRA 'well (dry spells)', DRAR 'well (dry spells)'; neither includes 'poorly drained', so waterlogging_tolerance is low under the team mapping (consistent with the DA guide's drainage warnings). The DA Region 02 guide gives an optimum of 18-30 C",
+          "url": "https://github.com/OpenCLIM/ecocrop/blob/main/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "perishability",
+          "citation": "Kader 1993 in FAO 'Storage of horticultural crops': pumpkin and winter squash in the 'Low' perishability class (8-16 weeks); storage table 'Squashes, winter' 2-3 months at 10 C. Applies to mature fruit; immature fruit harvested 30-40 days from pollination is not covered",
+          "url": "https://www.fao.org/4/x5403e/x5403e09.htm"
+        },
+        {
+          "field_or_fields": "yield_t_per_ha",
+          "citation": "PSA OpenSTAT 'Vegetables and Root Crops', Squash fruit, Lanao del Norte, 2022-2024: production 1,373.00 + 1,378.50 + 1,381.00 = 4,132.5 t (table 0082E4EVCP3); area 159.75 + 160.50 + 273.75 = 594.0 ha (table 0112E4EAHM3); yield 6.96 t/ha (computed)",
+          "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0082E4EVCP3.px"
+        },
+        {
+          "field_or_fields": "n_fixing",
+          "citation": "Team rule (assumption, no source cited; see meta.method): family Cucurbitaceae is not a legume (Fabaceae), so n_fixing is false. The family is cited above."
+        }
+      ],
+      "unverified": [
+        "drought_tolerance",
+        "storable_if_dried",
+        "labor",
+        "market",
+        "cover_value"
+      ],
+      "notes": "Squash is a vine crop for the drier months that gives fruit in about three months, and mature fruit keeps for weeks without a cold store."
+    },
+    {
+      "id": "cucumber",
+      "name": "Cucumber",
+      "local_name": "Kalabaga",
+      "family": "Cucurbitaceae",
+      "season_days": 88,
+      "stages_days": [
+        20,
+        30,
+        40,
+        15
+      ],
+      "kc": [
+        0.6,
+        1.0,
+        0.75
+      ],
+      "root_depth_m": [
+        0.7,
+        1.2
+      ],
+      "p_depletion": 0.5,
+      "temp_c": {
+        "min": 6,
+        "opt_low": 18,
+        "opt_high": 32,
+        "max": 38
+      },
+      "drought_tolerance": null,
+      "waterlogging_tolerance": "low",
+      "n_fixing": false,
+      "labor": null,
+      "market": null,
+      "cover_value": null,
+      "perishability": "high",
+      "storable_if_dried": null,
+      "yield_t_per_ha": 8.34,
+      "typical_calendar": [],
+      "sources": [
+        {
+          "field_or_fields": "local_name",
+          "citation": "StuartXchange (G. Stuart), Philippine Medicinal Plants, Pipino: 'Kalabaga (Bis.)', 'Pipino (Tag., Ilk.)'. DA-ATI 4B 'Gabay sa Produksyon ng Pipino' also says 'Tinatawag din itong kalabaga sa Bisaya'",
+          "url": "https://www.stuartxchange.org/Pipino.html"
+        },
+        {
+          "field_or_fields": "family",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Cucumis sativus under Cucurbitaceae",
+          "url": "https://raw.githubusercontent.com/OpenCLIM/ecocrop/f13577f4237604b15d85d8e43741714a2d1eb2d4/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "season_days, typical_calendar, waterlogging_tolerance, perishability",
+          "citation": "DA Regional Field Office 02 HVCDP Cucumber Production Guide (June 2017): 'Cucumbers are short season crops maturing within 75-100 days' (88 used, the rounded midpoint); 'Cucumber is a warm season grown year-round locally', so no fixed calendar (the guide also advises to 'avoid planting between February and April to minimize thrips and mites population'); 'Construct drainage canals at the end of rows to avoid water logging' (no tolerance word, so waterlogging uses Ecocrop, below); 'Cucumber fruit should not be kept too long to avoid spoilage in storage without refrigeration'. Slicing harvest 'at 38-45 days after planting'",
+          "url": "https://cagayanvalley.da.gov.ph/wp-content/uploads/2018/02/Cucumber-Production-Guide.pdf"
+        },
+        {
+          "field_or_fields": "stages_days",
+          "citation": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Table 11 (stage lengths, days); row 'Cucumber, June/Aug, Arid Region' 20/30/40/15 = 105 days (used). The other row is 'Nov; Feb, Arid Region' 25/35/50/20 = 130. No tropical row; rescale to season_days",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "kc",
+          "citation": "Allen et al. 1998, FAO-56 Table 12 (single Kc for non-stressed crops in a sub-humid standard climate, RHmin about 45%, u2 about 2 m/s; Kc mid and Kc end need adjustment for the humid Philippine climate); Cucumber, Fresh Market: Kc ini 0.6, Kc mid 1.00, Kc end 0.75 (footnote 2: for cucumbers grown on stakes 1.5 to 2 m tall, 1.15 can be taken for Kc mid). Machine harvest row is 0.5/1.00/0.90",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "root_depth_m, p_depletion",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); Cucumber, Fresh Market: Zr 0.7-1.2 m, p 0.50",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "temp_c, waterlogging_tolerance",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Cucumis sativus (EcoPort 817): TMIN 6, TOPMN 18, TOPMX 32, TMAX 38; DRA 'well (dry spells)', DRAR 'well (dry spells)'. Neither includes 'poorly drained', so waterlogging_tolerance is low (team mapping). The DA Region 02 guide gives an optimum of 'about 30oC' with optimum night temperature 18-20 C",
+          "url": "https://raw.githubusercontent.com/OpenCLIM/ecocrop/f13577f4237604b15d85d8e43741714a2d1eb2d4/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "perishability",
+          "citation": "FAO 'Storage of horticultural crops', Section 7, table 'Recommended Temperature and Relative Humidity, and Approximate Transit and Storage Life': 'Cucumbers 10-13 [C] ... 95 [% RH] 10-14 days'. Rated high because even under cool storage life is about two weeks, and the DA guide warns of spoilage without refrigeration",
+          "url": "https://www.fao.org/4/x5403e/x5403e09.htm"
+        },
+        {
+          "field_or_fields": "yield_t_per_ha",
+          "citation": "PSA OpenSTAT 'Vegetables and Root Crops' production (0082E4EVCP3) and area planted/harvested (0112E4EAHM3), Cucumber, Lanao del Norte, annual 2022-2024: production 541.00 + 547.10 + 545.50 = 1,633.60 t, area 55.50 + 69.82 + 70.50 = 195.82 ha, yield 8.34 t/ha (computed). National 2022-2024: 47,295.65 t / 6,505.42 ha = 7.27 t/ha",
+          "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0082E4EVCP3.px"
+        },
+        {
+          "field_or_fields": "n_fixing",
+          "citation": "Team rule (assumption, no source cited; see meta.method): family Cucurbitaceae is not a legume (Fabaceae), so n_fixing is false. The family is cited above."
+        }
+      ],
+      "unverified": [
+        "drought_tolerance",
+        "typical_calendar",
+        "labor",
+        "market",
+        "cover_value",
+        "storable_if_dried"
+      ],
+      "notes": "Cucumber is a quick vine crop that gives fruit about six weeks after planting, but the fruit spoils fast and needs a ready buyer."
+    },
+    {
+      "id": "watermelon",
+      "name": "Watermelon",
+      "local_name": "Pakwan",
+      "family": "Cucurbitaceae",
+      "season_days": null,
+      "stages_days": [
+        20,
+        30,
+        30,
+        30
+      ],
+      "kc": [
+        0.4,
+        1.0,
+        0.75
+      ],
+      "root_depth_m": [
+        0.8,
+        1.5
+      ],
+      "p_depletion": 0.4,
+      "temp_c": {
+        "min": 15,
+        "opt_low": 20,
+        "opt_high": 35,
+        "max": 40
+      },
+      "drought_tolerance": "low",
+      "waterlogging_tolerance": "low",
+      "n_fixing": false,
+      "labor": null,
+      "market": null,
+      "cover_value": null,
+      "perishability": "medium",
+      "storable_if_dried": null,
+      "yield_t_per_ha": 3.69,
+      "typical_calendar": [],
+      "sources": [
+        {
+          "field_or_fields": "local_name",
+          "citation": "Wiktionary, Cebuano 'pakwan': 'watermelon (Citrullus lanatus)', synonym 'sandiya'",
+          "url": "https://en.wiktionary.org/wiki/pakwan"
+        },
+        {
+          "field_or_fields": "family",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Citrullus lanatus under Cucurbitaceae",
+          "url": "https://raw.githubusercontent.com/OpenCLIM/ecocrop/f13577f4237604b15d85d8e43741714a2d1eb2d4/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "drought_tolerance, waterlogging_tolerance, typical_calendar, season_days",
+          "citation": "DA-ATI Regional Training Center VII Watermelon Production Guide (2020, reference da.gov.ph): 'Watermelon may suffer injury when exposed to a long period of drought' (low, agreeing with Ky below); 'Watermelon requires more aeration than any other kind of crops, so the field must have good drainage' and 'prefers a well-drained sandy loam soil' (low); 'Planting season is from October to January. In some parts of the country, planting is done as early as August to produce an off-season crop'; fruit matures '35 to 40 days from pollination'. No planting-to-harvest duration is given, so season_days and the harvest months are left null and the calendar empty (planting months October to January are recorded here for the team)",
+          "url": "https://ati2.da.gov.ph/ati-7/content/sites/default/files/users/user16/Watermelon%20Production%20Guide.pdf"
+        },
+        {
+          "field_or_fields": "drought_tolerance",
+          "citation": "Allen et al. 1998, FAO-56 Table 24 (seasonal yield response factor Ky from FAO Paper 33): 'Watermelon 1.1'. Ky above 1, so low",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "stages_days",
+          "citation": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Table 11 (stage lengths, days); row 'Water melons, April, Italy' 20/30/30/30 = 110 days (used). The other row is 'Mat/Aug, Near East (desert)' 10/20/20/30 = 80. No tropical row; rescale to season_days",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "kc",
+          "citation": "Allen et al. 1998, FAO-56 Table 12 (single Kc for non-stressed crops in a sub-humid standard climate, RHmin about 45%, u2 about 2 m/s; Kc mid and Kc end need adjustment for the humid Philippine climate); Watermelon: Kc ini 0.4, Kc mid 1.00, Kc end 0.75",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "root_depth_m, p_depletion",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); Watermelon: Zr 0.8-1.5 m, p 0.40",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "temp_c, waterlogging_tolerance",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Citrullus lanatus (EcoPort 708): TMIN 15, TOPMN 20, TOPMX 35, TMAX 40; DRA 'well (dry spells)', DRAR 'excessive (dry/moderately dry)'; neither includes 'poorly drained', consistent with low. The DA-ATI VII guide says 'A temperature of 25 C is ideal for growth'",
+          "url": "https://raw.githubusercontent.com/OpenCLIM/ecocrop/f13577f4237604b15d85d8e43741714a2d1eb2d4/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "perishability",
+          "citation": "FAO 'Storage of horticultural crops', Section 7, table 'Recommended Temperature and Relative Humidity, and Approximate Transit and Storage Life': 'Watermelons 10-15 [C] ... 90 [% RH] 2-3 weeks', so medium (1-3 weeks)",
+          "url": "https://www.fao.org/4/x5403e/x5403e09.htm"
+        },
+        {
+          "field_or_fields": "yield_t_per_ha",
+          "citation": "PSA OpenSTAT 'Fruit Crops' production (0072E4EVCP2) and area planted/harvested (0102E4EAHM2), Watermelon, Lanao del Norte, annual 2022-2024: production 1,046.00 + 1,041.00 + 1,059.79 = 3,146.79 t, area 180.00 + 281.00 + 391.81 = 852.81 ha, yield 3.69 t/ha (computed). National 2022-2024: 388,304.23 t / 26,846.97 ha = 14.46 t/ha. Watermelon is in the Fruit Crops tables, not Vegetables and Root Crops",
+          "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0072E4EVCP2.px"
+        },
+        {
+          "field_or_fields": "n_fixing",
+          "citation": "Team rule (assumption, no source cited; see meta.method): family Cucurbitaceae is not a legume (Fabaceae), so n_fixing is false. The family is cited above."
+        }
+      ],
+      "unverified": [
+        "season_days",
+        "typical_calendar",
+        "labor",
+        "market",
+        "cover_value",
+        "storable_if_dried"
+      ],
+      "notes": "Watermelon is a dry-season vine crop for well-drained sandy soil, and it does badly in wet or waterlogged fields."
+    },
+    {
+      "id": "lettuce",
+      "name": "Lettuce",
+      "local_name": "Letsugas",
+      "family": "Asteraceae",
+      "season_days": 58,
+      "stages_days": [
+        20,
+        30,
+        15,
+        10
+      ],
+      "kc": [
+        0.7,
+        1.0,
+        0.95
+      ],
+      "root_depth_m": [
+        0.3,
+        0.5
+      ],
+      "p_depletion": 0.3,
+      "temp_c": {
+        "min": 5,
+        "opt_low": 12,
+        "opt_high": 21,
+        "max": 30
+      },
+      "drought_tolerance": null,
+      "waterlogging_tolerance": "low",
+      "n_fixing": false,
+      "labor": null,
+      "market": null,
+      "cover_value": null,
+      "perishability": "high",
+      "storable_if_dried": null,
+      "yield_t_per_ha": 6.6,
+      "typical_calendar": [],
+      "sources": [
+        {
+          "field_or_fields": "local_name",
+          "citation": "Wiktionary, Cebuano 'letsugas' (Etymology 2, from Spanish lechugas): noun 'lettuce (Lactuca sativa)'. StuartXchange Letsugas page: 'Letsugas (Tag.)'",
+          "url": "https://en.wiktionary.org/wiki/letsugas"
+        },
+        {
+          "field_or_fields": "family",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Lactuca sativa var. capitata (the only lettuce row) under Compositae, modern name Asteraceae",
+          "url": "https://raw.githubusercontent.com/OpenCLIM/ecocrop/f13577f4237604b15d85d8e43741714a2d1eb2d4/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "season_days",
+          "citation": "DA-CAR technoguide 'Production and Management of Organic Highland Vegetables' (on hvcdp.da.gov.ph), harvesting criteria: 'LETTUCE (HEAD): harvest once the head feels full and firm with a gentle squeeze. This is 55 to 60 days after planting. Hot weather will cause it to bolt' (58 used, the rounded midpoint). Leaf lettuce is picked as needed",
+          "url": "https://hvcdp.da.gov.ph/wp-content/uploads/2022/05/DA-CAR-TECHNOGUIDE-IN-PRODUCTION-_-MANAGEMENT-OF-ORGANIC-HIGHLAND-VEGETABLES.pdf"
+        },
+        {
+          "field_or_fields": "season_days, perishability, typical_calendar",
+          "citation": "DA Regional Field Office 02 HVCDP Lettuce Production Guide (June 2017): 'Harvest crisphead lettuce at 45-60 days from transplanting or when heads are firm. Harvest loose leaf lettuce as needed'; seedlings are transplanted 'at three weeks after pricking'; 'pack immediately in perforated cardboard boxes. If available, vacuum cooling to 1 C is best. Transport at 4 C'. Top producers 'Cordillera Administrative Region, Region 10 and region 7'. No planting months are given, so the calendar is empty. DA-ATI MiMaRoPa 'Letsugas' leaflet (from Information Bulletin No. 150-1/2012) says leaf type is harvested about 30 days after planting and head type 45-60 days after transplanting",
+          "url": "https://cagayanvalley.da.gov.ph/wp-content/uploads/2018/02/Lettuce.pdf"
+        },
+        {
+          "field_or_fields": "stages_days",
+          "citation": "Allen et al. 1998, FAO Irrigation and Drainage Paper 56, Table 11 (stage lengths, days); row 'Lettuce, April, Mediterranean' 20/30/15/10 = 75 days (used, the shortest row). Other rows: Nov/Jan Mediterranean 30/40/25/10 = 105; Oct/Nov Arid Region 25/35/30/10 = 100; Feb Mediterranean 35/50/45/10 = 140. Rescale to season_days",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "kc",
+          "citation": "Allen et al. 1998, FAO-56 Table 12 (single Kc for non-stressed crops in a sub-humid standard climate, RHmin about 45%, u2 about 2 m/s; Kc mid and Kc end need adjustment for the humid Philippine climate); Lettuce: Kc ini 0.7 (small vegetables group), Kc mid 1.00, Kc end 0.95",
+          "url": "https://www.fao.org/4/x0490e/x0490e0b.htm"
+        },
+        {
+          "field_or_fields": "root_depth_m, p_depletion",
+          "citation": "Allen et al. 1998, FAO-56 Table 22 (maximum effective rooting depth Zr and depletion fraction p for ETc about 5 mm/day); Lettuce: Zr 0.3-0.5 m, p 0.30",
+          "url": "https://www.fao.org/4/x0490e/x0490e0e.htm"
+        },
+        {
+          "field_or_fields": "temp_c, waterlogging_tolerance",
+          "citation": "FAO Ecocrop database, as redistributed in full by the OpenCLIM/ecocrop project (EcoCrop_DB.csv); fields TMIN, TOPMN, TOPMX, TMAX (deg C) and drainage fields DRA/DRAR. The official FAO Ecocrop viewer now requires a Google sign-in, so the mirror was used; Lactuca sativa var. capitata (EcoPort 1313): TMIN 5, TOPMN 12, TOPMX 21, TMAX 30; DRA 'well (dry spells)', DRAR 'well (dry spells)'. Neither includes 'poorly drained', so waterlogging_tolerance is low (team mapping). The low optimum fits the highland zones where the crop is grown",
+          "url": "https://raw.githubusercontent.com/OpenCLIM/ecocrop/f13577f4237604b15d85d8e43741714a2d1eb2d4/EcoCrop_DB.csv"
+        },
+        {
+          "field_or_fields": "perishability",
+          "citation": "Kader 1993 in FAO 'Storage of horticultural crops': 'leaf lettuce' in the 'Very high' (<2 weeks) and 'head lettuce' in the 'High' (2-4 weeks) perishability class; the same page's storage table gives 'Lettuce 0 [C] ... 98-100 [% RH] 2-3 weeks', so only days at farm ambient (high)",
+          "url": "https://www.fao.org/4/x5403e/x5403e09.htm"
+        },
+        {
+          "field_or_fields": "yield_t_per_ha",
+          "citation": "PSA OpenSTAT 'Vegetables and Root Crops' production (0082E4EVCP3) and area planted/harvested (0112E4EAHM3), Lettuce, annual 2022-2024. National used: production 4,934.53 + 5,457.10 + 8,316.66 = 18,708.29 t, area 591.72 + 1,194.58 + 1,048.15 = 2,834.45 ha, yield 6.60 t/ha (computed). Lanao del Norte was not used: production 0.00 + 1.06 + 1.01 = 2.07 t on 2.00 + 3.50 + 5.00 = 10.50 ha (0.20 t/ha, with zero output in 2022), too small to be representative",
+          "url": "https://openstat.psa.gov.ph/PXWeb/api/v1/en/DB/2E/CS/0082E4EVCP3.px"
+        },
+        {
+          "field_or_fields": "n_fixing",
+          "citation": "Team rule (assumption, no source cited; see meta.method): family Asteraceae is not a legume (Fabaceae), so n_fixing is false. The family is cited above."
+        }
+      ],
+      "unverified": [
+        "drought_tolerance",
+        "typical_calendar",
+        "labor",
+        "market",
+        "cover_value",
+        "storable_if_dried"
+      ],
+      "notes": "Lettuce is a short, cool-weather leafy crop for the highlands that must be cooled and sold within days of harvest."
     }
   ]
 }

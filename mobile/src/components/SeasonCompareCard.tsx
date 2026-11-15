@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { cropById } from "../data/crops";
@@ -8,7 +9,9 @@ import { seasonLabel } from "../lots/months-core";
 import { Bullets, InfoCard } from "./InfoCard";
 import { rowsOf } from "./layout-core";
 import type { MonthsCompare } from "./lot-analysis-core";
+import { Button } from "./Button";
 import { Notice } from "./Notice";
+import { CropImage } from "./CropImage";
 import { colors, radius, space, text } from "./theme";
 
 // S5 "Your months vs better months" cards (#34, #95), shared by the dashboard (always shown,
@@ -27,10 +30,13 @@ const shortName = (id: string) => {
  * by side in its table, at every width.
  */
 export function MonthsCompareList({ months, period, columns = 1 }: { months: MonthsCompare; period: string; columns?: 1 | 2 }) {
+  // Progressive disclosure (#165): the first season (or the first row on a big window), then a
+  // button for the rest, so this section doesn't fill three phone screens.
+  const [all, setAll] = useState(false);
   const seasonsOf = (id: string) => months.crops.find((c) => c.crop_id === id)?.seasons ?? [];
   const ctx = { cropName: shortName, seasonsOf, period };
   const assumed = months.assumed.map(shortName);
-  const cards = months.planting.seasons.map((w) => (
+  const allCards = months.planting.seasons.map((w) => (
     <SeasonCard
       key={`${w.crop_id}-${w.season_index}`}
       w={w}
@@ -39,6 +45,9 @@ export function MonthsCompareList({ months, period, columns = 1 }: { months: Mon
       count={seasonsOf(w.crop_id).length}
     />
   ));
+  const firstCount = columns > 1 ? columns : 1;
+  const cards = all ? allCards : allCards.slice(0, firstCount);
+  const hidden = allCards.length - cards.length;
   return (
     <>
       {assumed.length > 0 ? (
@@ -59,6 +68,13 @@ export function MonthsCompareList({ months, period, columns = 1 }: { months: Mon
             </View>
           ))
         : cards}
+      {hidden > 0 || (all && allCards.length > firstCount) ? (
+        <Button
+          label={all ? "Show fewer seasons" : `Show ${hidden} more ${hidden === 1 ? "season" : "seasons"}`}
+          variant="secondary"
+          onPress={() => setAll((x) => !x)}
+        />
+      ) : null}
     </>
   );
 }
@@ -78,9 +94,12 @@ export function SeasonCard({ w, c, period, count }: { w: SeasonWindow; c: Season
       period={period}
       subtitle={count > 1 ? `Season ${w.season_index + 1} of ${count}` : undefined}
     >
-      <View style={[styles.headline, { backgroundColor: tone.bg }]}>
-        <Text style={[text.bodyStrong, { color: tone.fg }]}>{c.headline.text}</Text>
-        {c.detail ? <Text style={text.small}>{c.detail.text}</Text> : null}
+      <View style={styles.headlineRow}>
+        <CropImage cropId={w.crop_id} size={44} />
+        <View style={[styles.headline, styles.headlineText, { backgroundColor: tone.bg }]}>
+          <Text style={[text.bodyStrong, { color: tone.fg }]}>{c.headline.text}</Text>
+          {c.detail ? <Text style={text.small}>{c.detail.text}</Text> : null}
+        </View>
       </View>
 
       <View style={styles.table} accessibilityRole="summary">
@@ -118,6 +137,8 @@ function Section({ title, lines }: { title: string; lines: readonly string[] }) 
 const styles = StyleSheet.create({
   gridRow: { flexDirection: "row", alignItems: "flex-start", gap: space.lg },
   gridCell: { flex: 1, minWidth: 0 },
+  headlineRow: { flexDirection: "row", alignItems: "flex-start", gap: space.sm },
+  headlineText: { flex: 1 },
   headline: { gap: space.xs, padding: space.md, borderRadius: radius.sm },
   table: { borderTopWidth: 1, borderTopColor: colors.border },
   tr: {

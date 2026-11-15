@@ -60,7 +60,7 @@ test('a blocked season names the clashing season, shows the gain as a trade-off,
   assert.doesNotMatch(all, /already good/i);
   assert.ok(c.why.length >= 2, "says what would improve, and the data source");
   // The gain is "alone on the lot", so it is not put next to the lot score in the table.
-  assert.ok(!c.rows.some((r) => r.label.startsWith("Lot fit score")));
+  assert.ok(!c.rows.some((r) => r.label.startsWith("How well it suits the lot")));
 });
 
 test("the season already in the wet months says the timing is good, with one column", () => {
@@ -73,7 +73,7 @@ test("the season already in the wet months says the timing is good, with one col
   assert.equal(c.otherTitle, null);
   assert.ok(c.rows.every((r) => r.other === null));
   assert.match(c.detail?.text ?? "", /10-point margin is assumed/);
-  assert.ok(c.rows.some((r) => r.label.startsWith("Lot fit score")));
+  assert.ok(c.rows.some((r) => r.label.startsWith("How well it suits the lot")));
 });
 
 test("real Iligan lot: a better month comes with its gain, the side-by-side numbers and a planting check", () => {
@@ -85,7 +85,7 @@ test("real Iligan lot: a better month comes with its gain, the side-by-side numb
   assert.match(c.headline.text, /^Better months: \w{3} → \w{3}$/);
   assert.match(c.detail?.text ?? "", /^Planting about \d months? (later|earlier) adds \d+ points? to the fit score\.$/);
   assert.equal(c.otherTitle, "Better months");
-  const fit = c.rows.find((r) => r.label.startsWith("Lot fit score"));
+  const fit = c.rows.find((r) => r.label.startsWith("How well it suits the lot"));
   assert.match(fit?.other ?? "", /^\d+ \(\+\d+\)$/);
   assert.ok(c.checks.some((l) => l.code === "window.check.ready" && /Corn in \w+\?$/.test(l.text)));
 });

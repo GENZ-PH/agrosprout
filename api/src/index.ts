@@ -2,11 +2,14 @@ import { Hono } from "hono";
 import { fail } from "./lib/response";
 import { corsMiddleware } from "./middleware/cors";
 import { rateLimit } from "./middleware/rate-limit";
+import { explain, explainMonth, explainSections, explainYear } from "./routes/explain";
 import { health } from "./routes/health";
+import { nasaOpendap } from "./routes/nasa-opendap";
+import { nasaAppeears } from "./routes/nasa-appeears";
 
 // Every route lives under /v1. Add a route area: create src/routes/<area>.ts
 // (see _template.ts) and chain `.route("/<area>", area)` below so its types reach the app.
-const v1 = new Hono<{ Bindings: Env }>().use("*", rateLimit).route("/health", health);
+const v1 = new Hono<{ Bindings: Env }>().use("*", rateLimit).route("/health", health).route("/explain", explain).route("/explain-month", explainMonth).route("/explain-year", explainYear).route("/explain-sections", explainSections).route("/nasa", nasaOpendap).route("/nasa/appeears", nasaAppeears);
 
 const app = new Hono<{ Bindings: Env }>()
   .use("*", corsMiddleware)

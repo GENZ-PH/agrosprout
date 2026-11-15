@@ -9,6 +9,8 @@ import { analyzeLot } from "../engine/analyze";
 import { ILIGAN_LOT_FIXTURE } from "../engine/__fixtures__/iligan-lot.fixture";
 import type { CropLibrary, Lot, LotCrop } from "../types";
 import {
+  sameCropsAs,
+  topPick,
   confidenceReasonText,
   deltaText,
   FIT_LABELS,
@@ -167,4 +169,23 @@ test("Iligan lot with crops.json: every crop fit and option turns into clean tex
     );
   }
   assert.ok(pointLines > 0, "the Benefits and Trade-offs lines were checked against the bars");
+});
+
+test("topPick: the first option with the top total, or null", () => {
+  const o = (key: "A" | "B" | "C" | "D", top_total: boolean) => ({ key, top_total });
+  assert.equal(topPick([o("A", false), o("B", false), o("C", true), o("D", true)])?.key, "C");
+  assert.equal(topPick([o("A", true), o("B", false)])?.key, "A");
+  assert.equal(topPick([o("A", false)]), null);
+});
+
+test("sameCropsAs: a later option with the same crops in other months points to the earlier one", () => {
+  const slot = (crop_id: string, plant_month: number) => ({ crop_id, plant_month }) as never;
+  const opts = [
+    { key: "A" as const, slots: [slot("rice", 6), slot("rice", 11)] },
+    { key: "B" as const, slots: [slot("sorghum", 4), slot("rice", 8)] },
+    { key: "C" as const, slots: [slot("mungbean", 2), slot("rice", 5), slot("eggplant", 9)] },
+    { key: "D" as const, slots: [slot("mungbean", 4), slot("rice", 7), slot("eggplant", 11)] },
+  ];
+  assert.deepEqual(sameCropsAs(opts), { D: "C" });
+  assert.deepEqual(sameCropsAs([opts[0], { key: "B" as const, slots: [slot("rice", 7)] }]), { B: "A" });
 });

@@ -1,8 +1,10 @@
 import { type ComponentRef, type Ref, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { tr } from "../i18n/lang-store";
 import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { otherCropId } from "../lots/crop-picks";
 import { ADD_MAX_CHARS, enterChoice, searchCrops, searchSummary, type SearchEntry, type SearchResult } from "../lots/crop-search-core";
+import { CropImage } from "./CropImage";
 import { Icon } from "./Icon";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
@@ -60,7 +62,7 @@ export function CropSearch({ lotName, entries, chosen, onPick, searchRef }: Prop
 
   return (
     <View style={styles.block}>
-      <Text style={text.heading}>Search for a crop</Text>
+      <Text style={text.heading}>{tr("Search for a crop")}</Text>
       <View style={[styles.field, showing && styles.fieldOpen]}>
         <Icon name="search" size={20} color={colors.muted} />
         <TextInput
@@ -174,6 +176,7 @@ function ResultRow({
       accessibilityState={{ disabled: added }}
       style={({ pressed }) => [styles.row, last && styles.lastRow, pressed && styles.pressed]}
     >
+      <CropImage cropId={ours ? e.crop_id : ""} size={40} />
       <View style={[styles.flex, styles.body]}>
         <Text style={text.bodyStrong}>
           {r.title}

@@ -1,7 +1,7 @@
-# AgriResilience — Project Docs
+# AgroSprout: Project Docs
 
 **NASA Space Apps Challenge 2026 · "Field Shift: Adapting Farms with NASA Data"**
-Team **Jeoleecation** (`houston-no-problem`) · Local Event **Iligan City, Philippines** · Working name: *AgriResilience* (D7 open)
+Team **Jeoleecation** (`houston-no-problem`) · Local Event **Iligan City, Philippines** · Project name: **AgroSprout** (D7, decided 2026-11-15)
 
 ## ⏰ Key times (PHT, UTC+8)
 
@@ -30,6 +30,7 @@ Team **Jeoleecation** (`houston-no-problem`) · Local Event **Iligan City, Phili
 |---|---|---|
 | [01-challenge-brief.md](01-challenge-brief.md) | Challenge requirements as a checklist (R1–R8), "SI" terminology | Everyone |
 | [02-submission-and-judging.md](02-submission-and-judging.md) | Hard rules, form fields, SI disclosure rules, judging rubric | Everyone |
+| [13-judging-and-compliance.md](13-judging-and-compliance.md) | **Scorecard on submit day:** each eligibility gate and judging criterion, our status with evidence, the gaps, and who closes them by when | Everyone |
 | [04-gap-analysis.md](04-gap-analysis.md) | What the initial proposal is missing and what to fix | Everyone |
 | [05-mvp-scope.md](05-mvp-scope.md) | Persona, user flow, MoSCoW, Definition of Done | Everyone |
 | [11-user-flow.md](11-user-flow.md) | **Team-defined onboarding**, screen by screen: no login → map lots → crops → dashboard → months → side-by-side | Everyone (Frontend + Story especially) |
@@ -44,7 +45,7 @@ Team **Jeoleecation** (`houston-no-problem`) · Local Event **Iligan City, Phili
 | [si-usage-log.md](si-usage-log.md) | SI usage record (required for submission) | Anyone using SI |
 | [submission/fields.md](submission/fields.md) | Paste-ready drafts of every form field | Story lead |
 | [claude-setup.md](claude-setup.md) | `.claude/` contents, installed subagents, what to add later | Anyone using Claude Code |
-| [reference/initial-proposal.md](reference/initial-proposal.md) | The team's original AgriResilience proposal (moved here from repo root) | Reference |
+| [reference/initial-proposal.md](reference/initial-proposal.md) | The team's original proposal (working name AgriResilience) (moved here from repo root) | Reference |
 
 ## Kickoff agenda (Sat 08:00–09:00)
 

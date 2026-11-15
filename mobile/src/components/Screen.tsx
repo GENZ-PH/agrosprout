@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { FooterBar } from "./FooterLinks";
 import { colors, MAX_CONTENT_WIDTH, MAX_WIDE_WIDTH, space } from "./theme";
 
 type Props = {
@@ -18,22 +19,38 @@ type Props = {
    * Phones look the same either way: both are the full width minus the side padding.
    */
   width?: "narrow" | "wide";
+  /** Floats over the screen, e.g. the dashboard's "Adjust results" button (#165). */
+  overlay?: ReactNode;
+  /** Stays at the top while the body scrolls, e.g. the dashboard's title and lot tabs. */
+  header?: ReactNode;
+  /** true = the footer links and the rule 6 line, pinned at the very bottom (FooterBar). */
+  links?: boolean;
 };
 
 /** Page frame for every screen: safe area, scrolling body, optional pinned footer. */
-export function Screen({ children, footer, scrollEnabled = true, edgeToEdge = false, width = "narrow" }: Props) {
+export function Screen({ children, footer, scrollEnabled = true, edgeToEdge = false, width = "narrow", overlay, header, links = false }: Props) {
   const max = width === "wide" ? styles.wide : null;
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom", "left", "right"]}>
+      {header ? (
+        <View style={styles.headerBar}>
+          <View style={[styles.headerInner, max]}>{header}</View>
+        </View>
+      ) : null}
+      {/* The overlay floats over the scrolling body only, so it sits above the pinned footers. */}
+      <View style={styles.body}>
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={edgeToEdge ? styles.edge : [styles.content, max]}
+        contentContainerStyle={edgeToEdge ? styles.edge : [styles.content, max, overlay ? styles.underOverlay : null]}
         scrollEnabled={scrollEnabled}
         keyboardShouldPersistTaps="handled"
       >
         {children}
       </ScrollView>
+      {overlay}
+      </View>
       {footer ? <View style={[styles.footer, max]}>{footer}</View> : null}
+      {links ? <FooterBar /> : null}
     </SafeAreaView>
   );
 }
@@ -47,9 +64,15 @@ const column = {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
+  body: { flex: 1 },
   scroll: { flex: 1 },
   content: { ...column, flexGrow: 1, gap: space.lg, paddingTop: space.sm, paddingBottom: space.xl },
+  /** Room under the last card so a floating button (e.g. Adjust results) never covers it. */
+  underOverlay: { paddingBottom: 96 },
   edge: { flexGrow: 1 },
   footer: { ...column, gap: space.sm, paddingTop: space.sm, paddingBottom: space.lg },
   wide: { maxWidth: MAX_WIDE_WIDTH },
+  // Solid white, so the fixed header (logo, lot tabs) stands apart from the cream page.
+  headerBar: { backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border, zIndex: 2 },
+  headerInner: { ...column, gap: space.xs, paddingTop: space.sm, paddingBottom: space.sm },
 });

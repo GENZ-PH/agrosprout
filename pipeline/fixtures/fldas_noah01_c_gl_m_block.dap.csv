@@ -1,0 +1,15 @@
+Dataset: FLDAS_NOAH01_C_GL_M.A200101.001.nc
+/SoilMoi00_10cm_tavg[0][0], 0.40, 0.30
+/SoilMoi00_10cm_tavg[0][1], -9999, 0.20
+/SoilMoi10_40cm_tavg[0][0], 0.41, 0.31
+/SoilMoi10_40cm_tavg[0][1], -9999, 0.21
+/Evap_tavg[0][0], 1e-05, 2e-05
+/Evap_tavg[0][1], -9999, 3e-05
+/Rainf_f_tavg[0][0], 5e-05, 4e-05
+/Rainf_f_tavg[0][1], -9999, 0
+/Qs_tavg[0][0], 1e-06, 2e-06
+/Qs_tavg[0][1], -9999, 0
+/Qsb_tavg[0][0], 3e-06, 4e-06
+/Qsb_tavg[0][1], -9999, 0
+/X, 123.75, 123.85
+/Y, 7.95, 8.05000000000001

@@ -1,19 +1,30 @@
+import { useSyncExternalStore } from "react";
 import { useWindowDimensions } from "react-native";
 
-import { sizeClassFor, type SizeClass } from "./layout-core";
+import { getInspector, subscribeInspector } from "./inspector-store";
+import { useDockWidth } from "./dock-width";
+import { canDock, sizeClassFor, type SizeClass, TWO_COLUMN_MIN_WITH_DOCK } from "./layout-core";
 
 // The window's size class (#114). `useWindowDimensions` updates on a browser resize and on
-// phone rotation, so layouts reflow live with no reload.
+// phone rotation, so layouts reflow live with no reload. When the NASA data panel docks beside
+// the page (#165), the page lays out for the width that is left, not the whole window.
 
 export interface Layout {
+  /** The whole window (decides whether the panel can dock). */
   width: number;
+  /** The width the page itself gets: the window minus the docked panel, if open. */
+  contentWidth: number;
   size: SizeClass;
-  /** True on a laptop or desktop window (expanded): the dashboard uses two columns. */
+  /** True when the page has room for two dashboard columns. */
   wide: boolean;
 }
 
 export function useLayout(): Layout {
   const { width } = useWindowDimensions();
-  const size = sizeClassFor(width);
-  return { width, size, wide: size === "expanded" };
+  const docked = useSyncExternalStore(subscribeInspector, getInspector, getInspector) !== null && canDock(width);
+  const dock = useDockWidth(width);
+  const contentWidth = docked ? width - dock : width;
+  const size = sizeClassFor(contentWidth);
+  const wide = size === "expanded" && (!docked || contentWidth >= TWO_COLUMN_MIN_WITH_DOCK);
+  return { width, contentWidth, size, wide };
 }

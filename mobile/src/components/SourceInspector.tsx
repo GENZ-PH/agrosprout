@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { EXPLAINERS, fill } from "../content/explainers";
@@ -6,9 +6,22 @@ import { METHODS_ON, SOURCE_DETAILS } from "../content/source-details";
 import { SOURCES } from "../content/sources";
 import { getCalls, subscribeCalls } from "../net/call-log";
 import { Icon } from "./Icon";
-import { closeInspector, getInspector, subscribeInspector } from "./inspector-store";
+import { router } from "expo-router";
+
+import {
+  closeInspector,
+  getInspector,
+  getNotice,
+  getPanelContext,
+  openInspector,
+  openOverview,
+  type PanelContext,
+  subscribeInspector,
+} from "./inspector-store";
+import { clampDock, saveDockWidth, setDockWidth, useDockWidth } from "./dock-width";
+import { canDock } from "./layout-core";
 import { useLayout } from "./useLayout";
-import { BREAKPOINTS, colors, MIN_TOUCH, radius, space, text } from "./theme";
+import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
 // The inspector: one panel for the whole app, opened by clicking a NASA SourceChip. On a wide
 // screen it docks on the right and pushes the page narrower; on a phone it is a sheet from the
@@ -19,53 +32,125 @@ const MONO = Platform.select({ ios: "Menlo", android: "monospace", default: "ui-
 
 function useInspectorState() {
   const state = useSyncExternalStore(subscribeInspector, getInspector, getInspector);
+  const context = useSyncExternalStore(subscribeInspector, getPanelContext, getPanelContext);
   useEffect(() => {
     if (Platform.OS !== "web" || !state) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeInspector();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [state]);
-  return state;
+  // The overview needs a lot to describe: without one (another screen), nothing shows.
+  if (state?.view === "overview" && !context) return { state: null, context };
+  return { state, context };
 }
 
-const DOCK_WIDTH = 420;
-/**
- * Dock only when the page keeps its two-column width beside the panel; pages pick their layout
- * from the whole window, so a narrower window gets the sheet instead.
- */
-export const canDock = (width: number) => width >= BREAKPOINTS.expanded + DOCK_WIDTH;
+/** The panel's content for the current state. */
+function PanelBody({ state, context }: { state: NonNullable<ReturnType<typeof getInspector>>; context: PanelContext | null }) {
+  return state.view === "overview" && context ? (
+    <OverviewBody c={context} />
+  ) : state.view === "source" ? (
+    <InspectorBody k={state.key} period={state.period} onBack={context ? openOverview : undefined} />
+  ) : null;
+}
+
+export { canDock };
 
 /**
  * Wide screens: the panel docks beside the page and pushes it narrower (the root layout puts
  * this in a row next to the screens). Nothing shows until a NASA source is clicked.
  */
 export function DockedInspector() {
-  const state = useInspectorState();
+  const { state, context } = useInspectorState();
   const { width } = useLayout();
+  const dock = useDockWidth(width);
   if (!canDock(width) || !state) return null;
   return (
-    <View style={styles.dock} accessibilityLabel="NASA data inspector">
-      <InspectorBody k={state.key} period={state.period} />
+    <View style={[styles.dock, { width: dock }]} accessibilityLabel="Technical data panel">
+      <DockHandle windowWidth={width} current={dock} />
+      <PanelNotice />
+      <PanelBody state={state} context={context} />
+    </View>
+  );
+}
+
+/** The notice from a page link ("NASA data is now open here"), for 3 seconds, with a green flash. */
+function PanelNotice() {
+  const n = useSyncExternalStore(subscribeInspector, getNotice, getNotice);
+  const [hidden, setHidden] = useState<number | null>(null);
+  useEffect(() => {
+    if (!n) return;
+    const t = setTimeout(() => setHidden(n.at), 3000);
+    return () => clearTimeout(t);
+  }, [n]);
+  if (!n || hidden === n.at) return null;
+  return (
+    <View style={styles.notice} accessibilityRole="alert" accessibilityLiveRegion="polite">
+      <Icon name="check" size={18} color={colors.white} />
+      <Text style={styles.noticeText}>{n.text}</Text>
+    </View>
+  );
+}
+
+/**
+ * The drag handle on the panel's left edge (web, mouse or touch): drag to make the panel wider or
+ * narrower. The width is kept on the device. Arrow keys work too when the handle has focus.
+ */
+function DockHandle({ windowWidth, current }: { windowWidth: number; current: number }) {
+  const [active, setActive] = useState(false);
+  if (Platform.OS !== "web") return null;
+  const start = (e: { nativeEvent: { pageX: number }; preventDefault?: () => void }) => {
+    e.preventDefault?.();
+    setActive(true);
+    const move = (ev: PointerEvent) => setDockWidth(clampDock(windowWidth - ev.clientX, windowWidth));
+    const up = () => {
+      setActive(false);
+      saveDockWidth();
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      document.body.style.userSelect = "";
+    };
+    document.body.style.userSelect = "none";
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+  return (
+    <View
+      // react-native-web passes pointer and key events through to the element.
+      {...({
+        onPointerDown: start,
+        onKeyDown: (e: { nativeEvent: { key: string } }) => {
+          const k = e.nativeEvent.key;
+          if (k !== "ArrowLeft" && k !== "ArrowRight") return;
+          setDockWidth(clampDock(current + (k === "ArrowLeft" ? 40 : -40), windowWidth));
+          saveDockWidth();
+        },
+        tabIndex: 0,
+      } as object)}
+      accessibilityRole="adjustable"
+      accessibilityLabel="Drag to resize the technical data panel"
+      style={[styles.handle, active && styles.handleActive]}
+    >
+      <View style={styles.grip} />
     </View>
   );
 }
 
 /** Phones: the same panel as a sheet from the bottom. */
 export function SheetInspector() {
-  const state = useInspectorState();
+  const { state, context } = useInspectorState();
   const { width } = useLayout();
   if (canDock(width) || !state) return null;
   return (
     <Modal transparent animationType="slide" visible onRequestClose={closeInspector}>
       <Pressable style={styles.scrim} onPress={closeInspector} accessibilityLabel="Close" />
-      <View style={styles.sheet}>
-        <InspectorBody k={state.key} period={state.period} />
+      <View style={[styles.sheet, state.view === "overview" && styles.sheetTall]}>
+        <PanelBody state={state} context={context} />
       </View>
     </Modal>
   );
 }
 
-export function InspectorBody({ k, period }: { k: keyof typeof SOURCES; period: string }) {
+export function InspectorBody({ k, period, onBack }: { k: keyof typeof SOURCES; period: string; onBack?: () => void }) {
   const s = SOURCES[k];
   const d = SOURCE_DETAILS[k];
   const calls = useSyncExternalStore(subscribeCalls, getCalls, getCalls).filter((c) => c.source === k);
@@ -77,6 +162,11 @@ export function InspectorBody({ k, period }: { k: keyof typeof SOURCES; period: 
   return (
     <>
       <View style={styles.head}>
+        {onBack ? (
+          <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel="All NASA data" style={({ pressed }) => [styles.close, styles.back, pressed && styles.pressed]}>
+            <Icon name="back" size={22} color={colors.ink} />
+          </Pressable>
+        ) : null}
         <View style={styles.flex}>
           <Text style={styles.tag}>NASA data</Text>
           <Text style={text.heading} accessibilityRole="header">
@@ -196,8 +286,15 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 const styles = StyleSheet.create({
-  dock: { width: DOCK_WIDTH, flexShrink: 0, backgroundColor: colors.surface, borderLeftWidth: 1, borderLeftColor: colors.border },
+  notice: { flexDirection: "row", alignItems: "center", gap: space.sm, paddingHorizontal: space.md, paddingVertical: space.sm, backgroundColor: colors.green },
+  noticeText: { flex: 1, fontSize: 14, fontWeight: "700", color: colors.white },
+  handle: { position: "absolute", left: -5, top: 0, bottom: 0, width: 10, zIndex: 5, alignItems: "center", justifyContent: "center", cursor: "col-resize" } as object,
+  handleActive: { backgroundColor: colors.greenTint },
+  grip: { width: 4, height: 40, borderRadius: 2, backgroundColor: colors.borderStrong },
+  dock: { flexShrink: 0, backgroundColor: colors.surface, borderLeftWidth: 1, borderLeftColor: colors.border },
   scrim: { flex: 1, backgroundColor: "rgba(0,0,0,0.35)" },
+  sheetTall: { height: "88%", maxHeight: "88%" },
+  back: { marginLeft: -space.sm, marginRight: 0 },
   sheet: { maxHeight: "82%", backgroundColor: colors.surface, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg },
   head: { flexDirection: "row", alignItems: "flex-start", gap: space.sm, padding: space.lg, paddingBottom: space.md, borderBottomWidth: 1, borderBottomColor: colors.border },
   flex: { flex: 1, minWidth: 0 },
@@ -218,4 +315,178 @@ const styles = StyleSheet.create({
   call: { gap: 2 },
   method: { gap: space.xs, paddingTop: space.sm, borderTopWidth: 1, borderTopColor: colors.border },
   link: { ...text.small, color: colors.blue, textDecorationLine: "underline" },
+  /** A 44 dp tap target around the one-line link (#45). */
+  linkRow: { minHeight: MIN_TOUCH, justifyContent: "center" },
+});
+
+// ---------------------------------------------------------------------------
+// Overview (#165): all NASA data behind the lot on the dashboard, laid out the way the challenge
+// asks (NASA data, the patterns it checks, how it becomes advice, its limits). Every line names
+// what the app really does (see docs/submission/fields.md "NASA Data" and engine/scores.ts).
+
+/** Weather patterns the app checks, where the farmer sees each one, and the NASA variables behind it. */
+const CHECKS: readonly { what: string; where: string; vars: string }[] = [
+  { what: "Rain and dry months", where: "Fits your rain, dry months, the year calendar", vars: "NASA POWER PRECTOTCORR" },
+  {
+    what: "Crop water need (evaporation)",
+    where: "FAO-56 Penman-Monteith, month by month for each crop",
+    vars: "NASA POWER T2M, T2M_RANGE, RH2M, WS2M, ALLSKY_SFC_SW_DWN",
+  },
+  { what: "Heat", where: "Weather safety: months too hot for the crop (FAO Ecocrop ranges)", vars: "NASA POWER T2M, T2M_RANGE" },
+  { what: "Wet soil and waterlogging", where: "Weather safety: waterlogging risk", vars: "NASA POWER GWETROOT" },
+  { what: "Heavy rain", where: "Protects from washout (rain on bare soil), harvest in a heavy-rain month", vars: "NASA POWER PRECTOTCORR" },
+  { what: "Dry, typical and wet years", where: "Each result in a dry (20th percentile), typical and wet (80th) year; the drier or warmer what-if", vars: "NASA POWER, every year in the record" },
+];
+
+/** The panel's tabs (2026-11-15), so each kind of detail has its own page instead of one long scroll. */
+const PANEL_TABS = [
+  { key: "plans", label: "For your technician" },
+  { key: "nasa", label: "NASA data used" },
+  { key: "how", label: "How it works" },
+] as const;
+type PanelTab = (typeof PANEL_TABS)[number]["key"];
+/** Kept while the app is open, so switching lots keeps the tab. */
+let lastTab: PanelTab = "plans";
+const rememberTab = (t: PanelTab) => {
+  lastTab = t;
+};
+
+export function OverviewBody({ c }: { c: PanelContext }) {
+  const [tab, setTab] = useState<PanelTab>(lastTab);
+  const pickTab = (t: PanelTab) => {
+    rememberTab(t);
+    setTab(t);
+  };
+  const steps = [
+    `NASA POWER gives the weather at your lot for ${c.period || "the years of the lot's data"}${c.demo ? "" : ", asked for the lot's center rounded to 0.1°"}.`,
+    "The app works out each crop's water need month by month (FAO-56) and how much of it rain covers in a dry, typical and wet year.",
+    "It builds your crops (A) and three other plans (B to D), and scores each on eight things: fits your rain, weather safety, builds soil, protects from washout, breaks pest cycles, income, easy to get to market and easy to manage.",
+    "What matters to you sets the weights. Each plan lists why, the evidence, the benefits, the trade-offs, what is not known and what to check with your agricultural technician.",
+    c.demo
+      ? "Other NASA data is set beside the results as a check: GPM IMERG rain, SMAP soil moisture, MODIS and HLS greenness, ECOSTRESS plant water stress, the FLDAS land model and SRTM elevation. It is bundled with the sample farm and does not change the scores."
+      : "Other NASA data is set beside the results as a check: GPM IMERG rain, SMAP soil moisture, the FLDAS land model and SRTM elevation, and MODIS, HLS and ECOSTRESS when NASA AppEEARS has them ready. Our server asks NASA for them for the same rounded point. They do not change the scores.",
+    "SI (Claude, by Anthropic) writes short notes in plain words from the app's own results and NASA numbers, never from your location. Each note says where it comes from, and it can be wrong.",
+  ];
+  return (
+    <>
+      <View style={styles.head}>
+        <View style={styles.flex}>
+          <Text style={styles.tag}>Technical data</Text>
+          <Text style={text.heading} accessibilityRole="header">
+            The details behind {c.lotName}
+          </Text>
+          <Text style={[text.small, styles.muted]}>For agricultural technicians and anyone who wants the details.</Text>
+        </View>
+        <Pressable onPress={closeInspector} accessibilityRole="button" accessibilityLabel="Close technical data" style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
+          <Icon name="close" size={22} color={colors.ink} />
+        </Pressable>
+      </View>
+      <View style={overview.tabs} accessibilityRole="tablist">
+        {PANEL_TABS.map((t) => {
+          const on = t.key === tab;
+          return (
+            <Pressable
+              key={t.key}
+              onPress={() => pickTab(t.key)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: on }}
+              style={({ pressed }) => [overview.tab, on && overview.tabOn, pressed && styles.pressed]}
+            >
+              <Text style={[overview.tabText, on && overview.tabTextOn]}>{t.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <ScrollView key={tab} style={styles.scroll} contentContainerStyle={styles.content}>
+        {tab === "plans" ? c.details : null}
+        {tab === "nasa" ? (
+        <>
+        <Section title="NASA datasets used">
+          {c.sources.map((k) => {
+            const s = SOURCES[k];
+            return (
+              <Pressable
+                key={k}
+                onPress={() => openInspector(k, c.period)}
+                accessibilityRole="button"
+                accessibilityLabel={`${s.name}: details`}
+                style={({ pressed }) => [overview.dataset, pressed && styles.pressed]}
+              >
+                <View style={styles.flex}>
+                  <Text style={[text.small, styles.strong]}>{s.name}</Text>
+                  <Text style={text.small}>{s.gives}</Text>
+                  <Text style={[text.caption, styles.muted]}>{`${s.scale}, ${fill(s.years, { period: c.period || "the years of the lot's data" })}`}</Text>
+                </View>
+                <Icon name="chevron" size={18} color={colors.green} />
+              </Pressable>
+            );
+          })}
+        </Section>
+
+        <Section title="What the data checks on your lot">
+          {CHECKS.map((x) => (
+            <View key={x.what} style={overview.check}>
+              <Text style={[text.small, styles.strong]}>{x.what}</Text>
+              <Text style={text.small}>{x.where}</Text>
+              <Text style={styles.codeSmall}>{x.vars}</Text>
+            </View>
+          ))}
+        </Section>
+        {c.extra}
+        </>
+        ) : null}
+
+        {tab === "how" ? (
+        <>
+        <Section title="From data to advice">
+          {steps.map((t, i) => (
+            <View key={t} style={styles.bullet}>
+              <Text style={[text.small, styles.strong]}>{i + 1}.</Text>
+              <Text style={[text.small, styles.flex]}>{t}</Text>
+            </View>
+          ))}
+        </Section>
+
+        <Section title="Limits">
+          {[
+            "Past records, not a forecast.",
+            "One NASA POWER cell is about 50 km wide, so your own field can be wetter, drier, warmer or cooler.",
+            "Soil health is a relative indicator from this model, not a soil test.",
+            ...(c.demo ? [] : ["For a lot you draw, the satellite checks cover the last 3 years only, so their dry and wet years are rougher than NASA POWER's 25."]),
+            "Income and labor are not scored yet: the crop list has no local prices or labor needs.",
+          ].map((t) => (
+            <View key={t} style={styles.bullet}>
+              <Text style={text.small}>•</Text>
+              <Text style={[text.small, styles.flex]}>{t}</Text>
+            </View>
+          ))}
+          <Pressable onPress={() => router.push("/data")} accessibilityRole="link" style={styles.linkRow}>
+            <Text style={styles.link}>All data sources and limits</Text>
+          </Pressable>
+        </Section>
+        </>
+        ) : null}
+      </ScrollView>
+    </>
+  );
+}
+
+const overview = StyleSheet.create({
+  // Square tabs in one row, equal width, the open one underlined in green.
+  tabs: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: colors.border },
+  tab: { flex: 1, minHeight: 44, alignItems: "center", justifyContent: "center", paddingHorizontal: space.xs, borderBottomWidth: 3, borderBottomColor: "transparent" },
+  tabOn: { borderBottomColor: colors.green, backgroundColor: colors.greenTint },
+  tabText: { fontSize: 13, lineHeight: 16, fontWeight: "600", color: colors.muted, textAlign: "center" },
+  tabTextOn: { color: colors.green, fontWeight: "800" },
+  dataset: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.sm,
+    padding: space.md,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minHeight: MIN_TOUCH,
+  },
+  check: { gap: 2, paddingVertical: space.xs, borderTopWidth: 1, borderTopColor: colors.border },
 });

@@ -1,3 +1,6 @@
 # Copy to .dev.vars for local dev (never commit .dev.vars).
 # Production/preview values are set with: npx wrangler secret put NAME [--env preview]
 # EARTHDATA_TOKEN=
+
+# Claude API key for "Explain this plan with SI" (D33). Set with: npx wrangler secret put ANTHROPIC_API_KEY [--env preview]
+# ANTHROPIC_API_KEY=

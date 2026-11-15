@@ -11,7 +11,8 @@ import { lotView, readLotData, type DemoFarms, type LotView } from "./lot-analys
 // and runs the engine offline. When the lot sync finishes a download, the lot's `data_status`
 // changes and this reads the data again.
 
-const DEMO_FARMS: DemoFarms = { "lanao-norte-demo-1": demoLanaoNorte1 as LotData };
+/** The bundled sample farm data, by id (also read by the Offline notice, #36). */
+export const DEMO_FARMS: DemoFarms = { "lanao-norte-demo-1": demoLanaoNorte1 as LotData };
 
 /** `LotView` from lot-analysis-core, plus `loading` while the saved data is being read. */
 export type DashboardLotView = LotView | { kind: "loading" };

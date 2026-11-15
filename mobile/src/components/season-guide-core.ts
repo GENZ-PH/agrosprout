@@ -77,3 +77,8 @@ export function nowSummary(plan: Plan, month: number): NowSummary {
   }
   return { month, plant: s.plant, harvest: s.harvest, growing, next, risks: s.risks };
 }
+
+/** The icon and colour for each risk, shared by "Your year on" and the suggestion's strip. */
+export const RISK_ICON = { dry: "sun", hot: "heat", wet: "drop" } as const satisfies Record<MonthRisk, string>;
+export const RISK_COLOR: Record<MonthRisk, string> = { dry: "#B5641B", hot: "#B3261E", wet: "#1D5FA8" };
+export const RISK_LABEL: Record<MonthRisk, string> = { dry: "Short of water", hot: "Too hot", wet: "Too wet" };

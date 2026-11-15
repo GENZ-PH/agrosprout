@@ -10,7 +10,8 @@
   "workers_dev": true,
   "preview_urls": true,
   "observability": { "enabled": true, "head_sampling_rate": 1 },
-  "vars": { "ENVIRONMENT": "production" },
+  // SI_EXPLAIN: "on" or "off" (kill switch). ANTHROPIC_API_KEY is a secret, never in this file.
+  "vars": { "ENVIRONMENT": "production", "SI_EXPLAIN": "on" },
   "d1_databases": [
     {
       "binding": "DB",
@@ -22,12 +23,16 @@
   "r2_buckets": [{ "binding": "ASSETS", "bucket_name": "agrosprout-assets" }],
   // Public API with no login: per-IP limit on /v1. Raise "limit" here if the demo hits it.
   "ratelimits": [
-    { "name": "RATE_LIMITER", "namespace_id": "4201", "simple": { "limit": 120, "period": 60 } }
+    { "name": "RATE_LIMITER", "namespace_id": "4201", "simple": { "limit": 120, "period": 60 } },
+    // "Explain this plan with SI" (D33): each call costs money, so a much tighter per-IP limit.
+    { "name": "EXPLAIN_LIMITER", "namespace_id": "4203", "simple": { "limit": 4, "period": 60 } },
+    // One month of the year strip: a farmer hovers or taps several months, so a looser limit.
+    { "name": "EXPLAIN_MONTH_LIMITER", "namespace_id": "4205", "simple": { "limit": 15, "period": 60 } }
   ],
   "env": {
     "preview": {
       "name": "agrosprout-api-preview",
-      "vars": { "ENVIRONMENT": "preview" },
+      "vars": { "ENVIRONMENT": "preview", "SI_EXPLAIN": "on" },
       "d1_databases": [
         {
           "binding": "DB",
@@ -38,7 +43,9 @@
       ],
       "r2_buckets": [{ "binding": "ASSETS", "bucket_name": "agrosprout-assets-preview" }],
       "ratelimits": [
-        { "name": "RATE_LIMITER", "namespace_id": "4202", "simple": { "limit": 120, "period": 60 } }
+        { "name": "RATE_LIMITER", "namespace_id": "4202", "simple": { "limit": 120, "period": 60 } },
+        { "name": "EXPLAIN_LIMITER", "namespace_id": "4204", "simple": { "limit": 4, "period": 60 } },
+        { "name": "EXPLAIN_MONTH_LIMITER", "namespace_id": "4206", "simple": { "limit": 15, "period": 60 } }
       ]
     }
   }

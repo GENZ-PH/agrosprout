@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "../src/components/Button";
 import { Header } from "../src/components/Header";
+import { CropImage } from "../src/components/CropImage";
 import { Icon } from "../src/components/Icon";
 import { LotTabs } from "../src/components/LotTabs";
 import { Screen } from "../src/components/Screen";
@@ -55,7 +56,7 @@ export default function MonthsScreen() {
     >
       <Header title="When do you plant?" right="Optional" fallbackHref="/dashboard" />
       {!lot ? (
-        <Text style={text.body}>Draw a lot and pick its crops first.</Text>
+        <Text style={text.body}>Draw a lot and choose its main crop first.</Text>
       ) : (
         <>
           <Text style={[text.body, { color: colors.muted }]}>
@@ -142,6 +143,7 @@ function CropMonths({ lotId, lotCrop }: { lotId: string; lotCrop: LotCrop }) {
   return (
     <View style={styles.card}>
       <View style={styles.cropHead}>
+        <CropImage cropId={lotCrop.crop_id} size={44} />
         <View style={styles.flex}>
           <Text style={text.heading} accessibilityRole="header">
             {name}

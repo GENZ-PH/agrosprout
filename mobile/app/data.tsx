@@ -1,6 +1,6 @@
+import { router } from "expo-router";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { Disclaimer } from "../src/components/Disclaimer";
 import { DataTracePanel } from "../src/components/DataTracePanel";
 import { Header } from "../src/components/Header";
 import { Screen } from "../src/components/Screen";
@@ -12,7 +12,7 @@ const PERIOD = "the years your lot's own data covers (shown on each card's ⓘ)"
 
 export default function DataScreen() {
   return (
-    <Screen footer={<Disclaimer />}>
+    <Screen links>
       <Header title="Data and limits" fallbackHref="/dashboard" />
       <DataTracePanel />
       <Text style={text.heading} accessibilityRole="header">
@@ -62,6 +62,19 @@ export default function DataScreen() {
           </View>
         ))}
       </View>
+      <Text style={text.heading} accessibilityRole="header">
+        Crop pictures and other credits
+      </Text>
+      <Text style={text.small}>
+        The crop photos come from Wikimedia Commons, each under its photographer’s free license. Who made each photo, the data, the map and the software is on the Licenses and credits page.
+      </Text>
+      <Pressable
+        onPress={() => router.push("/credits")}
+        accessibilityRole="link"
+        style={styles.linkRow}
+      >
+        <Text style={styles.link}>Licenses and credits</Text>
+      </Pressable>
     </Screen>
   );
 }

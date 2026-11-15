@@ -124,11 +124,11 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   "lot-cutout": {
     id: "lot-cutout",
     sources: ["power", "fao56", "ecocrop", "crop-library", "farmer"],
-    title: "Now vs best option",
-    what: "The shape of the lot you drew, shown twice: on the left with your crops now, on the right with the best other option for this lot (the one with the highest total score). Each shape is filled with one color for the kind of data you pick: Soil health, Crop fit, Root-zone wetness or Rain in a dry year. The number or words on the shape is its value.",
+    title: "Lot comparison",
+    what: "The shape of the lot you drew, shown twice: on the left with your crops now, on the right with the best other option for this lot. \"Best\" means the highest total score over all your priorities, so on one kind of data your current crops can still do better. Each shape is filled with one color for the kind of data you pick: Soil health, Crop fit, Root-zone wetness or Rain in a dry year. The number or words on the shape is its value.",
     source:
       "Soil health is the 3-year Soil Health Index from this app's rotation model. Crop fit is the same check as \"Your crops here\" (FAO-56 crop water use, FAO Ecocrop temperature ranges). Root-zone wetness is NASA POWER GWETROOT (0 dry, 1 saturated) and rain is NASA POWER PRECTOTCORR in a dry year (the 20th percentile), both over the months a crop is in the field. Years used: {period}.",
-    read: "Compare the two shapes. Soil health: green goes up from the start, gray stays level, orange goes down. Crop fit: the same colors as \"Your crops here\". Wetness and rain: darker blue means wetter, or more of the year's rain falling while a crop is in the field. Gray with \"No data\" means a value is missing.",
+    read: "Compare the two shapes. Soil health: green goes up from the start, gray stays level, orange goes down. Crop fit: the same colors as \"Your crops here\". Wetness and rain: darker blue means wetter, or more of the year's rain falling while a crop is in the field. An empty shape with a dashed outline and \"No data\" means a value is missing. The row under the shapes gives both values and the difference, and says which one does better when that has a meaning.",
     limits: [
       "One color per lot: the data has one value for the whole lot, so nothing here shows differences inside your field.",
       "Soil health is a relative indicator from this model, not a soil test. It does not show carbon or nitrogen.",
@@ -180,7 +180,7 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
     title: "Your months vs better months",
     what: "For each crop and season, your planting months next to the best nearby months we found, with the same crop and season length.",
     source: "The same water balance and temperature checks as the recommendations, run for each of the 12 possible planting months, using NASA POWER data for {period}.",
-    read: "A better month is shown only when it clearly beats yours and does not clash with your other crops on the same lot. If a clearly better month would clash with another crop of yours, the card says so and names that crop: it is a trade-off to weigh with your technician, not a move to make. When nothing beats your month, even on a lot with nothing else on it, the card says your timing is already good, or, if your months still have dry-stress or heat-risk months, that no better month was found and which months to plan for.",
+    read: "A better month is shown only when it clearly beats yours and does not clash with your other crops on the same lot. If a clearly better month would clash with another crop of yours, the card says so and names that crop: it is a trade-off to weigh with your technician, not a move to make. When nothing beats your month, even on a lot with nothing else on it, the card says your timing is already good, or, if your months still have dry or hot months, that no better month was found and which months to plan for.",
     limits: [
       "It cannot see things we have no data for, such as when seed or labor are available.",
       "The confidence is lower if the best month changes between a dry and a typical year.",
@@ -225,16 +225,18 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   "satellite-checks": {
     id: "satellite-checks",
     title: "Satellite checks",
-    what: "NASA satellite data for the sample farm next to the NASA POWER numbers the results use: rain from GPM IMERG and soil moisture from SMAP.",
+    what: "NASA satellite and model data for this lot next to the NASA POWER numbers the results use: rain from GPM IMERG, soil moisture from SMAP, greenness (NDVI) from MODIS and HLS, plant water stress from ECOSTRESS, and the FLDAS land model's water in and out.",
     source:
-      "GPM IMERG Final V07 monthly rain (0.1°, GES DISC) and SMAP L4 soil moisture (SPL4SMGP v8, 9 km, NSIDC). Fetched once by the team's pipeline and bundled with the app; NASA POWER for {period}.",
-    sources: ["imerg", "smap", "power-daily"],
+      "GPM IMERG Final V07 monthly rain (0.1°, GES DISC), SMAP L4 soil moisture (SPL4SMGP v8, 9 km, NSIDC), MODIS MOD13Q1 v061 NDVI (250 m), HLS v2.0 NDVI (30 m) and ECOSTRESS ESI and ET v002 (70 m) through NASA AppEEARS (LP DAAC), and FLDAS Noah monthly (0.1°, GES DISC). Fetched once by the team's pipeline and bundled with the app; NASA POWER for {period}.",
+    sources: ["imerg", "smap", "modis", "hls", "ecostress", "fldas", "power-daily"],
     read: "Look at the shape over the year: do the wet and dry months line up? The sizes differ because each product covers a different area and measures a different thing. Tap a source name to see how each number is worked out.",
     limits: [
       "These are checks, not inputs: the scores do not use them.",
-      "Only the sample farm has them, because they are fetched ahead of time, not on the phone.",
-      "SMAP covers 2015 onward, and IMERG monthly files end at 2025-09.",
-      "A satellite grid cell is larger than the lot, and the sample farm's location is provisional.",
+      "The sample farm has them built in. For a lot you draw, our server asks NASA for them for the lot centre rounded to 0.1 degree (the NASA login stays on the server, never on the phone); MODIS, HLS and ECOSTRESS take a few minutes to arrive.",
+      "SMAP covers 2015 onward, and IMERG monthly files end at 2025-09. HLS starts in 2013 and ECOSTRESS in 2018.",
+      "ECOSTRESS and the NDVI products only see clear days, and ECOSTRESS has few samples per month (none in February).",
+      "FLDAS is a model run, not a measurement.",
+      "A satellite grid cell is larger than the lot, and the sample farm's location is provisional. A drawn lot uses fewer recent years than the sample farm, so its ranges are rougher.",
     ],
   },
 };
@@ -374,6 +376,14 @@ export const DATA_SOURCES: readonly DataSource[] = [
     url: "https://www.naturalearthdata.com/",
   },
   {
+    name: "GeoNames Philippines (cities and municipalities)",
+    used_for:
+      "The place search on the lots map: town and city names and positions, kept on your phone, so nothing you type is sent. Town names and positions: GeoNames (CC BY 4.0).",
+    period: "Retrieved 2026-11-15",
+    resolution: "1,646 cities and municipalities; positions rounded to about 100 m",
+    url: "https://www.geonames.org/",
+  },
+  {
     name: "Crop library (crops.json)",
     used_for: "Season length, planting calendars, waterlogging and drought tolerance and other crop traits. Each value has its own citation in the file.",
     period: "See each citation",
@@ -424,12 +434,15 @@ export const CHALLENGE_DATASETS: readonly DatasetStatus[] = [
   {
     name: "SRTM (elevation and slope)",
     status: "Demo farm only",
-    note: "The demo farm file has elevation and slope from SRTM. Lots you draw do not use it yet, so their evaporation is calculated at sea level and their erosion check relies on the land type you give.",
+    note: "The demo farm file has elevation and slope from SRTM. For a lot you draw, Satellite checks show its SRTM elevation fetched through our server, but the results do not use it yet: evaporation is calculated at sea level and the erosion check relies on the land type you give.",
   },
-  { name: "SMAP (soil moisture)", status: "Demo farm only", note: "SMAP L4 (SPL4SMGP v8, 9 km, 2015-2025) is shown for the sample farm in Satellite checks, as a check. The scores use NASA POWER soil wetness." },
-  { name: "GPM IMERG (rainfall)", status: "Demo farm only", note: "IMERG Final V07 monthly rain (0.1°, 2001 to 2025-09) is shown for the sample farm beside NASA POWER rain in Satellite checks. The scores use NASA POWER rain." },
-  { name: "MODIS, Landsat (vegetation)", status: "Not used", note: "Vegetation stress is not measured." },
-  { name: "ECOSTRESS, GRACE and GRACE-FO", status: "Not used", note: "Not needed for the lot-level questions this app answers." },
+  { name: "SMAP (soil moisture)", status: "Used", note: "SMAP L4 (SPL4SMGP v8, 9 km, 2015-2025) is shown in Satellite checks (sample farm built in; drawn lots fetched through our server), as a check. The scores use NASA POWER soil wetness." },
+  { name: "GPM IMERG (rainfall)", status: "Used", note: "IMERG Final V07 monthly rain (0.1°, 2001 to 2025-09) is shown beside NASA POWER rain in Satellite checks (sample farm built in; drawn lots fetched through our server). The scores use NASA POWER rain." },
+  { name: "MODIS, Landsat and Sentinel-2 (vegetation)", status: "Used", note: "MODIS MOD13Q1 NDVI (250 m, 2001-2025) and HLS NDVI (Landsat and Sentinel-2, 30 m, 2013-2026) are shown in Satellite checks (sample farm built in; drawn lots fetched through our server), by month. The scores do not use them." },
+  { name: "ECOSTRESS (evaporation)", status: "Used", note: "ECOSTRESS ESI and daily ET (70 m, 2018-2026, clear-sky passes only) are shown in Satellite checks (sample farm built in; drawn lots fetched through our server). The scores work out evaporation from NASA POWER with the FAO-56 method." },
+  { name: "FLDAS (land surface model)", status: "Used", note: "FLDAS Noah monthly soil moisture, evapotranspiration, rain and runoff (0.1°, 2001-2025) are shown in Satellite checks (sample farm built in; drawn lots fetched through our server). The scores do not use them." },
+  { name: "GRACE and GRACE-FO (water storage)", status: "Not used", note: "They measure water stored over large regions, far coarser than a farm lot." },
+  { name: "GEDI (forest structure)", status: "Not used", note: "It measures the height and structure of forests and other vegetation, not field crops." },
 ];
 
 /** Known limitations to state openly (docs/07 §8), plus the ones found while building. */
@@ -456,3 +469,14 @@ export const LIMITATIONS: readonly string[] = [
 export function fill(text: string, vars: Readonly<Record<string, string>>): string {
   return text.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? vars[k] : m));
 }
+
+/**
+ * One line under the lot comparison's layer switch (#171): what the selected layer measures.
+ * Keys match `CutoutLayer` in components/lot-cutout-core.ts.
+ */
+export const CUTOUT_LAYER_ABOUT = {
+  soil: "A relative soil health index from this app's model after 3 years of the plan, starting at 50. Higher is better. Not a soil test.",
+  fit: "How well the crops suit this lot's water and temperature. The weakest crop sets the level.",
+  wetness: "How wet the root zone is in the months a crop is in the field, from 0 (dry) to 1 (saturated).",
+  rain: "Rain that falls in the months a crop is in the field, in a dry year (1 year in 5 is this dry or drier).",
+} as const;

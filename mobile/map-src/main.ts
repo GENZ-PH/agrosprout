@@ -28,6 +28,7 @@ import {
   type MapToApp,
   type ShapeFix,
 } from "../src/map/bridge";
+import { GIBS_OVERLAYS, gibsTileUrl, type OverlayId } from "../src/map/gibs-layers";
 import type { LonLat } from "../src/types";
 import { cleanSketch, closeRing, corners, CLEANUP, isSimpleRing, pointInRing, ringAreaM2 } from "./cleanup";
 
@@ -111,6 +112,24 @@ function setBasemap(id: BasemapId) {
   tiles = L.tileLayer(b.url, { attribution: b.attribution, maxNativeZoom: b.maxNativeZoom, maxZoom: 20 }).addTo(map);
 }
 
+// NASA GIBS overlay (dashboard farm map): one layer at a time, between the basemap and the lots.
+// Offline or on a failed tile, Leaflet leaves that tile empty and the lots still draw.
+let overlay: L.TileLayer | null = null;
+function setOverlay(id: OverlayId | null) {
+  overlay?.remove();
+  overlay = null;
+  if (!id) return;
+  const o = GIBS_OVERLAYS[id];
+  overlay = L.tileLayer(gibsTileUrl(o), {
+    attribution: `<a href="https://nasa-gibs.github.io/gibs-api-docs/">NASA GIBS</a>: ${o.product}, ${o.date}`,
+    maxNativeZoom: o.maxNativeZoom,
+    maxZoom: 20,
+    opacity: 0.6,
+    // Over the basemap (tilePane z 200), under the lots (overlayPane 400).
+    zIndex: 10,
+  }).addTo(map);
+}
+
 // ---------------------------------------------------------------------------
 // Terra Draw
 // ---------------------------------------------------------------------------
@@ -122,6 +141,8 @@ const WHITE = "#FFFFFF";
 const adapter = new TerraDrawLeafletAdapter({ lib: L, map });
 
 let mode: MapMode = "view";
+/** Set by `init`: the map sits inside a scrolling page (the dashboard), see bridge.ts. */
+let inPage = false;
 let activeLotId: string | undefined;
 
 // Dashboard farm map (#124): a lot with a style is filled with its color, and the lot the
@@ -208,6 +229,11 @@ const lastRing = new Map<string, string>();
 const labels = new Map<string, L.Tooltip>();
 const placesLayer = L.layerGroup().addTo(map);
 let gpsLayer: L.LayerGroup | null = null;
+/** The name of the last searched place (#196), shown for SEARCH_LABEL_MS at its spot. */
+let searchLabel: L.Tooltip | null = null;
+let searchLabelTimer: ReturnType<typeof setTimeout> | undefined;
+const SEARCH_LABEL_MS = 4000;
+const reducedMotion = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
 const ringOf = (id: string): LonLat[] | null => {
   const f = draw.getSnapshotFeature(id);
@@ -375,13 +401,18 @@ function setMode(next: MapMode, lotId?: string) {
     map.dragging.disable();
     draw.setMode("freehand");
   } else {
-    map.dragging.enable();
+    // Dashboard overview ("view"): the page scrolls past the map, so the mouse wheel scrolls the
+    // page and, on a phone, one finger scrolls the page too. The + and - buttons still zoom.
+    if (next === "view" && inPage && L.Browser.mobile) map.dragging.disable();
+    else map.dragging.enable();
     if (next === "corners") draw.setMode("polygon");
     else if (next === "select") {
       draw.setMode("select");
       if (lotId && draw.hasFeature(lotId)) draw.selectFeature(lotId);
     } else draw.setMode("static"); // "view" and "pin": lots show without points, taps don't select
   }
+  if (next === "view" && inPage) map.scrollWheelZoom.disable();
+  else map.scrollWheelZoom.enable();
   document.body.dataset.mode = next;
 }
 
@@ -477,7 +508,9 @@ function receive(msg: AppToMap) {
   switch (msg.type) {
     case "init": {
       setBasemap(msg.basemap ?? DEFAULT_BASEMAP);
+      setOverlay(msg.overlay ?? null);
       if (msg.inset) inset = msg.inset;
+      inPage = msg.inPage === true;
       setLots(msg.lots);
       setPlaces(msg.places);
       if (msg.lots.length) fitLots();
@@ -501,9 +534,34 @@ function receive(msg: AppToMap) {
     case "setInset":
       inset = msg.inset;
       break;
+    case "overlay":
+      setOverlay(msg.id);
+      break;
     case "zoomIn":
       if (map.getZoom() < msg.zoom) map.setZoom(msg.zoom);
       break;
+    case "flyTo": {
+      const at: [number, number] = [msg.lat, msg.lon];
+      // Centre the place in the part of the map the app's panels leave visible, not behind them.
+      const shift = L.point((inset.right - inset.left) / 2, (inset.bottom - inset.top) / 2);
+      const centre = map.unproject(map.project(at, msg.zoom).add(shift), msg.zoom);
+      if (reducedMotion()) map.setView(centre, msg.zoom);
+      else map.flyTo(centre, msg.zoom, { duration: 1.2 });
+      clearTimeout(searchLabelTimer);
+      searchLabel?.remove();
+      searchLabel = null;
+      if (msg.label) {
+        searchLabel = L.tooltip({ permanent: true, direction: "top", interactive: false })
+          .setLatLng(at)
+          .setContent(msg.label)
+          .addTo(map);
+        searchLabelTimer = setTimeout(() => {
+          searchLabel?.remove();
+          searchLabel = null;
+        }, SEARCH_LABEL_MS);
+      }
+      break;
+    }
     case "gps": {
       gpsLayer?.remove();
       const at: [number, number] = [msg.lat, msg.lon];

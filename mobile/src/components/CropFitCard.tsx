@@ -1,7 +1,9 @@
 import { StyleSheet, Text, View } from "react-native";
+import { tr } from "../i18n/lang-store";
 
 import type { CropFit, FitLevel } from "../engine";
 import { FIT_COLORS } from "./farm-map-core";
+import { CropImage } from "./CropImage";
 import { Bullets, InfoCard } from "./InfoCard";
 import { FIT_LABELS, fitReasonText, fitSeasonsText, GOOD_FIT_TEXT, shortCropName } from "./recommendations-core";
 import { colors, radius, space, text } from "./theme";
@@ -14,6 +16,8 @@ type Props = {
   fits: readonly CropFit[];
   cropName: (id: string) => string;
   period: string;
+  /** A data caveat to show under the crops, e.g. the NASA cell's average height. */
+  note?: string;
 };
 
 /**
@@ -27,7 +31,7 @@ const BADGE: Record<FitLevel, { bg: string; fg: string; border: string }> = {
   unknown: { bg: colors.disabledBg, fg: FIT_COLORS.unknown, border: colors.disabledBg },
 };
 
-export function CropFitCard({ fits, cropName, period }: Props) {
+export function CropFitCard({ fits, cropName, period, note }: Props) {
   return (
     <InfoCard title="Your crops here" explainer="your-crops" period={period} subtitle="How well this lot suits each crop you grow.">
       <View style={styles.list}>
@@ -38,6 +42,7 @@ export function CropFitCard({ fits, cropName, period }: Props) {
           return (
             <View key={`${fit.crop_id}-${i}`} style={[styles.crop, i > 0 && styles.divider]}>
               <View style={styles.row}>
+                <CropImage cropId={fit.crop_id} size={40} />
                 <Text style={[text.bodyStrong, styles.flex]}>{name}</Text>
                 <FitBadge level={fit.level} />
               </View>
@@ -47,6 +52,7 @@ export function CropFitCard({ fits, cropName, period }: Props) {
           );
         })}
       </View>
+      {note ? <Text style={text.caption}>{note}</Text> : null}
     </InfoCard>
   );
 }
@@ -56,7 +62,7 @@ export function FitBadge({ level }: { level: FitLevel }) {
   const b = BADGE[level];
   return (
     <View style={[styles.badge, { backgroundColor: b.bg, borderColor: b.border }]}>
-      <Text style={[styles.badgeText, { color: b.fg }]}>{FIT_LABELS[level]}</Text>
+      <Text style={[styles.badgeText, { color: b.fg }]}>{tr(FIT_LABELS[level])}</Text>
     </View>
   );
 }
