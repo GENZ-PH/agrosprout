@@ -42,7 +42,7 @@ years (n_years) and the number of valid samples (n_samples). Low-NDVI months (MO
 a calendar month is listed when its p50 NDVI is below LOW_NDVI (0.4); the rule is stated in the file.
 
 Credentials: AppEEARS /login takes HTTP Basic with the Earthdata Login user and password, read at
-run time from the netrc at EARTHDATA_NETRC (default ~/infrastructure/.secrets/earthdata.netrc,
+run time from the netrc at EARTHDATA_NETRC (default ~/.netrc,
 machine urs.earthdata.nasa.gov). The returned AppEEARS token lives in memory only; it is sent as a
 bearer header only to *.nasa.gov (earthdata._Redirect drops it on redirect to S3). Only the task id
 is cached (pipeline/raw/appeears/task.json). Standard library only.
@@ -74,7 +74,7 @@ RAW_DIR = Path(__file__).parent / "raw" / "appeears"
 TASK_FILE = RAW_DIR / "task.json"
 OUT_DIR = ROOT / "mobile" / "assets" / "data" / "demo"
 API = "https://appeears.earthdatacloud.nasa.gov/api"
-DEFAULT_NETRC = Path.home() / "infrastructure" / ".secrets" / "earthdata.netrc"
+DEFAULT_NETRC = Path.home() / ".netrc"
 EDL_HOST = "urs.earthdata.nasa.gov"
 
 FARM_ID = "lanao-norte-demo-1"
