@@ -4,13 +4,16 @@
 
 /** One town row of `places-ph.json` (`places`): [name, province, lat, lon]. */
 export type PlaceRow = readonly [string, string, number, number];
-/** One barangay row of `places-ph.json` (`barangays`): [name, index of its town in `places`, lat, lon]. */
-export type BarangayRow = readonly [string, number, number, number];
+/**
+ * One barangay row of `places-ph.json` (`barangays`): [name, index of its town in `places`, lat, lon], plus `1` when
+ * GeoNames gives no town and the pipeline took the nearest one in the same province (the app says "near <town>").
+ */
+export type BarangayRow = readonly [string, number, number, number, 1?];
 
 export interface Place {
   kind: "town" | "barangay";
   name: string;
-  /** The result's second line: the province for a town, "Town, Province" for a barangay. */
+  /** The result's second line: the province for a town, "Town, Province" (or "near Town, Province") for a barangay. */
   detail: string;
   lat: number;
   lon: number;
@@ -60,11 +63,11 @@ export function toPlaces(rows: readonly PlaceRow[], barangays: readonly Barangay
     return { kind: "town", name, detail: province, lat, lon, norm, core: coreName(name), full: norm };
   });
   const out = [...towns];
-  for (const [name, town, lat, lon] of barangays) {
+  for (const [name, town, lat, lon, near] of barangays) {
     const t = towns[town];
     if (!t) continue;
     const norm = normalize(name);
-    const detail = t.detail ? `${t.name}, ${t.detail}` : t.name;
+    const detail = `${near ? "near " : ""}${t.detail ? `${t.name}, ${t.detail}` : t.name}`;
     out.push({ kind: "barangay", name, detail, lat, lon, norm, core: norm, full: `${norm} ${t.core}` });
   }
   return out;

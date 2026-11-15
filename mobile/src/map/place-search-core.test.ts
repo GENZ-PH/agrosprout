@@ -51,6 +51,15 @@ test("barangay then town: typing part of the town picks the right barangay", () 
   assert.match(first.detail, /^Iligan City, /);
 });
 
+test("a barangay whose town GeoNames doesn't give says near the nearest town", () => {
+  const [first] = searchPlaces(P, "bonbonon ili");
+  assert.equal(first.title, "Bonbonon");
+  assert.equal(first.detail, "near Iligan City, Lanao del Norte");
+  const near = toPlaces([["Iligan City", "Lanao del Norte", 8.231, 124.261]], [["Tibanga", 0, 8.24, 124.24, 1]]);
+  assert.equal(searchPlaces(near, "tibanga")[0].detail, "near Iligan City, Lanao del Norte");
+  assert.equal(searchPlaces(near, "tibanga ili")[0].title, "Tibanga");
+});
+
 test("towns before barangays with the same name", () => {
   const hits = searchPlaces(P, "tubod");
   const firstBarangay = hits.findIndex((h) => h.zoom === BARANGAY_ZOOM);

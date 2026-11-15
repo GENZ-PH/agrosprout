@@ -60,9 +60,52 @@ class BuildPlacesTest(unittest.TestCase):
         self.assertEqual(out["barangays"], [["Dalipuga", 0, 8.312, 124.257]])
         self.assertEqual(out["places"][0][0], "Iligan City")
 
-    def test_barangay_without_a_known_town_is_skipped(self):
-        rows = [LANAO, ILIGAN, VILLAGE, line("Somewhere", "8.1", "124.1", "PPL", "10", "34", admin3="999999999")]
+    def test_barangay_without_a_town_gets_the_nearest_town_in_its_province_marked_near(self):
+        rows = [LANAO, ILIGAN, TUBOD, line("Tibanga", "8.24", "124.24", "ADM4", "10", "34")]
+        out = b.build(b.parse(rows), "2026-11-15")
+        self.assertEqual(out["barangays"], [["Tibanga", 0, 8.24, 124.24, 1]])
+        self.assertEqual(out["meta"]["barangay_near_count"], 1)
+
+    def test_unknown_town_code_is_treated_like_no_town(self):
+        rows = [LANAO, ILIGAN, line("Somewhere", "8.2", "124.2", "PPL", "10", "34", admin3="999999999")]
+        self.assertEqual(b.build(b.parse(rows), "2026-11-15")["barangays"], [["Somewhere", 0, 8.2, 124.2, 1]])
+
+    def test_nearest_counts_known_barangays_not_only_town_centres(self):
+        rows = [
+            LANAO,
+            ILIGAN,
+            TUBOD,
+            line("Pualas", "8.20", "124.15", "PPL", "10", "34", admin3="103522000"),
+            line("Baris", "8.20", "124.16", "ADM4", "10", "34"),
+        ]
+        out = b.build(b.parse(rows), "2026-11-15")
+        self.assertIn(["Baris", 1, 8.2, 124.16, 1], out["barangays"])
+
+    def test_nearest_town_never_comes_from_another_province(self):
+        rows = [
+            LANAO,
+            ILIGAN,
+            line("Province of Misamis Oriental", "8.5", "124.6", "ADM2", "10", "43"),
+            line("Naawan", "8.43", "124.29", "ADM3", "10", "43", "20000", "104318000"),
+            line("Mandulog", "8.40", "124.29", "ADM4", "10", "34"),
+        ]
+        out = b.build(b.parse(rows), "2026-11-15")
+        iligan = [p[0] for p in out["places"]].index("Iligan City")
+        self.assertEqual(out["barangays"], [["Mandulog", iligan, 8.4, 124.29, 1]])
+
+    def test_barangay_without_a_town_in_its_province_is_skipped(self):
+        rows = [LANAO, ILIGAN, line("Somewhere", "8.1", "124.1", "PPL", "10", "99")]
         self.assertEqual(b.build(b.parse(rows), "2026-11-15")["barangays"], [])
+
+    def test_known_town_wins_over_a_guess_with_the_same_name(self):
+        rows = [
+            LANAO,
+            ILIGAN,
+            line("Dalipuga", "8.3", "124.25", "ADM4", "10", "34"),
+            line("Dalipuga", "8.31", "124.26", "PPL", "10", "34", admin3="103504000"),
+        ]
+        out = b.build(b.parse(rows), "2026-11-15")
+        self.assertEqual(out["barangays"], [["Dalipuga", 0, 8.31, 124.26]])
 
     def test_barangay_listed_once_when_adm4_and_ppl_both_have_it(self):
         rows = [
