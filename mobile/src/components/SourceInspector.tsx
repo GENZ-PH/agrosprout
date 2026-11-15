@@ -362,6 +362,10 @@ export function OverviewBody({ c }: { c: PanelContext }) {
     "The app works out each crop's water need month by month (FAO-56) and how much of it rain covers in a dry, typical and wet year.",
     "It builds your crops (A) and three other plans (B to D), and scores each on eight things: fits your rain, weather safety, builds soil, protects from washout, breaks pest cycles, income, easy to get to market and easy to manage.",
     "What matters to you sets the weights. Each plan lists why, the evidence, the benefits, the trade-offs, what is not known and what to check with your agricultural technician.",
+    c.demo
+      ? "Other NASA data is set beside the results as a check: GPM IMERG rain, SMAP soil moisture, MODIS and HLS greenness, ECOSTRESS plant water stress, the FLDAS land model and SRTM elevation. It is bundled with the sample farm and does not change the scores."
+      : "Other NASA data is set beside the results as a check: GPM IMERG rain, SMAP soil moisture, the FLDAS land model and SRTM elevation, and MODIS, HLS and ECOSTRESS when NASA AppEEARS has them ready. Our server asks NASA for them for the same rounded point. They do not change the scores.",
+    "SI (Claude, by Anthropic) writes short notes in plain words from the app's own results and NASA numbers, never from your location. Each note says where it comes from, and it can be wrong.",
   ];
   return (
     <>
@@ -448,6 +452,7 @@ export function OverviewBody({ c }: { c: PanelContext }) {
             "Past records, not a forecast.",
             "One NASA POWER cell is about 50 km wide, so your own field can be wetter, drier, warmer or cooler.",
             "Soil health is a relative indicator from this model, not a soil test.",
+            ...(c.demo ? [] : ["For a lot you draw, the satellite checks cover the last 3 years only, so their dry and wet years are rougher than NASA POWER's 25."]),
             "Income and labor are not scored yet: the crop list has no local prices or labor needs.",
           ].map((t) => (
             <View key={t} style={styles.bullet}>
