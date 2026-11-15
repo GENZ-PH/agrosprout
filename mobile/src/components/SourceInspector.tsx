@@ -11,6 +11,7 @@ import { router } from "expo-router";
 import {
   closeInspector,
   getInspector,
+  getNotice,
   getPanelContext,
   openInspector,
   openOverview,
@@ -66,7 +67,26 @@ export function DockedInspector() {
   return (
     <View style={[styles.dock, { width: dock }]} accessibilityLabel="NASA data panel">
       <DockHandle windowWidth={width} current={dock} />
+      <PanelNotice />
       <PanelBody state={state} context={context} />
+    </View>
+  );
+}
+
+/** The notice from a page link ("NASA data is now open here"), for 3 seconds, with a green flash. */
+function PanelNotice() {
+  const n = useSyncExternalStore(subscribeInspector, getNotice, getNotice);
+  const [hidden, setHidden] = useState<number | null>(null);
+  useEffect(() => {
+    if (!n) return;
+    const t = setTimeout(() => setHidden(n.at), 3000);
+    return () => clearTimeout(t);
+  }, [n]);
+  if (!n || hidden === n.at) return null;
+  return (
+    <View style={styles.notice} accessibilityRole="alert" accessibilityLiveRegion="polite">
+      <Icon name="check" size={18} color={colors.white} />
+      <Text style={styles.noticeText}>{n.text}</Text>
     </View>
   );
 }
@@ -266,6 +286,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 const styles = StyleSheet.create({
+  notice: { flexDirection: "row", alignItems: "center", gap: space.sm, paddingHorizontal: space.md, paddingVertical: space.sm, backgroundColor: colors.green },
+  noticeText: { flex: 1, fontSize: 14, fontWeight: "700", color: colors.white },
   handle: { position: "absolute", left: -5, top: 0, bottom: 0, width: 10, zIndex: 5, alignItems: "center", justifyContent: "center", cursor: "col-resize" } as object,
   handleActive: { backgroundColor: colors.greenTint },
   grip: { width: 4, height: 40, borderRadius: 2, backgroundColor: colors.borderStrong },

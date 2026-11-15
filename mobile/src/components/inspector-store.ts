@@ -44,6 +44,20 @@ export function openOverview(): void {
   emit();
 }
 
+/**
+ * A short notice on the docked panel (2026-11-15): a link that opens the panel says where it is,
+ * also when it was open already (on a big window it starts open, so the click otherwise did nothing).
+ */
+let notice: { text: string; at: number } | null = null;
+export const getNotice = () => notice;
+
+/** Opens the overview from a link on the page, and says so on the panel. */
+export function showOverview(): void {
+  notice = { text: state?.view === "overview" ? "The NASA data is open here, on the right." : "NASA data is now open here, on the right.", at: Date.now() };
+  if (state?.view === "overview") emit();
+  else openOverview();
+}
+
 /** The header button: opens the overview, or closes the panel when it is open. */
 export function toggleOverview(): void {
   if (state) closeInspector();

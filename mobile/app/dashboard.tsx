@@ -12,7 +12,7 @@ import { Header } from "../src/components/Header";
 import { HarvestCard } from "../src/components/HarvestCard";
 import { Icon, type IconName } from "../src/components/Icon";
 import { NasaDataButton } from "../src/components/NasaDataButton";
-import { openOverview, setPanelContext } from "../src/components/inspector-store";
+import { openOverview, setPanelContext, showOverview } from "../src/components/inspector-store";
 import { canDock } from "../src/components/SourceInspector";
 import type { SourceKey } from "../src/content/sources";
 import { WhatIfCard } from "../src/components/WhatIfCard";
@@ -147,10 +147,10 @@ export default function DashboardScreen() {
             />
           ) : null;
           return oneRowHeader ? (
-            <Header title="Your farm" middle={tabs} right={<NasaDataButton />} />
+            <Header logo title="Your farm" middle={tabs} right={<NasaDataButton />} />
           ) : (
             <>
-              <Header title="Your farm" right={<NasaDataButton />} />
+              <Header logo title="" right={<NasaDataButton />} />
               {tabs}
             </>
           );
@@ -332,6 +332,8 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
           cropById={cropById}
           period={period}
           initialKey={topPick(analysis.rotations.options)?.key}
+          monthly={data.monthly}
+          whatIf={scenario !== null}
         />
       );
       const whatIf = (
@@ -476,7 +478,7 @@ function NextSteps({ lot, stage, hasPlaces }: { lot: Lot; stage: 1 | 2; hasPlace
       icon: "info",
       title: "Details for your technician",
       body: "Every plan, its scores and the NASA data behind them.",
-      onPress: openOverview,
+      onPress: showOverview,
     },
   ];
   return (

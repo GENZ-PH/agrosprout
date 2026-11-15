@@ -72,6 +72,7 @@ const styles = StyleSheet.create({
   edge: { flexGrow: 1 },
   footer: { ...column, gap: space.sm, paddingTop: space.sm, paddingBottom: space.lg },
   wide: { maxWidth: MAX_WIDE_WIDTH },
-  headerBar: { backgroundColor: colors.bg, borderBottomWidth: 1, borderBottomColor: colors.border, zIndex: 2 },
+  // Solid white, so the fixed header (logo, lot tabs) stands apart from the cream page.
+  headerBar: { backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border, zIndex: 2 },
   headerInner: { ...column, gap: space.xs, paddingTop: space.sm, paddingBottom: space.sm },
 });
