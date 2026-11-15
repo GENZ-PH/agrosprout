@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Disclaimer } from "../src/components/Disclaimer";
+import { FooterLinks } from "../src/components/FooterLinks";
 import { Header } from "../src/components/Header";
 import { Screen } from "../src/components/Screen";
 import { colors, MIN_TOUCH, radius, space, text } from "../src/components/theme";
@@ -131,6 +132,7 @@ export default function CreditsScreen() {
       <Section title="SI tools">
         <Items items={SI_CREDITS} />
       </Section>
+      <FooterLinks />
     </Screen>
   );
 }

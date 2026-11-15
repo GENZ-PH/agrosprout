@@ -36,6 +36,8 @@ export const explainBody = z.object({
   checkLocally: lines,
   confidence: z.enum(["high", "medium", "low"]),
   confidenceReasons: lines,
+  /** "farmer" (default): the plain summary on the card. "technician": what in the data matters most, for the NASA data panel. */
+  audience: z.enum(["farmer", "technician"]).optional(),
 });
 export type ExplainBody = z.infer<typeof explainBody>;
 
@@ -55,6 +57,19 @@ Rules:
 - Use only the facts in the data. Never add a number, a price, a yield, a date or a fact that is not in the data.
 - Do not tell the farmer what to do; say what the results show.
 - 2 or 3 short sentences, plain text only. No headings, lists, bold or emoji. No jargon: say "rain" not "precipitation".`;
+
+// For the NASA data panel (2026-11-15): the technician sees every plan, score and NASA source, so
+// SI points out which of it matters most for this lot's decision and what to verify on the ground.
+const TECH_SYSTEM = `You help an agricultural technician in the Philippines read the results of a crop rotation engine for one farmer's plot.
+The technician's panel already lists every plan, all scores and the NASA data sources. Do not repeat those lists.
+
+Write only what makes the panel easier to act on:
+- which one or two results drive the suggestion most, and why that matters for this plot;
+- which result is the weakest or most uncertain, and what to verify on the ground before advising the farmer.
+
+Rules:
+- Use only the facts and numbers in the data. Never add a number, a price, a yield, a date or a fact that is not in the data.
+- 3 short sentences at most. Plain text only, no headings, lists, bold or emoji.`;
 
 function userText(b: ExplainBody): string {
   const section = (title: string, xs: string[]) => (xs.length ? `${title}:\n${xs.map((x) => `- ${x}`).join("\n")}\n` : "");
@@ -99,7 +114,7 @@ export const explain = new Hono<{ Bindings: Env }>().post("/", validate("json", 
     const res = await client.beta.messages.create({
       model: MODEL,
       max_tokens: 4000,
-      system: SYSTEM,
+      system: body.audience === "technician" ? TECH_SYSTEM : SYSTEM,
       output_config: { effort: "low" },
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",

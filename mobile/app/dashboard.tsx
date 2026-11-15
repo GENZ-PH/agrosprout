@@ -36,6 +36,8 @@ import { MonthsCompareList } from "../src/components/SeasonCompareCard";
 import { SoilHealthChart } from "../src/components/SoilHealthChart";
 import { FarmerSuggestion } from "../src/components/FarmerSuggestion";
 import { FadeIn, LotSkeleton } from "../src/components/Skeleton";
+import { ExplainWithSI } from "../src/components/ExplainWithSI";
+import { explainRequest } from "../src/components/explain-core";
 import { longerSeasons } from "../src/components/farmer-core";
 import { colors, MAX_CONTENT_WIDTH, radius, space, text } from "../src/components/theme";
 import { useLayout } from "../src/components/useLayout";
@@ -360,6 +362,14 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
           monthly={data.monthly}
         />
       ) : null;
+      const pickExplanation = pick ? analysis.explanations.find((e) => e.option_key === pick.key) : undefined;
+      const techRequest =
+        pick && pickExplanation
+          ? {
+              ...explainRequest({ pick, a, explanation: pickExplanation, cropName, componentsLeftOut: analysis.rotations.components_left_out }),
+              audience: "technician" as const,
+            }
+          : null;
       const monthsHref = { pathname: "/months", params: { lot: lot.id } } as const;
       return (
         <>
@@ -408,6 +418,8 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
             demo={data.kind === "demo"}
             details={
               <>
+                {/* SI for the technician (2026-11-15): which results drive the suggestion, and what to verify. */}
+                {techRequest ? <ExplainWithSI key={JSON.stringify(techRequest)} request={techRequest} auto={scenario === null} title="What matters most here (SI)" /> : null}
                 {recommendations}
                 {monthsCompare}
                 {fit}

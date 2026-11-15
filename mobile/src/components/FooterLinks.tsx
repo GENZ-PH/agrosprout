@@ -1,12 +1,19 @@
 import { router } from "expo-router";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+
+import { AboutDialog } from "./AboutDialog";
 
 import { colors, MIN_TOUCH, space } from "./theme";
 
-/** Links to Edit farm (#35), the Learn and Data and limits pages (#31), and Licenses and credits. */
+/** About AgroSprout (a dialog), then links to Edit farm (#35), Learn and Data and limits (#31), and Licenses and credits. */
 export function FooterLinks() {
+  const [about, setAbout] = useState(false);
   return (
     <View style={styles.row}>
+      <Pressable onPress={() => setAbout(true)} accessibilityRole="button" style={styles.link}>
+        <Text style={styles.text}>About AgroSprout</Text>
+      </Pressable>
       <Pressable onPress={() => router.push("/edit-farm")} accessibilityRole="link" style={styles.link}>
         <Text style={styles.text}>Edit farm</Text>
       </Pressable>
@@ -19,6 +26,7 @@ export function FooterLinks() {
       <Pressable onPress={() => router.push("/credits")} accessibilityRole="link" style={styles.link}>
         <Text style={styles.text}>Credits</Text>
       </Pressable>
+      <AboutDialog visible={about} onClose={() => setAbout(false)} />
     </View>
   );
 }
