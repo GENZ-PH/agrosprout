@@ -45,7 +45,7 @@ Priority chips (save water, build soil, extra income, less work) re-rank the opt
 
 POWER's native grid is a 0.5° × 0.625° cell, so the climate is a regional average, not a field measurement. Each value the app shows carries its source, resolution, and period.
 
-<!-- Team: list SMAP, MODIS, or Sentinel-2 here only after they're actually used in the app (#5, #13, #42). -->
+**NASA satellite and model checks** (shown beside the results and given to the SI notes; the scores use NASA POWER only): GPM IMERG monthly rain, SMAP L4 soil moisture, MODIS MOD13Q1 NDVI, HLS NDVI (Landsat and Sentinel-2), ECOSTRESS ESI and daily ET (both via NASA AppEEARS), FLDAS Noah land model and SRTM slope. The sample farm has them bundled; for a drawn lot the app asks our API Worker, which calls NASA for the lot centre rounded to 0.1° with the Earthdata login kept as a Worker secret (decision D35). The dashboard map can also show NASA GIBS layers: greenness, rain, soil moisture and land temperature. Datasets, DOIs and periods: [THIRD_PARTY.md](THIRD_PARTY.md) and the app's *NASA data used* tab.
 
 **How the data drives the results:** ET₀ (FAO-56 Penman-Monteith) times each crop's coefficient gives its monthly water need. Comparing that with effective rainfall gives a water-stress index per crop and month, which drives the "Fits your rain" score, the stress months on the calendar, and the planting-month scan. Temperature sets crop fit and heat risk, root-zone wetness flags waterlogging, and heavy-rain days weigh how much a bare field would wash out.
 
