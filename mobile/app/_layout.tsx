@@ -14,8 +14,11 @@ import {
   queryPersister,
   shouldPersistQuery,
 } from "../src/state/query-client";
+import { patchTextForTranslation } from "../src/i18n/auto-text";
 import { useLang } from "../src/i18n/lang-store";
 import "../src/state/stores"; // starts loading every persisted store at launch
+
+patchTextForTranslation();
 
 // Root providers only. Screens and navigation design belong to the Frontend track.
 export default function RootLayout() {

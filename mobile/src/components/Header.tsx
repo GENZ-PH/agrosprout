@@ -67,7 +67,8 @@ export function Header({ title, leading = "back", fallbackHref = "/", right, mid
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: space.sm },
+  // Above the lot tabs that follow it, so the language menu opens over them.
+  wrap: { gap: space.sm, zIndex: 30 },
   row: { flexDirection: "row", alignItems: "center", gap: 4, minHeight: 48 },
   lead: {
     width: MIN_TOUCH,
