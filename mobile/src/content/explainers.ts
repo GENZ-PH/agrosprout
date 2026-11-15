@@ -374,6 +374,14 @@ export const DATA_SOURCES: readonly DataSource[] = [
     url: "https://www.naturalearthdata.com/",
   },
   {
+    name: "GeoNames Philippines (cities and municipalities)",
+    used_for:
+      "The place search on the lots map: town and city names and positions, kept on your phone, so nothing you type is sent. Town names and positions: GeoNames (CC BY 4.0).",
+    period: "Retrieved 2026-11-15",
+    resolution: "1,646 cities and municipalities; positions rounded to about 100 m",
+    url: "https://www.geonames.org/",
+  },
+  {
     name: "Crop library (crops.json)",
     used_for: "Season length, planting calendars, waterlogging and drought tolerance and other crop traits. Each value has its own citation in the file.",
     period: "See each citation",
