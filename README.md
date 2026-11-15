@@ -9,11 +9,10 @@ An offline-first app that helps smallholder farmers compare crop-rotation strate
 
 | Try it | Link |
 |---|---|
-| Web app | https://agrosprout.inovsea.com (deploys from `main`; final link confirmed in #50) |
-| Android APK | *Link added after the first EAS build (#38)* |
-| Demo deck | *Link added with the 7-slide deck (#51)* |
+| Web app (no login) | https://agrosprout.inovsea.com (also https://agrosprout.pages.dev). Tap **See a sample farm** for full results without drawing. |
+| Demo deck (7 slides) | [docs/submission/demo-deck.pdf](docs/submission/demo-deck.pdf) |
 
-> **Status: README v1, Sat Nov 14.** The rotation engine, the NASA POWER data layer, and the lot map work today; the remaining screens are being built. See [What works today](#what-works-today). The final README lands with #52.
+> **Status: submitted version, Sun Nov 15, 2026.** The web app is complete for judging. See [What works today](#what-works-today). An Android build is future work.
 
 ## Who it's for
 
@@ -76,10 +75,11 @@ flowchart LR
 | NASA POWER live fetch and parser, on-device ET₀ | Built, unit-tested |
 | Demo farm from NASA POWER daily data and SRTM elevation (`pipeline/`) | Built, tested |
 | Travel time: road route with an offline estimate | Built, unit-tested |
-| S0 Welcome and S1 lot map (sketch to clean plot, draggable points, tap corners, pin) | Built; lots are saved on the phone once #18 lands |
-| S2 crops, S3 dashboard, S4 and S5 months, S6 harvest destinations, priority chips | In progress (#25, #29, #34, #30, #40) |
-| Crop library `crops.json` with cited values | In progress (#11); engine tests use a cited subset |
-| Offline behavior and Android APK | In progress (#36, #38) |
+| S0 Welcome and S1 lot map (sketch to clean plot, draggable points, tap corners, pin) | Built; lots are saved on the phone |
+| S2 crops, S3 dashboard, S4 and S5 months, S6 harvest destinations, priority chips | Built |
+| Crop library `crops.json` with cited values (22 crops) | Built |
+| Offline: saved results open without signal (web) | Built |
+| Android APK | Not built; future work |
 
 ## Run it
 
@@ -135,4 +135,4 @@ Third-party services, data, and libraries, with their licenses and terms: [THIRD
 
 Code: [MIT](LICENSE), Copyright (c) 2026 Team Jeoleecation. Crop photos, NASA and other data, OpenStreetMap map data, fonts and icons keep their own licenses and terms; see [THIRD_PARTY.md](THIRD_PARTY.md).
 
-<!-- Team: add member names as registered on the Space Apps site before submission (#52). -->
+Team Jeoleecation: RomartM, DMNCLDLPRT, johrald1, earnieacts.

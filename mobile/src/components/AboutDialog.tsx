@@ -105,7 +105,7 @@ export function AboutDialog({ visible, onClose }: { visible: boolean; onClose: (
                 Farms with NASA Data.
               </Text>
               <Text style={text.small}>{TEAM.join(", ")}</Text>
-              <Pressable onPress={() => Linking.openURL("https://github.com/GENZ-PH/agrosprout")} accessibilityRole="link">
+              <Pressable onPress={() => Linking.openURL("https://github.com/InovSea/agrosprout")} accessibilityRole="link">
                 <Text style={styles.link}>Source code on GitHub</Text>
               </Pressable>
               <Text style={text.caption}>Not affiliated with or endorsed by NASA.</Text>
