@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { tr } from "../i18n/lang-store";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { cropById } from "../data/crops";
@@ -39,7 +40,7 @@ export function TopCrops({ lotName, top, period, chosen, onChoose, noFit }: Prop
     <View style={styles.block}>
       <View style={styles.head}>
         <Text style={[text.bodyStrong, styles.flex]} accessibilityRole="header">
-          {none ? "No good match for this lot" : `Top ${top.length} for this lot`}
+          {none ? tr("No good match for this lot") : tr("Top {n} for this lot", { n: top.length })}
         </Text>
         <Pressable
           onPress={() => setInfo((v) => !v)}
@@ -65,7 +66,7 @@ export function TopCrops({ lotName, top, period, chosen, onChoose, noFit }: Prop
           ))}
         </View>
       )}
-      <Text style={text.caption}>{TOP_CROPS_CAPTION}</Text>
+      <Text style={text.caption}>{tr(TOP_CROPS_CAPTION)}</Text>
     </View>
   );
 }

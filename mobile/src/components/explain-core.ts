@@ -21,6 +21,7 @@ export type ExplainRequest = {
   audience?: "farmer" | "technician";
   /** NASA satellite and model checks for the lot (`satelliteYearFacts`); they do not change the scores. */
   satellite?: string[];
+  lang?: "tl" | "ceb";
 };
 
 const MAX_LINES = 8;
@@ -35,6 +36,7 @@ export function explainRequest(args: {
   cropName: (id: string) => string;
   componentsLeftOut: readonly ComponentKey[];
   satellite?: readonly string[];
+  lang?: "en" | "tl" | "ceb";
 }): ExplainRequest {
   const { pick, a, explanation: ex, cropName, componentsLeftOut } = args;
   const sat = clip(args.satellite ?? []);
@@ -55,6 +57,7 @@ export function explainRequest(args: {
     confidence: ex.confidence.level,
     confidenceReasons: clip(ex.confidence.reasons.map(confidenceReasonText)),
     ...(sat.length ? { satellite: sat } : {}),
+    ...(args.lang && args.lang !== "en" ? { lang: args.lang } : {}),
   };
 }
 

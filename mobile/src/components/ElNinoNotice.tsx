@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { tr } from "../i18n/lang-store";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
 import context from "../../assets/data/context.json";
@@ -15,7 +16,7 @@ export function ensoText(): { short: string; line: string; source: string; url: 
   const sign = oni.anomaly_c > 0 ? "+" : "";
   return {
     // Plain-language first line (#165); the full advisory wording stays one tap away.
-    short: "El Niño year. PAGASA says a very strong El Niño will last into early 2027, with less rain than normal. Plan for dry months: these results come from past years, not a forecast.",
+    short: tr("El Niño year. PAGASA says a very strong El Niño will last into early 2027, with less rain than normal. Plan for dry months: these results come from past years, not a forecast."),
     line: `El Niño year: ${advisory.issuer} (${advisory.issued}) says "${advisory.title}", expected to last into the first half of 2027. For November 2026 it expected below normal to way below normal rain over most of the country. Plan for the dry months: the results here come from past records, not a forecast.`,
     source: `Sources: ${advisory.issuer} press release; ${oni.source}, ${oni.season} ${oni.year}: ${sign}${oni.anomaly_c} °C.`,
     url: advisory.url,
@@ -38,7 +39,7 @@ export function ElNinoNotice() {
         accessibilityState={{ expanded: open }}
         style={styles.link}
       >
-        <Text style={[text.caption, styles.linkText]}>{open ? "Hide the advisory" : "Read the PAGASA advisory and sources"}</Text>
+        <Text style={[text.caption, styles.linkText]}>{open ? tr("Hide the advisory") : tr("Read the PAGASA advisory and sources")}</Text>
       </Pressable>
       {open ? (
         <>

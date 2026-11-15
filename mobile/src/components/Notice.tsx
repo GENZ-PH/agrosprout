@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { tr } from "../i18n/lang-store";
 import { StyleSheet, Text, View } from "react-native";
 
 import { Icon, type IconName } from "./Icon";
@@ -21,7 +22,7 @@ export function Notice({ children, tone = "good", icon = tone === "good" ? "chec
       <View style={styles.icon}>
         <Icon name={icon} size={small ? 16 : 22} color={fg} />
       </View>
-      <Text style={[styles.text, small && styles.textSmall]}>{children}</Text>
+      <Text style={[styles.text, small && styles.textSmall]}>{typeof children === "string" ? tr(children) : children}</Text>
     </View>
   );
 }

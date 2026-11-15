@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { tr } from "../i18n/lang-store";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { MapInset, MapToApp } from "../map/bridge";
@@ -53,7 +54,7 @@ export function FarmMapCard({ lots, views, selectedId, onSelect, wide }: Props) 
 
   return (
     <InfoCard
-      title="Your lots on the map"
+      title={tr("Your lots on the map")}
       explainer="farm-map"
       period={period}
       subtitle="Each lot colored by how well it suits its crops. Tap a lot to compare its crops with the best other option."

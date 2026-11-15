@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { tr } from "../i18n/lang-store";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Icon } from "./Icon";
@@ -32,7 +33,7 @@ export function SISource({ lead, given, links }: { lead: string; given: string[]
         accessibilityLabel={`${open ? "Hide" : "Show"} where this comes from`}
         style={styles.toggle}
       >
-        <Text style={styles.toggleText}>{open ? "Hide sources" : "Where this comes from"}</Text>
+        <Text style={styles.toggleText}>{open ? tr("Hide sources") : tr("Where this comes from")}</Text>
         <View style={{ transform: [{ rotate: open ? "-90deg" : "90deg" }] }}>
           <Icon name="chevron" size={14} color={colors.green} />
         </View>
