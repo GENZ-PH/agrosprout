@@ -65,7 +65,7 @@ export function DockedInspector() {
   const dock = useDockWidth(width);
   if (!canDock(width) || !state) return null;
   return (
-    <View style={[styles.dock, { width: dock }]} accessibilityLabel="NASA data panel">
+    <View style={[styles.dock, { width: dock }]} accessibilityLabel="Technical data panel">
       <DockHandle windowWidth={width} current={dock} />
       <PanelNotice />
       <PanelBody state={state} context={context} />
@@ -127,7 +127,7 @@ function DockHandle({ windowWidth, current }: { windowWidth: number; current: nu
         tabIndex: 0,
       } as object)}
       accessibilityRole="adjustable"
-      accessibilityLabel="Drag to resize the NASA data panel"
+      accessibilityLabel="Drag to resize the technical data panel"
       style={[styles.handle, active && styles.handleActive]}
     >
       <View style={styles.grip} />
@@ -338,7 +338,25 @@ const CHECKS: readonly { what: string; where: string; vars: string }[] = [
   { what: "Dry, typical and wet years", where: "Each result in a dry (20th percentile), typical and wet (80th) year; the drier or warmer what-if", vars: "NASA POWER, every year in the record" },
 ];
 
+/** The panel's tabs (2026-11-15), so each kind of detail has its own page instead of one long scroll. */
+const PANEL_TABS = [
+  { key: "plans", label: "For your technician" },
+  { key: "nasa", label: "NASA data used" },
+  { key: "how", label: "How it works" },
+] as const;
+type PanelTab = (typeof PANEL_TABS)[number]["key"];
+/** Kept while the app is open, so switching lots keeps the tab. */
+let lastTab: PanelTab = "plans";
+const rememberTab = (t: PanelTab) => {
+  lastTab = t;
+};
+
 export function OverviewBody({ c }: { c: PanelContext }) {
+  const [tab, setTab] = useState<PanelTab>(lastTab);
+  const pickTab = (t: PanelTab) => {
+    rememberTab(t);
+    setTab(t);
+  };
   const steps = [
     `NASA POWER gives the weather at your lot for ${c.period || "the years of the lot's data"}${c.demo ? "" : ", asked for the lot's center rounded to 0.1°"}.`,
     "The app works out each crop's water need month by month (FAO-56) and how much of it rain covers in a dry, typical and wet year.",
@@ -349,18 +367,36 @@ export function OverviewBody({ c }: { c: PanelContext }) {
     <>
       <View style={styles.head}>
         <View style={styles.flex}>
-          <Text style={styles.tag}>NASA data</Text>
+          <Text style={styles.tag}>Technical data</Text>
           <Text style={text.heading} accessibilityRole="header">
-            The data behind {c.lotName}
+            The details behind {c.lotName}
           </Text>
           <Text style={[text.small, styles.muted]}>For agricultural technicians and anyone who wants the details.</Text>
         </View>
-        <Pressable onPress={closeInspector} accessibilityRole="button" accessibilityLabel="Close NASA data" style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
+        <Pressable onPress={closeInspector} accessibilityRole="button" accessibilityLabel="Close technical data" style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
           <Icon name="close" size={22} color={colors.ink} />
         </Pressable>
       </View>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        {c.details}
+      <View style={overview.tabs} accessibilityRole="tablist">
+        {PANEL_TABS.map((t) => {
+          const on = t.key === tab;
+          return (
+            <Pressable
+              key={t.key}
+              onPress={() => pickTab(t.key)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: on }}
+              style={({ pressed }) => [overview.tab, on && overview.tabOn, pressed && styles.pressed]}
+            >
+              <Text style={[overview.tabText, on && overview.tabTextOn]}>{t.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <ScrollView key={tab} style={styles.scroll} contentContainerStyle={styles.content}>
+        {tab === "plans" ? c.details : null}
+        {tab === "nasa" ? (
+        <>
         <Section title="NASA datasets used">
           {c.sources.map((k) => {
             const s = SOURCES[k];
@@ -392,7 +428,12 @@ export function OverviewBody({ c }: { c: PanelContext }) {
             </View>
           ))}
         </Section>
+        {c.extra}
+        </>
+        ) : null}
 
+        {tab === "how" ? (
+        <>
         <Section title="From data to advice">
           {steps.map((t, i) => (
             <View key={t} style={styles.bullet}>
@@ -418,14 +459,19 @@ export function OverviewBody({ c }: { c: PanelContext }) {
             <Text style={styles.link}>All data sources and limits</Text>
           </Pressable>
         </Section>
-
-        {c.extra}
+        </>
+        ) : null}
       </ScrollView>
     </>
   );
 }
 
 const overview = StyleSheet.create({
+  tabs: { flexDirection: "row", gap: space.xs, paddingHorizontal: space.md, paddingVertical: space.sm, borderBottomWidth: 1, borderBottomColor: colors.border, flexWrap: "wrap" },
+  tab: { minHeight: 34, justifyContent: "center", paddingHorizontal: 12, borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.borderStrong, backgroundColor: colors.surface },
+  tabOn: { backgroundColor: colors.green, borderColor: colors.green },
+  tabText: { fontSize: 14, fontWeight: "600", color: colors.ink },
+  tabTextOn: { color: colors.white },
   dataset: {
     flexDirection: "row",
     alignItems: "center",

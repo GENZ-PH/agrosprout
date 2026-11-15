@@ -302,3 +302,87 @@ export const explainYear = new Hono<{ Bindings: Env }>().post("/", validate("jso
   );
   return ok(c, { ...data, cached: false });
 });
+
+// The technical data panel (2026-11-15): one plain insight per section (plans, months, fit, soil),
+// all in one call. Each insight is checked against its own section's numbers.
+export const explainSectionsBody = z.object({
+  sections: z
+    .array(
+      z.object({
+        id: z.string().trim().min(1).max(40),
+        title: z.string().trim().min(1).max(80),
+        facts: z.array(z.string().trim().min(1).max(300)).min(1).max(12),
+      }),
+    )
+    .min(1)
+    .max(6),
+});
+export type ExplainSectionsBody = z.infer<typeof explainSectionsBody>;
+
+const SECTIONS_SYSTEM = `You help an agricultural technician in the Philippines read the sections of a crop planning tool for one farmer's plot.
+For each section you get its title and the results it shows. Write one insight per section: the one thing in it that matters most for this plot, in plain, everyday English.
+
+Rules:
+- Use only the facts given for that section. Never add a number, a price, a yield, a date or a fact that is not there.
+- At most one number per insight, only if it helps.
+- One short sentence per section, under 30 words. Everyday words: "rain" not "precipitation", "wet soil" not "waterlogging".
+- Plain text. Answer with only a JSON array of strings, one per section, in the same order, nothing before or after it.`;
+
+export const explainSections = new Hono<{ Bindings: Env }>().post("/", validate("json", explainSectionsBody), async (c) => {
+  if (c.env.SI_EXPLAIN !== "on" || !c.env.ANTHROPIC_API_KEY) {
+    return fail(c, 503, "si_off", "SI explanations are not switched on yet");
+  }
+  const body = c.req.valid("json");
+  const cache = caches.default;
+  const bytes = new TextEncoder().encode(MODEL + "\nsections-v1\n" + JSON.stringify(body));
+  const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map((x) => x.toString(16).padStart(2, "0")).join("");
+  const key = new Request(`https://si-explain-sections.cache/${hash}`);
+  const hit = await cache.match(key);
+  if (hit) return ok(c, { ...((await hit.json()) as { notes: (string | null)[]; model: string }), cached: true });
+
+  const { success } = await c.env.EXPLAIN_LIMITER.limit({ key: c.req.header("cf-connecting-ip") ?? "local" });
+  if (!success) return fail(c, 429, "rate_limited", "Too many explanations, try again in a minute");
+
+  const client = new Anthropic({ apiKey: c.env.ANTHROPIC_API_KEY, maxRetries: 1, timeout: 50_000 });
+  const sources = body.sections.map((x) => `Section: ${x.title}\n${x.facts.map((f) => `- ${f}`).join("\n")}`);
+  let raw = "";
+  try {
+    const res = await client.beta.messages.create({
+      model: MODEL,
+      max_tokens: 4000,
+      system: SECTIONS_SYSTEM,
+      output_config: { effort: "low" },
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+      messages: [{ role: "user", content: sources.join("\n\n") }],
+    });
+    if (res.stop_reason === "refusal") return fail(c, 502, "si_declined", "The SI model declined to explain these results");
+    raw = res.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("").trim();
+  } catch (e) {
+    if (e instanceof Anthropic.RateLimitError) return fail(c, 429, "si_busy", "The SI service is busy, try again in a minute");
+    if (e instanceof Anthropic.AuthenticationError) return fail(c, 503, "si_off", "SI explanations are not switched on yet");
+    if (e instanceof Anthropic.APIError) return fail(c, 502, "si_error", "The SI service did not answer");
+    throw e;
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw.slice(raw.indexOf("["), raw.lastIndexOf("]") + 1));
+  } catch {
+    return fail(c, 502, "si_error", "The SI service did not answer");
+  }
+  if (!Array.isArray(parsed) || parsed.length !== sources.length) return fail(c, 502, "si_error", "The SI service did not answer");
+  const notes = parsed.map((t, i) => {
+    if (typeof t !== "string" || !t.trim()) return null;
+    const extra = unsupportedNumbers(t, sources[i]);
+    if (extra.length > 0) {
+      console.warn("si-explain-sections: dropped a note with numbers not in the engine output", extra);
+      return null;
+    }
+    return t.trim();
+  });
+  const data = { notes, model: MODEL };
+  c.executionCtx.waitUntil(
+    cache.put(key, new Response(JSON.stringify(data), { headers: { "content-type": "application/json", "cache-control": `public, max-age=${CACHE_SECONDS}` } })),
+  );
+  return ok(c, { ...data, cached: false });
+});
