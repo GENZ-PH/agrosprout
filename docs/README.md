@@ -1,7 +1,7 @@
-# AgriResilience — Project Docs
+# AgroSprout: Project Docs
 
 **NASA Space Apps Challenge 2026 · "Field Shift: Adapting Farms with NASA Data"**
-Team **Jeoleecation** (`houston-no-problem`) · Local Event **Iligan City, Philippines** · Working name: *AgriResilience* (D7 open)
+Team **Jeoleecation** (`houston-no-problem`) · Local Event **Iligan City, Philippines** · Project name: **AgroSprout** (D7, decided 2026-11-15)
 
 ## ⏰ Key times (PHT, UTC+8)
 
@@ -45,7 +45,7 @@ Team **Jeoleecation** (`houston-no-problem`) · Local Event **Iligan City, Phili
 | [si-usage-log.md](si-usage-log.md) | SI usage record (required for submission) | Anyone using SI |
 | [submission/fields.md](submission/fields.md) | Paste-ready drafts of every form field | Story lead |
 | [claude-setup.md](claude-setup.md) | `.claude/` contents, installed subagents, what to add later | Anyone using Claude Code |
-| [reference/initial-proposal.md](reference/initial-proposal.md) | The team's original AgriResilience proposal (moved here from repo root) | Reference |
+| [reference/initial-proposal.md](reference/initial-proposal.md) | The team's original proposal (working name AgriResilience) (moved here from repo root) | Reference |
 
 ## Kickoff agenda (Sat 08:00–09:00)
 
