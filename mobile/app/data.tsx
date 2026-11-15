@@ -1,9 +1,7 @@
 import { router } from "expo-router";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { Disclaimer } from "../src/components/Disclaimer";
 import { DataTracePanel } from "../src/components/DataTracePanel";
-import { FooterLinks } from "../src/components/FooterLinks";
 import { Header } from "../src/components/Header";
 import { Screen } from "../src/components/Screen";
 import { colors, MIN_TOUCH, radius, space, text } from "../src/components/theme";
@@ -14,7 +12,7 @@ const PERIOD = "the years your lot's own data covers (shown on each card's ⓘ)"
 
 export default function DataScreen() {
   return (
-    <Screen footer={<Disclaimer />}>
+    <Screen links>
       <Header title="Data and limits" fallbackHref="/dashboard" />
       <DataTracePanel />
       <Text style={text.heading} accessibilityRole="header">
@@ -77,7 +75,6 @@ export default function DataScreen() {
       >
         <Text style={styles.link}>Licenses and credits</Text>
       </Pressable>
-      <FooterLinks />
     </Screen>
   );
 }

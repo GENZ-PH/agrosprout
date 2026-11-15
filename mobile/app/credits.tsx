@@ -1,8 +1,6 @@
 import type { ReactNode } from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { Disclaimer } from "../src/components/Disclaimer";
-import { FooterLinks } from "../src/components/FooterLinks";
 import { Header } from "../src/components/Header";
 import { Screen } from "../src/components/Screen";
 import { colors, MIN_TOUCH, radius, space, text } from "../src/components/theme";
@@ -57,7 +55,7 @@ function Items({ items }: { items: readonly CreditItem[] }) {
 export default function CreditsScreen() {
   const saved = useSavedCropPhotos();
   return (
-    <Screen footer={<Disclaimer />}>
+    <Screen links>
       <Header title="Licenses and credits" fallbackHref="/dashboard" />
       <Text style={text.body}>
         AgroSprout is built on the work of many people. Here is who made what, and the license it is shared under.
@@ -132,7 +130,6 @@ export default function CreditsScreen() {
       <Section title="SI tools">
         <Items items={SI_CREDITS} />
       </Section>
-      <FooterLinks />
     </Screen>
   );
 }

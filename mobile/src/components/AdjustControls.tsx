@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { Icon } from "./Icon";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
@@ -65,9 +65,10 @@ export function AdjustSheet({ visible, onClose, children }: { visible: boolean; 
 }
 
 const styles = StyleSheet.create({
-  // Fixed to the window on web, so it floats while the page scrolls; absolute over the screen on a phone.
+  // Over the scrolling body (Screen puts the overlay there), so it floats while the page scrolls and
+  // stays above the pinned footer.
   floatWrap: {
-    position: (Platform.OS === "web" ? "fixed" : "absolute") as "absolute",
+    position: "absolute",
     left: 0,
     right: 0,
     bottom: space.lg,

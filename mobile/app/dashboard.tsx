@@ -7,9 +7,7 @@ import { AdjustButton, AdjustSheet } from "../src/components/AdjustControls";
 import { adjustSummary } from "../src/components/adjust-core";
 import { Button } from "../src/components/Button";
 import { CropFitCard } from "../src/components/CropFitCard";
-import { Disclaimer } from "../src/components/Disclaimer";
 import { FarmMapCard } from "../src/components/FarmMapCard";
-import { FooterLinks } from "../src/components/FooterLinks";
 import { Header } from "../src/components/Header";
 import { HarvestCard } from "../src/components/HarvestCard";
 import { Icon, type IconName } from "../src/components/Icon";
@@ -134,6 +132,7 @@ export default function DashboardScreen() {
     <DemoDataContext.Provider value={lot?.data_ref.startsWith("demo/") ?? false}>
     <Screen
       width="wide"
+      links
       header={
         // Fixed at the top (2026-11-15): the title, the lot tabs and the NASA data button stay in
         // reach while the farmer scrolls. One row on a wide window, two rows on a phone.
@@ -215,10 +214,6 @@ export default function DashboardScreen() {
           <Button label="Draw your lots" href="/lots" />
         </Narrow>
       )}
-      <View style={styles.footer}>
-        <FooterLinks />
-        <Disclaimer />
-      </View>
     </Screen>
     </DemoDataContext.Provider>
   );
@@ -541,5 +536,4 @@ const styles = StyleSheet.create({
   stepLine: { borderTopWidth: 1, borderTopColor: colors.border },
   stepPressed: { backgroundColor: colors.pressed },
   stepIcon: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: colors.greenTint },
-  footer: { gap: space.xs, marginTop: space.lg },
 });
