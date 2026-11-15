@@ -47,6 +47,11 @@ export const OTHER_DATA_CREDITS: readonly CreditItem[] = [
     url: "https://www.naturalearthdata.com/",
   },
   {
+    name: "GeoNames",
+    lines: ["Towns and cities for the place search on the map, kept on your phone: nothing you type is sent. Town names and positions: GeoNames (CC BY 4.0)."],
+    url: "https://www.geonames.org/",
+  },
+  {
     name: "OpenStreetMap road routing",
     lines: ["Travel time to harvest places. Routing © OpenStreetMap contributors (ODbL), through the FOSSGIS routing server."],
     url: "https://www.openstreetmap.org/copyright",
