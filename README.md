@@ -131,4 +131,8 @@ We used SI (Super Intelligence) tools as assistants. The idea comes from the tea
 
 Third-party services, data, and libraries, with their licenses and terms: [THIRD_PARTY.md](THIRD_PARTY.md). Methods: FAO Irrigation and Drainage Paper 56 (Allen et al., 1998) for ET₀ and crop coefficients; FAO effective-rainfall rules (Training Manual No. 3). NASA POWER data: https://power.larc.nasa.gov/.
 
-<!-- Team: add member names as registered on the Space Apps site, and a license, before submission (#52). -->
+## License
+
+Code: [MIT](LICENSE), Copyright (c) 2026 Team Jeoleecation. Crop photos, NASA and other data, OpenStreetMap map data, fonts and icons keep their own licenses and terms; see [THIRD_PARTY.md](THIRD_PARTY.md).
+
+<!-- Team: add member names as registered on the Space Apps site before submission (#52). -->
