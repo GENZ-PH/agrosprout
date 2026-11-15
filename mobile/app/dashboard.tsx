@@ -1,5 +1,5 @@
 import { Redirect, router, useLocalSearchParams } from "expo-router";
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { describeScenario } from "../src/components/what-if-core";
@@ -23,7 +23,8 @@ import { ElNinoNotice } from "../src/components/ElNinoNotice";
 import { SatelliteCard } from "../src/components/SatelliteCard";
 import { useLiveSatellite } from "../src/data/live-satellite";
 import type { LotData } from "../src/types";
-import { DemoDataContext } from "../src/components/SourceChip";
+import { CheckedAgainstContext, DemoDataContext } from "../src/components/SourceChip";
+import { SATELLITE } from "../src/data/satellite";
 import { YearCalendar } from "../src/components/YearCalendar";
 import { SectionSI } from "../src/components/SectionSI";
 import { fitFacts, monthsFacts, recommendationFacts, section, soilFacts } from "../src/components/panel-si";
@@ -123,6 +124,22 @@ export default function DashboardScreen() {
   // Back on the dashboard asks: edit the farm, start over, or stay (the start screen would send a
   // returning farmer straight back here).
   const [leaving, setLeaving] = useState(false);
+  // Which NASA satellite datasets have arrived for this lot (D35), for the "Checked against" chips.
+  const lotData = lotView?.kind === "ready" ? lotView.data : undefined;
+  const liveSat = useLiveSatellite(lotData);
+  const checkedAgainst = useMemo(() => {
+    const f = lotData?.kind === "demo" ? SATELLITE[lotData.id] : liveSat?.files;
+    if (!f) return [] as SourceKey[];
+    const out: SourceKey[] = [];
+    if (f.imerg) out.push("imerg");
+    if (f.smap) out.push("smap");
+    if (f.fldas) out.push("fldas");
+    if (f.ndvi) out.push("modis");
+    if (f.hls) out.push("hls");
+    if (f.ecostress) out.push("ecostress");
+    if (lotData?.kind === "demo" || liveSat?.srtm) out.push("srtm");
+    return out;
+  }, [lotData, liveSat]);
   const scenario = lot ? (scenarios[lot.id] ?? null) : null;
   const setScenario = useCallback(
     (s: Scenario | null) => {
@@ -138,6 +155,7 @@ export default function DashboardScreen() {
   // The sample farm's numbers come from NASA POWER daily: its source chips say so (#144).
   return (
     <DemoDataContext.Provider value={lot?.data_ref.startsWith("demo/") ?? false}>
+    <CheckedAgainstContext.Provider value={checkedAgainst}>
     <Screen
       width="wide"
       links
@@ -224,6 +242,7 @@ export default function DashboardScreen() {
       )}
       <LeaveFarmDialog open={leaving} onClose={() => setLeaving(false)} sample={isDemoFarm(farm.lots)} />
     </Screen>
+    </CheckedAgainstContext.Provider>
     </DemoDataContext.Provider>
   );
 }
@@ -529,11 +548,20 @@ function NextSteps({ lot, stage, hasPlaces }: { lot: Lot; stage: 1 | 2; hasPlace
  * live there (satellite checks, NASA requests). Renders nothing itself.
  */
 function PanelLot({ lotName, period, demo, extra, details }: { lotName: string; period: string; demo: boolean; extra: ReactNode; details: ReactNode }) {
+  // The panel renders outside this screen's tree, so hand it the same chip contexts (the sample
+  // farm's "daily" chips and the "Checked against" datasets) around what it shows.
+  const isDemo = useContext(DemoDataContext);
+  const checked = useContext(CheckedAgainstContext);
+  const wrap = (node: ReactNode) => (
+    <DemoDataContext.Provider value={isDemo}>
+      <CheckedAgainstContext.Provider value={checked}>{node}</CheckedAgainstContext.Provider>
+    </DemoDataContext.Provider>
+  );
   useEffect(() => {
     const sources: SourceKey[] = demo
       ? ["power-daily", "srtm", "imerg", "smap", "modis", "hls", "ecostress", "fldas"]
       : ["power", "srtm", "imerg", "smap", "modis", "hls", "ecostress", "fldas"];
-    setPanelContext({ lotName, period, demo, sources, extra, details });
+    setPanelContext({ lotName, period, demo, sources, extra: wrap(extra), details: wrap(details) });
   });
   return null;
 }
