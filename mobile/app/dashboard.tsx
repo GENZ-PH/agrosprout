@@ -339,7 +339,7 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
       const whatIf = (
         <WhatIfCard scenario={scenario} onChange={setScenario} notes={analysis.scenario?.notes ?? []} period={period} />
       );
-      // NASA satellite checks (IMERG rain, SMAP soil moisture) are bundled for the sample farm only (#144).
+      // NASA satellite checks (IMERG rain, SMAP soil moisture, MODIS and HLS NDVI, ECOSTRESS, FLDAS) are bundled for the sample farm only (#144).
       const satellite =
         data.kind === "demo" ? <SatelliteCard farmId={data.id} lotName={lot.name} info={{ id: "satellite-checks", period }} /> : null;
       const trace = <DataTracePanel data={data} />;
@@ -515,7 +515,7 @@ function NextSteps({ lot, stage, hasPlaces }: { lot: Lot; stage: 1 | 2; hasPlace
  */
 function PanelLot({ lotName, period, demo, extra, details }: { lotName: string; period: string; demo: boolean; extra: ReactNode; details: ReactNode }) {
   useEffect(() => {
-    const sources: SourceKey[] = demo ? ["power-daily", "srtm", "imerg", "smap"] : ["power"];
+    const sources: SourceKey[] = demo ? ["power-daily", "srtm", "imerg", "smap", "modis", "hls", "ecostress", "fldas"] : ["power"];
     setPanelContext({ lotName, period, demo, sources, extra, details });
   });
   return null;

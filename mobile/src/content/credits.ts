@@ -24,6 +24,10 @@ export const NASA_CREDITS: readonly CreditItem[] = [
   { name: "NASA SRTM (sample farm elevation and slope)", lines: [cite("srtm")], url: link("srtm") },
   { name: "NASA GPM IMERG (sample farm rain check)", lines: [cite("imerg")], url: link("imerg") },
   { name: "NASA SMAP L4 (sample farm soil moisture check)", lines: [cite("smap")], url: link("smap") },
+  { name: "NASA MODIS NDVI (sample farm greenness check)", lines: [cite("modis")], url: link("modis") },
+  { name: "NASA HLS NDVI (sample farm greenness check)", lines: [cite("hls")], url: link("hls") },
+  { name: "NASA ECOSTRESS (sample farm water stress check)", lines: [cite("ecostress")], url: link("ecostress") },
+  { name: "NASA FLDAS (sample farm land model check)", lines: [cite("fldas")], url: link("fldas") },
 ];
 
 export const OTHER_DATA_CREDITS: readonly CreditItem[] = [
