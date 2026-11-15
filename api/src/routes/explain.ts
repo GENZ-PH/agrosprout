@@ -43,7 +43,8 @@ export type ExplainBody = z.infer<typeof explainBody>;
 
 // v2 (2026-11-15): the card already shows the crops and months, the top gains with their scores and
 // the first thing to ask the technician, so the summary adds only what is not on it.
-const PROMPT_VERSION = "v2";
+// v3 (2026-11-15): plainer and shorter, no scores in the technician note.
+const PROMPT_VERSION = "v3";
 const SYSTEM = `You explain a crop plan to a smallholder farmer in the Philippines, in plain English a farmer with little schooling can follow.
 You are given the results of a crop rotation engine for one plot. Explain them; do not add to them.
 
@@ -60,16 +61,18 @@ Rules:
 
 // For the NASA data panel (2026-11-15): the technician sees every plan, score and NASA source, so
 // SI points out which of it matters most for this lot's decision and what to verify on the ground.
-const TECH_SYSTEM = `You help an agricultural technician in the Philippines read the results of a crop rotation engine for one farmer's plot.
-The technician's panel already lists every plan, all scores and the NASA data sources. Do not repeat those lists.
+const TECH_SYSTEM = `You help an agricultural technician in the Philippines explain one farmer's crop plan, in plain, everyday English that the technician can read out to the farmer.
+The panel already lists every plan, all scores and the NASA data sources. Do not repeat them.
 
-Write only what makes the panel easier to act on:
-- which one or two results drive the suggestion most, and why that matters for this plot;
-- which result is the weakest or most uncertain, and what to verify on the ground before advising the farmer.
+Say only:
+- the one main reason this plan is suggested for this plot, in everyday words, and
+- the one thing to check on the field before advising the farmer.
 
 Rules:
-- Use only the facts and numbers in the data. Never add a number, a price, a yield, a date or a fact that is not in the data.
-- 3 short sentences at most. Plain text only, no headings, lists, bold or emoji.`;
+- Use only the facts in the data. Never add a number, a price, a yield, a date or a fact that is not in the data.
+- No scores, no points, no numbers in brackets, no "out of". At most one number in total, and only if it helps.
+- Everyday words only: say "adds nitrogen" not "nitrogen-fixing", "same crop family" not "rotation", "rain" not "precipitation", "wet soil" not "waterlogging".
+- 2 short sentences, under 45 words in total. Plain text only, no headings, lists, bold or emoji.`;
 
 function userText(b: ExplainBody): string {
   const section = (title: string, xs: string[]) => (xs.length ? `${title}:\n${xs.map((x) => `- ${x}`).join("\n")}\n` : "");
@@ -166,14 +169,15 @@ export const explainMonthBody = z.object({
 });
 export type ExplainMonthBody = z.infer<typeof explainMonthBody>;
 
-const MONTH_SYSTEM = `You explain one month of a crop plan to a smallholder farmer in the Philippines, in plain English a farmer with little schooling can follow.
+const MONTH_SYSTEM = `You explain one month of a crop plan to a smallholder farmer in the Philippines, in plain, everyday English a farmer with little schooling can follow.
 You get what a crop rotation engine says happens on the field that month with the suggested plan and with the farmer's current crops, and that month's climate on the plot from NASA data.
 
 Rules:
 - Use only the facts and numbers given. Never add a number, a price, a yield or a fact that is not in the data.
-- The screen already lists what happens on the field this month. Do not repeat it. Say WHY, from this month's rain and the water the air takes from the soil: why the suggestion does better or worse than the farmer's crops this month, and what risk this month carries (a dry year, a wet year, bare soil in heavy rain).
-- 2 short sentences at most.
-- Do not tell the farmer what to do. No jargon: say "rain" not "precipitation".
+- The screen already lists what happens on the field this month. Do not repeat it. Say WHY in everyday words: is this month wet or dry for the crops, and what can go wrong (a dry year, a very wet year, bare soil washing away).
+- At most one number (rain in mm), only if it helps.
+- 2 short sentences, under 40 words in total.
+- Do not tell the farmer what to do. Everyday words only: "rain" not "precipitation", "the sun and wind dry the soil" not "evapotranspiration".
 - Plain text only. No headings, lists, bold or emoji.`;
 
 function monthText(b: ExplainMonthBody): string {
@@ -187,7 +191,7 @@ export const explainMonth = new Hono<{ Bindings: Env }>().post("/", validate("js
   }
   const body = c.req.valid("json");
   const cache = caches.default;
-  const bytes = new TextEncoder().encode(MODEL + "\nmonth\n" + JSON.stringify(body));
+  const bytes = new TextEncoder().encode(MODEL + "\nmonth-v2\n" + JSON.stringify(body));
   const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map((x) => x.toString(16).padStart(2, "0")).join("");
   const key = new Request(`https://si-explain-month.cache/${hash}`);
   const hit = await cache.match(key);
@@ -224,6 +228,75 @@ export const explainMonth = new Hono<{ Bindings: Env }>().post("/", validate("js
     return fail(c, 422, "si_unchecked", "The SI answer used numbers that are not in your results, so it was not shown");
   }
   const data = { text, model: MODEL };
+  c.executionCtx.waitUntil(
+    cache.put(key, new Response(JSON.stringify(data), { headers: { "content-type": "application/json", "cache-control": `public, max-age=${CACHE_SECONDS}` } })),
+  );
+  return ok(c, { ...data, cached: false });
+});
+
+// Batched (2026-11-15): the plan repeats every year, so a lot has only 12 month notes per plan.
+// One call returns all 12, the phone keeps them, and hovering or tapping months costs nothing more.
+export const explainYearBody = z.object({ months: z.array(explainMonthBody).min(1).max(12) });
+export type ExplainYearBody = z.infer<typeof explainYearBody>;
+
+const YEAR_SYSTEM = MONTH_SYSTEM.replace("You explain one month of a crop plan", "You explain each month of a crop plan, one note per month,") + `
+- You get several months. Write one separate note for each, in the same order.
+- Answer with only a JSON array of strings, one string per month, nothing before or after it.`;
+
+export const explainYear = new Hono<{ Bindings: Env }>().post("/", validate("json", explainYearBody), async (c) => {
+  if (c.env.SI_EXPLAIN !== "on" || !c.env.ANTHROPIC_API_KEY) {
+    return fail(c, 503, "si_off", "SI explanations are not switched on yet");
+  }
+  const body = c.req.valid("json");
+  const cache = caches.default;
+  const bytes = new TextEncoder().encode(MODEL + "\nyear-v1\n" + JSON.stringify(body));
+  const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map((x) => x.toString(16).padStart(2, "0")).join("");
+  const key = new Request(`https://si-explain-year.cache/${hash}`);
+  const hit = await cache.match(key);
+  if (hit) return ok(c, { ...((await hit.json()) as { notes: (string | null)[]; model: string }), cached: true });
+
+  const { success } = await c.env.EXPLAIN_MONTH_LIMITER.limit({ key: c.req.header("cf-connecting-ip") ?? "local" });
+  if (!success) return fail(c, 429, "rate_limited", "Too many explanations, try again in a minute");
+
+  const client = new Anthropic({ apiKey: c.env.ANTHROPIC_API_KEY, maxRetries: 1, timeout: 50_000 });
+  const sources = body.months.map(monthText);
+  let raw = "";
+  try {
+    const res = await client.beta.messages.create({
+      model: MODEL,
+      max_tokens: 6000,
+      system: YEAR_SYSTEM,
+      output_config: { effort: "low" },
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+      messages: [{ role: "user", content: sources.map((s, i) => `Month ${i + 1} of ${sources.length}\n${s}`).join("\n") }],
+    });
+    if (res.stop_reason === "refusal") return fail(c, 502, "si_declined", "The SI model declined to explain these months");
+    raw = res.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("").trim();
+  } catch (e) {
+    if (e instanceof Anthropic.RateLimitError) return fail(c, 429, "si_busy", "The SI service is busy, try again in a minute");
+    if (e instanceof Anthropic.AuthenticationError) return fail(c, 503, "si_off", "SI explanations are not switched on yet");
+    if (e instanceof Anthropic.APIError) return fail(c, 502, "si_error", "The SI service did not answer");
+    throw e;
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw.slice(raw.indexOf("["), raw.lastIndexOf("]") + 1));
+  } catch {
+    return fail(c, 502, "si_error", "The SI service did not answer");
+  }
+  if (!Array.isArray(parsed) || parsed.length !== sources.length) return fail(c, 502, "si_error", "The SI service did not answer");
+  // Each note is checked against its own month's data; a note with a number not in it is dropped.
+  const notes = parsed.map((t, i) => {
+    if (typeof t !== "string" || !t.trim()) return null;
+    const extra = unsupportedNumbers(t, sources[i]);
+    if (extra.length > 0) {
+      console.warn("si-explain-year: dropped a note with numbers not in the engine output", extra);
+      return null;
+    }
+    return t.trim();
+  });
+  const data = { notes, model: MODEL };
   c.executionCtx.waitUntil(
     cache.put(key, new Response(JSON.stringify(data), { headers: { "content-type": "application/json", "cache-control": `public, max-age=${CACHE_SECONDS}` } })),
   );

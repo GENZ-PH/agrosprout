@@ -14,8 +14,8 @@ import { Icon } from "./Icon";
 import { explainMonthRequest, monthLines, MONTH_LONG, readSaved, save, stripMonths, type StripMonth } from "./month-si";
 import { colors, radius, space, text } from "./theme";
 
-// The suggestion's year as a strip you can drag (2026-11-15): 12 months back, this month (outlined),
-// and 2 years ahead. The plan repeats every year, so past months show what the plan would have done.
+// The suggestion's year as a strip you can drag (2026-11-15): 5 years back, this month (outlined),
+// and 5 years ahead. The plan repeats every year, so past months show what the plan would have done.
 // The row names stay put while the months scroll. Hover (web) or tap a month for what happens in it:
 // the engine's lines at once, then a short SI note on why (from that month's NASA rain), kept on the
 // device so the same month is not asked twice.
@@ -23,10 +23,11 @@ import { colors, radius, space, text } from "./theme";
 const CELL = 34;
 const GAP = 3;
 const STEP = CELL + GAP;
-const BACK = 12;
+const BACK = 60;
+const AHEAD = 59;
 
 const siApi = hc<AppType>(API_URL, { fetch: (i: RequestInfo | URL, init?: RequestInit) => fetchWithTimeout(i, init, 60_000) });
-const inFlight = new Map<string, Promise<string>>();
+const inFlight = new Map<string, Promise<(string | null)[]>>();
 const storage = (): Storage | null => {
   try {
     return Platform.OS === "web" && typeof localStorage !== "undefined" ? localStorage : null;
@@ -35,20 +36,31 @@ const storage = (): Storage | null => {
   }
 };
 
-function askMonth(req: ReturnType<typeof explainMonthRequest>): Promise<string> {
-  const key = JSON.stringify(req);
-  const saved = readSaved(storage(), key);
-  if (saved) return Promise.resolve(saved);
+type MonthReq = ReturnType<typeof explainMonthRequest>;
+
+/**
+ * All 12 month notes of a plan in one call (2026-11-15): each answer is saved on the device under its
+ * month's own key, so every month after the first opens with no call. Resolves to the notes.
+ */
+function askYear(year: MonthReq[]): Promise<(string | null)[]> {
+  const key = JSON.stringify(year);
   let p = inFlight.get(key);
   if (!p) {
-    p = unwrap(siApi.v1["explain-month"].$post({ json: req })).then((d) => {
-      save(storage(), key, d.text);
-      return d.text;
+    p = unwrap(siApi.v1["explain-year"].$post({ json: { months: year } })).then((d) => {
+      d.notes.forEach((t, i) => {
+        if (t) save(storage(), JSON.stringify(year[i]), t);
+      });
+      return d.notes;
     });
     p.catch(() => inFlight.delete(key));
     inFlight.set(key, p);
   }
   return p;
+}
+
+/** The requests for all 12 calendar months of a plan, in month order. */
+export function yearRequests(args: Omit<Parameters<typeof explainMonthRequest>[0], "month">): MonthReq[] {
+  return Array.from({ length: 12 }, (_, month) => explainMonthRequest({ ...args, month }));
 }
 
 type Props = {
@@ -63,7 +75,7 @@ type Props = {
 };
 
 export function YearStrip({ pick, a, isA, name, cropById, monthly, whatIf }: Props) {
-  const [months] = useState(() => stripMonths(new Date(), BACK));
+  const [months] = useState(() => stripMonths(new Date(), BACK, AHEAD));
   const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
   const x = useRef(0);
   const [active, setActive] = useState(BACK);
@@ -208,33 +220,7 @@ function MonthNote({
   monthly: Props["monthly"];
   whatIf: boolean;
 }) {
-  const online = useOnline();
-  const req = explainMonthRequest({ month: m.month, pick, a, monthly, name });
-  const key = JSON.stringify(req);
-  const saved = readSaved(storage(), key);
-  // Fetched answers (or a failure) by request; a saved answer needs no state.
-  const [si, setSi] = useState<{ key: string; text: string | null }>({ key: "", text: null });
-  const wanted = !whatIf && online && !saved;
-
-  useEffect(() => {
-    if (!wanted) return;
-    let live = true;
-    // A short wait, so moving the mouse across the strip does not ask about every month on the way.
-    const t = setTimeout(() => {
-      askMonth(req).then(
-        (txt) => live && setSi({ key, text: txt }),
-        () => live && setSi({ key, text: null }),
-      );
-    }, 450);
-    return () => {
-      live = false;
-      clearTimeout(t);
-    };
-    // `key` stands for `req`.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, wanted]);
-
-  const mine = saved ? { text: saved, loading: false } : si.key === key ? { text: si.text, loading: false } : { text: null, loading: wanted };
+  const year = yearRequests({ pick, a, monthly, name });
   return (
     <View style={styles.note} accessibilityLiveRegion="polite">
       <Text style={text.bodyStrong}>
@@ -251,17 +237,51 @@ function MonthNote({
           {monthLines(a, m.month, name).join(" ")}
         </Text>
       ) : null}
-      {mine.loading ? (
-        <View style={styles.row}>
-          <ActivityIndicator size="small" color={colors.green} />
-          <Text style={text.caption}>SI is looking at this month…</Text>
-        </View>
-      ) : mine.text ? (
-        <View style={styles.si}>
-          <Text style={text.small}>{mine.text}</Text>
-          <Text style={text.caption}>{"Why, by SI (Claude, by Anthropic) from this lot's NASA rain for the month. It can be wrong."}</Text>
-        </View>
-      ) : null}
+      <MonthSI year={year} month={m.month} whatIf={whatIf} />
+    </View>
+  );
+}
+
+/**
+ * The SI note for one calendar month (0-11), also used by "Your year on". The first month asked
+ * fetches the whole year in one call; skipped offline or during a what-if.
+ */
+export function MonthSI({ year, month, whatIf }: { year: MonthReq[]; month: number; whatIf: boolean }) {
+  const online = useOnline();
+  const yearKey = JSON.stringify(year);
+  const saved = readSaved(storage(), JSON.stringify(year[month]));
+  // The year's notes once fetched (or a failure), by request.
+  const [si, setSi] = useState<{ key: string; notes: (string | null)[] | null }>({ key: "", notes: null });
+  const wanted = !whatIf && online && !saved;
+
+  useEffect(() => {
+    if (!wanted) return;
+    let live = true;
+    askYear(year).then(
+      (notes) => live && setSi({ key: yearKey, notes }),
+      () => live && setSi({ key: yearKey, notes: null }),
+    );
+    return () => {
+      live = false;
+    };
+    // `yearKey` stands for `year`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [yearKey, wanted]);
+
+  const fetched = si.key === yearKey;
+  const textNow = saved ?? (fetched ? (si.notes?.[month] ?? null) : null);
+  if (!textNow && wanted && !fetched)
+    return (
+      <View style={[styles.row, styles.si]}>
+        <ActivityIndicator size="small" color={colors.green} />
+        <Text style={text.caption}>SI is looking at the whole year…</Text>
+      </View>
+    );
+  if (!textNow) return null;
+  return (
+    <View style={styles.si}>
+      <Text style={text.small}>{textNow}</Text>
+      <Text style={text.caption}>{"Why, by SI (Claude, by Anthropic) from this lot's NASA rain for the month. It can be wrong."}</Text>
     </View>
   );
 }

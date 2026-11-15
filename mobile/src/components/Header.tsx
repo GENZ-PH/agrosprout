@@ -1,6 +1,6 @@
 import { type Href, router } from "expo-router";
 import type { ReactNode } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Icon } from "./Icon";
 import { OfflineBadge } from "./OfflineBadge";
@@ -16,9 +16,11 @@ type Props = {
   right?: ReactNode;
   /** Between the title and the right side, e.g. the dashboard's lot tabs on a wide window. */
   middle?: ReactNode;
+  /** true = the AgroSprout wordmark before the title (the dashboard). */
+  logo?: boolean;
 };
 
-export function Header({ title, leading = "back", fallbackHref = "/", right, middle }: Props) {
+export function Header({ title, leading = "back", fallbackHref = "/", right, middle, logo = false }: Props) {
   const goBack = () => (router.canGoBack() ? router.back() : router.replace(fallbackHref));
   return (
     <View style={styles.wrap}>
@@ -34,9 +36,22 @@ export function Header({ title, leading = "back", fallbackHref = "/", right, mid
             <Icon name={leading} />
           </Pressable>
         ) : null}
-        <Text style={middle ? styles.titleInline : styles.title} accessibilityRole="header" numberOfLines={middle ? 1 : 2}>
-          {title}
-        </Text>
+        {logo ? (
+          <Image
+            source={require("../../assets/images/agrosprout-logo.png")}
+            style={styles.logo}
+            resizeMode="contain"
+            accessibilityRole="image"
+            accessibilityLabel="AgroSprout"
+          />
+        ) : null}
+        {title ? (
+          <Text style={[middle ? styles.titleInline : styles.title, logo && styles.titleSmall]} accessibilityRole="header" numberOfLines={middle ? 1 : 2}>
+            {title}
+          </Text>
+        ) : logo ? (
+          <View style={styles.flex} />
+        ) : null}
         {middle ? <View style={styles.middle}>{middle}</View> : null}
         {typeof right === "string" ? <Text style={styles.right}>{right}</Text> : right}
       </View>
@@ -62,5 +77,9 @@ const styles = StyleSheet.create({
   // Beside the lot tabs: as wide as its words, never squeezed.
   titleInline: { ...text.title, flexShrink: 0, marginRight: space.md },
   middle: { flex: 1, minWidth: 0 },
+  flex: { flex: 1 },
+  // The wordmark is 1400 x 320.
+  logo: { height: 28, width: 28 * (1400 / 320), marginRight: space.sm },
+  titleSmall: { fontSize: 18, lineHeight: 24 },
   right: { ...text.small, color: colors.muted },
 });

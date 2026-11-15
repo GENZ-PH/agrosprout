@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-
 
 import type { Lot } from "../types";
 import { Icon } from "./Icon";
-import { colors, MIN_TOUCH, radius, space } from "./theme";
+import { colors, radius, space } from "./theme";
 
 type Props = {
   lots: readonly Pick<Lot, "id" | "name">[];
@@ -125,8 +125,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: space.xs,
-    minHeight: MIN_TOUCH,
-    paddingHorizontal: 14,
+    minHeight: 34,
+    paddingHorizontal: 12,
     borderRadius: radius.pill,
     borderWidth: 1.5,
     borderColor: colors.borderStrong,
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   },
   selected: { backgroundColor: colors.green, borderColor: colors.green },
   pressed: { backgroundColor: colors.pressed },
-  chipText: { fontSize: 15, lineHeight: 20, fontWeight: "600" },
+  chipText: { fontSize: 14, lineHeight: 18, fontWeight: "600" },
   label: { color: colors.ink },
   selectedLabel: { color: colors.white },
   add: { borderStyle: "dashed", borderColor: colors.green, backgroundColor: "transparent" },
