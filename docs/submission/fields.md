@@ -1,26 +1,26 @@
 # Submission Form: Working Draft
 
-> Paste-ready drafts for each field on the team's Project Submission page. **English only.** Requirements: [../02-submission-and-judging.md](../02-submission-and-judging.md). Win plan and gates: issue #150.
+> Paste-ready drafts for each field on the team's Project Submission page. **English only.** Requirements: [../02-submission-and-judging.md](../02-submission-and-judging.md).
 >
-> **Draft v2 (Sat Nov 14, 23:50 PHT), written with SI (Claude Code) from what is merged on `main` at `85c11fa`.** Every sentence was checked against the code or the bundled data; anything that is not in the app is under "What's next". The team owns the final wording: drop or change anything you disagree with, and recheck it against the frozen build after 12:00.
+> **Draft v3 (Sun Nov 15, 17:30 PHT), written with SI (Claude Code) from what is live on `main`.** Every sentence was checked against the code, the bundled data or the live app. The team owns the final wording: change anything you disagree with before pasting.
 >
-> Project name: **AgroSprout** (D7, decided 2026-11-15). Open team decision this page still depends on: **D6 demo format** (#150 recommends the 30-second video; script in [demo-video-script.md](demo-video-script.md)).
+> Project name: **AgroSprout** (D7). Demo: **7-slide deck** (D6), [demo-deck.pdf](demo-deck.pdf).
 
 ## Project Name
-**AgroSprout** *(D7, decided 2026-11-15)*
+**AgroSprout**
 
 ## High-Level Project Summary
 *What did you develop? How does it address the challenge? Why is it important?*
 
-> AgroSprout is a free app that helps a smallholder farmer decide what to plant, and when, on each of their own lots. The farmer draws their lots on a satellite map with a finger and picks the crop on each lot. The app then pulls 25 years of NASA POWER climate data for each lot and compares the farmer's current crop with three other rotations (best for water, best for soil, and balanced) on rain, heat, soil health, erosion and pest cycles, plus market access once the farmer adds where the harvest goes. It also checks the farmer's planting months against better ones. Every result says why, what it is based on, what is uncertain, and what to check with the local agricultural technician. It runs in a phone or laptop browser, needs no account, and saved results work offline. This matters now: PAGASA reports a very strong El Niño expected to last into the first half of 2027, so choosing a crop and planting month that fit a dry year protects the harvest. It is built for small farms: the Philippine Statistics Authority's 2022 Census of Agriculture and Fisheries counted 7.73 million farms, and 55.8 percent were smaller than half a hectare.
+> AgroSprout is a free app that helps a smallholder farmer decide what to plant, and when, on each of their own lots, using NASA data. The farmer draws each lot on a satellite map and picks the main crop. For every lot, the app takes 25 years of NASA POWER climate data (2001 to 2025) and compares the farmer's current crop with three other year-long rotations (best for water, best for soil, balanced) on rain, heat, waterlogging, soil building, erosion and pest cycles, and checks their planting months against better ones. Seven more NASA datasets (GPM IMERG rain, SMAP soil moisture, FLDAS, MODIS and HLS greenness, ECOSTRESS plant stress, SRTM elevation) are fetched for each lot and shown beside the results as independent checks. Every result says why, what it is based on, what is uncertain and what to check with the local agricultural technician; short notes written by SI explain the plan in plain words and are rejected if they contain any number the engine did not produce. The app works in English, Tagalog and Bisaya, needs no account, keeps farm data on the phone and keeps saved results offline. This matters now: PAGASA reports a very strong El Niño expected to last into the first half of 2027, and the Philippine Statistics Authority counted 7.73 million farms in 2022, 55.8 percent of them smaller than half a hectare, where one lost season is hard to absorb.
 
 ## Link to Project Demo
-`TBD` (public link; 30-second video or 7 slides at most; open it in a private window on a phone before submitting)
+https://github.com/InovSea/agrosprout/blob/main/docs/submission/demo-deck.pdf (7 slides; opens in any browser, no login)
 
 ## Link to Final Project
-- Web app (no login): https://agrosprout.pages.dev (primary; Cloudflare Pages, no domain to renew)
-- Same app on our domain: https://agrosprout.inovsea.com
-- Source code: https://github.com/InovSea/agrosprout (public since 2026-11-15, after a gitleaks scan of all history)
+- Web app (no login): https://agrosprout.inovsea.com
+- Same app, second address: https://agrosprout.pages.dev
+- Source code (MIT license): https://github.com/InovSea/agrosprout
 
 Tip for judges, also on the start screen: tap **See a sample farm** to see full results without drawing anything and without signal.
 
@@ -28,68 +28,68 @@ Tip for judges, also on the start screen: tap **See a sample farm** to see full 
 
 **What exactly does it do?**
 
-AgroSprout is a decision-support app for smallholder farmers in Lanao del Norte, Philippines, built for the "Field Shift: Adapting Farms with NASA Data" challenge.
+AgroSprout is a decision-support app for smallholder farmers and the agricultural technicians who advise them, starting in Lanao del Norte, Philippines. It answers the "Field Shift" question for one farm at a time: which crop rotation and which planting months fit this lot's water and weather, and what does the farmer gain or risk by changing.
 
-1. **Draw your lots.** The farmer sketches each lot on a satellite map with a finger; the app turns the sketch into a clean plot with points they can drag, and measures its area.
-2. **Pick the crop on each lot.** For each lot the app suggests the top 3 crops for that lot's climate, with the planting months where each fits best, and the farmer can search for any crop they grow (crops outside the 10 in the library are saved but not scored).
-3. **See the results for each lot.** The dashboard compares the farmer's current crops (option A) with three other 12-month rotations: best for water, best for soil, and balanced. The farmer taps what matters to them (save water, build soil) and the scores are worked out again on the phone.
-4. **Understand each option.** Each option lists why it was suggested, the evidence, benefits, trade-offs, what we don't know and what to check locally, with a High, Medium or Low confidence level.
-5. **Check your planting months.** "Your months vs better months" compares the farmer's months with the best months found for that lot, and calls a better month a trade-off when it clashes with another crop on the lot.
-6. **Plan the year.** A month-by-month calendar shows what to plant, harvest or watch for in each month of the chosen plan; a 3-year soil health line shows how each option trends (a relative indicator from the model, not a soil test).
-7. **Ask "what if".** A what-if card recomputes everything for drier (down to 30% less rain) or warmer (up to +2 °C) conditions. It is labeled a what-if, not a forecast.
-8. **Getting the harvest out.** Optionally, the farmer adds where the harvest goes; the app estimates travel time per lot (by road, or a labeled rough estimate when no route is found; a time the farmer types always wins) and counts it in the market score.
+1. **Draw your lots.** The farmer finds their barangay or town in the search box, then draws each lot on a satellite map with a finger, taps its corners, or drops a pin and types the area. The app cleans the outline and measures the area.
+2. **Pick the main crop on each lot.** The app suggests the top 3 crops for that lot from its NASA climate data, with the planting months where each fits best, or the farmer searches any crop. The library has 22 crops, each value cited. For crops grown year-round, the app asks when the farmer usually plants and marks the months that suit the lot.
+3. **See the answer first.** The dashboard opens with one suggested plan for the lot, a month-by-month calendar of "Suggestion" next to "You now", and what the farmer gains: fewer pests and diseases, soil built up, soil kept from washing away, each as a score next to their current crops.
+4. **Compare.** "Compare this lot with the best option" shows the lot's shape twice, the current crops and the best other option, colored by soil health, crop fit, root-zone wetness or rain in a dry year.
+5. **Check planting months.** "Your months vs better months" compares the farmer's months with the best months found for the lot, and calls a better month a trade-off when it clashes with another crop.
+6. **Ask "what if".** The results are worked out again on the phone for less rain (down to 30%) or more heat (up to +2 °C), labelled a what-if, not a forecast.
+7. **Read it in plain words.** A short SI note explains the suggested plan, each month and each technician section, in the chosen language. The note gets only the engine's numbers, never the location, and is rejected if it adds a number.
+8. **Give more detail when ready.** Three optional questions (land type, water source, soil feel) sharpen the results; "I don't know" is always allowed and lowers the confidence instead of guessing. Places where the harvest is sold add travel time per lot to the market score.
 
-Every chart and card has a "What am I looking at?" explainer. NASA source chips on the cards open a panel that names the NASA dataset, the variables, the grid size, the years and the formula behind each number, and a request log lists every data request the app made in this session.
+A "Details for your technician" panel holds every plan with its scores, the NASA data behind each number (dataset, variables, grid size, years, formula) and a log of every data request the app made.
 
 **How does it work?**
 
-For each lot, the app requests NASA POWER monthly point data (2001-2025) for the lot's center, rounded to 0.1°: rain, temperature and its daily range, humidity, wind, sunshine and root-zone soil wetness. On the phone, it computes reference evaporation with the FAO-56 Penman-Monteith method, turns it into each crop's water need with FAO-56 crop coefficients, and compares that with effective rain (FAO Training Manual No. 3) in a dry year (20th percentile), a typical year (median) and a wet year (80th percentile). FAO Ecocrop temperature ranges set heat and cold limits.
+For each lot, the app requests NASA POWER monthly point data (2001 to 2025) for the lot's center rounded to 0.1°: rain, temperature and its daily range, humidity, wind, sunshine and root-zone soil wetness. On the phone it computes reference evaporation with FAO-56 Penman-Monteith, each crop's water need with FAO-56 crop coefficients, and effective rain (FAO Training Manual No. 3) in a dry year (20th percentile), a typical year (median) and a wet year (80th percentile). FAO Ecocrop temperature ranges set the heat and cold limits.
 
-A rotation engine in TypeScript builds 12-month rotations from a library of 10 crops (rice, corn, mungbean, peanut, soybean, string bean, sweet potato, sorghum, eggplant and the green manure Sesbania rostrata), each value cited in the library file. It drops rotations that break hard limits and scores the rest on eight parts: fits your rain, weather safety, builds soil, protects from washout, breaks pest cycles, income potential, easy to get to market, and easy to manage. Income and work are not scored yet, because the crop library has no local price or labor data; market access counts once the farmer adds a destination. The farmer's priorities change the weights. Explanations are fixed templates filled with the computed numbers, so every sentence traces to a source. Confidence drops to Low when the ranking flips between a dry and a wet year, or when key answers are unknown.
+A rotation engine in TypeScript builds year-long rotations from the 22-crop library, drops those that break hard limits, and scores the rest on fit to rain, weather safety, soil building, erosion protection, pest-cycle breaks and, once the farmer adds a place, market access. The farmer's priorities change the weights. Confidence drops to Low when the best choice changes between a dry and a wet year or when key answers are "I don't know". The scores use NASA POWER only.
 
-A Python pipeline prepares a sample farm in Lanao del Norte from NASA POWER daily data (which also gives heavy-rain days), NASA SRTM elevation, and two satellite checks shown beside the POWER values: GPM IMERG monthly rain and SMAP Level 4 soil moisture. For that farm, the twelve monthly medians add up to about 2390 mm (NASA POWER) and about 2275 mm (IMERG, 2001 to 2025-09): within about 5%. The checks are shown, not used in the scores.
+A small API on Cloudflare Workers fetches, for the same rounded point, NASA GPM IMERG, SMAP L4, FLDAS, SRTM and, through NASA AppEEARS, MODIS NDVI, HLS NDVI and ECOSTRESS. It holds the NASA Earthdata login and the SI key as server secrets, so neither is in the app. These datasets are shown beside the results and given to the SI notes, which cite them; they do not change the scores. The farm map can also show NASA GIBS layers (greenness, rain, soil moisture, land temperature).
 
-This season's context is on the dashboard: the DOST-PAGASA El Niño advisory of 4 November 2026 and the NOAA Oceanic Niño Index (+2.46 °C for Aug-Oct 2026), with the note that results come from past records, not a forecast.
+This season's context is on the dashboard: the DOST-PAGASA El Niño advisory of 4 November 2026 and the NOAA Oceanic Niño Index, with the note that results come from past records, not a forecast.
 
-Privacy: no login and no account. Farm data stays on the phone. The only location data that leaves the phone is the lot center rounded to 0.1° (to NASA POWER) and, if the farmer adds a destination, points rounded to about 100 m (to a road-routing server). The map also loads satellite image tiles from Esri for the area on screen.
+Privacy: no login and no account. Farm data stays on the phone. The only location that leaves the phone is the lot center rounded to 0.1° (to NASA POWER and to our API for the NASA satellite checks) and, if the farmer adds a place, points rounded to about 100 m (to a road-routing server). The SI notes receive results only: no location, no lot shape, no names.
 
 **What benefits does it have?**
 
-- It brings NASA data to the farmer's own lots and crops, in plain language, with an explainer on every chart.
-- It shows trade-offs instead of one answer. The farmer's current crops are always one of the options, so every suggestion is compared with what they already know.
-- It is honest about uncertainty: dry, typical and wet years; a confidence level with its reasons; assumptions labeled as assumptions; limits listed on a "Data and limits" page.
-- It is traceable: every NASA number can be opened to see the dataset, the variables, the grid size, the years and the formula.
-- It works where farmers are: in a phone browser, with no account, and saved results stay available offline.
-- It gives the farmer and the agricultural technician a shared starting point. It supports their judgment and doesn't replace it.
+- NASA data on the farmer's own lots and crops, in plain language and in their language, with an explainer on every chart.
+- Trade-offs instead of one answer: the farmer's current crops are always on screen, so every suggestion is compared with what they already know.
+- Honest about uncertainty: dry, typical and wet years; a confidence level with its reasons; assumptions labelled as assumptions; limits listed on a "Data and limits" page.
+- Traceable: every NASA number opens to its dataset, variables, years and formula, and the SI notes cannot add numbers.
+- Works where farmers are: in a phone browser, no account, results saved offline.
+- A shared starting point for the farmer and the agricultural technician. It supports their judgment and doesn't replace it.
 
 **Who it is for**
 
-Smallholder farmers and the agricultural technicians who advise them, starting in Lanao del Norte. The Philippine Statistics Authority's 2022 Census of Agriculture and Fisheries "recorded a total of 7.73 million farms", and "55.8 percent (4,312 thousand farms) had size of less than 0.5 hectares" (PSA, 2022 CAF Agricultural Farm and Parcel Characteristics, Final Results, released 6 July 2026: https://psa.gov.ph/content/2022-census-agriculture-and-fisheries-agricultural-farm-and-parcel-characteristics-final). On a farm that small there is little room for a season lost to the wrong crop or planting month.
+Smallholder farmers and municipal agricultural technicians, starting in Lanao del Norte. The Philippine Statistics Authority's 2022 Census of Agriculture and Fisheries "recorded a total of 7.73 million farms", and "55.8 percent (4,312 thousand farms) had size of less than 0.5 hectares" (PSA, 2022 CAF Agricultural Farm and Parcel Characteristics, Final Results, released 6 July 2026: https://psa.gov.ph/content/2022-census-agriculture-and-fisheries-agricultural-farm-and-parcel-characteristics-final).
 
 **What do you hope to achieve?**
 
-We want a farmer to see, before planting, which season on each lot is likely to run short of water this El Niño year, and which crop or planting month fits the rain better. Next steps:
-- test the results with farmers and municipal agricultural technicians in Lanao del Norte;
-- add local planting calendars, prices and labor to the crop library;
-- add Filipino and Cebuano;
+That a farmer sees, before planting, which season on each lot is likely to run short of water this El Niño year, and which crop or planting month fits the rain better. Next steps:
+- test the results with farmers and municipal agricultural technicians in Lanao del Norte, and have native speakers check the Tagalog and Bisaya;
+- add local planting calendars, prices and labor to the crop library, so income and work can be scored;
+- replace the team's assumed score weights with values validated locally;
 - a view for technicians and cooperatives that covers several farms;
-- bring satellite data to every lot the farmer draws, not only the sample farm: SMAP soil moisture, GPM IMERG rain, MODIS and HLS greenness, ECOSTRESS evaporative stress, FLDAS, and SRTM elevation for live lots;
-- local soil data in place of the farmer's soil answer;
-- an installable Android app built from the same code (the web app already runs in a phone browser).
+- an installable Android app from the same code.
 
 **Tools, languages, hardware, and software used**
 
 - Languages: TypeScript, Python.
-- App: Expo (React Native) with expo-router, one codebase for Android and the web; react-native-webview, react-native-svg, React Native Chart Kit (charts), Lucide icons, AsyncStorage, Zustand, TanStack Query.
-- Map: Leaflet, Terra Draw and Turf.js, bundled into an offline map page with esbuild; Esri World Imagery basemap.
-- Data and methods: NASA POWER API (monthly per lot; daily for the sample farm), NASA SRTM v3 via Open Topo Data, GPM IMERG and SMAP L4 via NASA Earthdata; FAO-56; FAO Training Manual No. 3; FAO Ecocrop; PSA OpenSTAT yields; NOAA ONI; DOST-PAGASA; OSRM road routing on OpenStreetMap data.
-- Testing: Node.js test runner (over 400 tests for the engine, data and screens' logic), Python unittest for the pipeline.
-- Hosting and build: Cloudflare Pages (web), GitHub.
+- App: Expo (React Native) with expo-router, one codebase for web and Android; React Native Web, react-native-svg, React Native Chart Kit, Lucide icons, AsyncStorage, Zustand, TanStack Query.
+- Map: Leaflet, Terra Draw and Turf.js in an offline map page built with esbuild; Esri World Imagery basemap; NASA GIBS layers; GeoNames place names.
+- API: Hono and Zod on Cloudflare Workers; NASA Earthdata (OPeNDAP, AppEEARS); Claude (Anthropic) for the SI notes.
+- Data and methods: NASA POWER, GPM IMERG, SMAP L4, FLDAS, SRTM, MODIS, HLS, ECOSTRESS; FAO-56; FAO Training Manual No. 3; FAO Ecocrop; PSA OpenSTAT; NOAA ONI; DOST-PAGASA; OSRM on OpenStreetMap.
+- Testing: Node.js test runner (527 tests for the engine, data and screen logic), Python unittest for the data pipeline.
+- Hosting: Cloudflare Pages and Workers, GitHub.
 - SI assistant: Claude Code (Anthropic); see "Use of SI".
-- Hardware: none needed beyond a phone or laptop with a web browser.
+- Hardware: none beyond a phone or laptop with a web browser.
 
 ## Use of Super Intelligence (SI)
-> Draft lives in [../si-usage-log.md](../si-usage-log.md#draft-answer-for-the-use-of-si-form-field-update-before-submitting). Copy the final version here. Judges do not see this field, but they see the SI labels in the project, so both must match.
+
+> We used SI as an assistant, not to come up with the idea. The rotation concept comes from the team's initial proposal, and the design decisions are the team's, recorded in our decision log. Claude Code (Anthropic) helped us research the challenge materials and NASA datasets, write planning documents, write and review code and tests, and draft text, which the team reviewed. In the app, Claude writes short plain-language notes from the engine's own numbers; they are labelled "Written by SI (Claude, by Anthropic)… It can be wrong", get no location, and are rejected if they contain a number the engine did not send. The Tagalog and Bisaya texts were translated with SI and are labelled so in the app. Every SI use is logged with date, person, purpose and output in docs/si-usage-log.md. No SI-generated images are used, and no NASA branding appears in SI content.
 
 ## NASA Data
 *Specific NASA data and resources used. Name the product, variables, period, and how each one is used.*
