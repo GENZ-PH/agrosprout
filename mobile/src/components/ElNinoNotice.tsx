@@ -10,15 +10,23 @@ import { colors, MIN_TOUCH, space, text } from "./theme";
 // both bundled in assets/data/context.json by the pipeline (#10). Context only: no score uses it.
 // The wording follows the advisory's own summary in context.json; nothing here is computed.
 
+const EN_SHORT =
+  "El Niño year. PAGASA says a very strong El Niño will last into early 2027, with less rain than normal. It names no Mindanao-specific impact. These results come from past years, not a forecast.";
+
 export function ensoText(): { short: string; line: string; source: string; url: string; oniUrl: string } | null {
   const { oni, advisory } = context;
   if (!oni || !advisory) return null;
   const sign = oni.anomaly_c > 0 ? "+" : "";
+  // The ONI value can be null in the file; then only the press release is cited.
+  const oniPart = oni.anomaly_c === null ? "" : `; ${oni.source}, ${oni.season} ${oni.year}: ${sign}${oni.anomaly_c} °C`;
   return {
-    // Plain-language first line (#165); the full advisory wording stays one tap away.
-    short: tr("El Niño year. PAGASA says a very strong El Niño will last into early 2027, with less rain than normal. Plan for dry months: these results come from past years, not a forecast."),
-    line: `El Niño year: ${advisory.issuer} (${advisory.issued}) says "${advisory.title}", expected to last into the first half of 2027. For November 2026 it expected below normal to way below normal rain over most of the country. Plan for the dry months: the results here come from past records, not a forecast.`,
-    source: `Sources: ${advisory.issuer} press release; ${oni.source}, ${oni.season} ${oni.year}: ${sign}${oni.anomaly_c} °C.`,
+    // Plain-language first line (#165); the full advisory wording stays one tap away. Like the full line, it
+    // keeps the source's "no Mindanao-specific impact" and gives no advice the source does not give (#174).
+    short: tr(EN_SHORT),
+    // "Names no Mindanao-specific impact" is in the advisory summary in context.json (summary_by_hand); the
+    // notice shows every lot, so it must say so. Advice such as "plan for the dry months" is not in the source.
+    line: `El Niño year: ${advisory.issuer} (${advisory.issued}) says "${advisory.title}", expected to last into the first half of 2027. For November 2026 it expected below normal to way below normal rain over most of the country. It names no Mindanao-specific impact. The results here come from past records, not a forecast.`,
+    source: `Sources: ${advisory.issuer} press release${oniPart}.`,
     url: advisory.url,
     oniUrl: oni.url,
   };

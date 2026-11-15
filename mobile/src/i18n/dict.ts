@@ -110,7 +110,7 @@ const tl: Dict = {
   "SI is looking at the whole year…": "Tinitingnan ng SI ang buong taon…",
   "Where this comes from": "Saan ito galing",
   "Hide sources": "Itago ang mga pinagmulan",
-  "El Niño year. PAGASA says a very strong El Niño will last into early 2027, with less rain than normal. Plan for dry months: these results come from past years, not a forecast.": "Taon ng El Niño. Ayon sa PAGASA, tatagal hanggang unang bahagi ng 2027 ang napakalakas na El Niño, na may mas kaunting ulan kaysa karaniwan. Maghanda para sa mga tuyong buwan: galing sa mga nakaraang taon ang mga resultang ito, hindi ito hula ng panahon.",
+  "El Niño year. PAGASA says a very strong El Niño will last into early 2027, with less rain than normal. It names no Mindanao-specific impact. These results come from past years, not a forecast.": "Taon ng El Niño. Ayon sa PAGASA, tatagal hanggang unang bahagi ng 2027 ang napakalakas na El Niño, na may mas kaunting ulan kaysa karaniwan. Wala itong binanggit na epekto na para lang sa Mindanao. Galing sa mga nakaraang taon ang mga resultang ito, hindi ito hula ng panahon.",
   "Read the PAGASA advisory and sources": "Basahin ang abiso ng PAGASA at mga pinagmulan",
   "Hide the advisory": "Itago ang abiso",
 };
@@ -218,7 +218,7 @@ const ceb: Dict = {
   "SI is looking at the whole year…": "Gitan-aw sa SI ang tibuok tuig…",
   "Where this comes from": "Asa kini gikan",
   "Hide sources": "Itago ang mga gigikanan",
-  "El Niño year. PAGASA says a very strong El Niño will last into early 2027, with less rain than normal. Plan for dry months: these results come from past years, not a forecast.": "Tuig sa El Niño. Matod sa PAGASA, molungtad hangtod sa sayong bahin sa 2027 ang kusog kaayo nga El Niño, nga mas gamay ang ulan kaysa naandan. Pangandam sa mga uga nga bulan: gikan sa milabay nga mga tuig kini nga mga resulta, dili tag-na sa panahon.",
+  "El Niño year. PAGASA says a very strong El Niño will last into early 2027, with less rain than normal. It names no Mindanao-specific impact. These results come from past years, not a forecast.": "Tuig sa El Niño. Matod sa PAGASA, molungtad hangtod sa sayong bahin sa 2027 ang kusog kaayo nga El Niño, nga mas gamay ang ulan kaysa naandan. Wala kini maghisgot og epekto nga para lang sa Mindanao. Gikan sa milabay nga mga tuig kini nga mga resulta, dili tag-na sa panahon.",
   "Read the PAGASA advisory and sources": "Basaha ang pahibalo sa PAGASA ug mga gigikanan",
   "Hide the advisory": "Itago ang pahibalo",
 };

@@ -13,3 +13,8 @@ test("El Niño notice dates match the bundled PAGASA advisory", () => {
   assert.match(context.advisory.summary_by_hand, /November 2026/);
   assert.ok(context.oni.url.startsWith("https://"));
 });
+
+test("the notice says the advisory names no Mindanao-specific impact, because the bundled summary does", () => {
+  // The notice text is typed by hand from the summary. If the summary stops saying this, the notice must change.
+  assert.match(context.advisory.summary_by_hand, /names no Mindanao-specific impact/);
+});
