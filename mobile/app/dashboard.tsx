@@ -23,7 +23,8 @@ import { ElNinoNotice } from "../src/components/ElNinoNotice";
 import { SatelliteCard } from "../src/components/SatelliteCard";
 import { useLiveSatellite } from "../src/data/live-satellite";
 import type { LotData } from "../src/types";
-import { CheckedAgainstContext, DemoDataContext } from "../src/components/SourceChip";
+import { CheckedAgainstContext, DemoDataContext, SatelliteContext } from "../src/components/SourceChip";
+import { satelliteYearFacts } from "../src/components/satellite-facts";
 import { SATELLITE } from "../src/data/satellite";
 import { YearCalendar } from "../src/components/YearCalendar";
 import { SectionSI } from "../src/components/SectionSI";
@@ -140,6 +141,8 @@ export default function DashboardScreen() {
     if (lotData?.kind === "demo" || liveSat?.srtm) out.push("srtm");
     return out;
   }, [lotData, liveSat]);
+  // The files themselves, for the SI notes and their sources; a drawn lot's once nothing is still on its way.
+  const satFiles = lotData?.kind === "demo" ? (SATELLITE[lotData.id] ?? null) : liveSat && liveSat.waiting.length === 0 ? liveSat.files : null;
   const scenario = lot ? (scenarios[lot.id] ?? null) : null;
   const setScenario = useCallback(
     (s: Scenario | null) => {
@@ -156,6 +159,7 @@ export default function DashboardScreen() {
   return (
     <DemoDataContext.Provider value={lot?.data_ref.startsWith("demo/") ?? false}>
     <CheckedAgainstContext.Provider value={checkedAgainst}>
+    <SatelliteContext.Provider value={satFiles}>
     <Screen
       width="wide"
       links
@@ -242,6 +246,7 @@ export default function DashboardScreen() {
       )}
       <LeaveFarmDialog open={leaving} onClose={() => setLeaving(false)} sample={isDemoFarm(farm.lots)} />
     </Screen>
+    </SatelliteContext.Provider>
     </CheckedAgainstContext.Provider>
     </DemoDataContext.Provider>
   );
@@ -259,6 +264,7 @@ type LotResultsProps = {
 
 function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, closeAdjust }: LotResultsProps) {
   const view = useLotAnalysis(farm, lot, scenario);
+  const satFiles = useContext(SatelliteContext);
   const updateLot = useFarmStore((s) => s.updateLot);
   const setPriorities = useFarmStore((s) => s.setPriorities);
 
@@ -396,9 +402,10 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
       const shortName = (id: string) => cropById(id)?.name.replace(/\s*\(.*\)\s*$/, "").trim() || id;
       const panelSections = [
         section("plans", "Recommendations: your crops and three other plans", recommendationFacts(analysis.rotations.options, shortName)),
-        section("months", "Your months vs better months", monthsFacts(months.planting.seasons, shortName)),
+        section("months", "Your months vs better months", [...monthsFacts(months.planting.seasons, shortName), ...satelliteYearFacts(satFiles).slice(0, 2)]),
         section("fit", "How each of your crops fits this lot", fitFacts(analysis.crop_fits, shortName)),
         section("soil", "Soil health over the years, by plan", soilFacts(analysis.soil_health)),
+        section("satellite", "NASA satellite checks for this lot (they do not change the scores)", satelliteYearFacts(satFiles)),
       ];
       return (
         <>
@@ -462,6 +469,7 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
             }
             extra={
               <>
+                <SectionSI sections={panelSections} index={4} whatIf={scenario !== null} />
                 {satellite}
                 {trace}
               </>
@@ -552,9 +560,12 @@ function PanelLot({ lotName, period, demo, extra, details }: { lotName: string; 
   // farm's "daily" chips and the "Checked against" datasets) around what it shows.
   const isDemo = useContext(DemoDataContext);
   const checked = useContext(CheckedAgainstContext);
+  const sat = useContext(SatelliteContext);
   const wrap = (node: ReactNode) => (
     <DemoDataContext.Provider value={isDemo}>
-      <CheckedAgainstContext.Provider value={checked}>{node}</CheckedAgainstContext.Provider>
+      <CheckedAgainstContext.Provider value={checked}>
+        <SatelliteContext.Provider value={sat}>{node}</SatelliteContext.Provider>
+      </CheckedAgainstContext.Provider>
     </DemoDataContext.Provider>
   );
   useEffect(() => {

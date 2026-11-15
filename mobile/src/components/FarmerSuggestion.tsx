@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { ComponentKey, Explanation, RotationOption } from "../engine";
@@ -10,6 +10,8 @@ import { MONTH_LONG } from "./month-si";
 import { ExplainWithSI } from "./ExplainWithSI";
 import { YearStrip } from "./YearStrip";
 import { explainRequest } from "./explain-core";
+import { satelliteYearFacts } from "./satellite-facts";
+import { SatelliteContext } from "./SourceChip";
 import { checkFirst, cropSequence, type LongerSeason, plainReasons } from "./farmer-core";
 import { familyStyle } from "./field-year-core";
 import { RISK_COLOR, RISK_ICON, RISK_LABEL } from "./season-guide-core";
@@ -46,7 +48,8 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
   const name = (id: string) => shortName(cropName(id));
   const reasons = plainReasons(pick, a, componentsLeftOut);
   const check = checkFirst(explanation);
-  const siRequest = explanation ? explainRequest({ pick, a, explanation, cropName, componentsLeftOut }) : null;
+  const sat = useContext(SatelliteContext);
+  const siRequest = explanation ? explainRequest({ pick, a, explanation, cropName, componentsLeftOut, satellite: satelliteYearFacts(sat) }) : null;
   const crops = [...new Set(pick.slots.map((s) => s.crop_id))];
   const yours = a ? [...new Set(a.slots.map((s) => s.crop_id))] : [];
   const legend = [...new Set([...crops, ...(isA ? [] : yours)])];

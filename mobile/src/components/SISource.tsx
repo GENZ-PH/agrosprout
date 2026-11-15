@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Icon } from "./Icon";
+import { SATELLITE_LINKS } from "./satellite-facts";
 import { colors, space } from "./theme";
 
 // Where an SI note comes from (2026-11-15): one small line saying SI wrote it and can be wrong, and a
@@ -15,6 +16,7 @@ export const SI_LINKS = {
   powerMethod: { label: "NASA POWER methods", url: "https://power.larc.nasa.gov/docs/methodology/" },
   fao56: { label: "FAO-56 crop water need (water the air takes from the soil)", url: "https://www.fao.org/4/x0490e/x0490e00.htm" },
   ecocrop: { label: "FAO Ecocrop (crop temperature and season)", url: "https://gaez.fao.org/pages/ecocrop" },
+  ...SATELLITE_LINKS,
   claude: { label: "Claude, by Anthropic (the SI that writes the words)", url: "https://www.anthropic.com/claude" },
 } satisfies Record<string, SILink>;
 

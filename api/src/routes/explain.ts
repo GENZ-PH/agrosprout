@@ -38,13 +38,16 @@ export const explainBody = z.object({
   confidenceReasons: lines,
   /** "farmer" (default): the plain summary on the card. "technician": what in the data matters most, for the NASA data panel. */
   audience: z.enum(["farmer", "technician"]).optional(),
+  /** NASA satellite and model checks for the lot (IMERG, SMAP, MODIS, FLDAS); they do not change the scores. */
+  satellite: lines.optional(),
 });
 export type ExplainBody = z.infer<typeof explainBody>;
 
 // v2 (2026-11-15): the card already shows the crops and months, the top gains with their scores and
 // the first thing to ask the technician, so the summary adds only what is not on it.
 // v3 (2026-11-15): plainer and shorter, no scores in the technician note.
-const PROMPT_VERSION = "v3";
+// v4 (2026-11-15): NASA satellite checks beside the results.
+const PROMPT_VERSION = "v4";
 const SYSTEM = `You explain a crop plan to a smallholder farmer in the Philippines, in plain English a farmer with little schooling can follow.
 You are given the results of a crop rotation engine for one plot. Explain them; do not add to them.
 
@@ -85,7 +88,8 @@ function userText(b: ExplainBody): string {
     section("What we don't know", b.unknowns) +
     section("Check locally", b.checkLocally) +
     `Confidence: ${b.confidence}\n` +
-    section("Why this confidence", b.confidenceReasons)
+    section("Why this confidence", b.confidenceReasons) +
+    section("NASA satellite checks for this plot (they did not change the scores)", b.satellite ?? [])
   );
 }
 
@@ -166,23 +170,26 @@ export const explainMonthBody = z.object({
   yours: lines,
   /** "Rain in a typical year: 244 mm (dry year 164, wet year 305). Water the air takes: 102 mm." */
   climate: z.string().trim().min(1).max(300),
+  /** NASA satellite and model lines for the same month (IMERG rain, SMAP soil moisture, MODIS greenness, FLDAS run-off). */
+  satellite: lines.optional(),
 });
 export type ExplainMonthBody = z.infer<typeof explainMonthBody>;
 
 const MONTH_SYSTEM = `You explain one month of a crop plan to a smallholder farmer in the Philippines, in plain, everyday English a farmer with little schooling can follow.
-You get what a crop rotation engine says happens on the field that month with the suggested plan and with the farmer's current crops, and that month's climate on the plot from NASA data.
+You get what a crop rotation engine says happens on the field that month with the suggested plan and with the farmer's current crops, and that month's climate on the plot from NASA POWER (what the plan is scored on). Sometimes you also get NASA satellite checks for the same month: rain seen by GPM IMERG satellites, soil moisture from SMAP, greenness from MODIS and run-off from the FLDAS land model.
 
 Rules:
 - Use only the facts and numbers given. Never add a number, a price, a yield or a fact that is not in the data.
 - The screen already lists what happens on the field this month. Do not repeat it. Say WHY in everyday words: is this month wet or dry for the crops, and what can go wrong (a dry year, a very wet year, bare soil washing away).
 - At most one number (rain in mm), only if it helps.
+- If satellite checks are given, you may use one of them when it helps explain the month (for example the satellites also see a dry month, or see more rain than NASA POWER). Name the source in plain words, e.g. "rain satellites" or "soil moisture satellite".
 - 2 short sentences, under 40 words in total.
 - Do not tell the farmer what to do. Everyday words only: "rain" not "precipitation", "the sun and wind dry the soil" not "evapotranspiration".
 - Plain text only. No headings, lists, bold or emoji.`;
 
 function monthText(b: ExplainMonthBody): string {
   const list = (xs: string[]) => (xs.length ? xs.map((x) => `- ${x}`).join("\n") : "- (nothing)");
-  return `Month: ${b.month}\nSuggested plan this month:\n${list(b.suggestion)}\nFarmer's current crops this month:\n${list(b.yours)}\nClimate this month: ${b.climate}\n`;
+  return `Month: ${b.month}\nSuggested plan this month:\n${list(b.suggestion)}\nFarmer's current crops this month:\n${list(b.yours)}\nClimate this month (NASA POWER): ${b.climate}\n${b.satellite?.length ? `NASA satellite checks this month (they do not change the plan):\n${list(b.satellite)}\n` : ""}`;
 }
 
 export const explainMonth = new Hono<{ Bindings: Env }>().post("/", validate("json", explainMonthBody), async (c) => {
@@ -191,7 +198,7 @@ export const explainMonth = new Hono<{ Bindings: Env }>().post("/", validate("js
   }
   const body = c.req.valid("json");
   const cache = caches.default;
-  const bytes = new TextEncoder().encode(MODEL + "\nmonth-v2\n" + JSON.stringify(body));
+  const bytes = new TextEncoder().encode(MODEL + "\nmonth-v3\n" + JSON.stringify(body));
   const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map((x) => x.toString(16).padStart(2, "0")).join("");
   const key = new Request(`https://si-explain-month.cache/${hash}`);
   const hit = await cache.match(key);
@@ -249,7 +256,7 @@ export const explainYear = new Hono<{ Bindings: Env }>().post("/", validate("jso
   }
   const body = c.req.valid("json");
   const cache = caches.default;
-  const bytes = new TextEncoder().encode(MODEL + "\nyear-v1\n" + JSON.stringify(body));
+  const bytes = new TextEncoder().encode(MODEL + "\nyear-v2\n" + JSON.stringify(body));
   const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map((x) => x.toString(16).padStart(2, "0")).join("");
   const key = new Request(`https://si-explain-year.cache/${hash}`);
   const hit = await cache.match(key);
@@ -323,6 +330,7 @@ const SECTIONS_SYSTEM = `You help an agricultural technician in the Philippines 
 For each section you get its title and the results it shows. Write one insight per section: the one thing in it that matters most for this plot, in plain, everyday English.
 
 Rules:
+- Some facts come from NASA satellite checks (GPM IMERG rain, SMAP soil moisture, MODIS greenness, FLDAS run-off). They do not change the scores; say so if you use them against a score.
 - Use only the facts given for that section. Never add a number, a price, a yield, a date or a fact that is not there.
 - At most one number per insight, only if it helps.
 - One short sentence per section, under 30 words. Everyday words: "rain" not "precipitation", "wet soil" not "waterlogging".
@@ -334,7 +342,7 @@ export const explainSections = new Hono<{ Bindings: Env }>().post("/", validate(
   }
   const body = c.req.valid("json");
   const cache = caches.default;
-  const bytes = new TextEncoder().encode(MODEL + "\nsections-v1\n" + JSON.stringify(body));
+  const bytes = new TextEncoder().encode(MODEL + "\nsections-v2\n" + JSON.stringify(body));
   const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].map((x) => x.toString(16).padStart(2, "0")).join("");
   const key = new Request(`https://si-explain-sections.cache/${hash}`);
   const hit = await cache.match(key);

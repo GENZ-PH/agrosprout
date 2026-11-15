@@ -8,6 +8,7 @@ import { fetchWithTimeout } from "../net/fetch";
 import { useOnline } from "../net/useOnline";
 import { SI_LINKS, SISource } from "./SISource";
 import type { PanelSection } from "./panel-si";
+import { linksIn } from "./satellite-facts";
 import { colors, radius, space, text } from "./theme";
 
 // One plain SI insight at the top of each section of the technical data panel (2026-11-15). Every
@@ -44,11 +45,14 @@ function askAll(sections: PanelSection[]): Promise<(string | null)[]> {
   const key = JSON.stringify(sections);
   let p = inFlight.get(key);
   if (!p) {
-    p = unwrap(api.v1["explain-sections"].$post({ json: { sections } })).then((d) => {
-      d.notes.forEach((t, i) => {
-        if (t) write(JSON.stringify(sections[i]), t);
+    const idx = sections.flatMap((s, i) => (s.facts.length ? [i] : []));
+    p = unwrap(api.v1["explain-sections"].$post({ json: { sections: idx.map((i) => sections[i]) } })).then((d) => {
+      const notes: (string | null)[] = sections.map(() => null);
+      d.notes.forEach((t, k) => {
+        notes[idx[k]] = t;
+        if (t) write(JSON.stringify(sections[idx[k]]), t);
       });
-      return d.notes;
+      return notes;
     });
     p.catch(() => inFlight.delete(key));
     inFlight.set(key, p);
@@ -95,7 +99,7 @@ export function SectionSI({ sections, index, whatIf }: { sections: PanelSection[
       <SISource
         lead="Written by SI (Claude, by Anthropic) from the numbers in this section only."
         given={sections[index].facts}
-        links={[SI_LINKS.power, SI_LINKS.powerMethod, SI_LINKS.fao56, SI_LINKS.ecocrop, SI_LINKS.claude]}
+        links={[SI_LINKS.power, SI_LINKS.powerMethod, ...linksIn(sections[index].facts), SI_LINKS.fao56, SI_LINKS.ecocrop, SI_LINKS.claude]}
       />
     </View>
   );
