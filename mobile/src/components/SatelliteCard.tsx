@@ -76,7 +76,7 @@ export function SatelliteCard({
           <View style={styles.blockHead}>
             <Text style={[text.bodyStrong, styles.fullLine]}>Rain in a typical year</Text>
             <SourceChip k="imerg" />
-            <SourceChip k="power-daily" />
+            <SourceChip k={live ? "power" : "power-daily"} />
           </View>
           <MonthChart
             unit="mm per month"
