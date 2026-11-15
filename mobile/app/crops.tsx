@@ -18,13 +18,13 @@ import { useLotData } from "../src/components/useLotAnalysis";
 import { CROP_LIBRARY, cropById } from "../src/data/crops";
 import { ECOCROP_NAMES } from "../src/data/ecocrop";
 import { LAND_WATER } from "../src/data/land-water";
-import { chooseCrop, cropShortName, dataLine, isOtherCrop, lotsWithoutCrops, otherCropName, toggleCrop } from "../src/lots/crop-picks";
+import { chooseCrop, cropNeedingMonth, cropShortName, dataLine, isOtherCrop, lotsWithoutCrops, otherCropName, seasonFromPlantMonth, toggleCrop } from "../src/lots/crop-picks";
 import { buildSearchEntries } from "../src/lots/crop-search-core";
 import { lotLooksLikeWater } from "../src/lots/land-water-core";
 import { safeLotTop } from "../src/lots/suggest-core";
 import { areaLabel, isPinLot } from "../src/lots/lot-editor";
 import { useFarmStore } from "../src/state/farm-store";
-import type { Lot, LotCrop } from "../src/types";
+import type { Crop, Lot, LotCrop } from "../src/types";
 
 // S2 What do you plant on each lot? (#25, #152, docs/11-user-flow.md). One crop per lot (D13, changed by the
 // team 2026-11-14). Per lot: a search over our crop list and the FAO Ecocrop names (first, as the team asked),
@@ -52,7 +52,12 @@ export default function CropsScreen() {
   const oneLot = lotParam ? allLots.find((l) => l.id === lotParam) : undefined;
   const lots = oneLot ? [oneLot] : allLots;
   const missing = lotsWithoutCrops(lots);
-  const ready = lots.length > 0 && missing.length === 0;
+  // A crop grown year-round needs the farmer's planting month before the results can compare with it.
+  const noMonth = lots.flatMap((l) => {
+    const c = cropNeedingMonth(l, cropById);
+    return c ? [`${cropShortName(c)} on ${l.name}`] : [];
+  });
+  const ready = lots.length > 0 && missing.length === 0 && noMonth.length === 0;
 
   return (
     <Screen
@@ -62,6 +67,9 @@ export default function CropsScreen() {
             <Text style={[text.small, { color: colors.amber }]}>
               {tr("Choose a crop for {names}.", { names: missing.map((l) => l.name).join(", ") })}
             </Text>
+          ) : null}
+          {lots.length > 0 && missing.length === 0 && noMonth.length > 0 ? (
+            <Text style={[text.small, { color: colors.amber }]}>Choose when you plant {noMonth.join(", ")}.</Text>
           ) : null}
           {oneLot ? (
             <Button
@@ -104,6 +112,56 @@ export default function CropsScreen() {
         </>
       )}
     </Screen>
+  );
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS_LONG = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+/**
+ * "When do you usually plant it?" (2026-11-15): shown for a crop with no usual planting months in
+ * the crop library (the DA guides say several are grown year-round). The farmer's month is saved
+ * as the crop's season, so "You now" and every comparison on the results use it. Nothing invented.
+ */
+function PlantMonthAsk({ lot }: { lot: Lot }) {
+  const setSeasons = useFarmStore((s) => s.setSeasons);
+  const lc = lot.crops.length === 1 ? lot.crops[0] : null;
+  const crop: Crop | undefined = lc ? cropById(lc.crop_id) : undefined;
+  if (!lc || !crop || crop.typical_calendar.length > 0) return null;
+  const picked = lc.seasons[0]?.plant_month ?? null;
+  const name = cropShortName(crop);
+  return (
+    <View style={styles.monthAsk} accessibilityRole="radiogroup" accessibilityLabel={`When do you usually plant ${name} on ${lot.name}?`}>
+      <Text style={text.heading}>When do you usually plant {name}?</Text>
+      <Text style={[text.small, { color: colors.muted }]}>
+        {name} can be planted at different times of the year, so tell us your month. The results compare every plan with it.
+      </Text>
+      <View style={styles.monthRow}>
+        {MONTHS.map((m, i) => {
+          const on = picked === i + 1;
+          return (
+            <Pressable
+              key={m}
+              onPress={() => {
+                const season = seasonFromPlantMonth(crop, i + 1);
+                if (season) setSeasons(lot.id, crop.id, [season]);
+              }}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: on }}
+              accessibilityLabel={MONTHS_LONG[i]}
+              style={({ pressed }) => [styles.monthChip, on && styles.monthChipOn, pressed && { opacity: 0.7 }]}
+            >
+              <Text style={[styles.monthText, on && styles.monthTextOn]}>{m}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      {picked && lc.seasons[0] ? (
+        <Text style={[text.small, { color: colors.muted }]}>
+          {`Planted in ${MONTHS_LONG[picked - 1]}, harvested around ${MONTHS_LONG[lc.seasons[0].harvest_month - 1]} (the crop's usual season length). You can change it later.`}
+        </Text>
+      ) : null}
+    </View>
   );
 }
 
@@ -153,6 +211,8 @@ function LotCrops({ lot }: { lot: Lot }) {
         onRemove={(id) => setCrops(lot.id, toggleCrop(lot.crops, id))}
         onSearch={() => search.current?.focus()}
       />
+
+      <PlantMonthAsk lot={lot} />
 
       <View
         style={line.tone === "ready" ? styles.dataQuiet : [styles.dataLine, line.tone === "error" ? styles.dataError : null]}
@@ -285,6 +345,12 @@ function YourCrops({
 }
 
 const styles = StyleSheet.create({
+  monthAsk: { gap: space.xs, padding: space.sm, borderRadius: radius.md, borderWidth: 1, borderColor: colors.amber, backgroundColor: colors.amberTint },
+  monthRow: { flexDirection: "row", flexWrap: "wrap", gap: space.xs },
+  monthChip: { minWidth: 52, minHeight: MIN_TOUCH, paddingHorizontal: space.sm, alignItems: "center", justifyContent: "center", borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  monthChipOn: { backgroundColor: colors.green, borderColor: colors.green },
+  monthText: { fontSize: 15, fontWeight: "600", color: colors.ink },
+  monthTextOn: { color: colors.surface },
   flex: { flex: 1 },
   creditsLink: { minHeight: MIN_TOUCH, justifyContent: "center", alignSelf: "flex-start" },
   creditsText: { color: colors.blue, textDecorationLine: "underline" },

@@ -1,4 +1,5 @@
-import type { Crop, DataStatus, Lot, LotCrop } from "../types";
+import { cropSeasonDays, harvestMonthOf } from "../engine/season";
+import type { Crop, CropSeason, DataStatus, Lot, LotCrop } from "../types";
 
 // S2 crop picking (#25). No React Native imports, so it runs in Node tests.
 
@@ -54,4 +55,22 @@ export function dataLine(status: DataStatus, online: boolean, noSoil = false): D
   return online
     ? { text: "Getting NASA climate data…", tone: "waiting" }
     : { text: "Waiting for internet. The NASA data loads when you're back online.", tone: "waiting" };
+}
+
+/**
+ * The lot's one crop when the farmer still has to say when they plant it (2026-11-15): a library
+ * crop with no usual planting months (the DA guides say several are grown year-round) and no
+ * months from the farmer. Without a month the results cannot show "You now".
+ */
+export function cropNeedingMonth(lot: Pick<Lot, "crops">, byId: (id: string) => Crop | undefined): Crop | null {
+  if (lot.crops.length !== 1) return null;
+  const lc = lot.crops[0];
+  const crop = byId(lc.crop_id);
+  return crop && crop.typical_calendar.length === 0 && lc.seasons.length === 0 ? crop : null;
+}
+
+/** The farmer's planting month as a season, harvested after the crop's season length (crop library). */
+export function seasonFromPlantMonth(crop: Crop, plantMonth: number): CropSeason | null {
+  const { days } = cropSeasonDays(crop);
+  return days === null ? null : { plant_month: plantMonth as CropSeason["plant_month"], harvest_month: harvestMonthOf(plantMonth, days) as CropSeason["harvest_month"] };
 }

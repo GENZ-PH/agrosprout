@@ -50,7 +50,7 @@ import { useFarmLotViews, useLotAnalysis } from "../src/components/useLotAnalysi
 import { LAND_WATER } from "../src/data/land-water";
 import { lotLooksLikeWater } from "../src/lots/land-water-core";
 import { CROP_LIBRARY, cropById } from "../src/data/crops";
-import { isOtherCrop } from "../src/lots/crop-picks";
+import { cropNeedingMonth, cropShortName, isOtherCrop } from "../src/lots/crop-picks";
 import { seasonsText } from "../src/lots/months-core";
 import { useFarm, useFarmStore } from "../src/state/farm-store";
 import type { Farm, Lot } from "../src/types";
@@ -401,6 +401,8 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
       ) : null;
       const monthsHref = { pathname: "/months", params: { lot: lot.id } } as const;
       const shortName = (id: string) => cropById(id)?.name.replace(/\s*\(.*\)\s*$/, "").trim() || id;
+      // A crop grown year-round and no planting month from the farmer: ask for it (2026-11-15).
+      const needMonth = cropNeedingMonth(lot, cropById);
       const panelSections = [
         section("plans", "Recommendations: your crops and three other plans", recommendationFacts(analysis.rotations.options, shortName)),
         section("months", "Your months vs better months", [...monthsFacts(months.planting.seasons, shortName), ...satelliteYearFacts(satFiles).slice(0, 2)]),
@@ -423,6 +425,17 @@ function LotResults({ farm, lot, overview, scenario, setScenario, adjustOpen, cl
               ("Details for your technician"), docked beside the page on a big window. The farm map
               with its NASA layer switcher stays in the main column (2026-11-15). */}
           <FadeIn>
+          {needMonth ? (
+            <Narrow>
+              <Notice tone="warn" icon="alert">
+                {`We don't know when you plant ${cropShortName(needMonth)} on ${lot.name}, so "You now" is empty and the plans are not compared with your crop yet. ${cropShortName(needMonth)} can be planted at different times of the year.`}
+              </Notice>
+              <Button
+                label={`Tell us when you plant ${cropShortName(needMonth)}`}
+                onPress={() => router.push({ pathname: "/crops", params: { lot: lot.id } })}
+              />
+            </Narrow>
+          ) : null}
           {topCard}
           {yearCalendar}
           {overview}
