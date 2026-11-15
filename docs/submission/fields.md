@@ -20,7 +20,7 @@
 ## Link to Final Project
 - Web app (no login): https://agrosprout.pages.dev (primary; Cloudflare Pages, no domain to renew)
 - Same app on our domain: https://agrosprout.inovsea.com
-- Source code: https://github.com/GENZ-PH/agrosprout (public since 2026-11-15, after a gitleaks scan of all history)
+- Source code: https://github.com/InovSea/agrosprout (public since 2026-11-15, after a gitleaks scan of all history)
 
 Tip for judges, also on the start screen: tap **See a sample farm** to see full results without drawing anything and without signal.
 

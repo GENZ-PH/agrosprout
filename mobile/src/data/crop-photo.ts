@@ -22,7 +22,7 @@ const HEADERS: Record<string, string> =
   Platform.OS === "web"
     ? {}
     : {
-        "User-Agent": "AgroSprout/1.0 (https://github.com/GENZ-PH/agrosprout)",
+        "User-Agent": "AgroSprout/1.0 (https://github.com/InovSea/agrosprout)",
       };
 
 type Saved = { photo: CropPhoto | null; at: number };

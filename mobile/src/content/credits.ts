@@ -10,7 +10,7 @@ export interface CreditItem {
 }
 
 /** Full list of everything the project uses, with versions and licenses. */
-export const THIRD_PARTY_URL = "https://github.com/GENZ-PH/agrosprout/blob/main/THIRD_PARTY.md";
+export const THIRD_PARTY_URL = "https://github.com/InovSea/agrosprout/blob/main/THIRD_PARTY.md";
 
 const cite = (key: keyof typeof SOURCE_DETAILS) => SOURCE_DETAILS[key]?.cite ?? "";
 const link = (key: keyof typeof SOURCE_DETAILS) => SOURCE_DETAILS[key]?.url;
