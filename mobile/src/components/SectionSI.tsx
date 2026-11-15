@@ -6,6 +6,7 @@ import type { AppType } from "../../../api/types/index";
 import { API_URL, unwrap } from "../api/client";
 import { fetchWithTimeout } from "../net/fetch";
 import { useOnline } from "../net/useOnline";
+import { SI_LINKS, SISource } from "./SISource";
 import type { PanelSection } from "./panel-si";
 import { colors, radius, space, text } from "./theme";
 
@@ -91,6 +92,11 @@ export function SectionSI({ sections, index, whatIf }: { sections: PanelSection[
     <View style={styles.box} accessibilityLabel={`SI insight: ${note}`}>
       <Text style={styles.tag}>SI insight</Text>
       <Text style={text.small}>{note}</Text>
+      <SISource
+        lead="Written by SI (Claude, by Anthropic) from the numbers in this section only."
+        given={sections[index].facts}
+        links={[SI_LINKS.power, SI_LINKS.powerMethod, SI_LINKS.fao56, SI_LINKS.ecocrop, SI_LINKS.claude]}
+      />
     </View>
   );
 }

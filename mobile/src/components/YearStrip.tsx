@@ -11,6 +11,8 @@ import type { Crop, LotData } from "../types";
 import { familyStyle, MONTH_NAMES } from "./field-year-core";
 import { yearStrip } from "./farmer-core";
 import { Icon } from "./Icon";
+import { SI_LINKS, SISource } from "./SISource";
+import { monthStates, RISK_COLOR, RISK_ICON, RISK_LABEL } from "./season-guide-core";
 import { explainMonthRequest, monthLines, MONTH_LONG, readSaved, save, stripMonths, type StripMonth } from "./month-si";
 import { colors, radius, space, text } from "./theme";
 
@@ -91,6 +93,8 @@ export function YearStrip({ pick, a, isA, name, cropById, monthly, whatIf }: Pro
     ...(!isA && a ? [{ label: "You now", strip: yearStrip(a) }] : []),
   ];
   // One page at a time: the visible months less one, so a month stays for orientation.
+  // The suggested plan's risk months (engine output), as small icons over each month.
+  const risks = monthStates(pick).map((x) => x.risks);
   const by = (dir: -1 | 1) => {
     const page = Math.max(STEP, Math.floor(view.w / STEP - 1) * STEP);
     scroll.current?.scrollTo({ x: Math.min(maxX, Math.max(0, x.current + dir * page)), animated: true });
@@ -128,7 +132,7 @@ export function YearStrip({ pick, a, isA, name, cropById, monthly, whatIf }: Pro
           contentContainerStyle={styles.cols}
         >
           {months.map((m, i) => (
-            <MonthColumn key={i} m={m} rows={rows} cropById={cropById} on={i === active} onPick={() => setActive(i)} />
+            <MonthColumn key={i} m={m} rows={rows} cropById={cropById} on={i === active} onPick={() => setActive(i)} risks={risks[m.month]} />
           ))}
         </ScrollView>
       </View>
@@ -172,7 +176,9 @@ function MonthColumn({
   cropById,
   on,
   onPick,
+  risks,
 }: {
+  risks: readonly (keyof typeof RISK_ICON)[];
   m: StripMonth;
   rows: { label: string; strip: (string | null)[] }[];
   cropById: (id: string) => Crop | undefined;
@@ -191,6 +197,11 @@ function MonthColumn({
     >
       <Text style={styles.year}>{showYear ? String(m.year) : " "}</Text>
       <Text style={[styles.letter, m.when === "now" && styles.letterNow, on && styles.letterOn]}>{MONTH_NAMES[m.month]}</Text>
+      <View style={styles.riskRow} accessibilityLabel={risks.map((r) => RISK_LABEL[r]).join(", ")}>
+        {risks.map((r) => (
+          <Icon key={r} name={RISK_ICON[r]} size={12} color={RISK_COLOR[r]} />
+        ))}
+      </View>
       {rows.map((r) => {
         const id = r.strip[m.month];
         const st = id ? familyStyle(cropById(id)?.family) : null;
@@ -281,7 +292,16 @@ export function MonthSI({ year, month, whatIf }: { year: MonthReq[]; month: numb
   return (
     <View style={styles.si}>
       <Text style={text.small}>{textNow}</Text>
-      <Text style={text.caption}>{"Why, by SI (Claude, by Anthropic) from this lot's NASA rain for the month. It can be wrong."}</Text>
+      <SISource
+        lead="Why, by SI (Claude, by Anthropic), from this lot's NASA data for the month."
+        given={[
+          `Month: ${year[month].month}.`,
+          year[month].climate,
+          ...year[month].suggestion.map((l) => `Suggested plan: ${l}`),
+          ...year[month].yours.map((l) => `Your crops now: ${l}`),
+        ]}
+        links={[SI_LINKS.power, SI_LINKS.fao56, SI_LINKS.ecocrop, SI_LINKS.claude]}
+      />
     </View>
   );
 }
@@ -292,7 +312,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1, minWidth: 0 },
   center: { textAlign: "center" },
   labels: { width: 84, gap: GAP, paddingRight: space.xs },
-  headSpace: { height: 34 },
+  headSpace: { height: 34 + 14 + GAP },
   rowLabel: { height: 26, lineHeight: 26 },
   cols: { gap: GAP, paddingBottom: space.xs },
   col: { width: CELL, gap: GAP, alignItems: "stretch", borderRadius: 4 },
@@ -303,6 +323,7 @@ const styles = StyleSheet.create({
   letterNow: { color: colors.green, fontWeight: "800" },
   letterOn: { color: colors.ink, fontWeight: "800", textDecorationLine: "underline" },
   cell: { height: 26, borderRadius: 4 },
+  riskRow: { height: 14, flexDirection: "row", justifyContent: "center", gap: 1 },
   cellEmpty: { backgroundColor: colors.bg, borderWidth: 1, borderStyle: "dashed", borderColor: colors.dashed },
   cellNow: { borderWidth: 2, borderStyle: "solid", borderColor: colors.ink },
   cellOn: { transform: [{ scaleY: 1.08 }] },

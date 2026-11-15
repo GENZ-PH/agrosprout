@@ -85,7 +85,8 @@ export default function DashboardScreen() {
   const views = useFarmLotViews(farm);
   const { wide, width, contentWidth } = useLayout();
   // The lot tabs sit beside the title when there is room, else on their own row under it.
-  const oneRowHeader = contentWidth >= 720;
+  // Two rows at every width (2026-11-15): logo, title and Technical data, then the lot tabs.
+  const oneRowHeader = false;
   // On a big window (mostly judges and technicians), the NASA data panel starts open once per
   // visit; on a phone it waits for the header button. Leaving the dashboard clears its lot.
   useEffect(() => {
@@ -150,7 +151,7 @@ export default function DashboardScreen() {
             <Header logo title="Your farm" middle={tabs} right={<NasaDataButton />} />
           ) : (
             <>
-              <Header logo title="" right={<NasaDataButton />} />
+              <Header logo title={contentWidth >= 520 ? "Your farm" : ""} right={<NasaDataButton />} />
               {tabs}
             </>
           );
