@@ -9,6 +9,7 @@ import { useOnline } from "../net/useOnline";
 import { Button } from "./Button";
 import { SI_LINKS, SISource } from "./SISource";
 import { explainErrorText, type ExplainRequest } from "./explain-core";
+import { linksIn } from "./satellite-facts";
 import { colors, radius, space, text } from "./theme";
 
 // "In plain words" (D33): a few plain sentences about the suggested plan, written by Claude from
@@ -76,7 +77,7 @@ export function ExplainWithSI({ request, auto = false, title = "In plain words" 
         <Text style={styles.label}>{title}</Text>
         <Text style={text.body}>{state.text}</Text>
         <SISource
-          lead="Written by SI (Claude, by Anthropic) from the app's results for this plan only. Talk it over with your technician."
+          lead={`Written by SI (Claude, by Anthropic) from the app's results for this plan${request.satellite ? " and this lot's NASA satellite checks" : ""} only. Talk it over with your technician.`}
           given={[
             `Plan: ${request.plan}. Crops: ${request.crops}`,
             `Score ${request.score ?? "not known"} out of 100${request.yourScore != null ? `, your crops ${request.yourScore}` : ""}.`,
@@ -84,8 +85,9 @@ export function ExplainWithSI({ request, auto = false, title = "In plain words" 
             ...request.why,
             ...request.tradeoffs,
             ...request.unknowns,
+            ...(request.satellite ?? []),
           ]}
-          links={[SI_LINKS.power, SI_LINKS.fao56, SI_LINKS.ecocrop, SI_LINKS.claude]}
+          links={[SI_LINKS.power, ...linksIn(request.satellite), SI_LINKS.fao56, SI_LINKS.ecocrop, SI_LINKS.claude]}
         />
       </View>
     );

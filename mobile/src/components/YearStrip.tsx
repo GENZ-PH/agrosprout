@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ComponentRef } from "react";
+import { useContext, useEffect, useRef, useState, type ComponentRef } from "react";
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { hc } from "hono/client";
 
@@ -12,6 +12,8 @@ import { familyStyle, MONTH_NAMES } from "./field-year-core";
 import { yearStrip } from "./farmer-core";
 import { Icon } from "./Icon";
 import { SI_LINKS, SISource } from "./SISource";
+import { linksIn, satelliteMonthFacts } from "./satellite-facts";
+import { SatelliteContext } from "./SourceChip";
 import { monthStates, RISK_COLOR, RISK_ICON, RISK_LABEL } from "./season-guide-core";
 import { explainMonthRequest, monthLines, MONTH_LONG, readSaved, save, stripMonths, type StripMonth } from "./month-si";
 import { colors, radius, space, text } from "./theme";
@@ -231,7 +233,8 @@ function MonthNote({
   monthly: Props["monthly"];
   whatIf: boolean;
 }) {
-  const year = yearRequests({ pick, a, monthly, name });
+  const sat = useContext(SatelliteContext);
+  const year = yearRequests({ pick, a, monthly, name, satellite: (m) => satelliteMonthFacts(sat, m) });
   return (
     <View style={styles.note} accessibilityLiveRegion="polite">
       <Text style={text.bodyStrong}>
@@ -293,14 +296,19 @@ export function MonthSI({ year, month, whatIf }: { year: MonthReq[]; month: numb
     <View style={styles.si}>
       <Text style={text.small}>{textNow}</Text>
       <SISource
-        lead="Why, by SI (Claude, by Anthropic), from this lot's NASA data for the month."
+        lead={
+          year[month].satellite
+            ? "Why, by SI (Claude, by Anthropic), from this lot's NASA POWER and NASA satellite data for the month."
+            : "Why, by SI (Claude, by Anthropic), from this lot's NASA POWER data for the month."
+        }
         given={[
           `Month: ${year[month].month}.`,
-          year[month].climate,
+          `NASA POWER (what the scores use): ${year[month].climate}`,
+          ...(year[month].satellite ?? []),
           ...year[month].suggestion.map((l) => `Suggested plan: ${l}`),
           ...year[month].yours.map((l) => `Your crops now: ${l}`),
         ]}
-        links={[SI_LINKS.power, SI_LINKS.fao56, SI_LINKS.ecocrop, SI_LINKS.claude]}
+        links={[SI_LINKS.power, ...linksIn(year[month].satellite), SI_LINKS.fao56, SI_LINKS.ecocrop, SI_LINKS.claude]}
       />
     </View>
   );

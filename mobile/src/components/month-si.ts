@@ -23,7 +23,7 @@ export const MONTH_LONG = [
 ] as const;
 
 /** Matches `explainMonthBody` in api/src/routes/explain.ts. */
-export type ExplainMonthRequest = { month: string; suggestion: string[]; yours: string[]; climate: string };
+export type ExplainMonthRequest = { month: string; suggestion: string[]; yours: string[]; climate: string; satellite?: string[] };
 
 /** One month of the strip: its calendar month (0-11), year, and whether it is past, now or ahead. */
 export interface StripMonth {
@@ -44,7 +44,7 @@ export function stripMonths(today: Date, back = 12, ahead = 23): StripMonth[] {
 
 const r = (v: number | null | undefined) => (v == null ? null : Math.round(v));
 
-/** "Rain in a typical year: 244 mm (dry year 164 mm, wet year 305 mm). Water the air takes: 102 mm." */
+/** NASA POWER, the data the scores use: "Rain in a typical year: 244 mm (dry year 164 mm, wet year 305 mm). Water the air takes: 102 mm." */
 export function monthClimate(monthly: Pick<LotData["monthly"], "precip_mm" | "et0_mm">, month: number): string {
   const p50 = r(monthly.precip_mm.p50[month]);
   const p20 = r(monthly.precip_mm.p20[month]);
@@ -66,13 +66,17 @@ export function explainMonthRequest(args: {
   a: RotationOption | undefined;
   monthly: Pick<LotData["monthly"], "precip_mm" | "et0_mm">;
   name: (id: string) => string;
+  /** NASA satellite lines for this month (`satelliteMonthFacts`); left out when there are none. */
+  satellite?: (month: number) => string[];
 }): ExplainMonthRequest {
   const { month, pick, a, monthly, name } = args;
+  const sat = args.satellite?.(month).slice(0, 8) ?? [];
   return {
     month: MONTH_LONG[month],
     suggestion: monthLines(pick, month, name).slice(0, 8),
     yours: a ? monthLines(a, month, name).slice(0, 8) : [],
     climate: monthClimate(monthly, month).slice(0, 300),
+    ...(sat.length ? { satellite: sat.map((l) => l.slice(0, 400)) } : {}),
   };
 }
 

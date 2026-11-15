@@ -2,6 +2,7 @@ import { createContext, useContext } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { SOURCES, type SourceKey } from "../content/sources";
+import type { SatelliteFiles } from "../data/satellite";
 import { openInspector } from "./inspector-store";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
@@ -48,6 +49,8 @@ export const DemoDataContext = createContext(false);
  * NASA POWER chip, so every card says which NASA data stands behind it. They do not change scores.
  */
 export const CheckedAgainstContext = createContext<readonly SourceKey[]>([]);
+/** The NASA satellite and model files for the lot on screen (D35), for the SI notes and their sources. */
+export const SatelliteContext = createContext<SatelliteFiles | null>(null);
 
 /** The NASA datasets a card uses, as clickable chips. Non-NASA sources are left out (they open nothing). */
 export function SourceChips({ keys, period = "" }: { keys: readonly SourceKey[]; period?: string }) {
