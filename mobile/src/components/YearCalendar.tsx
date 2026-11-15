@@ -5,9 +5,9 @@ import type { RotationOption } from "../engine/rotations";
 import { monthLong } from "../lots/months-core";
 import type { Crop, LotData } from "../types";
 import { familyStyle, MONTH_NAMES } from "./field-year-core";
-import { Icon, type IconName } from "./Icon";
+import { Icon } from "./Icon";
 import { ExplainerBox } from "./InfoCard";
-import { monthStates, type MonthRisk } from "./season-guide-core";
+import { monthStates, RISK_COLOR, RISK_ICON } from "./season-guide-core";
 import { OPTION_LABELS } from "./soil-health-chart-core";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 import { useLayout } from "./useLayout";
@@ -34,8 +34,6 @@ type Props = {
 };
 
 const TILE_W = 58;
-const RISK_ICON: Record<MonthRisk, IconName> = { dry: "sun", hot: "heat", wet: "drop" };
-const RISK_COLOR: Record<MonthRisk, string> = { dry: "#B5641B", hot: "#B3261E", wet: "#1D5FA8" };
 
 export function YearCalendar({ options, lotName, cropById, period, initialKey, monthly, whatIf }: Props) {
   const { wide } = useLayout();
@@ -54,7 +52,21 @@ export function YearCalendar({ options, lotName, cropById, period, initialKey, m
   const siYear = yearRequests({ pick: selected, a: selected.key === "A" ? undefined : yours, monthly, name });
   // The crops of this plan, for the legend under the tiles.
   const planCrops = [...new Set(selected.slots.map((x) => x.crop_id))];
-  const ordered = useMemo(() => Array.from({ length: 12 }, (_, i) => states[(nowMonth - 1 + i) % 12]), [states, nowMonth]);
+  // Earlier and later years (2026-11-15): the window is 12 months from this month, moved a year at a
+  // time up to 5 years back or ahead. The plan repeats every year; past months are dimmed.
+  const [shift, setShift] = useState(0);
+  const thisYear = new Date().getFullYear();
+  const ordered = useMemo(
+    () =>
+      Array.from({ length: 12 }, (_, i) => {
+        const abs = thisYear * 12 + (nowMonth - 1) + shift * 12 + i;
+        const nowAbs = thisYear * 12 + (nowMonth - 1);
+        return { ...states[abs % 12], year: Math.floor(abs / 12), when: abs < nowAbs ? "past" : abs === nowAbs ? "now" : "ahead" };
+      }),
+    [states, nowMonth, shift, thisYear],
+  );
+  const pickedYear = ordered.find((s) => s.month === picked)?.year ?? thisYear;
+  const range = `${MONTH_NAMES[ordered[0].month - 1]} ${ordered[0].year} to ${MONTH_NAMES[ordered[11].month - 1]} ${ordered[11].year}`;
 
   return (
     <View style={styles.block}>
@@ -93,6 +105,36 @@ export function YearCalendar({ options, lotName, cropById, period, initialKey, m
       </View>
       <Text style={[text.small, styles.muted]}>Tap a month to see what to do, and why.</Text>
 
+      <View style={styles.nav}>
+        <Pressable
+          onPress={() => setShift((v) => Math.max(-5, v - 1))}
+          disabled={shift <= -5}
+          accessibilityRole="button"
+          accessibilityLabel="Earlier year"
+          style={[styles.navBtn, shift <= -5 && styles.navOff]}
+        >
+          <Icon name="back" size={18} color={colors.green} />
+          <Text style={styles.navText}>Earlier</Text>
+        </Pressable>
+        <View style={[styles.flex, styles.navMid]}>
+          <Text style={[text.small, styles.navRange]}>{range}</Text>
+          {shift !== 0 ? (
+            <Pressable onPress={() => setShift(0)} accessibilityRole="button" accessibilityLabel="Back to this year">
+              <Text style={styles.navText}>Back to now</Text>
+            </Pressable>
+          ) : null}
+        </View>
+        <Pressable
+          onPress={() => setShift((v) => Math.min(5, v + 1))}
+          disabled={shift >= 5}
+          accessibilityRole="button"
+          accessibilityLabel="Later year"
+          style={[styles.navBtn, shift >= 5 && styles.navOff]}
+        >
+          <Text style={styles.navText}>Later</Text>
+          <Icon name="chevron" size={18} color={colors.green} />
+        </Pressable>
+      </View>
       <ScrollView
         ref={stripRef}
         horizontal={!wide}
@@ -101,7 +143,7 @@ export function YearCalendar({ options, lotName, cropById, period, initialKey, m
       >
         {ordered.map((s) => {
           const on = s.month === picked;
-          const isNow = s.month === nowMonth;
+          const isNow = s.when === "now";
           return (
             <Pressable
               key={s.month}
@@ -109,9 +151,10 @@ export function YearCalendar({ options, lotName, cropById, period, initialKey, m
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
               accessibilityLabel={tileLabel(s, monthLong(s.month), name, isNow)}
-              style={[styles.tile, wide && styles.tileWide, on && styles.tileOn, isNow && !on && styles.tileNow]}
+              style={[styles.tile, wide && styles.tileWide, on && styles.tileOn, isNow && !on && styles.tileNow, s.when === "past" && styles.tilePast]}
             >
               <Text style={[styles.tileMonth, on && styles.tileMonthOn]}>{MONTH_NAMES[s.month - 1]}</Text>
+              {s.month === 1 || s === ordered[0] ? <Text style={styles.tileYear}>{s.year}</Text> : null}
               <View style={styles.tileRisk}>
                 {s.risks.map((r) => (
                   <Icon key={r} name={RISK_ICON[r]} size={16} color={RISK_COLOR[r]} />
@@ -167,7 +210,8 @@ export function YearCalendar({ options, lotName, cropById, period, initialKey, m
       <View style={styles.detail} accessibilityLiveRegion="polite">
         <Text style={text.bodyStrong}>
           {monthLong(picked)}
-          {picked === nowMonth ? " (this month)" : ""}, {OPTION_LABELS[selected.key]}
+          {` ${pickedYear}`}
+          {pickedYear === thisYear && picked === nowMonth ? " (this month)" : ""}, {OPTION_LABELS[selected.key]}
         </Text>
         {lines.map((l) => (
           <View key={l.text} style={styles.line}>
@@ -237,6 +281,14 @@ const styles = StyleSheet.create({
   tileNow: { borderColor: colors.green, borderWidth: 2 },
   tileMonth: { fontSize: 15, fontWeight: "800", color: colors.ink },
   tileMonthOn: { color: colors.green },
+  tileYear: { fontSize: 11, lineHeight: 13, fontWeight: "700", color: colors.muted, marginTop: -4 },
+  tilePast: { opacity: 0.6 },
+  nav: { flexDirection: "row", alignItems: "center", gap: space.sm },
+  navBtn: { flexDirection: "row", alignItems: "center", gap: 2, minHeight: MIN_TOUCH, paddingHorizontal: space.xs },
+  navOff: { opacity: 0.35 },
+  navText: { fontSize: 14, fontWeight: "700", color: colors.green },
+  navMid: { alignItems: "center" },
+  navRange: { fontWeight: "700", textAlign: "center" },
   tileRisk: { flexDirection: "row", gap: 2, minHeight: 16 },
   tileBands: { alignSelf: "stretch", gap: 3 },
   band: { height: 22, borderRadius: 6, alignItems: "center", justifyContent: "center", flexDirection: "row" },

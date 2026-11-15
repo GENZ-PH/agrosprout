@@ -467,11 +467,12 @@ export function OverviewBody({ c }: { c: PanelContext }) {
 }
 
 const overview = StyleSheet.create({
-  tabs: { flexDirection: "row", gap: space.xs, paddingHorizontal: space.md, paddingVertical: space.sm, borderBottomWidth: 1, borderBottomColor: colors.border, flexWrap: "wrap" },
-  tab: { minHeight: 34, justifyContent: "center", paddingHorizontal: 12, borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.borderStrong, backgroundColor: colors.surface },
-  tabOn: { backgroundColor: colors.green, borderColor: colors.green },
-  tabText: { fontSize: 14, fontWeight: "600", color: colors.ink },
-  tabTextOn: { color: colors.white },
+  // Square tabs in one row, equal width, the open one underlined in green.
+  tabs: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: colors.border },
+  tab: { flex: 1, minHeight: 44, alignItems: "center", justifyContent: "center", paddingHorizontal: space.xs, borderBottomWidth: 3, borderBottomColor: "transparent" },
+  tabOn: { borderBottomColor: colors.green, backgroundColor: colors.greenTint },
+  tabText: { fontSize: 13, lineHeight: 16, fontWeight: "600", color: colors.muted, textAlign: "center" },
+  tabTextOn: { color: colors.green, fontWeight: "800" },
   dataset: {
     flexDirection: "row",
     alignItems: "center",

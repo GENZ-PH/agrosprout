@@ -7,6 +7,7 @@ import { API_URL, ApiError, unwrap } from "../api/client";
 import { fetchWithTimeout } from "../net/fetch";
 import { useOnline } from "../net/useOnline";
 import { Button } from "./Button";
+import { SI_LINKS, SISource } from "./SISource";
 import { explainErrorText, type ExplainRequest } from "./explain-core";
 import { colors, radius, space, text } from "./theme";
 
@@ -74,7 +75,18 @@ export function ExplainWithSI({ request, auto = false, title = "In plain words" 
       <View style={styles.box} accessibilityRole="summary">
         <Text style={styles.label}>{title}</Text>
         <Text style={text.body}>{state.text}</Text>
-        <Text style={text.caption}>Written by SI (Claude, by Anthropic) from these results only. It can be wrong: talk it over with your technician.</Text>
+        <SISource
+          lead="Written by SI (Claude, by Anthropic) from the app's results for this plan only. Talk it over with your technician."
+          given={[
+            `Plan: ${request.plan}. Crops: ${request.crops}`,
+            `Score ${request.score ?? "not known"} out of 100${request.yourScore != null ? `, your crops ${request.yourScore}` : ""}.`,
+            ...request.scores,
+            ...request.why,
+            ...request.tradeoffs,
+            ...request.unknowns,
+          ]}
+          links={[SI_LINKS.power, SI_LINKS.fao56, SI_LINKS.ecocrop, SI_LINKS.claude]}
+        />
       </View>
     );
   }

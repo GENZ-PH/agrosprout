@@ -1,13 +1,18 @@
-import { StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { ComponentKey, Explanation, RotationOption } from "../engine";
 import type { Crop, LotData } from "../types";
 import { CropImage } from "./CropImage";
+import { CropInfoDialog } from "./CropInfoDialog";
+import { lacksData } from "./crop-facts";
+import { MONTH_LONG } from "./month-si";
 import { ExplainWithSI } from "./ExplainWithSI";
 import { YearStrip } from "./YearStrip";
 import { explainRequest } from "./explain-core";
 import { checkFirst, cropSequence, type LongerSeason, plainReasons } from "./farmer-core";
 import { familyStyle } from "./field-year-core";
+import { RISK_COLOR, RISK_ICON, RISK_LABEL } from "./season-guide-core";
 import { Icon } from "./Icon";
 import { OPTION_LABELS } from "./soil-health-chart-core";
 import { colors, space, text } from "./theme";
@@ -45,6 +50,13 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
   const crops = [...new Set(pick.slots.map((s) => s.crop_id))];
   const yours = a ? [...new Set(a.slots.map((s) => s.crop_id))] : [];
   const legend = [...new Set([...crops, ...(isA ? [] : yours)])];
+  const [info, setInfo] = useState<string | null>(null);
+  const planLine = (id: string) => {
+    const when = pick.slots
+      .filter((x) => x.crop_id === id)
+      .map((x) => `plant in ${MONTH_LONG[x.plant_month - 1]}, harvest in ${MONTH_LONG[x.harvest_month - 1]}`);
+    return `In this plan for ${lotName}: ${when.join("; then ")}.`;
+  };
 
   return (
     <View style={styles.card} accessibilityRole="summary">
@@ -53,14 +65,32 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
         {isA ? "Keep your crops" : cropSequence(pick, name)}
       </Text>
       <View style={styles.pics}>
-        {crops.map((id) => (
-          <View key={id} style={styles.pic}>
-            <CropImage cropId={id} size={56} borderColor={familyStyle(cropById(id)?.family).fill} />
-            <Text style={text.small} numberOfLines={1}>
-              {name(id)}
-            </Text>
-          </View>
-        ))}
+        {crops.map((id) => {
+          const c = cropById(id);
+          const gap = c ? lacksData(c) : false;
+          return (
+            <Pressable
+              key={id}
+              onPress={() => setInfo(id)}
+              accessibilityRole="button"
+              accessibilityLabel={`About ${name(id)}${gap ? ", some data missing" : ""}`}
+              style={({ pressed }) => [styles.pic, pressed && styles.picHover]}
+            >
+              <View>
+                <CropImage cropId={id} size={56} borderColor={familyStyle(c?.family).fill} />
+                {gap ? (
+                  <View style={styles.picWarn}>
+                    <Icon name="alert" size={14} color={colors.white} />
+                  </View>
+                ) : null}
+              </View>
+              <Text style={text.small} numberOfLines={1}>
+                {name(id)}
+              </Text>
+              <Text style={styles.picHint}>About</Text>
+            </Pressable>
+          );
+        })}
       </View>
 
       {/* The year as pictures: months over numbers. */}
@@ -86,6 +116,12 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
             <View style={[styles.swatch, styles.swatchNow]} />
             <Text style={text.caption}>This month</Text>
           </View>
+          {(["dry", "hot", "wet"] as const).map((r) => (
+            <View key={r} style={styles.legendItem}>
+              <Icon name={RISK_ICON[r]} size={13} color={RISK_COLOR[r]} />
+              <Text style={text.caption}>{RISK_LABEL[r]}</Text>
+            </View>
+          ))}
         </View>
         {!isA && a?.assumed_calendar ? (
           <Text style={text.caption}>
@@ -118,6 +154,9 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
         </View>
       ) : null}
 
+      {info ? (
+        <CropInfoDialog crop={cropById(info) ?? null} planLine={planLine(info)} lotName={lotName} whatIf={whatIf} onClose={() => setInfo(null)} />
+      ) : null}
       {siRequest ? <ExplainWithSI key={JSON.stringify(siRequest)} request={siRequest} auto={!whatIf} /> : null}
       <Text style={text.caption}>
         {isA ? "Your crops already score highest on this lot." : `This is plan ${pick.key} (${OPTION_LABELS[pick.key]}) in the details for your technician.`} You
@@ -132,7 +171,10 @@ const styles = StyleSheet.create({
   card: { gap: space.md, paddingTop: space.sm },
   kicker: { fontSize: 15, lineHeight: 20, fontWeight: "700", color: colors.olive },
   pics: { flexDirection: "row", flexWrap: "wrap", gap: space.md },
-  pic: { alignItems: "center", gap: 2, maxWidth: 88 },
+  pic: { alignItems: "center", gap: 2, maxWidth: 88, padding: 4, borderRadius: 8 },
+  picHover: { backgroundColor: colors.greenTint },
+  picWarn: { position: "absolute", top: -4, right: -4, width: 20, height: 20, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: colors.amber },
+  picHint: { fontSize: 11, fontWeight: "700", color: colors.green, textDecorationLine: "underline" },
   year: { gap: space.xs },
   yearRow: { flexDirection: "row", alignItems: "center", gap: space.sm },
   rowLabel: { width: 76 },

@@ -9,41 +9,11 @@ import { colors, radius, space, text } from "../src/components/theme";
 import { CROP_LIBRARY } from "../src/data/crops";
 import { params } from "../src/engine";
 import type { Crop } from "../src/types";
+import { rows, UNKNOWN, usable } from "../src/components/crop-facts";
 
 // Crop library (2026-11-15): every crop the engine can suggest, with the characteristics it uses and
 // where each value comes from, and how a crop is matched to a lot. The numbers shown are the ones in
 // crops.json and params.ts, nothing else; a value with no source shows as "not known yet".
-
-const MONTH = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const LEVEL = { low: "Low", medium: "Medium", high: "High" } as const;
-const UNKNOWN = "Not known yet";
-
-/** Same rule as the engine (rotations.ts isComplete): these values must all be known to suggest a crop. */
-const usable = (c: Crop) => c.season_days !== null && c.kc !== null && c.stages_days !== null && c.temp_c !== null;
-
-const level = (v: keyof typeof LEVEL | null) => (v ? LEVEL[v] : UNKNOWN);
-
-function rows(c: Crop): [string, string][] {
-  const t = c.temp_c;
-  return [
-    ["Days in the field", c.season_days === null ? UNKNOWN : `${c.season_days} days`],
-    ["Temperature it survives", t ? `${t.min} to ${t.max} °C` : UNKNOWN],
-    ["Temperature it likes best", t ? `${t.opt_low} to ${t.opt_high} °C` : UNKNOWN],
-    ["Water use at its peak (FAO-56 Kc mid)", c.kc ? String(c.kc[1]) : UNKNOWN],
-    ["Root depth", c.root_depth_m ? `${c.root_depth_m[0]} to ${c.root_depth_m[1]} m` : UNKNOWN],
-    ["Handles dry spells", level(c.drought_tolerance)],
-    ["Handles waterlogged soil", level(c.waterlogging_tolerance)],
-    ["Adds nitrogen to the soil", c.n_fixing === null ? UNKNOWN : c.n_fixing ? "Yes (legume)" : "No"],
-    ["Spoils after harvest", c.perishability ? { high: "Within days", medium: "In 1 to 3 weeks", low: "Keeps for months" }[c.perishability] : UNKNOWN],
-    ["Typical yield (PSA)", c.yield_t_per_ha === null ? UNKNOWN : `${c.yield_t_per_ha} t/ha`],
-    [
-      "Usual months",
-      c.typical_calendar.length === 0
-        ? UNKNOWN
-        : c.typical_calendar.map((s) => `${MONTH[s.plant_month - 1]} to ${MONTH[s.harvest_month - 1]}`).join(", "),
-    ],
-  ];
-}
 
 function CropCard({ c }: { c: Crop }) {
   const [open, setOpen] = useState(false);
