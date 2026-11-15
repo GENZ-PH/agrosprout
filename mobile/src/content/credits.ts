@@ -57,6 +57,62 @@ export const OTHER_DATA_CREDITS: readonly CreditItem[] = [
   },
 ];
 
+export const METHOD_CREDITS: readonly CreditItem[] = [
+  {
+    name: "FAO-56 (crop water need)",
+    lines: ["Allen, R.G., Pereira, L.S., Raes, D., Smith, M. (1998). Crop evapotranspiration: guidelines for computing crop water requirements. FAO Irrigation and Drainage Paper 56. Penman-Monteith ET0, crop coefficients, stage lengths, rooting depth and depletion fraction."],
+    url: "https://www.fao.org/4/x0490e/x0490e00.htm",
+  },
+  {
+    name: "FAO Training Manual No. 3 (effective rain)",
+    lines: ["Brouwer, C., Heibloem, M. (1986). Irrigation Water Management Training Manual No. 3: Irrigation Water Needs. FAO. Effective rainfall and the extra water paddy rice needs."],
+    url: "https://www.fao.org/4/s2022e/s2022e08.htm",
+  },
+  { name: "FAO Ecocrop (crop temperature ranges)", lines: ["Each value is cited per crop in the crop library."], url: "https://gaez.fao.org/pages/ecocrop" },
+  { name: "Kader (1993)", lines: ["Perishability classes for market access, where cited in the crop library."] },
+];
+
+export const SERVICE_CREDITS: readonly CreditItem[] = [
+  {
+    name: "NASA POWER API",
+    lines: ["Called once per lot with the lot centre rounded to 0.1 degree."],
+    url: "https://power.larc.nasa.gov/docs/services/api/",
+  },
+  {
+    name: "Anthropic Claude API (SI notes)",
+    lines: ["Called only by our API Worker with the app's results (no location, no lot shape, no names). Model claude-opus-5-5. Terms: Anthropic Commercial Terms and Usage Policy."],
+    url: "https://www.anthropic.com/legal/commercial-terms",
+  },
+  {
+    name: "Wikipedia and Wikimedia Commons",
+    lines: ["Pictures for crops found by search. Only the crop's scientific name is sent."],
+    url: "https://foundation.wikimedia.org/wiki/Policy:User-Agent_policy",
+  },
+  {
+    name: "FOSSGIS routing server (OpenStreetMap)",
+    lines: ["Travel time to harvest places. Points rounded to about 100 m. Routing © OpenStreetMap contributors (ODbL)."],
+    url: "https://routing.openstreetmap.de/about.html",
+  },
+  {
+    name: "Open Topo Data (pipeline only)",
+    lines: ["SRTM elevation for the sample farm, fetched once by the team's pipeline. The app never calls it."],
+    url: "https://www.opentopodata.org/",
+  },
+];
+
+export const BUILD_CREDITS: readonly CreditItem[] = [
+  { name: "TypeScript", lines: ["Apache-2.0. Type checking."], url: "https://www.typescriptlang.org" },
+  { name: "esbuild", lines: ["MIT. Bundles the offline map page."], url: "https://esbuild.github.io" },
+  { name: "ESLint and eslint-config-expo", lines: ["MIT. Linting."], url: "https://eslint.org" },
+  { name: "Workbox", lines: ["MIT. Service worker for the installable web app."], url: "https://developer.chrome.com/docs/workbox" },
+  { name: "Node.js test runner", lines: ["MIT. Engine and data tests."], url: "https://nodejs.org" },
+  { name: "Zod and @hono/zod-validator", lines: ["MIT. Checks requests in the API Worker."], url: "https://zod.dev" },
+  { name: "EAS Build (Expo)", lines: ["Android builds. Expo terms."], url: "https://expo.dev/eas" },
+  { name: "Cloudflare Pages, Workers and Wrangler", lines: ["Web hosting and the API Worker. Wrangler: MIT or Apache-2.0. Cloudflare terms."], url: "https://www.cloudflare.com" },
+  { name: "GitHub", lines: ["Code, issues and pull requests. GitHub terms."], url: "https://github.com" },
+  { name: "Python 3 standard library", lines: ["The data pipeline. No third-party Python packages."], url: "https://www.python.org" },
+];
+
 export const MAP_CREDITS: readonly CreditItem[] = [
   {
     name: "Esri World Imagery (for now)",

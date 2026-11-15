@@ -9,6 +9,8 @@ import { Button } from "../src/components/Button";
 import { CropFitCard } from "../src/components/CropFitCard";
 import { FarmMapCard } from "../src/components/FarmMapCard";
 import { Header } from "../src/components/Header";
+import { LeaveFarmDialog } from "../src/components/LeaveFarmDialog";
+import { isDemoFarm } from "../src/state/demo-farm-core";
 import { HarvestCard } from "../src/components/HarvestCard";
 import { Icon, type IconName } from "../src/components/Icon";
 import { NasaDataButton } from "../src/components/NasaDataButton";
@@ -116,6 +118,9 @@ export default function DashboardScreen() {
   // sheet with every control opens from the "Adjust results" button that stays on screen.
   const [scenarios, setScenarios] = useState<Record<string, Scenario | null>>({});
   const [adjustOpen, setAdjustOpen] = useState(false);
+  // Back on the dashboard asks: edit the farm, start over, or stay (the start screen would send a
+  // returning farmer straight back here).
+  const [leaving, setLeaving] = useState(false);
   const scenario = lot ? (scenarios[lot.id] ?? null) : null;
   const setScenario = useCallback(
     (s: Scenario | null) => {
@@ -148,10 +153,10 @@ export default function DashboardScreen() {
             />
           ) : null;
           return oneRowHeader ? (
-            <Header logo title="Your farm" middle={tabs} right={<NasaDataButton />} />
+            <Header logo title="Your farm" middle={tabs} right={<NasaDataButton />} onBack={() => setLeaving(true)} />
           ) : (
             <>
-              <Header logo title={contentWidth >= 520 ? "Your farm" : ""} right={<NasaDataButton />} />
+              <Header logo title={contentWidth >= 520 ? "Your farm" : ""} right={<NasaDataButton />} onBack={() => setLeaving(true)} />
               {tabs}
             </>
           );
@@ -215,6 +220,7 @@ export default function DashboardScreen() {
           <Button label="Draw your lots" href="/lots" />
         </Narrow>
       )}
+      <LeaveFarmDialog open={leaving} onClose={() => setLeaving(false)} sample={isDemoFarm(farm.lots)} />
     </Screen>
     </DemoDataContext.Provider>
   );

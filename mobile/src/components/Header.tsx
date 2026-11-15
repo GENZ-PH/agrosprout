@@ -18,10 +18,12 @@ type Props = {
   middle?: ReactNode;
   /** true = the AgroSprout wordmark before the title (the dashboard). */
   logo?: boolean;
+  /** Replaces the default back (history, else `fallbackHref`), e.g. the dashboard's leave dialog. */
+  onBack?: () => void;
 };
 
-export function Header({ title, leading = "back", fallbackHref = "/", right, middle, logo = false }: Props) {
-  const goBack = () => (router.canGoBack() ? router.back() : router.replace(fallbackHref));
+export function Header({ title, leading = "back", fallbackHref = "/", right, middle, logo = false, onBack }: Props) {
+  const goBack = onBack ?? (() => (router.canGoBack() ? router.back() : router.replace(fallbackHref)));
   return (
     <View style={styles.wrap}>
       <View style={styles.row}>
