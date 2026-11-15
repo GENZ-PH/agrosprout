@@ -73,7 +73,7 @@ export const SOURCE_DETAILS: Readonly<Partial<Record<SourceKey, SourceDetail>>> 
   srtm: {
     variables: [{ code: "srtm30m", meaning: "Ground height, 1 arc-second (about 30 m), whole metres" }],
     how: [
-      "Sample farm only. The team's pipeline asked once for nine heights on a 3 × 3 grid, 30 m apart, around the farm point, and the results are bundled with the app. Lots you draw have no SRTM data yet.",
+      "Sample farm only. The team's pipeline asked once for nine heights on a 3 × 3 grid, 30 m apart, around the farm point, and the results are bundled with the app. For a lot you draw, our server asks Open Topo Data for the SRTM height at the lot centre rounded to 0.1 degree, shown in Satellite checks only.",
       "The middle height is the field elevation. It sets the air pressure in the evaporation sum. Without it, sea level is used.",
       "The slope comes from the nine heights and is kept with the sample farm, but no score uses it yet. The washout score uses the land type you give.",
     ],
@@ -137,7 +137,7 @@ export const SOURCE_DETAILS: Readonly<Partial<Record<SourceKey, SourceDetail>>> 
     variables: [{ code: "precipitation", meaning: "Merged satellite and gauge rain, average rate over the month, mm/hr" }],
     how: [
       "A check, not an input: the results still use NASA POWER rain. IMERG is shown beside it so you can see how far two NASA rain estimates agree here.",
-      "Fetched once by the team's pipeline and bundled for the sample farm. The farm point sits on the corner of four IMERG cells, so each month is the mean of those four.",
+      "Fetched once by the team's pipeline and bundled for the sample farm. The farm point sits on the corner of four IMERG cells, so each month is the mean of those four. For a lot you draw, our server fetches IMERG for the lot centre rounded to 0.1 degree, with fewer recent years.",
       "Monthly files end at 2025-09, so October to December have one year fewer.",
     ],
     formulas: [
@@ -213,7 +213,7 @@ export const SOURCE_DETAILS: Readonly<Partial<Record<SourceKey, SourceDetail>>> 
       { code: "Qs_tavg, Qsb_tavg", meaning: "Surface and subsurface runoff, kg m⁻² s⁻¹" },
     ],
     how: [
-      "A check, not an input: the scores do not use it. A land surface model run (Noah 3.6.1, forced by MERRA-2 weather and CHIRPS rain), not a measurement. Fetched once by the team's pipeline and bundled for the sample farm.",
+      "A check, not an input: the scores do not use it. A land surface model run (Noah 3.6.1, forced by MERRA-2 weather and CHIRPS rain), not a measurement. Fetched once by the team's pipeline and bundled for the sample farm. For a lot you draw, our server fetches it for the lot centre rounded to 0.1 degree, with fewer recent years.",
       "The farm point sits on a cell corner, so each month is the mean of the 3 touching cells that have values in every month.",
       "Its rain is the CHIRPS forcing, so it will not match NASA POWER or GPM IMERG exactly.",
     ],

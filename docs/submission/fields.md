@@ -4,15 +4,15 @@
 >
 > **Draft v2 (Sat Nov 14, 23:50 PHT), written with SI (Claude Code) from what is merged on `main` at `85c11fa`.** Every sentence was checked against the code or the bundled data; anything that is not in the app is under "What's next". The team owns the final wording: drop or change anything you disagree with, and recheck it against the frozen build after 12:00.
 >
-> Open team decisions this page depends on: **D7 project name** (this draft uses AgriResilience, the name the app shows) and **D6 demo format** (#150 recommends the 30-second video; script in [demo-video-script.md](demo-video-script.md)).
+> Project name: **AgroSprout** (D7, decided 2026-11-15). Open team decision this page still depends on: **D6 demo format** (#150 recommends the 30-second video; script in [demo-video-script.md](demo-video-script.md)).
 
 ## Project Name
-**AgriResilience** *(D7 still open; the app and the docs use this name today)*
+**AgroSprout** *(D7, decided 2026-11-15)*
 
 ## High-Level Project Summary
 *What did you develop? How does it address the challenge? Why is it important?*
 
-> AgriResilience is a free app that helps a smallholder farmer decide what to plant, and when, on each of their own lots. The farmer draws their lots on a satellite map with a finger and picks the crop on each lot. The app then pulls 25 years of NASA POWER climate data for each lot and compares the farmer's current crop with three other rotations (best for water, best for soil, and balanced) on rain, heat, soil health, erosion and pest cycles, plus market access once the farmer adds where the harvest goes. It also checks the farmer's planting months against better ones. Every result says why, what it is based on, what is uncertain, and what to check with the local agricultural technician. It runs in a phone or laptop browser, needs no account, and saved results work offline. This matters now: PAGASA reports a very strong El Niño expected to last into the first half of 2027, so choosing a crop and planting month that fit a dry year protects the harvest. It is built for small farms: the Philippine Statistics Authority's 2022 Census of Agriculture and Fisheries counted 7.73 million farms, and 55.8 percent were smaller than half a hectare.
+> AgroSprout is a free app that helps a smallholder farmer decide what to plant, and when, on each of their own lots. The farmer draws their lots on a satellite map with a finger and picks the crop on each lot. The app then pulls 25 years of NASA POWER climate data for each lot and compares the farmer's current crop with three other rotations (best for water, best for soil, and balanced) on rain, heat, soil health, erosion and pest cycles, plus market access once the farmer adds where the harvest goes. It also checks the farmer's planting months against better ones. Every result says why, what it is based on, what is uncertain, and what to check with the local agricultural technician. It runs in a phone or laptop browser, needs no account, and saved results work offline. This matters now: PAGASA reports a very strong El Niño expected to last into the first half of 2027, so choosing a crop and planting month that fit a dry year protects the harvest. It is built for small farms: the Philippine Statistics Authority's 2022 Census of Agriculture and Fisheries counted 7.73 million farms, and 55.8 percent were smaller than half a hectare.
 
 ## Link to Project Demo
 `TBD` (public link; 30-second video or 7 slides at most; open it in a private window on a phone before submitting)
@@ -20,7 +20,7 @@
 ## Link to Final Project
 - Web app (no login): https://agrosprout.pages.dev (primary; Cloudflare Pages, no domain to renew)
 - Same app on our domain: https://agrosprout.inovsea.com
-- Source code: https://github.com/GENZ-PH/agrosprout *(repo must be public before submitting, #54)*
+- Source code: https://github.com/GENZ-PH/agrosprout (public since 2026-11-15, after a gitleaks scan of all history)
 
 Tip for judges, also on the start screen: tap **See a sample farm** to see full results without drawing anything and without signal.
 
@@ -28,7 +28,7 @@ Tip for judges, also on the start screen: tap **See a sample farm** to see full 
 
 **What exactly does it do?**
 
-AgriResilience is a decision-support app for smallholder farmers in Lanao del Norte, Philippines, built for the "Field Shift: Adapting Farms with NASA Data" challenge.
+AgroSprout is a decision-support app for smallholder farmers in Lanao del Norte, Philippines, built for the "Field Shift: Adapting Farms with NASA Data" challenge.
 
 1. **Draw your lots.** The farmer sketches each lot on a satellite map with a finger; the app turns the sketch into a clean plot with points they can drag, and measures its area.
 2. **Pick the crop on each lot.** For each lot the app suggests the top 3 crops for that lot's climate, with the planting months where each fits best, and the farmer can search for any crop they grow (crops outside the 10 in the library are saved but not scored).
@@ -102,7 +102,15 @@ We want a farmer to see, before planting, which season on each lot is likely to 
 | GPM IMERG Final Precipitation L3 1 month 0.1° V07 (doi:10.5067/GPM/IMERG/3B-MONTH/07), sample farm | Monthly precipitation | 2001 to 2025-09 | Satellite check of NASA POWER rain, shown side by side; not used in scores |
 | SMAP L4 Global 3-hourly 9 km Surface and Root Zone Soil Moisture, SPL4SMGP Version 8 (doi:10.5067/T5RUATAQREF8), sample farm | Surface (0-5 cm) and root-zone (0-100 cm) soil moisture | 2015-04 to 2025-12 | Satellite check shown beside NASA POWER soil wetness; not used in scores |
 
-Not used, and why: GRACE and GRACE-FO measure water storage over large regions, far coarser than a farm lot; GEDI measures forest and vegetation structure, not field crops. (The app's Data and limits page lists GRACE as not needed and does not mention GEDI yet.) MODIS, HLS, ECOSTRESS and FLDAS are not in the app: next steps.
+| NASA MODIS Terra NDVI, MOD13Q1 v061 (NASA LP DAAC, via NASA AppEEARS) | NDVI (how green the ground is), 16-day composites | Sample farm 2001-01 to 2025-12; drawn lots the last 5 years | Satellite check shown beside the results; not used in scores |
+| NASA HLS NDVI, HLSL30_VI and HLSS30_VI v2.0 (Landsat 8/9 and Sentinel-2, via NASA AppEEARS) | NDVI at 30 m | Sample farm 2013-05 to 2026-10; drawn lots the last 5 years | Satellite check; not used in scores |
+| NASA ECOSTRESS, ECO_L4T_ESI and ECO_L3T_JET v002 (via NASA AppEEARS) | Evaporative Stress Index, daily evapotranspiration | Sample farm 2018-09 to 2026-09; drawn lots the last 5 years | Satellite check of plant water stress; not used in scores |
+| NASA FLDAS Noah, FLDAS_NOAH01_C_GL_M v001 (NASA GES DISC) | Soil moisture, evapotranspiration, rain, runoff | Sample farm 2001-01 to 2025-12; drawn lots 2023-10 to 2026-09 | Model check beside NASA POWER; its numbers are given to the SI notes; not used in scores |
+| NASA GIBS map layers (MODIS Terra NDVI 8-day, GPM IMERG daily rain, SMAP L4 root-zone soil moisture, MODIS Terra land surface temperature) | Map tiles | Mid-November 2026 (date shown on each layer) | Layer switcher on the dashboard farm map |
+
+Drawn lots (decision D35, 2026-11-15): the app asks our API Worker for GPM IMERG (2022-10 to 2025-09), SMAP (2023-11 to 2026-10), FLDAS, SRTM slope and the AppEEARS products for the lot centre rounded to 0.1°. The Worker holds the NASA Earthdata login as a secret; no credential is in the app. These checks, and the SI notes that cite them, sit beside the scores; the scores use NASA POWER only.
+
+Not used, and why: GRACE and GRACE-FO measure water storage over large regions, far coarser than a farm lot; GEDI measures forest and vegetation structure, not field crops.
 
 ## Space Agency Partner Data & Other References
 *List ALL data, resources, and tools, open source included.* Versions, licenses and terms: [THIRD_PARTY.md](../../THIRD_PARTY.md).
@@ -141,6 +149,6 @@ Not used, and why: GRACE and GRACE-FO measure water storage over large regions, 
 - [ ] All members confirmed at the Iligan City Local Event, 6 at most
 - [ ] All required fields filled, all English
 - [ ] Demo within limits; every link opens in a private window on a phone
-- [ ] Repo public after a secrets scan
+- [x] Repo public after a secrets scan (gitleaks, all refs, 2026-11-15)
 - [ ] No under-18 likeness; no NASA branding in SI content; SI images watermarked
 - [ ] Terms checkbox ticked, **Submit for Judging** clicked (by 21:00 PHT Sun)

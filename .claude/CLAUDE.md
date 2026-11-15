@@ -1,4 +1,4 @@
-# AgriResilience: Claude Code project instructions
+# AgroSprout: Claude Code project instructions
 
 NASA Space Apps Challenge 2026 entry for **"Field Shift: Adapting Farms with NASA Data"**. Team Jeoleecation, Local Event Iligan City, Philippines.
 An offline-first mobile app (Expo React Native: Android app for farmers + web build for judges) that helps smallholder farmers compare crop-rotation strategies (current + ≥2 alternatives) and planting months using NASA Earth observations, crop characteristics, and farmer priorities.
@@ -21,8 +21,9 @@ An offline-first mobile app (Expo React Native: Android app for farmers + web bu
 5. **English** for all submission materials.
 6. The app **supports and doesn't replace** farmer judgment and agricultural technicians. Keep that framing in the UI copy.
 7. Scope discipline: respect the MoSCoW in `docs/05-mvp-scope.md` and the cut order in `docs/08-hackathon-schedule.md`. Flag scope creep.
-8. **No login, no accounts, no backend storage.** Farm data (lots, crops, destinations, months) lives in AsyncStorage on the device. Outbound location data is limited to the NASA POWER request (lot centroid rounded to 0.1°) and the optional OSRM routing request (rounded to ~100 m). The "In plain words" SI summary (D33) sends the engine's results for the suggested plan to Claude through our API Worker, by itself when online (a button during a what-if): no location, no lot shape, no names, nothing stored.
+8. **No login, no accounts, no backend storage.** Farm data (lots, crops, destinations, months) lives in AsyncStorage on the device. Outbound location data is limited to the NASA POWER request (lot centroid rounded to 0.1°), the NASA satellite checks request to our API Worker (the same rounded centroid; the Worker calls NASA IMERG, SMAP, FLDAS, AppEEARS and SRTM with Earthdata credentials kept as Worker secrets, decision D35, 2026-11-15) and the optional OSRM routing request (rounded to ~100 m). The "In plain words" SI summary (D33) sends the engine's results for the suggested plan to Claude through our API Worker, by itself when online (a button during a what-if): no location, no lot shape, no names, nothing stored.
 9. Travel-time defaults (mode speeds, loads, circuity, perishability thresholds) are **assumptions**. Label them so in `params.ts` and the UI, and the farmer's own travel time always wins.
+10. **The project name is AgroSprout** (D7, decided 2026-11-15) in the app, README, docs, slides, demo and the submission form. "AgriResilience" was the working name; keep it only in historical records (`docs/reference/`, past SI log entries).
 
 ## Technical conventions (proposed; see decision log)
 - `pipeline/`: Python 3.11+, prepares the crop library + demo farm data → `mobile/assets/data/`. Never commit credentials (`.netrc`, `.env`) or `pipeline/raw/`.

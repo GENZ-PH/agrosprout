@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import type { Lang } from "../i18n/core";
+import { useLang } from "../i18n/lang-store";
 import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
 import { hc } from "hono/client";
 
@@ -8,6 +10,7 @@ import { fetchWithTimeout } from "../net/fetch";
 import { useOnline } from "../net/useOnline";
 import { SI_LINKS, SISource } from "./SISource";
 import type { PanelSection } from "./panel-si";
+import { linksIn } from "./satellite-facts";
 import { colors, radius, space, text } from "./theme";
 
 // One plain SI insight at the top of each section of the technical data panel (2026-11-15). Every
@@ -40,15 +43,18 @@ const write = (key: string, value: string) => {
   }
 };
 
-function askAll(sections: PanelSection[]): Promise<(string | null)[]> {
-  const key = JSON.stringify(sections);
+function askAll(sections: PanelSection[], lang: Lang): Promise<(string | null)[]> {
+  const key = lang + JSON.stringify(sections);
   let p = inFlight.get(key);
   if (!p) {
-    p = unwrap(api.v1["explain-sections"].$post({ json: { sections } })).then((d) => {
-      d.notes.forEach((t, i) => {
-        if (t) write(JSON.stringify(sections[i]), t);
+    const idx = sections.flatMap((s, i) => (s.facts.length ? [i] : []));
+    p = unwrap(api.v1["explain-sections"].$post({ json: { sections: idx.map((i) => sections[i]), ...(lang !== "en" ? { lang } : {}) } })).then((d) => {
+      const notes: (string | null)[] = sections.map(() => null);
+      d.notes.forEach((t, k) => {
+        notes[idx[k]] = t;
+        if (t) write(lang + JSON.stringify(sections[idx[k]]), t);
       });
-      return d.notes;
+      return notes;
     });
     p.catch(() => inFlight.delete(key));
     inFlight.set(key, p);
@@ -59,15 +65,16 @@ function askAll(sections: PanelSection[]): Promise<(string | null)[]> {
 /** The insight for `sections[index]`. Shows nothing offline, during a what-if, or if SI has nothing. */
 export function SectionSI({ sections, index, whatIf }: { sections: PanelSection[]; index: number; whatIf: boolean }) {
   const online = useOnline();
-  const allKey = JSON.stringify(sections);
-  const saved = read(JSON.stringify(sections[index]));
+  const lang = useLang();
+  const allKey = lang + JSON.stringify(sections);
+  const saved = read(lang + JSON.stringify(sections[index]));
   const [got, setGot] = useState<{ key: string; notes: (string | null)[] | null }>({ key: "", notes: null });
   const wanted = !whatIf && online && !saved && sections[index].facts.length > 0;
 
   useEffect(() => {
     if (!wanted) return;
     let live = true;
-    askAll(sections).then(
+    askAll(sections, lang).then(
       (notes) => live && setGot({ key: allKey, notes }),
       () => live && setGot({ key: allKey, notes: null }),
     );
@@ -95,7 +102,7 @@ export function SectionSI({ sections, index, whatIf }: { sections: PanelSection[
       <SISource
         lead="Written by SI (Claude, by Anthropic) from the numbers in this section only."
         given={sections[index].facts}
-        links={[SI_LINKS.power, SI_LINKS.powerMethod, SI_LINKS.fao56, SI_LINKS.ecocrop, SI_LINKS.claude]}
+        links={[SI_LINKS.power, SI_LINKS.powerMethod, ...linksIn(sections[index].facts), SI_LINKS.fao56, SI_LINKS.ecocrop, SI_LINKS.claude]}
       />
     </View>
   );

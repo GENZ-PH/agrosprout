@@ -2,7 +2,7 @@ import { type Ref, useCallback, useEffect, useImperativeHandle, useLayoutEffect,
 import type { StyleProp, ViewStyle } from "react-native";
 
 import type { LonLat } from "../types";
-import type { AppToMap, BasemapId, MapInset, MapLot, MapMode, MapPlace, MapToApp } from "./bridge";
+import type { AppToMap, BasemapId, MapInset, MapLot, MapMode, MapPlace, MapToApp, OverlayId } from "./bridge";
 
 export type MapViewHandle = {
   /** One-off commands: `gps`, `fitLots`. Lots, places and mode follow the props. */
@@ -23,6 +23,8 @@ export type MapViewProps = {
   inset?: MapInset;
   /** The map sits inside a scrolling page: see `inPage` on the `init` message. */
   inPage?: boolean;
+  /** NASA GIBS overlay over the lots, or none (default). */
+  overlay?: OverlayId | null;
   onMessage?: (msg: MapToApp) => void;
   accessibilityLabel?: string;
   style?: StyleProp<ViewStyle>;
@@ -38,7 +40,7 @@ const NO_PLACES: MapPlace[] = [];
  * Returns the handler for messages coming back from the page.
  */
 export function useMapBridge(props: MapViewProps, postToPage: (msg: AppToMap) => void) {
-  const { lots, places = NO_PLACES, mode, activeLotId, inset, ref } = props;
+  const { lots, places = NO_PLACES, mode, activeLotId, inset, overlay = null, ref } = props;
   const ready = useRef(false);
   const latest = useRef(props);
   useLayoutEffect(() => {
@@ -59,6 +61,7 @@ export function useMapBridge(props: MapViewProps, postToPage: (msg: AppToMap) =>
   useEffect(() => {
     if (inset) send({ type: "setInset", inset });
   }, [send, inset]);
+  useEffect(() => send({ type: "overlay", id: overlay }), [send, overlay]);
 
   return useCallback(
     (msg: MapToApp) => {
@@ -76,6 +79,7 @@ export function useMapBridge(props: MapViewProps, postToPage: (msg: AppToMap) =>
           basemap: p.basemap,
           inset: p.inset,
           inPage: p.inPage,
+          overlay: p.overlay ?? null,
         });
       }
       latest.current.onMessage?.(msg);

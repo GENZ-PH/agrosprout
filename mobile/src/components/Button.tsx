@@ -1,4 +1,5 @@
 import { type Href, router } from "expo-router";
+import { tr } from "../i18n/lang-store";
 import { Pressable, type StyleProp, StyleSheet, Text, type ViewStyle } from "react-native";
 
 import { Icon, type IconName } from "./Icon";
@@ -81,7 +82,7 @@ export function Button({
           isLink && styles.linkLabel,
         ]}
       >
-        {label}
+        {tr(label)}
       </Text>
       {iconAfter ? <Icon name={iconAfter} size={20} color={fg} /> : null}
     </Pressable>

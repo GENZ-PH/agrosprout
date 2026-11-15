@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type ComponentRef } from "react";
+import { useContext, useEffect, useRef, useState, type ComponentRef } from "react";
+import { tr, useLang } from "../i18n/lang-store";
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { hc } from "hono/client";
 
@@ -12,6 +13,8 @@ import { familyStyle, MONTH_NAMES } from "./field-year-core";
 import { yearStrip } from "./farmer-core";
 import { Icon } from "./Icon";
 import { SI_LINKS, SISource } from "./SISource";
+import { linksIn, satelliteMonthFacts } from "./satellite-facts";
+import { SatelliteContext } from "./SourceChip";
 import { monthStates, RISK_COLOR, RISK_ICON, RISK_LABEL } from "./season-guide-core";
 import { explainMonthRequest, monthLines, MONTH_LONG, readSaved, save, stripMonths, type StripMonth } from "./month-si";
 import { colors, radius, space, text } from "./theme";
@@ -89,8 +92,8 @@ export function YearStrip({ pick, a, isA, name, cropById, monthly, whatIf }: Pro
   const atStart = view.x <= 2;
   const atEnd = view.x >= maxX - 2;
   const rows: { label: string; strip: (string | null)[] }[] = [
-    { label: isA ? "Your crops" : "Suggestion", strip: yearStrip(pick) },
-    ...(!isA && a ? [{ label: "You now", strip: yearStrip(a) }] : []),
+    { label: isA ? tr("Your crops") : tr("Suggestion"), strip: yearStrip(pick) },
+    ...(!isA && a ? [{ label: tr("You now"), strip: yearStrip(a) }] : []),
   ];
   // One page at a time: the visible months less one, so a month stays for orientation.
   // The suggested plan's risk months (engine output), as small icons over each month.
@@ -137,7 +140,7 @@ export function YearStrip({ pick, a, isA, name, cropById, monthly, whatIf }: Pro
         </ScrollView>
       </View>
       {fits ? (
-        <Text style={text.caption}>The plan repeats every year.</Text>
+        <Text style={text.caption}>{tr("The plan repeats every year.")}</Text>
       ) : (
         <View style={styles.nav}>
           <Pressable
@@ -149,9 +152,9 @@ export function YearStrip({ pick, a, isA, name, cropById, monthly, whatIf }: Pro
             style={[styles.navBtn, atStart && styles.navOff]}
           >
             <Icon name="back" size={18} color={colors.green} />
-            <Text style={styles.navText}>Earlier</Text>
+            <Text style={styles.navText}>{tr("Earlier")}</Text>
           </Pressable>
-          <Text style={[text.caption, styles.flex, styles.center]}>Drag or use the arrows. The plan repeats every year.</Text>
+          <Text style={[text.caption, styles.flex, styles.center]}>{tr("Drag or use the arrows. The plan repeats every year.")}</Text>
           <Pressable
             onPress={() => by(1)}
             disabled={atEnd}
@@ -160,7 +163,7 @@ export function YearStrip({ pick, a, isA, name, cropById, monthly, whatIf }: Pro
             accessibilityState={{ disabled: atEnd }}
             style={[styles.navBtn, atEnd && styles.navOff]}
           >
-            <Text style={styles.navText}>Later</Text>
+            <Text style={styles.navText}>{tr("Later")}</Text>
             <Icon name="chevron" size={18} color={colors.green} />
           </Pressable>
         </View>
@@ -231,7 +234,9 @@ function MonthNote({
   monthly: Props["monthly"];
   whatIf: boolean;
 }) {
-  const year = yearRequests({ pick, a, monthly, name });
+  const sat = useContext(SatelliteContext);
+  const lang = useLang();
+  const year = yearRequests({ pick, a, monthly, name, satellite: (m) => satelliteMonthFacts(sat, m), lang });
   return (
     <View style={styles.note} accessibilityLiveRegion="polite">
       <Text style={text.bodyStrong}>
@@ -285,7 +290,7 @@ export function MonthSI({ year, month, whatIf }: { year: MonthReq[]; month: numb
     return (
       <View style={[styles.row, styles.si]}>
         <ActivityIndicator size="small" color={colors.green} />
-        <Text style={text.caption}>SI is looking at the whole year…</Text>
+        <Text style={text.caption}>{tr("SI is looking at the whole year…")}</Text>
       </View>
     );
   if (!textNow) return null;
@@ -293,14 +298,19 @@ export function MonthSI({ year, month, whatIf }: { year: MonthReq[]; month: numb
     <View style={styles.si}>
       <Text style={text.small}>{textNow}</Text>
       <SISource
-        lead="Why, by SI (Claude, by Anthropic), from this lot's NASA data for the month."
+        lead={
+          year[month].satellite
+            ? "Why, by SI (Claude, by Anthropic), from this lot's NASA POWER and NASA satellite data for the month."
+            : "Why, by SI (Claude, by Anthropic), from this lot's NASA POWER data for the month."
+        }
         given={[
           `Month: ${year[month].month}.`,
-          year[month].climate,
+          `NASA POWER (what the scores use): ${year[month].climate}`,
+          ...(year[month].satellite ?? []),
           ...year[month].suggestion.map((l) => `Suggested plan: ${l}`),
           ...year[month].yours.map((l) => `Your crops now: ${l}`),
         ]}
-        links={[SI_LINKS.power, SI_LINKS.fao56, SI_LINKS.ecocrop, SI_LINKS.claude]}
+        links={[SI_LINKS.power, ...linksIn(year[month].satellite), SI_LINKS.fao56, SI_LINKS.ecocrop, SI_LINKS.claude]}
       />
     </View>
   );

@@ -2,6 +2,7 @@ import { createContext, useContext } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { SOURCES, type SourceKey } from "../content/sources";
+import type { SatelliteFiles } from "../data/satellite";
 import { openInspector } from "./inspector-store";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
@@ -42,21 +43,44 @@ export function SourceChip({ k, period = "" }: { k: SourceKey; period?: string }
  */
 export const DemoDataContext = createContext(false);
 
+/**
+ * The NASA satellite and model datasets this lot's results were checked against (D35): bundled for
+ * the sample farm, fetched through our server for a drawn lot. Shown as a second row under a card's
+ * NASA POWER chip, so every card says which NASA data stands behind it. They do not change scores.
+ */
+export const CheckedAgainstContext = createContext<readonly SourceKey[]>([]);
+/** The NASA satellite and model files for the lot on screen (D35), for the SI notes and their sources. */
+export const SatelliteContext = createContext<SatelliteFiles | null>(null);
+
 /** The NASA datasets a card uses, as clickable chips. Non-NASA sources are left out (they open nothing). */
 export function SourceChips({ keys, period = "" }: { keys: readonly SourceKey[]; period?: string }) {
   const demo = useContext(DemoDataContext);
+  const checked = useContext(CheckedAgainstContext);
   const nasa = [...new Set(keys.map((k) => (demo && k === "power" ? "power-daily" : k)))].filter((k) => SOURCES[k].nasa);
   if (nasa.length === 0) return null;
+  const usesPower = nasa.some((k) => k === "power" || k === "power-daily");
+  const extra = usesPower ? checked.filter((k) => !nasa.includes(k)) : [];
   return (
-    <View style={styles.row} accessibilityLabel="NASA data used">
-      {nasa.map((k) => (
-        <SourceChip key={k} k={k} period={period} />
-      ))}
+    <View style={styles.wrap}>
+      <View style={styles.row} accessibilityLabel="NASA data used">
+        {nasa.map((k) => (
+          <SourceChip key={k} k={k} period={period} />
+        ))}
+      </View>
+      {extra.length > 0 ? (
+        <View style={styles.row} accessibilityLabel="Checked against other NASA data">
+          <Text style={[text.caption, styles.muted]}>Checked against</Text>
+          {extra.map((k) => (
+            <SourceChip key={k} k={k} />
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrap: { gap: 6 },
   row: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6 },
   muted: { color: colors.muted, marginRight: 2 },
   chip: {

@@ -1,4 +1,6 @@
 import { type Href, router } from "expo-router";
+import { tr } from "../i18n/lang-store";
+import { LanguageSwitch } from "./LanguageSwitch";
 import type { ReactNode } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -49,13 +51,14 @@ export function Header({ title, leading = "back", fallbackHref = "/", right, mid
         ) : null}
         {title ? (
           <Text style={[middle ? styles.titleInline : styles.title, logo && styles.titleSmall]} accessibilityRole="header" numberOfLines={middle ? 1 : 2}>
-            {title}
+            {tr(title)}
           </Text>
         ) : logo ? (
           <View style={styles.flex} />
         ) : null}
         {middle ? <View style={styles.middle}>{middle}</View> : null}
-        {typeof right === "string" ? <Text style={styles.right}>{right}</Text> : right}
+        {typeof right === "string" ? <Text style={styles.right}>{tr(right)}</Text> : right}
+        <LanguageSwitch />
       </View>
       {/* Only while the phone has no signal (#36). */}
       <OfflineBadge />
@@ -64,7 +67,8 @@ export function Header({ title, leading = "back", fallbackHref = "/", right, mid
 }
 
 const styles = StyleSheet.create({
-  wrap: { gap: space.sm },
+  // Above the lot tabs that follow it, so the language menu opens over them.
+  wrap: { gap: space.sm, zIndex: 30 },
   row: { flexDirection: "row", alignItems: "center", gap: 4, minHeight: 48 },
   lead: {
     width: MIN_TOUCH,

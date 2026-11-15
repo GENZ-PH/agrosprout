@@ -56,7 +56,7 @@ export default function MonthsScreen() {
     >
       <Header title="When do you plant?" right="Optional" fallbackHref="/dashboard" />
       {!lot ? (
-        <Text style={text.body}>Draw a lot and pick its crops first.</Text>
+        <Text style={text.body}>Draw a lot and choose its main crop first.</Text>
       ) : (
         <>
           <Text style={[text.body, { color: colors.muted }]}>

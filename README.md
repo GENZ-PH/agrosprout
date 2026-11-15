@@ -1,4 +1,4 @@
-# AgriResilience (working name)
+# AgroSprout
 
 **NASA Space Apps Challenge 2026 · "Field Shift: Adapting Farms with NASA Data"**
 Team **Jeoleecation** · Local Event: Iligan City, Philippines
@@ -23,7 +23,7 @@ An offline-first app that helps smallholder farmers compare crop-rotation strate
 
 Farmers are dealing with shifting temperatures, less predictable rain, water shortages, and declining soil health. A rotation that helps the soil in one place can use too much water, have no nearby market, or miss the growing season somewhere else. The challenge asks for a decision-support tool that combines NASA Earth observations with local soil information, crop characteristics, and farmer priorities ([challenge brief](docs/01-challenge-brief.md)).
 
-NASA POWER data on rain, heat, and evaporation is global and free to use, but it rarely reaches the person deciding what to plant next month. AgriResilience turns it into a side-by-side comparison on the farmer's phone, for the farmer's own lots and crops, and keeps working without a signal.
+NASA POWER data on rain, heat, and evaporation is global and free to use, but it rarely reaches the person deciding what to plant next month. AgroSprout turns it into a side-by-side comparison on the farmer's phone, for the farmer's own lots and crops, and keeps working without a signal.
 
 ## What it does
 
@@ -45,7 +45,7 @@ Priority chips (save water, build soil, extra income, less work) re-rank the opt
 
 POWER's native grid is a 0.5° × 0.625° cell, so the climate is a regional average, not a field measurement. Each value the app shows carries its source, resolution, and period.
 
-<!-- Team: list SMAP, MODIS, or Sentinel-2 here only after they're actually used in the app (#5, #13, #42). -->
+**NASA satellite and model checks** (shown beside the results and given to the SI notes; the scores use NASA POWER only): GPM IMERG monthly rain, SMAP L4 soil moisture, MODIS MOD13Q1 NDVI, HLS NDVI (Landsat and Sentinel-2), ECOSTRESS ESI and daily ET (both via NASA AppEEARS), FLDAS Noah land model and SRTM slope. The sample farm has them bundled; for a drawn lot the app asks our API Worker, which calls NASA for the lot centre rounded to 0.1° with the Earthdata login kept as a Worker secret (decision D35). The dashboard map can also show NASA GIBS layers: greenness, rain, soil moisture and land temperature. Datasets, DOIs and periods: [THIRD_PARTY.md](THIRD_PARTY.md) and the app's *NASA data used* tab.
 
 **How the data drives the results:** ET₀ (FAO-56 Penman-Monteith) times each crop's coefficient gives its monthly water need. Comparing that with effective rainfall gives a water-stress index per crop and month, which drives the "Fits your rain" score, the stress months on the calendar, and the planting-month scan. Temperature sets crop fit and heat risk, root-zone wetness flags waterlogging, and heavy-rain days weigh how much a bare field would wash out.
 
@@ -131,4 +131,8 @@ We used SI (Super Intelligence) tools as assistants. The idea comes from the tea
 
 Third-party services, data, and libraries, with their licenses and terms: [THIRD_PARTY.md](THIRD_PARTY.md). Methods: FAO Irrigation and Drainage Paper 56 (Allen et al., 1998) for ET₀ and crop coefficients; FAO effective-rainfall rules (Training Manual No. 3). NASA POWER data: https://power.larc.nasa.gov/.
 
-<!-- Team: add member names as registered on the Space Apps site, and a license, before submission (#52). -->
+## License
+
+Code: [MIT](LICENSE), Copyright (c) 2026 Team Jeoleecation. Crop photos, NASA and other data, OpenStreetMap map data, fonts and icons keep their own licenses and terms; see [THIRD_PARTY.md](THIRD_PARTY.md).
+
+<!-- Team: add member names as registered on the Space Apps site before submission (#52). -->

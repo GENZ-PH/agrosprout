@@ -50,7 +50,7 @@ export default function CompareScreen() {
     >
       <Header title="Your months vs better months" fallbackHref="/dashboard" />
       {!lot ? (
-        <Text style={text.body}>Draw a lot and pick its crops first.</Text>
+        <Text style={text.body}>Draw a lot and choose its main crop first.</Text>
       ) : (
         <>
           <Narrow>

@@ -127,6 +127,14 @@ export const MAP_CREDITS: readonly CreditItem[] = [
     ],
   },
   {
+    name: "NASA GIBS (map layers)",
+    lines: [
+      "The Greenness (MODIS Terra NDVI), Rain (GPM IMERG), Soil moisture (SMAP L4) and Land temp (MODIS Terra land surface temperature) layers on the dashboard's farm map. Their credit is shown on the map.",
+      "We acknowledge the use of imagery provided by services from NASA's Global Imagery Browse Services (GIBS), part of NASA's Earth Science Data and Information System (ESDIS).",
+    ],
+    url: "https://nasa-gibs.github.io/gibs-api-docs/",
+  },
+  {
     name: "Leaflet, Terra Draw, Turf.js",
     lines: ["The map and drawing tools. Leaflet (BSD-2-Clause), Terra Draw and Turf.js (MIT)."],
     url: "https://leafletjs.com",

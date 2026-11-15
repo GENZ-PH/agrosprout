@@ -19,6 +19,9 @@ export type ExplainRequest = {
   confidence: Explanation["confidence"]["level"];
   confidenceReasons: string[];
   audience?: "farmer" | "technician";
+  /** NASA satellite and model checks for the lot (`satelliteYearFacts`); they do not change the scores. */
+  satellite?: string[];
+  lang?: "tl" | "ceb";
 };
 
 const MAX_LINES = 8;
@@ -32,8 +35,11 @@ export function explainRequest(args: {
   explanation: Explanation;
   cropName: (id: string) => string;
   componentsLeftOut: readonly ComponentKey[];
+  satellite?: readonly string[];
+  lang?: "en" | "tl" | "ceb";
 }): ExplainRequest {
   const { pick, a, explanation: ex, cropName, componentsLeftOut } = args;
+  const sat = clip(args.satellite ?? []);
   const isA = pick.key === "A";
   const scores = scoreRows(pick, a, componentsLeftOut)
     .filter((r) => !r.left_out && r.value !== null)
@@ -50,6 +56,8 @@ export function explainRequest(args: {
     checkLocally: clip(ex.check_locally.map((l) => l.text)),
     confidence: ex.confidence.level,
     confidenceReasons: clip(ex.confidence.reasons.map(confidenceReasonText)),
+    ...(sat.length ? { satellite: sat } : {}),
+    ...(args.lang && args.lang !== "en" ? { lang: args.lang } : {}),
   };
 }
 

@@ -225,18 +225,18 @@ export const EXPLAINERS: Readonly<Record<ExplainerId, Explainer>> = {
   "satellite-checks": {
     id: "satellite-checks",
     title: "Satellite checks",
-    what: "NASA satellite and model data for the sample farm next to the NASA POWER numbers the results use: rain from GPM IMERG, soil moisture from SMAP, greenness (NDVI) from MODIS and HLS, plant water stress from ECOSTRESS, and the FLDAS land model's water in and out.",
+    what: "NASA satellite and model data for this lot next to the NASA POWER numbers the results use: rain from GPM IMERG, soil moisture from SMAP, greenness (NDVI) from MODIS and HLS, plant water stress from ECOSTRESS, and the FLDAS land model's water in and out.",
     source:
       "GPM IMERG Final V07 monthly rain (0.1°, GES DISC), SMAP L4 soil moisture (SPL4SMGP v8, 9 km, NSIDC), MODIS MOD13Q1 v061 NDVI (250 m), HLS v2.0 NDVI (30 m) and ECOSTRESS ESI and ET v002 (70 m) through NASA AppEEARS (LP DAAC), and FLDAS Noah monthly (0.1°, GES DISC). Fetched once by the team's pipeline and bundled with the app; NASA POWER for {period}.",
     sources: ["imerg", "smap", "modis", "hls", "ecostress", "fldas", "power-daily"],
     read: "Look at the shape over the year: do the wet and dry months line up? The sizes differ because each product covers a different area and measures a different thing. Tap a source name to see how each number is worked out.",
     limits: [
       "These are checks, not inputs: the scores do not use them.",
-      "Only the sample farm has them, because they are fetched ahead of time, not on the phone.",
+      "The sample farm has them built in. For a lot you draw, our server asks NASA for them for the lot centre rounded to 0.1 degree (the NASA login stays on the server, never on the phone); MODIS, HLS and ECOSTRESS take a few minutes to arrive.",
       "SMAP covers 2015 onward, and IMERG monthly files end at 2025-09. HLS starts in 2013 and ECOSTRESS in 2018.",
       "ECOSTRESS and the NDVI products only see clear days, and ECOSTRESS has few samples per month (none in February).",
       "FLDAS is a model run, not a measurement.",
-      "A satellite grid cell is larger than the lot, and the sample farm's location is provisional.",
+      "A satellite grid cell is larger than the lot, and the sample farm's location is provisional. A drawn lot uses fewer recent years than the sample farm, so its ranges are rougher.",
     ],
   },
 };
@@ -434,13 +434,13 @@ export const CHALLENGE_DATASETS: readonly DatasetStatus[] = [
   {
     name: "SRTM (elevation and slope)",
     status: "Demo farm only",
-    note: "The demo farm file has elevation and slope from SRTM. Lots you draw do not use it yet, so their evaporation is calculated at sea level and their erosion check relies on the land type you give.",
+    note: "The demo farm file has elevation and slope from SRTM. For a lot you draw, Satellite checks show its SRTM elevation fetched through our server, but the results do not use it yet: evaporation is calculated at sea level and the erosion check relies on the land type you give.",
   },
-  { name: "SMAP (soil moisture)", status: "Demo farm only", note: "SMAP L4 (SPL4SMGP v8, 9 km, 2015-2025) is shown for the sample farm in Satellite checks, as a check. The scores use NASA POWER soil wetness." },
-  { name: "GPM IMERG (rainfall)", status: "Demo farm only", note: "IMERG Final V07 monthly rain (0.1°, 2001 to 2025-09) is shown for the sample farm beside NASA POWER rain in Satellite checks. The scores use NASA POWER rain." },
-  { name: "MODIS, Landsat and Sentinel-2 (vegetation)", status: "Demo farm only", note: "MODIS MOD13Q1 NDVI (250 m, 2001-2025) and HLS NDVI (Landsat and Sentinel-2, 30 m, 2013-2026) are shown for the sample farm in Satellite checks, by month. The scores do not use them." },
-  { name: "ECOSTRESS (evaporation)", status: "Demo farm only", note: "ECOSTRESS ESI and daily ET (70 m, 2018-2026, clear-sky passes only) are shown for the sample farm in Satellite checks. The scores work out evaporation from NASA POWER with the FAO-56 method." },
-  { name: "FLDAS (land surface model)", status: "Demo farm only", note: "FLDAS Noah monthly soil moisture, evapotranspiration, rain and runoff (0.1°, 2001-2025) are shown for the sample farm in Satellite checks. The scores do not use them." },
+  { name: "SMAP (soil moisture)", status: "Used", note: "SMAP L4 (SPL4SMGP v8, 9 km, 2015-2025) is shown in Satellite checks (sample farm built in; drawn lots fetched through our server), as a check. The scores use NASA POWER soil wetness." },
+  { name: "GPM IMERG (rainfall)", status: "Used", note: "IMERG Final V07 monthly rain (0.1°, 2001 to 2025-09) is shown beside NASA POWER rain in Satellite checks (sample farm built in; drawn lots fetched through our server). The scores use NASA POWER rain." },
+  { name: "MODIS, Landsat and Sentinel-2 (vegetation)", status: "Used", note: "MODIS MOD13Q1 NDVI (250 m, 2001-2025) and HLS NDVI (Landsat and Sentinel-2, 30 m, 2013-2026) are shown in Satellite checks (sample farm built in; drawn lots fetched through our server), by month. The scores do not use them." },
+  { name: "ECOSTRESS (evaporation)", status: "Used", note: "ECOSTRESS ESI and daily ET (70 m, 2018-2026, clear-sky passes only) are shown in Satellite checks (sample farm built in; drawn lots fetched through our server). The scores work out evaporation from NASA POWER with the FAO-56 method." },
+  { name: "FLDAS (land surface model)", status: "Used", note: "FLDAS Noah monthly soil moisture, evapotranspiration, rain and runoff (0.1°, 2001-2025) are shown in Satellite checks (sample farm built in; drawn lots fetched through our server). The scores do not use them." },
   { name: "GRACE and GRACE-FO (water storage)", status: "Not used", note: "They measure water stored over large regions, far coarser than a farm lot." },
   { name: "GEDI (forest structure)", status: "Not used", note: "It measures the height and structure of forests and other vegetation, not field crops." },
 ];

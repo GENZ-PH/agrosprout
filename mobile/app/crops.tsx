@@ -1,4 +1,5 @@
 import { onlineManager } from "@tanstack/react-query";
+import { tr } from "../src/i18n/lang-store";
 import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useRef, useSyncExternalStore } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -17,13 +18,14 @@ import { useLotData } from "../src/components/useLotAnalysis";
 import { CROP_LIBRARY, cropById } from "../src/data/crops";
 import { ECOCROP_NAMES } from "../src/data/ecocrop";
 import { LAND_WATER } from "../src/data/land-water";
-import { chooseCrop, cropShortName, dataLine, isOtherCrop, lotsWithoutCrops, otherCropName, toggleCrop } from "../src/lots/crop-picks";
+import { chooseCrop, cropNeedingMonth, cropShortName, dataLine, isOtherCrop, lotsWithoutCrops, otherCropName, seasonFromPlantMonth, toggleCrop } from "../src/lots/crop-picks";
 import { buildSearchEntries } from "../src/lots/crop-search-core";
 import { lotLooksLikeWater } from "../src/lots/land-water-core";
-import { safeLotTop } from "../src/lots/suggest-core";
+import { FIT_LABELS, fitReasonText } from "../src/components/recommendations-core";
+import { goodMonthsText, lotSuggestions, safeLotTop, type CropSuggestion } from "../src/lots/suggest-core";
 import { areaLabel, isPinLot } from "../src/lots/lot-editor";
 import { useFarmStore } from "../src/state/farm-store";
-import type { Lot, LotCrop } from "../src/types";
+import type { Crop, Lot, LotCrop } from "../src/types";
 
 // S2 What do you plant on each lot? (#25, #152, docs/11-user-flow.md). One crop per lot (D13, changed by the
 // team 2026-11-14). Per lot: a search over our crop list and the FAO Ecocrop names (first, as the team asked),
@@ -51,7 +53,12 @@ export default function CropsScreen() {
   const oneLot = lotParam ? allLots.find((l) => l.id === lotParam) : undefined;
   const lots = oneLot ? [oneLot] : allLots;
   const missing = lotsWithoutCrops(lots);
-  const ready = lots.length > 0 && missing.length === 0;
+  // A crop grown year-round needs the farmer's planting month before the results can compare with it.
+  const noMonth = lots.flatMap((l) => {
+    const c = cropNeedingMonth(l, cropById);
+    return c ? [`${cropShortName(c)} on ${l.name}`] : [];
+  });
+  const ready = lots.length > 0 && missing.length === 0 && noMonth.length === 0;
 
   return (
     <Screen
@@ -59,12 +66,15 @@ export default function CropsScreen() {
         <>
           {lots.length > 0 && missing.length > 0 ? (
             <Text style={[text.small, { color: colors.amber }]}>
-              Choose a crop for {missing.map((l) => l.name).join(", ")}.
+              {tr("Choose a crop for {names}.", { names: missing.map((l) => l.name).join(", ") })}
             </Text>
+          ) : null}
+          {lots.length > 0 && missing.length === 0 && noMonth.length > 0 ? (
+            <Text style={[text.small, { color: colors.amber }]}>Choose when you plant {noMonth.join(", ")}.</Text>
           ) : null}
           {oneLot ? (
             <Button
-              label={`Next: see ${oneLot.name}`}
+              label={tr("Next: see {name}", { name: oneLot.name })}
               iconAfter="chevron"
               size="lg"
               disabled={!ready}
@@ -72,37 +82,108 @@ export default function CropsScreen() {
               onPress={() => router.dismissTo({ pathname: "/dashboard", params: { lot: oneLot.id } })}
             />
           ) : (
-            <Button label="Next: see your results" href="/dashboard" size="lg" disabled={!ready} />
+            <Button label={tr("Next: see your results")} href="/dashboard" size="lg" disabled={!ready} />
           )}
         </>
       }
     >
       <Header
-        title={oneLot ? `What do you plant on ${oneLot.name}?` : "What do you plant?"}
-        right={oneLot ? undefined : "Step 2 of 2"}
+        title={oneLot ? tr("Main crop on {name}", { name: oneLot.name }) : tr("Main crop on each lot")}
+        right={oneLot ? undefined : tr("Step 2 of 2")}
         fallbackHref={oneLot ? "/dashboard" : "/lots"}
       />
       {lots.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={text.body}>Plot a lot on the map first, then pick its crops here.</Text>
-          <Button label="Plot your lots" href="/lots" variant="secondary" />
+          <Text style={text.body}>Plot a lot on the map first, then choose its main crop here.</Text>
+          <Button label={tr("Plot your lots")} href="/lots" variant="secondary" />
         </View>
       ) : (
         <>
           <Text style={[text.body, { color: colors.muted }]}>
             {oneLot
-              ? "Choose the crop you grow on this lot: search for it, or tap one of the top crops. You can change it later."
-              : "Choose the crop you grow on each lot: search for it, or tap one of the top crops. You can change it later."}
+              ? tr("Choose one crop, the main one you grow on this lot: search for it, or tap one of the top crops. Choosing another crop replaces it, and you can change it later.")
+              : tr("Choose one crop for each lot, the main one you grow there: search for it, or tap one of the top crops. Choosing another crop replaces it, and you can change it later.")}
           </Text>
           {lots.map((lot) => (
             <LotCrops key={lot.id} lot={lot} />
           ))}
           <Pressable onPress={() => router.push("/credits")} accessibilityRole="link" style={styles.creditsLink}>
-            <Text style={[text.small, styles.creditsText]}>Photo credits</Text>
+            <Text style={[text.small, styles.creditsText]}>{tr("Photo credits")}</Text>
           </Pressable>
         </>
       )}
     </Screen>
+  );
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS_LONG = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+/**
+ * "When do you usually plant it?" (2026-11-15): shown for a crop with no usual planting months in
+ * the crop library (the DA guides say several are grown year-round). The farmer's month is saved
+ * as the crop's season, so "You now" and every comparison on the results use it. Nothing invented.
+ */
+function PlantMonthAsk({ lot, fit }: { lot: Lot; fit: CropSuggestion | null }) {
+  const setSeasons = useFarmStore((s) => s.setSeasons);
+  const lc = lot.crops.length === 1 ? lot.crops[0] : null;
+  const crop: Crop | undefined = lc ? cropById(lc.crop_id) : undefined;
+  if (!lc || !crop || crop.typical_calendar.length > 0) return null;
+  const picked = lc.seasons[0]?.plant_month ?? null;
+  const name = cropShortName(crop);
+  // The same check as the top 3 crops: the planting months where this crop fits the lot best.
+  // Dots only when some months are better than others; the same rating in all 12 is said in words.
+  const rated = fit && fit.level !== "unknown" ? fit : null;
+  const everyMonth = rated !== null && rated.best_months.length === 12;
+  const best = new Set(rated && !everyMonth && (rated.level === "good" || rated.level === "watch") ? rated.best_months : []);
+  const why = rated && rated.reasons[0] ? fitReasonText(rated.reasons[0]) : null;
+  return (
+    <View style={styles.monthAsk} accessibilityRole="radiogroup" accessibilityLabel={`When do you usually plant ${name} on ${lot.name}?`}>
+      <Text style={text.heading}>When do you usually plant {name}?</Text>
+      <Text style={[text.small, { color: colors.muted }]}>
+        {name} can be planted at different times of the year, so tell us your month. The results compare every plan with it.
+      </Text>
+      {rated && best.size > 0 ? (
+        <Text style={[text.small, styles.bestLine]}>
+          {tr("Best on this lot from NASA data: {level} if planted in {months}. Marked with a dot.", {
+            level: FIT_LABELS[rated.level],
+            months: goodMonthsText(rated.best_months),
+          })}
+        </Text>
+      ) : null}
+      {rated && everyMonth ? (
+        <Text style={[text.small, styles.bestLine]}>
+          {tr("From NASA data, {level} in every planting month on this lot, so no month is better.", { level: FIT_LABELS[rated.level] })}
+          {why ? ` ${tr(why)}` : ""}
+        </Text>
+      ) : null}
+      <View style={styles.monthRow}>
+        {MONTHS.map((m, i) => {
+          const on = picked === i + 1;
+          return (
+            <Pressable
+              key={m}
+              onPress={() => {
+                const season = seasonFromPlantMonth(crop, i + 1);
+                if (season) setSeasons(lot.id, crop.id, [season]);
+              }}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: on }}
+              accessibilityLabel={best.has(i + 1) ? `${MONTHS_LONG[i]}, ${fit ? FIT_LABELS[fit.level] : ""}` : MONTHS_LONG[i]}
+              style={({ pressed }) => [styles.monthChip, best.has(i + 1) && styles.monthChipBest, on && styles.monthChipOn, pressed && { opacity: 0.7 }]}
+            >
+              <Text style={[styles.monthText, on && styles.monthTextOn]}>{m}</Text>
+              {best.has(i + 1) ? <View style={[styles.bestDot, on && { backgroundColor: colors.surface }]} /> : null}
+            </Pressable>
+          );
+        })}
+      </View>
+      {picked && lc.seasons[0] ? (
+        <Text style={[text.small, { color: colors.muted }]}>
+          {`Planted in ${MONTHS_LONG[picked - 1]}, harvested around ${MONTHS_LONG[lc.seasons[0].harvest_month - 1]} (the crop's usual season length). You can change it later.`}
+        </Text>
+      ) : null}
+    </View>
   );
 }
 
@@ -121,6 +202,14 @@ function LotCrops({ lot }: { lot: Lot }) {
 
   // One crop per lot: a crop counts as chosen only when it is the lot's only crop.
   const chosen = lot.crops.length === 1 ? lot.crops[0].crop_id : null;
+  const chosenFit = useMemo(() => {
+    if (!data || seaData || !chosen) return null;
+    try {
+      return lotSuggestions(lot.details, data, CROP_LIBRARY).crops.find((c) => c.crop_id === chosen) ?? null;
+    } catch {
+      return null;
+    }
+  }, [data, seaData, lot.details, chosen]);
   const line = dataLine(lot.data_status, online, noSoil);
   const search = useRef<{ focus: () => void }>(null);
   // Soft: NASA's coarse cells read inner seas and lakes as land, so the lot is also checked against a land map.
@@ -153,6 +242,8 @@ function LotCrops({ lot }: { lot: Lot }) {
         onSearch={() => search.current?.focus()}
       />
 
+      <PlantMonthAsk lot={lot} fit={chosenFit} />
+
       <View
         style={line.tone === "ready" ? styles.dataQuiet : [styles.dataLine, line.tone === "error" ? styles.dataError : null]}
         accessibilityLiveRegion="polite"
@@ -162,17 +253,17 @@ function LotCrops({ lot }: { lot: Lot }) {
           size={18}
           color={line.tone === "ready" ? colors.green : line.tone === "error" ? colors.amber : colors.muted}
         />
-        <Text style={[text.small, styles.flex, line.tone === "ready" && { color: colors.muted }]}>{line.text}</Text>
+        <Text style={[text.small, styles.flex, line.tone === "ready" && { color: colors.muted }]}>{tr(line.text)}</Text>
         {noSoil ? (
           <Button
-            label="Move lot"
+            label={tr("Move lot")}
             variant="quiet"
             href={{ pathname: "/lots", params: { lot: lot.id } }}
             accessibilityLabel={`Move ${lot.name} on the map`}
           />
         ) : line.tone === "error" ? (
           <Button
-            label="Try again"
+            label={tr("Try again")}
             variant="quiet"
             onPress={() => updateLot(lot.id, { data_status: "pending" })}
             accessibilityLabel={`Try loading the NASA data for ${lot.name} again`}
@@ -187,7 +278,7 @@ function LotCrops({ lot }: { lot: Lot }) {
             {lot.name} looks like it is on water (sea or lake) on our map. If this is your farm, go on. If not, move it.
           </Text>
           <Button
-            label="Move lot"
+            label={tr("Move lot")}
             variant="quiet"
             href={{ pathname: "/lots", params: { lot: lot.id } }}
             accessibilityLabel={`Move ${lot.name} on the map`}
@@ -232,7 +323,7 @@ function YourCrops({
   return (
     <View style={styles.yours} accessibilityLiveRegion="polite">
       <Text style={text.heading} accessibilityRole="header">
-        {crops.length > 1 ? `Your crops on ${lotName}` : `Your crop on ${lotName}`}
+        {crops.length > 1 ? `Your crops on ${lotName}` : tr("Main crop on {name}", { name: lotName })}
       </Text>
       {crops.length > 1 ? (
         <Text style={[text.small, { color: colors.muted }]}>One crop per lot now: the crop you choose next replaces these.</Text>
@@ -245,7 +336,7 @@ function YourCrops({
           style={({ pressed }) => [styles.emptyCrop, pressed && styles.pressed]}
         >
           <Text style={[text.body, { color: colors.muted }]}>
-            {hasTop ? "None yet. Search for a crop above, or tap one of the top crops below." : "None yet. Search for a crop above."}
+            {hasTop ? tr("None yet. Search for a crop above, or tap one of the top crops below.") : tr("None yet. Search for a crop above.")}
           </Text>
         </Pressable>
       ) : (
@@ -284,6 +375,15 @@ function YourCrops({
 }
 
 const styles = StyleSheet.create({
+  monthAsk: { gap: space.xs, padding: space.sm, borderRadius: radius.md, borderWidth: 1, borderColor: colors.amber, backgroundColor: colors.amberTint },
+  monthRow: { flexDirection: "row", flexWrap: "wrap", gap: space.xs },
+  monthChip: { minWidth: 52, minHeight: MIN_TOUCH, paddingHorizontal: space.sm, alignItems: "center", justifyContent: "center", borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  monthChipOn: { backgroundColor: colors.green, borderColor: colors.green },
+  monthText: { fontSize: 15, fontWeight: "600", color: colors.ink },
+  monthTextOn: { color: colors.surface },
+  monthChipBest: { borderColor: colors.green, borderWidth: 2 },
+  bestDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.green, marginTop: 2 },
+  bestLine: { color: colors.green, fontWeight: "600" },
   flex: { flex: 1 },
   creditsLink: { minHeight: MIN_TOUCH, justifyContent: "center", alignSelf: "flex-start" },
   creditsText: { color: colors.blue, textDecorationLine: "underline" },

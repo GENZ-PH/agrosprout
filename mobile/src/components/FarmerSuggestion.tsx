@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { tr, useLang } from "../i18n/lang-store";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import type { ComponentKey, Explanation, RotationOption } from "../engine";
@@ -10,6 +11,8 @@ import { MONTH_LONG } from "./month-si";
 import { ExplainWithSI } from "./ExplainWithSI";
 import { YearStrip } from "./YearStrip";
 import { explainRequest } from "./explain-core";
+import { satelliteYearFacts } from "./satellite-facts";
+import { SatelliteContext } from "./SourceChip";
 import { checkFirst, cropSequence, type LongerSeason, plainReasons } from "./farmer-core";
 import { familyStyle } from "./field-year-core";
 import { RISK_COLOR, RISK_ICON, RISK_LABEL } from "./season-guide-core";
@@ -46,7 +49,9 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
   const name = (id: string) => shortName(cropName(id));
   const reasons = plainReasons(pick, a, componentsLeftOut);
   const check = checkFirst(explanation);
-  const siRequest = explanation ? explainRequest({ pick, a, explanation, cropName, componentsLeftOut }) : null;
+  const sat = useContext(SatelliteContext);
+  const lang = useLang();
+  const siRequest = explanation ? explainRequest({ pick, a, explanation, cropName, componentsLeftOut, satellite: satelliteYearFacts(sat), lang }) : null;
   const crops = [...new Set(pick.slots.map((s) => s.crop_id))];
   const yours = a ? [...new Set(a.slots.map((s) => s.crop_id))] : [];
   const legend = [...new Set([...crops, ...(isA ? [] : yours)])];
@@ -60,9 +65,9 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
 
   return (
     <View style={styles.card} accessibilityRole="summary">
-      <Text style={styles.kicker}>Our suggestion for {lotName}</Text>
+      <Text style={styles.kicker}>{tr("Our suggestion for {name}", { name: lotName })}</Text>
       <Text style={text.title} accessibilityRole="header">
-        {isA ? "Keep your crops" : cropSequence(pick, name)}
+        {isA ? tr("Keep your crops") : cropSequence(pick, name)}
       </Text>
       <View style={styles.pics}>
         {crops.map((id) => {
@@ -87,7 +92,7 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
               <Text style={text.small} numberOfLines={1}>
                 {name(id)}
               </Text>
-              <Text style={styles.picHint}>About</Text>
+              <Text style={styles.picHint}>{tr("About")}</Text>
             </Pressable>
           );
         })}
@@ -110,11 +115,11 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
           ))}
           <View style={styles.legendItem}>
             <View style={[styles.swatch, styles.cellEmpty]} />
-            <Text style={text.caption}>Nothing planted</Text>
+            <Text style={text.caption}>{tr("Nothing planted")}</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.swatch, styles.swatchNow]} />
-            <Text style={text.caption}>This month</Text>
+            <Text style={text.caption}>{tr("This month")}</Text>
           </View>
           {(["dry", "hot", "wet"] as const).map((r) => (
             <View key={r} style={styles.legendItem}>
@@ -132,7 +137,7 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
 
       {reasons.length > 0 ? (
         <View style={styles.reasons}>
-          <Text style={text.bodyStrong}>What you gain</Text>
+          <Text style={text.bodyStrong}>{tr("What you gain")}</Text>
           {reasons.map((r) => (
             <View key={r.key} style={styles.reason}>
               <Icon name="check" size={20} color={colors.green} />
@@ -149,7 +154,7 @@ export function FarmerSuggestion({ lotName, pick, a, explanation, cropName, crop
 
       {check ? (
         <View style={styles.reasons}>
-          <Text style={text.bodyStrong}>Ask your technician first</Text>
+          <Text style={text.bodyStrong}>{tr("Ask your technician first")}</Text>
           <Text style={text.body}>{check}</Text>
         </View>
       ) : null}
