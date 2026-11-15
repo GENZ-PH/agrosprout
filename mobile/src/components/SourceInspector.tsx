@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { EXPLAINERS, fill } from "../content/explainers";
@@ -17,7 +17,8 @@ import {
   type PanelContext,
   subscribeInspector,
 } from "./inspector-store";
-import { canDock, DOCK_WIDTH } from "./layout-core";
+import { clampDock, saveDockWidth, setDockWidth, useDockWidth } from "./dock-width";
+import { canDock } from "./layout-core";
 import { useLayout } from "./useLayout";
 import { colors, MIN_TOUCH, radius, space, text } from "./theme";
 
@@ -60,10 +61,56 @@ export { canDock };
 export function DockedInspector() {
   const { state, context } = useInspectorState();
   const { width } = useLayout();
+  const dock = useDockWidth(width);
   if (!canDock(width) || !state) return null;
   return (
-    <View style={styles.dock} accessibilityLabel="NASA data panel">
+    <View style={[styles.dock, { width: dock }]} accessibilityLabel="NASA data panel">
+      <DockHandle windowWidth={width} current={dock} />
       <PanelBody state={state} context={context} />
+    </View>
+  );
+}
+
+/**
+ * The drag handle on the panel's left edge (web, mouse or touch): drag to make the panel wider or
+ * narrower. The width is kept on the device. Arrow keys work too when the handle has focus.
+ */
+function DockHandle({ windowWidth, current }: { windowWidth: number; current: number }) {
+  const [active, setActive] = useState(false);
+  if (Platform.OS !== "web") return null;
+  const start = (e: { nativeEvent: { pageX: number }; preventDefault?: () => void }) => {
+    e.preventDefault?.();
+    setActive(true);
+    const move = (ev: PointerEvent) => setDockWidth(clampDock(windowWidth - ev.clientX, windowWidth));
+    const up = () => {
+      setActive(false);
+      saveDockWidth();
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      document.body.style.userSelect = "";
+    };
+    document.body.style.userSelect = "none";
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+  return (
+    <View
+      // react-native-web passes pointer and key events through to the element.
+      {...({
+        onPointerDown: start,
+        onKeyDown: (e: { nativeEvent: { key: string } }) => {
+          const k = e.nativeEvent.key;
+          if (k !== "ArrowLeft" && k !== "ArrowRight") return;
+          setDockWidth(clampDock(current + (k === "ArrowLeft" ? 40 : -40), windowWidth));
+          saveDockWidth();
+        },
+        tabIndex: 0,
+      } as object)}
+      accessibilityRole="adjustable"
+      accessibilityLabel="Drag to resize the NASA data panel"
+      style={[styles.handle, active && styles.handleActive]}
+    >
+      <View style={styles.grip} />
     </View>
   );
 }
@@ -219,7 +266,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 const styles = StyleSheet.create({
-  dock: { width: DOCK_WIDTH, flexShrink: 0, backgroundColor: colors.surface, borderLeftWidth: 1, borderLeftColor: colors.border },
+  handle: { position: "absolute", left: -5, top: 0, bottom: 0, width: 10, zIndex: 5, alignItems: "center", justifyContent: "center", cursor: "col-resize" } as object,
+  handleActive: { backgroundColor: colors.greenTint },
+  grip: { width: 4, height: 40, borderRadius: 2, backgroundColor: colors.borderStrong },
+  dock: { flexShrink: 0, backgroundColor: colors.surface, borderLeftWidth: 1, borderLeftColor: colors.border },
   scrim: { flex: 1, backgroundColor: "rgba(0,0,0,0.35)" },
   sheetTall: { height: "88%", maxHeight: "88%" },
   back: { marginLeft: -space.sm, marginRight: 0 },

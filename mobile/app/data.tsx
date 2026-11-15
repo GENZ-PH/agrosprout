@@ -3,6 +3,7 @@ import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { Disclaimer } from "../src/components/Disclaimer";
 import { DataTracePanel } from "../src/components/DataTracePanel";
+import { FooterLinks } from "../src/components/FooterLinks";
 import { Header } from "../src/components/Header";
 import { Screen } from "../src/components/Screen";
 import { colors, MIN_TOUCH, radius, space, text } from "../src/components/theme";
@@ -76,6 +77,7 @@ export default function DataScreen() {
       >
         <Text style={styles.link}>Licenses and credits</Text>
       </Pressable>
+      <FooterLinks />
     </Screen>
   );
 }

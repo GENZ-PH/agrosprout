@@ -2,7 +2,8 @@ import { useSyncExternalStore } from "react";
 import { useWindowDimensions } from "react-native";
 
 import { getInspector, subscribeInspector } from "./inspector-store";
-import { canDock, DOCK_WIDTH, sizeClassFor, type SizeClass, TWO_COLUMN_MIN_WITH_DOCK } from "./layout-core";
+import { useDockWidth } from "./dock-width";
+import { canDock, sizeClassFor, type SizeClass, TWO_COLUMN_MIN_WITH_DOCK } from "./layout-core";
 
 // The window's size class (#114). `useWindowDimensions` updates on a browser resize and on
 // phone rotation, so layouts reflow live with no reload. When the NASA data panel docks beside
@@ -21,7 +22,8 @@ export interface Layout {
 export function useLayout(): Layout {
   const { width } = useWindowDimensions();
   const docked = useSyncExternalStore(subscribeInspector, getInspector, getInspector) !== null && canDock(width);
-  const contentWidth = docked ? width - DOCK_WIDTH : width;
+  const dock = useDockWidth(width);
+  const contentWidth = docked ? width - dock : width;
   const size = sizeClassFor(contentWidth);
   const wide = size === "expanded" && (!docked || contentWidth >= TWO_COLUMN_MIN_WITH_DOCK);
   return { width, contentWidth, size, wide };

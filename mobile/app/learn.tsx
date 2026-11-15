@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 
 import { Disclaimer } from "../src/components/Disclaimer";
+import { FooterLinks } from "../src/components/FooterLinks";
 import { Header } from "../src/components/Header";
 import { Screen } from "../src/components/Screen";
 import { colors, radius, space, text } from "../src/components/theme";
@@ -23,6 +24,7 @@ export default function LearnScreen() {
           </View>
         ))}
       </View>
+      <FooterLinks />
     </Screen>
   );
 }

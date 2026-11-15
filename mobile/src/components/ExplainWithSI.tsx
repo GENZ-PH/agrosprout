@@ -39,7 +39,7 @@ function explain(request: ExplainRequest): Promise<string> {
 
 type State = { kind: "idle" } | { kind: "loading" } | { kind: "done"; text: string } | { kind: "error"; message: string };
 
-export function ExplainWithSI({ request, auto = false }: { request: ExplainRequest; auto?: boolean }) {
+export function ExplainWithSI({ request, auto = false, title = "In plain words" }: { request: ExplainRequest; auto?: boolean; title?: string }) {
   const online = useOnline();
   // Auto starts out loading; the parent keys this component by request, so a new plan starts fresh.
   const [state, setState] = useState<State>(() => (auto && online ? { kind: "loading" } : { kind: "idle" }));
@@ -72,7 +72,7 @@ export function ExplainWithSI({ request, auto = false }: { request: ExplainReque
   if (state.kind === "done") {
     return (
       <View style={styles.box} accessibilityRole="summary">
-        <Text style={styles.label}>In plain words</Text>
+        <Text style={styles.label}>{title}</Text>
         <Text style={text.body}>{state.text}</Text>
         <Text style={text.caption}>Written by SI (Claude, by Anthropic) from these results only. It can be wrong: talk it over with your technician.</Text>
       </View>

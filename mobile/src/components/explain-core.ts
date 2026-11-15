@@ -18,6 +18,7 @@ export type ExplainRequest = {
   checkLocally: string[];
   confidence: Explanation["confidence"]["level"];
   confidenceReasons: string[];
+  audience?: "farmer" | "technician";
 };
 
 const MAX_LINES = 8;
