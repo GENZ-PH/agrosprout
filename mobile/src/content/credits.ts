@@ -48,7 +48,7 @@ export const OTHER_DATA_CREDITS: readonly CreditItem[] = [
   },
   {
     name: "GeoNames",
-    lines: ["Towns and cities for the place search on the map, kept on your phone: nothing you type is sent. Town names and positions: GeoNames (CC BY 4.0)."],
+    lines: ["Towns, cities and barangays for the place search on the map, kept on your phone: nothing you type is sent. Place names and positions: GeoNames (CC BY 4.0)."],
     url: "https://www.geonames.org/",
   },
   {
